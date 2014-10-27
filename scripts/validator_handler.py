@@ -8,10 +8,11 @@ import sys
 import ctypes
 import subprocess
 from subprocess import Popen, PIPE
-import os
+import shutil
 from optparse import OptionParser
 from biokbase.workspace.client import Workspace
 import urllib
+import urllib2
 
 desc1 = '''
 NAME
@@ -42,12 +43,6 @@ AUTHORS
 First Last.
 '''
 
-class AuthURLopener(urllib.FancyURLopener):
-    Authorization= "OAuth {}".format(os.environ.get('KB_AUTH_TOKEN'))
-
-urllib._urlopener = AuthURLopener()
-
-
 def handler (args) :
     ###
     # download ws object and find where the validation script is located
@@ -59,23 +54,44 @@ def handler (args) :
         raise Exception("Object {} not found in workspace {}".format(args.inobj_id, args.sws_id))
 
     try:
+        shutil.rmtree(args.sdir)
+    except:
+        pass
+
+    try:
         os.mkdir(args.sdir)
     except:
         raise Exception("Could not create directory {}".format(args.sdir))
 
-    if indata['validation_script']['id'] is None: raise Exception("Script Shock node id information is not provided")
+    if 'id' not in indata['validation_script'] and indata['validation_script']['id'] is None: 
+        raise Exception("Script Shock node id information is not provided")
 
+    script_id = indata['validation_script']['id']
     surl = args.shock_url
-    if indata['validation_script']['shock_url'] is not None: surl = indata['validation_script']['shock_url']
+    if 'shock_url' in indata['validation_script'] and indata['validation_script']['shock_url'] is not None: 
+        surl = indata['validation_script']['shock_url']
     
-    meta = urllib.urlopen("{}/node/{}".format(surl, indata['validation_script']['id']))
-    script = urllib.urlopen("{}/node/{}?Download".format(surl, indata['id']))
-    data = urllib.urlopen("{}/node/{}?Download".format(surl, args.inobj_id))
+    headers = {'Authorization' :  "OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')) }
+    content = {}
+    body = urllib.urlencode(content)
+    meta_req = urllib2.Request("{}/node/{}".format(surl, script_id))
+    meta_req.add_header('Authorization',"OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')))
+
+    script_req = urllib2.Request("{}/node/{}?download_raw".format(surl, script_id));
+    script_req.add_header('Authorization',"OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')))
+
+    data_req = urllib2.Request("{}/node/{}?download_raw".format(surl, args.inobj_id))
+    data_req.add_header('Authorization',"OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')))
+
+    meta = urllib2.urlopen(meta_req)
+    script = urllib2.urlopen(script_req)
+    data = urllib2.urlopen(data_req)
         
-    # TODO: add compressed file handling using meta (tar.gz, tgz, etc).
+    # TODO: add compressed file handling using meta (tar.gz, tgz, etc) using the configuration to choose what to execute and parameter handling.
     sif = open("{}/validator".format(args.sdir),'w')
     sif.write(script.read())
     sif.close()
+    os.chmod("{}/validator".format(args.sdir),0700)
     
     dif = open("{}/in_file".format(args.sdir),'w')
     dif.write(data.read())
@@ -93,11 +109,15 @@ def handler (args) :
     # print output message for error tracking
     if out_str[0] is not None : print out_str[0]
     if out_str[1] is not None : print >> sys.stderr, out_str[1]
-   
+
     # 
-    #if(args.del_tmps is "true") :
-    #    os.remove("{}-{}".format(os.getpid(), args.exp_fn))
-    #    os.remove("{}-{}".format(os.getpid(), args.flt_out_fn))
+    if(args.del_tmps is "true") :
+        try :
+          shutil.rmtree("{}".format(args.sdir))
+        except:
+          pass
+
+    if p1.returncode != 0: exit(p1.returncode) 
 
 if __name__ == "__main__":
     # Parse options.

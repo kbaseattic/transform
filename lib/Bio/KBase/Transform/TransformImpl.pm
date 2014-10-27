@@ -16,6 +16,7 @@ Transform APIs
 =cut
 
 #BEGIN_HEADER
+use Bio::KBase::Workflow::KBW;
 #END_HEADER
 
 sub new
@@ -25,6 +26,31 @@ sub new
     };
     bless $self, $class;
     #BEGIN_CONSTRUCTOR
+    my %params;
+    my @list = qw(ws_url ws_un ws_id ws_type erdb_url ws_pw);
+    if ((my $e = $ENV{KB_DEPLOYMENT_CONFIG}) && -e $ENV{KB_DEPLOYMENT_CONFIG}) {  
+      my $service = $ENV{KB_SERVICE_NAME};
+      if (defined($service)) {
+        my %Config = ();
+        tie %Config, "Config::Simple", "$e";
+        for my $p (@list) {
+          my $v = $Config{"$service.$p"};
+          if ($v) {
+            $params{$p} = $v;
+          }
+        }
+      }
+    }
+ 
+    # set default values for testing
+    $params{ujs_url} = 'http://localhost:7083' if! defined $params{ujs_url};
+    $params{ws_url} = 'http://localhost:7058' if! defined $params{ws_url};
+    $params{shock_url} = 'http://localhost:7078' if! defined $params{shock_url};
+    $params{awe_url} = 'http://localhost:7080' if! defined $params{awe_url};
+    $params{clientgroups} = 'prod' if ! defined $params{clientgroups};
+    $params{svc_ws_un} = 'kbasetest' if! defined $params{ws_un};
+    #$params{svc_ws_pw} = '' if! defined $params{svc_ws_pw};
+    $params{svc_ws_name} = 'loader_test' if! defined $params{ws_id};
     #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
@@ -104,6 +130,7 @@ sub import_data
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($result);
     #BEGIN import_data
+    $result = Bio::KBase::Workflow::KBW::run_async($self, $ctx, $args);
     #END import_data
     my @_bad_returns;
     (!ref($result)) or push(@_bad_returns, "Invalid type for return variable \"result\" (value was \"$result\")");
@@ -186,6 +213,7 @@ sub validate
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($result);
     #BEGIN validate
+    $result = Bio::KBase::Workflow::KBW::run_async($self, $ctx, $args);
     #END validate
     my @_bad_returns;
     (ref($result) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"result\" (value was \"$result\")");
@@ -274,6 +302,7 @@ sub uploader
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($result);
     #BEGIN uploader
+    $result = Bio::KBase::Workflow::KBW::run_async($self, $ctx, $args);
     #END uploader
     my @_bad_returns;
     (ref($result) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"result\" (value was \"$result\")");

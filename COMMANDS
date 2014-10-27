@@ -1,0 +1,4 @@
+#group-name	st	Loader
+#command-set	scripts/(.*).pl	st
+#command-set	scripts/(.*)\.r$	st
+#command-set	scripts/(.*)\.py	st

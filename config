@@ -1,0 +1,7 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+[remote "origin"]
+	url = https://sjyoo@github.com/sjyoo/service_template
+	fetch = +refs/heads/*:refs/remotes/origin/*

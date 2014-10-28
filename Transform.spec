@@ -156,4 +156,27 @@ module Transform
   } DownloadParam;
   funcdef download(DownloadParam args) returns (list<string> result);
   
+
+  /* Test script type */
+  typedef structure {
+      string key;
+      string value;
+  } Pair;
+
+
+  /* script required information 
+     */
+  typedef structure {
+      string cmd_name;
+      string cmd_args;
+      string cmd_description;
+      int max_runtime;
+      mapping<string, string> opt_args;
+  } CommandConfig;
+
+  /* each external type validator or external type to internal type pair transformer script configuration */
+  typedef structure {
+      mapping<string, CommandConfig> config_map;
+  } Type2CommandConfig;
+
 };

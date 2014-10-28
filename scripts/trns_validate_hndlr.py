@@ -13,10 +13,12 @@ from optparse import OptionParser
 from biokbase.workspace.client import Workspace
 import urllib
 import urllib2
+from ConfigParser import ConfigParser
+from biokbase import log
 
 desc1 = '''
 NAME
-      validator_handler -- validate the input data
+      trns_validate_hndlr -- validate the input data
 
 SYNOPSIS      
       
@@ -24,17 +26,13 @@ SYNOPSIS
 
 desc2 = '''
 DESCRIPTION
-  validator_handler call actual validation script to test wheather the input data is valid external data format or not
+  trns_validate_hndlr call actual validation script to test wheather the input data is valid external data format or not
 '''
 
 desc3 = '''
 EXAMPLES
       CSV test case
-      > validator_handler --ws_url 'https://kbase.us/services/ws' --ws_id kbasetest:home  --in_id '' --out_id 'filtered_series' --method anova --p_value 0.01 
-      
-      Filter genes with LOR
-      > validator_handler --ws_url 'https://kbase.us/services/ws' --ws_id KBasePublicExpression  --in_id 'my_series' -out_id 'filtered_series' --method lor --p_value 0.01 
-
+      > trns_validate_hndlr -i 'your_shock_node_id' -e Transform.CSV
 
 SEE ALSO
       upload_handler, import_handler
@@ -119,12 +117,16 @@ def handler (args) :
 
     if p1.returncode != 0: exit(p1.returncode) 
 
+def get_config(args):
+    if not os.environ.get('KB_DEPLOYMENT_CONFIG'): return None
+    retconfig = {}
+    config = ConfigParser()
+    config.read(os.environ.get('KB_DEPLOYMENT_CONFIG')
+
 if __name__ == "__main__":
     # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='validator_handler', epilog=desc3)
-    parser.add_argument('-u', '--ws_url', help='Workspace url', action='store', dest='ws_url', default='https://kbase.us/services/ws')
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_validate_hndlr', epilog=desc3)
     parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
-    parser.add_argument('-x', '--svc_ws_name', help='Service workspace name', action='store', dest='sws_id', default=None, required=True)
     parser.add_argument('-i', '--in_id', help='Input Shock node id', action='store', dest='inobj_id', default=None, required=True)
     parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=True)
     parser.add_argument('-b', '--script_dir', help='Script directory', action='store', dest='sdir', default='bin')
@@ -133,6 +135,11 @@ if __name__ == "__main__":
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
+
+
+    config = {}
+    config
+
 
     # main loop
     handler(args)

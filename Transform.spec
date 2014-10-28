@@ -91,7 +91,7 @@ module Transform
       /* mapping<string, string> optional_args; // optarg key and values */ 
   } ImportParam;
   
-  funcdef import_data(ImportParam) returns (string result);
+  funcdef import_data(ImportParam args) returns (string result);
   
   
   
@@ -107,10 +107,10 @@ module Transform
   
   typedef structure {
       type_string etype;
-      shock_ref id;
+      shock_id id;
       /* mapping<string, string> optional_args; // optarg key and values */ 
   } ValidateParam;
-  funcdef validate(ValidateParam) returns (list<string> result);
+  funcdef validate(ValidateParam args) returns (list<string> result);
   
   
   
@@ -128,12 +128,12 @@ module Transform
   typedef structure {
       type_string etype;
       type_string kb_type;
-      shock_ref in_id;
+      shock_id in_id;
       string ws_name;
       string obj_name;
       /* mapping<string, string> optional_args; // optarg key and values */ 
   } UploadParam;
-  funcdef uploader(UploadParam) returns (list<string> result);     
+  funcdef uploader(UploadParam args) returns (list<string> result);     
   
   typedef structure {
       type_string kb_type;
@@ -149,11 +149,11 @@ module Transform
   typedef structure {
       type_string etype;
       type_string kb_type;
-      shock_ref out_id;
+      shock_id out_id;
       string ws_name;
       string obj_name;
       /* mapping<string, string> optional_args; // optarg key and values */ 
   } DownloadParam;
-  funcdef download(DownloadParam) returns (list<string> result);
+  funcdef download(DownloadParam args) returns (list<string> result);
   
 };

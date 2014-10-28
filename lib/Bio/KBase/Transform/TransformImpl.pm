@@ -51,6 +51,8 @@ sub new
     $params{svc_ws_un} = 'kbasetest' if! defined $params{ws_un};
     #$params{svc_ws_pw} = '' if! defined $params{svc_ws_pw};
     $params{svc_ws_name} = 'loader_test' if! defined $params{ws_id};
+
+    $self->{_config} = \%params;
     #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
@@ -66,7 +68,7 @@ sub new
 
 =head2 import_data
 
-  $result = $obj->import_data($ImportParam)
+  $result = $obj->import_data($args)
 
 =over 4
 
@@ -75,7 +77,7 @@ sub new
 =begin html
 
 <pre>
-$ImportParam is an ImportParam
+$args is an ImportParam
 $result is a string
 ImportParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
@@ -91,7 +93,7 @@ type_string is a string
 
 =begin text
 
-$ImportParam is an ImportParam
+$args is an ImportParam
 $result is a string
 ImportParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
@@ -117,10 +119,10 @@ type_string is a string
 sub import_data
 {
     my $self = shift;
-    my($ImportParam) = @_;
+    my($args) = @_;
 
     my @_bad_arguments;
-    (ref($ImportParam) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"ImportParam\" (value was \"$ImportParam\")");
+    (ref($args) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"args\" (value was \"$args\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to import_data:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -147,7 +149,7 @@ sub import_data
 
 =head2 validate
 
-  $result = $obj->validate($ValidateParam)
+  $result = $obj->validate($args)
 
 =over 4
 
@@ -156,15 +158,12 @@ sub import_data
 =begin html
 
 <pre>
-$ValidateParam is a ValidateParam
+$args is a ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
-	id has a value which is a shock_ref
-type_string is a string
-shock_ref is a reference to a hash where the following keys are defined:
 	id has a value which is a shock_id
-	shock_url has a value which is a string
+type_string is a string
 shock_id is a string
 
 </pre>
@@ -173,15 +172,12 @@ shock_id is a string
 
 =begin text
 
-$ValidateParam is a ValidateParam
+$args is a ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
-	id has a value which is a shock_ref
-type_string is a string
-shock_ref is a reference to a hash where the following keys are defined:
 	id has a value which is a shock_id
-	shock_url has a value which is a string
+type_string is a string
 shock_id is a string
 
 
@@ -200,10 +196,10 @@ shock_id is a string
 sub validate
 {
     my $self = shift;
-    my($ValidateParam) = @_;
+    my($args) = @_;
 
     my @_bad_arguments;
-    (ref($ValidateParam) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"ValidateParam\" (value was \"$ValidateParam\")");
+    (ref($args) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"args\" (value was \"$args\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to validate:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -230,7 +226,7 @@ sub validate
 
 =head2 uploader
 
-  $result = $obj->uploader($UploadParam)
+  $result = $obj->uploader($args)
 
 =over 4
 
@@ -239,18 +235,15 @@ sub validate
 =begin html
 
 <pre>
-$UploadParam is an UploadParam
+$args is an UploadParam
 $result is a reference to a list where each element is a string
 UploadParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
 	kb_type has a value which is a type_string
-	in_id has a value which is a shock_ref
+	in_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 type_string is a string
-shock_ref is a reference to a hash where the following keys are defined:
-	id has a value which is a shock_id
-	shock_url has a value which is a string
 shock_id is a string
 
 </pre>
@@ -259,18 +252,15 @@ shock_id is a string
 
 =begin text
 
-$UploadParam is an UploadParam
+$args is an UploadParam
 $result is a reference to a list where each element is a string
 UploadParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
 	kb_type has a value which is a type_string
-	in_id has a value which is a shock_ref
+	in_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 type_string is a string
-shock_ref is a reference to a hash where the following keys are defined:
-	id has a value which is a shock_id
-	shock_url has a value which is a string
 shock_id is a string
 
 
@@ -289,10 +279,10 @@ shock_id is a string
 sub uploader
 {
     my $self = shift;
-    my($UploadParam) = @_;
+    my($args) = @_;
 
     my @_bad_arguments;
-    (ref($UploadParam) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"UploadParam\" (value was \"$UploadParam\")");
+    (ref($args) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"args\" (value was \"$args\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to uploader:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -319,7 +309,7 @@ sub uploader
 
 =head2 download
 
-  $result = $obj->download($DownloadParam)
+  $result = $obj->download($args)
 
 =over 4
 
@@ -328,18 +318,15 @@ sub uploader
 =begin html
 
 <pre>
-$DownloadParam is a DownloadParam
+$args is a DownloadParam
 $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
 	kb_type has a value which is a type_string
-	out_id has a value which is a shock_ref
+	out_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 type_string is a string
-shock_ref is a reference to a hash where the following keys are defined:
-	id has a value which is a shock_id
-	shock_url has a value which is a string
 shock_id is a string
 
 </pre>
@@ -348,18 +335,15 @@ shock_id is a string
 
 =begin text
 
-$DownloadParam is a DownloadParam
+$args is a DownloadParam
 $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
 	kb_type has a value which is a type_string
-	out_id has a value which is a shock_ref
+	out_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 type_string is a string
-shock_ref is a reference to a hash where the following keys are defined:
-	id has a value which is a shock_id
-	shock_url has a value which is a string
 shock_id is a string
 
 
@@ -378,10 +362,10 @@ shock_id is a string
 sub download
 {
     my $self = shift;
-    my($DownloadParam) = @_;
+    my($args) = @_;
 
     my @_bad_arguments;
-    (ref($DownloadParam) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"DownloadParam\" (value was \"$DownloadParam\")");
+    (ref($args) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"args\" (value was \"$args\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to download:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -686,7 +670,7 @@ mapping<string, string> optional_args; // optarg key and values
 <pre>
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
-id has a value which is a shock_ref
+id has a value which is a shock_id
 
 </pre>
 
@@ -696,7 +680,7 @@ id has a value which is a shock_ref
 
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
-id has a value which is a shock_ref
+id has a value which is a shock_id
 
 
 =end text
@@ -758,7 +742,7 @@ mapping<string, string> optional_args; // optarg key and values
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
 kb_type has a value which is a type_string
-in_id has a value which is a shock_ref
+in_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 
@@ -771,7 +755,7 @@ obj_name has a value which is a string
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
 kb_type has a value which is a type_string
-in_id has a value which is a shock_ref
+in_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 
@@ -835,7 +819,7 @@ mapping<string, string> optional_args; // optarg key and values
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
 kb_type has a value which is a type_string
-out_id has a value which is a shock_ref
+out_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 
@@ -848,7 +832,7 @@ obj_name has a value which is a string
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
 kb_type has a value which is a type_string
-out_id has a value which is a shock_ref
+out_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 

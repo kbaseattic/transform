@@ -8,7 +8,7 @@ SERVICE_PSGI_FILE = $(SERVICE_NAME).psgi
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
 SERVER_MODULE = lib/Bio/KBase/$(SERVICE_NAME)/Service.pm
 #SERVICE = TransformService
-SERVICE_PORT = 7777
+SERVICE_PORT = 7778
 
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
 TPAGE_ARGS = --define kb_top=$(TARGET) --define kb_runtime=$(DEPLOY_RUNTIME) --define kb_service_name=$(SERVICE_NAME) \

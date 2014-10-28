@@ -165,22 +165,22 @@ class Transform(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
         return resp['result']
 
-    def import_data(self, ImportParam):
+    def import_data(self, args):
         resp = self._call('Transform.import_data',
-                          [ImportParam])
+                          [args])
         return resp[0]
 
-    def validate(self, ValidateParam):
+    def validate(self, args):
         resp = self._call('Transform.validate',
-                          [ValidateParam])
+                          [args])
         return resp[0]
 
-    def uploader(self, UploadParam):
+    def uploader(self, args):
         resp = self._call('Transform.uploader',
-                          [UploadParam])
+                          [args])
         return resp[0]
 
-    def download(self, DownloadParam):
+    def download(self, args):
         resp = self._call('Transform.download',
-                          [DownloadParam])
+                          [args])
         return resp[0]

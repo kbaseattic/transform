@@ -27,7 +27,7 @@ class Transform:
         #END_CONSTRUCTOR
         pass
 
-    def import_data(self, ctx, ImportParam):
+    def import_data(self, ctx, args):
         # ctx is the context object
         # return variables are: result
         #BEGIN import_data
@@ -40,7 +40,7 @@ class Transform:
         # return the results
         return [result]
 
-    def validate(self, ctx, ValidateParam):
+    def validate(self, ctx, args):
         # ctx is the context object
         # return variables are: result
         #BEGIN validate
@@ -53,7 +53,7 @@ class Transform:
         # return the results
         return [result]
 
-    def uploader(self, ctx, UploadParam):
+    def uploader(self, ctx, args):
         # ctx is the context object
         # return variables are: result
         #BEGIN uploader
@@ -66,7 +66,7 @@ class Transform:
         # return the results
         return [result]
 
-    def download(self, ctx, DownloadParam):
+    def download(self, ctx, args):
         # ctx is the context object
         # return variables are: result
         #BEGIN download

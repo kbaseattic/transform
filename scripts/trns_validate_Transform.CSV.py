@@ -49,6 +49,7 @@ if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trnf_validator_Transform.CSV-1.0', epilog=desc3)
     parser.add_argument('-i', '--in_file', help='Input file', action='store', dest='in_file', default=None, required=True)
+    parser.add_argument('-a', '--optional_args', help='optional argument json string', action='store', dest='opt_args', default=None, required=False)
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS

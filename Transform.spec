@@ -156,22 +156,20 @@ module Transform
   } DownloadParam;
   funcdef download(DownloadParam args) returns (list<string> result);
   
-
   /* Test script type */
   typedef structure {
       string key;
       string value;
   } Pair;
 
-
   /* script required information 
      */
   typedef structure {
       string cmd_name;
-      string cmd_args;
+      list<string, string> cmd_args; /* mandatory argument name (key) and command line option (value) <input,-i>. At this time, we only support input and output as madatory for transformer and input only for validator. */
       string cmd_description;
       int max_runtime;
-      mapping<string, string> opt_args;
+      mapping<string, string> opt_args; /* optional argument that is provided by json string. key is argument name and the key is used for retrieving json string from upload,download api call and the value is the command line option such as '-k' */
   } CommandConfig;
 
   /* each external type validator or external type to internal type pair transformer script configuration */

@@ -55,6 +55,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_transform_Transform.CSV-to-Pair', epilog=desc3)
     parser.add_argument('-i', '--in_file', help='Input file', action='store', dest='in_file', default=None, required=True)
     parser.add_argument('-o', '--out_file', help='Output file', action='store', dest='out_file', default=None, required=True)
+    parser.add_argument('-a', '--optional_args', help='optional argument json string', action='store', dest='opt_args', default=None, required=False)
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS

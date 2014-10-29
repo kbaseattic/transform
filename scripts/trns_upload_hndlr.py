@@ -14,6 +14,11 @@ from biokbase.workspace.client import Workspace
 import urllib
 import urllib2
 import json
+from biokbase.Transform.util import download_shock_data, validation_handler, transformation_handler,upload_to_ws
+
+
+
+
 
 desc1 = '''
 NAME
@@ -47,118 +52,6 @@ AUTHORS
 First Last.
 '''
 
-#
-# TODO: Make the following function to be shared library function
-#
-def download_shock_data(surl, inobj_id, sdir, itmp) :
-    # TODO: Improve folder checking
-    try:
-        os.mkdir(sdir)
-    except:
-        pass
-
-    headers = {'Authorization' :  "OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')) }
-
-    data_req = urllib2.Request("{}/node/{}?download_raw".format(surl, inobj_id))
-    data_req.add_header('Authorization',"OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')))
-
-    print "{}/node/{}?download_raw".format(surl, inobj_id)
-    print os.environ.get('KB_AUTH_TOKEN')
-    print "=============="
-
-    data = urllib2.urlopen(data_req)
-        
-    
-    dif = open("{}/{}".format(sdir, itmp),'w')
-    dif.write(data.read())
-    dif.close()
-    data.close()
-
-
-def validation_handler (args) :
-    ###
-    # download ws object and find where the validation script is located
-    wsd = Workspace(url=args.ws_url, token=os.environ.get('KB_AUTH_TOKEN'))
-    # TODO: get subobject
-    config = wsd.get_object({'id' : args.cfg_name, 'workspace' : args.sws_id})['data']['config_map']
-
-    if config is None:
-        raise Exception("Object {} not found in workspace {}".format(args.etype, args.sws_id))
-    
-    ###
-    # execute validation
-    
-    ## TODO: Add input type checking
-    ## TODO: Add logging
-    
-    vcmd_lst = [config[args.etype]['cmd_name'], config[args.etype]['cmd_args']['input'], "{}/{}".format(args.sdir,args.itmp)]
-
-    if 'validator' in args.opt_args:
-      opt_args = args.opt_args['validator']
-      for k in opt_args:
-        if k in config[args.etype]['opt_args']:
-          vcmd_lst.append(config[args.etype]['opt_args'][k])
-          vcmd_lst.append(opt_args[k])
-         
-    p1 = Popen(vcmd_lst, stdout=PIPE)
-    out_str = p1.communicate()
-    # print output message for error tracking
-    if out_str[0] is not None : print out_str[0]
-    if out_str[1] is not None : print >> sys.stderr, out_str[1]
-
-
-    if p1.returncode != 0: 
-        # TODO: Update UJS job status and update log
-        exit(p1.returncode) 
-
-def transformation_handler (args) :
-    ###
-    # download ws object and find where the validation script is located
-    wsd = Workspace(url=args.ws_url, token=os.environ.get('KB_AUTH_TOKEN'))
-    # TODO: get subobject
-    config = wsd.get_object({'id' : args.cfg_name, 'workspace' : args.sws_id})['data']['config_map']
-
-    if config is None:
-        raise Exception("Object {} not found in workspace {}".format(args.etype, args.sws_id))
-    
-    ###
-    # execute validation
-    
-    ## TODO: Add input type checking
-    ## TODO: Add logging
-    
-    conv_type = "{}-to-{}".format(args.etype, args.kbtype)
-    vcmd_lst = [config[conv_type]['cmd_name'], config[conv_type]['cmd_args']['input'], "{}/{}".format(args.sdir,args.itmp), config[conv_type]['cmd_args']['output'],"{}/{}".format(args.sdir,args.otmp)]
-
-    if 'transformer' in args.opt_args:
-      opt_args = args.opt_args['transformer']
-      for k in opt_args:
-        if k in config[args.etype]['opt_args']:
-          vcmd_lst.append(config[args.etype]['opt_args'][k])
-          vcmd_lst.append(opt_args[k])
-
-    p1 = Popen(vcmd_lst, stdout=PIPE)
-    out_str = p1.communicate()
-    # print output message for error tracking
-    if out_str[0] is not None : print out_str[0]
-    if out_str[1] is not None : print >> sys.stderr, out_str[1]
-
-    if p1.returncode != 0: 
-        # TODO: add ujs status update here
-        exit(p1.returncode) 
-
-def load_to_ws (args) :
-    wsd = Workspace(url=args.ws_url, token=os.environ.get('KB_AUTH_TOKEN'))
-    # TODO: Add input file checking
-    jif = open("{}/{}".format(args.sdir,args.otmp, 'r'))
-    data = json.loads(jif.read())
-    jif.close()
-
-    config = wsd.save_objects({'workspace':args.ws_id, 'objects' : [ {
-      'type' : args.kbtype, 'data' : data, 'name' : args.outobj_id, 
-      'meta' : { 'source_id' : args.inobj_id, 'source_type' : args.etype,
-                 'ujs_job_id' : args.jid} } ]})
-
 if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trnf_upload_handler', epilog=desc3)
@@ -191,9 +84,9 @@ if __name__ == "__main__":
     # main loop
     args.opt_args = json.loads(args.opt_args)
     download_shock_data(args.shock_url, args.inobj_id, args.sdir, args.itmp)
-    validation_handler(args)
-    transformation_handler(args)
-    load_to_ws(args)
+    validation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.sdir, args.itmp, args.opt_args, "", args.jid)
+    transformation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.kbtype, args.sdir, args.itmp, args.otmp, args.opt_args, "", args.jid)
+    upload_to_ws(args.ws_url,args.sdir, args.otmp, args.ws_id, args.kbtype, args.outobj_id, args.inobj_id, args.etype, args.jid)
 
     # clean-up
     if(args.del_tmps is "true") :

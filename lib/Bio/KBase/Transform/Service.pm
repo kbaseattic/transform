@@ -29,7 +29,7 @@ our $CallContext;
 our %return_counts = (
         'import_data' => 1,
         'validate' => 1,
-        'uploader' => 1,
+        'upload' => 1,
         'download' => 1,
         'version' => 1,
 );
@@ -37,7 +37,7 @@ our %return_counts = (
 our %method_authentication = (
         'import_data' => 'required',
         'validate' => 'required',
-        'uploader' => 'required',
+        'upload' => 'required',
         'download' => 'required',
 );
 
@@ -48,7 +48,7 @@ sub _build_valid_methods
     my $methods = {
         'import_data' => 1,
         'validate' => 1,
-        'uploader' => 1,
+        'upload' => 1,
         'download' => 1,
         'version' => 1,
     };

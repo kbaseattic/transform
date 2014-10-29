@@ -175,8 +175,8 @@ class Transform(object):
                           [args])
         return resp[0]
 
-    def uploader(self, args):
-        resp = self._call('Transform.uploader',
+    def upload(self, args):
+        resp = self._call('Transform.upload',
                           [args])
         return resp[0]
 

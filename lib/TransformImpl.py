@@ -53,15 +53,15 @@ class Transform:
         # return the results
         return [result]
 
-    def uploader(self, ctx, args):
+    def upload(self, ctx, args):
         # ctx is the context object
         # return variables are: result
-        #BEGIN uploader
-        #END uploader
+        #BEGIN upload
+        #END upload
 
         # At some point might do deeper type checking...
         if not isinstance(result, list):
-            raise ValueError('Method uploader return value ' +
+            raise ValueError('Method upload return value ' +
                              'result is not type list as required.')
         # return the results
         return [result]

@@ -62,6 +62,10 @@ def download_shock_data(surl, inobj_id, sdir, itmp) :
     data_req = urllib2.Request("{}/node/{}?download_raw".format(surl, inobj_id))
     data_req.add_header('Authorization',"OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')))
 
+    print "{}/node/{}?download_raw".format(surl, inobj_id)
+    print os.environ.get('KB_AUTH_TOKEN')
+    print "=============="
+
     data = urllib2.urlopen(data_req)
         
     
@@ -75,6 +79,7 @@ def validation_handler (args) :
     ###
     # download ws object and find where the validation script is located
     wsd = Workspace(url=args.ws_url, token=os.environ.get('KB_AUTH_TOKEN'))
+    # TODO: get subobject
     config = wsd.get_object({'id' : args.cfg_name, 'workspace' : args.sws_id})['data']['config_map']
 
     if config is None:
@@ -90,7 +95,7 @@ def validation_handler (args) :
 
     if 'validator' in args.opt_args:
       opt_args = args.opt_args['validator']
-      for k in opt_args['validator'].keys():
+      for k in opt_args:
         if k in config[args.etype]['opt_args']:
           vcmd_lst.append(config[args.etype]['opt_args'][k])
           vcmd_lst.append(opt_args[k])
@@ -110,6 +115,7 @@ def transformation_handler (args) :
     ###
     # download ws object and find where the validation script is located
     wsd = Workspace(url=args.ws_url, token=os.environ.get('KB_AUTH_TOKEN'))
+    # TODO: get subobject
     config = wsd.get_object({'id' : args.cfg_name, 'workspace' : args.sws_id})['data']['config_map']
 
     if config is None:
@@ -121,13 +127,15 @@ def transformation_handler (args) :
     ## TODO: Add input type checking
     ## TODO: Add logging
     
-    conv_type = "{}-2-{}".format(args.etype, args.kbtype)
+    conv_type = "{}-to-{}".format(args.etype, args.kbtype)
     vcmd_lst = [config[conv_type]['cmd_name'], config[conv_type]['cmd_args']['input'], "{}/{}".format(args.sdir,args.itmp), config[conv_type]['cmd_args']['output'],"{}/{}".format(args.sdir,args.otmp)]
 
-    
-    ###
-    # execute validation
-    vcmd_lst = ["{}/validator".format(args.sdir), "-i", "{}/in_file".format(args.sdir) ]
+    if 'transformer' in args.opt_args:
+      opt_args = args.opt_args['transformer']
+      for k in opt_args:
+        if k in config[args.etype]['opt_args']:
+          vcmd_lst.append(config[args.etype]['opt_args'][k])
+          vcmd_lst.append(opt_args[k])
 
     p1 = Popen(vcmd_lst, stdout=PIPE)
     out_str = p1.communicate()
@@ -135,16 +143,21 @@ def transformation_handler (args) :
     if out_str[0] is not None : print out_str[0]
     if out_str[1] is not None : print >> sys.stderr, out_str[1]
 
-    # 
-    if(args.del_tmps is "true") :
-        try :
-          shutil.rmtree("{}".format(args.sdir))
-        except:
-          pass
-
     if p1.returncode != 0: 
         # TODO: add ujs status update here
         exit(p1.returncode) 
+
+def load_to_ws (args) :
+    wsd = Workspace(url=args.ws_url, token=os.environ.get('KB_AUTH_TOKEN'))
+    # TODO: Add input file checking
+    jif = open("{}/{}".format(args.sdir,args.otmp, 'r'))
+    data = json.loads(jif.read())
+    jif.close()
+
+    config = wsd.save_objects({'workspace':args.ws_id, 'objects' : [ {
+      'type' : args.kbtype, 'data' : data, 'name' : args.outobj_id, 
+      'meta' : { 'source_id' : args.inobj_id, 'source_type' : args.etype,
+                 'ujs_job_id' : args.jid} } ]})
 
 if __name__ == "__main__":
     # Parse options.
@@ -177,7 +190,7 @@ if __name__ == "__main__":
 
     # main loop
     args.opt_args = json.loads(args.opt_args)
-    download_shock_data(args.shock_url, args.inobj_id, args.sdir, args,itmp)
+    download_shock_data(args.shock_url, args.inobj_id, args.sdir, args.itmp)
     validation_handler(args)
     transformation_handler(args)
     load_to_ws(args)

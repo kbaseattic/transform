@@ -133,7 +133,7 @@ module Transform
       string obj_name;
       /* mapping<string, string> optional_args; // optarg key and values */ 
   } UploadParam;
-  funcdef uploader(UploadParam args) returns (list<string> result);     
+  funcdef upload(UploadParam args) returns (list<string> result);     
   
   typedef structure {
       type_string kb_type;
@@ -162,11 +162,10 @@ module Transform
       string value;
   } Pair;
 
-  /* script required information 
-     */
+  /* script required information */
   typedef structure {
       string cmd_name;
-      list<string, string> cmd_args; /* mandatory argument name (key) and command line option (value) <input,-i>. At this time, we only support input and output as madatory for transformer and input only for validator. */
+      mapping<string, string> cmd_args; /* mandatory argument name (key) and command line option (value) <input,-i>. At this time, we only support input and output as madatory for transformer and input only for validator. */
       string cmd_description;
       int max_runtime;
       mapping<string, string> opt_args; /* optional argument that is provided by json string. key is argument name and the key is used for retrieving json string from upload,download api call and the value is the command line option such as '-k' */

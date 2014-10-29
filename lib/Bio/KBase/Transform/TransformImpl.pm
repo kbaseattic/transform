@@ -224,9 +224,9 @@ sub validate
 
 
 
-=head2 uploader
+=head2 upload
 
-  $result = $obj->uploader($args)
+  $result = $obj->upload($args)
 
 =over 4
 
@@ -276,7 +276,7 @@ shock_id is a string
 
 =cut
 
-sub uploader
+sub upload
 {
     my $self = shift;
     my($args) = @_;
@@ -284,22 +284,22 @@ sub uploader
     my @_bad_arguments;
     (ref($args) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"args\" (value was \"$args\")");
     if (@_bad_arguments) {
-	my $msg = "Invalid arguments passed to uploader:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	my $msg = "Invalid arguments passed to upload:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'uploader');
+							       method_name => 'upload');
     }
 
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($result);
-    #BEGIN uploader
+    #BEGIN upload
     $result = Bio::KBase::Workflow::KBW::run_async($self, $ctx, $args);
-    #END uploader
+    #END upload
     my @_bad_returns;
     (ref($result) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"result\" (value was \"$result\")");
     if (@_bad_returns) {
-	my $msg = "Invalid returns passed to uploader:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	my $msg = "Invalid returns passed to upload:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'uploader');
+							       method_name => 'upload');
     }
     return($result);
 }
@@ -835,6 +835,121 @@ kb_type has a value which is a type_string
 out_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 Pair
+
+=over 4
+
+
+
+=item Description
+
+Test script type
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+key has a value which is a string
+value has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+key has a value which is a string
+value has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 CommandConfig
+
+=over 4
+
+
+
+=item Description
+
+optional argument that is provided by json string. key is argument name and the key is used for retrieving json string from upload,download api call and the value is the command line option such as '-k'
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+cmd_name has a value which is a string
+cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+cmd_description has a value which is a string
+max_runtime has a value which is an int
+opt_args has a value which is a reference to a hash where the key is a string and the value is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+cmd_name has a value which is a string
+cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+cmd_description has a value which is a string
+max_runtime has a value which is an int
+opt_args has a value which is a reference to a hash where the key is a string and the value is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 Type2CommandConfig
+
+=over 4
+
+
+
+=item Description
+
+each external type validator or external type to internal type pair transformer script configuration
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
 
 
 =end text

@@ -272,10 +272,10 @@ class Application(object):
                              name='Transform.validate',
                              types=[dict])
         self.method_authentication['Transform.validate'] = 'required'
-        self.rpc_service.add(impl_Transform.uploader,
-                             name='Transform.uploader',
+        self.rpc_service.add(impl_Transform.upload,
+                             name='Transform.upload',
                              types=[dict])
-        self.method_authentication['Transform.uploader'] = 'required'
+        self.method_authentication['Transform.upload'] = 'required'
         self.rpc_service.add(impl_Transform.download,
                              name='Transform.download',
                              types=[dict])

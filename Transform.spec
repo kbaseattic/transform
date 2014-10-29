@@ -107,8 +107,8 @@ module Transform
   
   typedef structure {
       type_string etype;
-      shock_id id;
-      /* mapping<string, string> optional_args; // optarg key and values */ 
+      shock_id in_id;
+      string optional_args; /* json string */ 
   } ValidateParam;
   funcdef validate(ValidateParam args) returns (list<string> result);
   
@@ -131,7 +131,7 @@ module Transform
       shock_id in_id;
       string ws_name;
       string obj_name;
-      /* mapping<string, string> optional_args; // optarg key and values */ 
+      string optional_args; /* json string */
   } UploadParam;
   funcdef upload(UploadParam args) returns (list<string> result);     
   

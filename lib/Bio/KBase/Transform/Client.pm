@@ -219,7 +219,8 @@ $args is a ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
-	id has a value which is a shock_id
+	in_id has a value which is a shock_id
+	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
 
@@ -233,7 +234,8 @@ $args is a ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
-	id has a value which is a shock_id
+	in_id has a value which is a shock_id
+	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
 
@@ -314,6 +316,7 @@ UploadParam is a reference to a hash where the following keys are defined:
 	in_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
+	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
 
@@ -331,6 +334,7 @@ UploadParam is a reference to a hash where the following keys are defined:
 	in_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
+	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
 
@@ -779,7 +783,7 @@ validation_script has a value which is a shock_ref
 
 =item Description
 
-mapping<string, string> optional_args; // optarg key and values
+json string
 
 
 =item Definition
@@ -789,7 +793,8 @@ mapping<string, string> optional_args; // optarg key and values
 <pre>
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
-id has a value which is a shock_id
+in_id has a value which is a shock_id
+optional_args has a value which is a string
 
 </pre>
 
@@ -799,7 +804,8 @@ id has a value which is a shock_id
 
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
-id has a value which is a shock_id
+in_id has a value which is a shock_id
+optional_args has a value which is a string
 
 
 =end text
@@ -850,7 +856,7 @@ translation_script has a value which is a shock_ref
 
 =item Description
 
-mapping<string, string> optional_args; // optarg key and values
+json string
 
 
 =item Definition
@@ -864,6 +870,7 @@ kb_type has a value which is a type_string
 in_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
+optional_args has a value which is a string
 
 </pre>
 
@@ -877,6 +884,7 @@ kb_type has a value which is a type_string
 in_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
+optional_args has a value which is a string
 
 
 =end text

@@ -1,6 +1,6 @@
 use strict;
 use Bio::KBase::Transform::Client;
-use Test::More tests => 3;
+use Test::More tests => 5;
 use Data::Dumper;
 use Test::Cmd;
 use JSON;
@@ -17,6 +17,10 @@ ok( defined $cc, "Check if the server is working" );
 
 #my $job_id = $cc->validate({etype => $in_id, id => "d3eecb7f-5b52-4b63-9871-62ecedfd149e"});
 my $job_id = $cc->upload({etype => "Transform.CSV", kb_type => "Transform.Pair", in_id => "d3eecb7f-5b52-4b63-9871-62ecedfd149e", "ws_name" => "loader_test", "obj_name" => "api-test-pair"});
+ok(ref($job_id) eq "ARRAY","mys_example returns an array");
+ok(@{$job_id} eq 2, "returns two job ids for mys_example");
+
+my $job_id = $cc->validate({etype => "Transform.CSV", in_id => "d3eecb7f-5b52-4b63-9871-62ecedfd149e"});
 ok(ref($job_id) eq "ARRAY","mys_example returns an array");
 ok(@{$job_id} eq 2, "returns two job ids for mys_example");
 

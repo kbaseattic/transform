@@ -14,11 +14,8 @@ from biokbase.workspace.client import Workspace
 import urllib
 import urllib2
 import json
+from biokbase import log
 from biokbase.Transform.util import download_shock_data, validation_handler, transformation_handler,upload_to_ws
-
-
-
-
 
 desc1 = '''
 NAME

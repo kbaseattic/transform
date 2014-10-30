@@ -59,6 +59,9 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
     parser.add_argument('-i', '--in_id', help='Input Shock node id', action='store', dest='inobj_id', default=None, required=True)
 
+    parser.add_argument('-r', '--ujs_url', help='UJS url', action='store', dest='ujs_url', default='https://kbase.us/services/userandjobstate')
+    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=True)
+
     parser.add_argument('-w', '--dst_ws_name', help='Destination workspace name', action='store', dest='ws_id', default=None, required=True)
     parser.add_argument('-o', '--out_id', help='Output workspace object name', action='store', dest='outobj_id', default=None, required=True)
 
@@ -66,7 +69,6 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--kbase_type', help='KBase object type', action='store', dest='kbtype', default=None, required=True)
 
     parser.add_argument('-a', '--opt_args', help='Optional argument json string', action='store', dest='opt_args', default='{"validator":{},"transformer":{}}')
-    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=True)
 
     parser.add_argument('-l', '--support_dir', help='Support directory', action='store', dest='sdir', default='lib')
     parser.add_argument('-d', '--del_lib_dir', help='Delete library directory', action='store', dest='del_tmps', default='true')

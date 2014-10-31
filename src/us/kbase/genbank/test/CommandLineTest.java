@@ -4,6 +4,7 @@ import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
 import us.kbase.genbank.GbkUploader;
 import us.kbase.genbank.ObjectStorage;
+import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
 import us.kbase.workspace.ObjectData;
 import us.kbase.workspace.ObjectIdentity;
@@ -33,21 +34,21 @@ public class CommandLineTest {
 
         File indir = new File(args[0]);
 
-            parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
-                @Override
-                public List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> saveObjects(
-                        String authToken, SaveObjectsParams params) throws Exception {
-                    //validateObject(validator, params.getObjects().get(0).getName(),
-                    //			params.getObjects().get(0).getData(), params.getObjects().get(0).getType());
-                    return null;
-                }
+        parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
+            @Override
+            public List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> saveObjects(
+                    String authToken, SaveObjectsParams params) throws Exception {
+                //validateObject(validator, params.getObjects().get(0).getName(),
+                //			params.getObjects().get(0).getData(), params.getObjects().get(0).getType());
+                return null;
+            }
 
-                @Override
-                public List<ObjectData> getObjects(String authToken,
-                                                   List<ObjectIdentity> objectIds) throws Exception {
-                    throw new IllegalStateException("Unsupported method");
-                }
-            });
+            @Override
+            public List<ObjectData> getObjects(String authToken,
+                                               List<ObjectIdentity> objectIds) throws Exception {
+                throw new IllegalStateException("Unsupported method");
+            }
+        });
     }
 
 
@@ -64,7 +65,7 @@ public class CommandLineTest {
                 parseAllInDir(pos, f, wc);
             } else if (f.getName().endsWith(".gbk")) {
                 files.add(f);
-                System.out.println("Added "+f);
+                System.out.println("Added " + f);
             }
         }
         if (files.size() > 0)
@@ -82,19 +83,32 @@ public class CommandLineTest {
     public static void parseGenome(int[] pos, File dir, List<File> gbkFiles, ObjectStorage wc) throws Exception {
         System.out.println("[" + (pos[0]++) + "] " + dir.getName());
         long time = System.currentTimeMillis();
-        ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wc, "", dir.getName(), "");
+        ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wc, "replacewithrealWS", dir.getName(), "");
 
-        Genome gnm = (Genome)ar.get(4);
+        Genome gnm = (Genome) ar.get(4);
         final String outpath = gnm.getId() + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
-                    out.print(UObject.transformObjectToString(gnm));
-                    out.close();
+            out.print(UObject.transformObjectToString(gnm));
+            out.close();
             System.out.println("    wrote: " + outpath);
-                } catch (IOException e) {
-                    System.out.println("Error creating or writing file " + outpath);
-                    System.out.println("IOException: " + e.getMessage());
-                }
+        } catch (IOException e) {
+            System.out.println("Error creating or writing file " + outpath);
+            System.out.println("IOException: " + e.getMessage());
+        }
+
+        ContigSet cs = (ContigSet) ar.get(6);
+        final String outpath2 = gnm.getId() + "_ContigSet.jsonp";
+        try {
+            PrintWriter out = new PrintWriter(new FileWriter(outpath2));
+            out.print(UObject.transformObjectToString(cs));
+            out.close();
+            System.out.println("    wrote: " + outpath2);
+        } catch (IOException e) {
+            System.out.println("Error creating or writing file " + outpath2);
+            System.out.println("IOException: " + e.getMessage());
+        }
+
         System.out.println("    time: " + (System.currentTimeMillis() - time) + " ms");
     }
 

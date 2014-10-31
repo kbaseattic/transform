@@ -13,6 +13,7 @@ SERVICE_PORT = 7778
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
 TPAGE_ARGS = --define kb_top=$(TARGET) --define kb_runtime=$(DEPLOY_RUNTIME) --define kb_service_name=$(SERVICE_NAME) \
         --define kb_service_port=$(SERVICE_PORT)
+ANT = ant
 
 #include $(TOP_DIR)/tools/Makefile.common
 
@@ -153,7 +154,7 @@ deploy-docs: build-docs
 	if [ ! -d $(SERVICE_DIR)/webroot ] ; then mkdir -p $(SERVICE_DIR)/webroot ; fi
 	cp docs/*html $(SERVICE_DIR)/webroot/.
         
-build-docs:
+build-docs: build-libs
 	if [ ! -d docs ] ; then mkdir -p docs ; fi
 	pod2html -t "Transform" lib/Bio/KBase/Transform/Client.pm > docs/Transform.html
         
@@ -193,5 +194,6 @@ build-libs:
 		--py biokbase/$(SERVICE_NAME)/Client \
 		--js javascript/$(SERVICE_NAME)/Client \
 		$(SERVICE_SPEC) lib
+	$(ANT) compile
 
 #		--scripts scripts \ # script is not working

@@ -15,6 +15,11 @@ import urllib
 import urllib2
 import json
 
+#
+# TODO: Make the following functions to be classes
+#
+
+
 def download_shock_data(surl, inobj_id, sdir, itmp) :
     # TODO: Improve folder checking
     try:

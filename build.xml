@@ -1,0 +1,89 @@
+<project name="Genbank genome uploader" default="compile" basedir=".">
+
+  <description>
+      Build jar-file for genome uploader in genbank format
+  </description>
+
+  <!-- set global properties for this build -->
+  <property name="src" location="src"/>
+  <property name="dist" location="dist"/>
+  <property name="dst" location="lib/jars"/>
+  <property name="classes" location="classes"/>
+  <property name="jar.file" value="GenBankTransform.jar"/>
+  <property name="jarsdir" value="../jars/lib/jars"/>
+  <property name="doc" location="docs/javadoc"/>
+  <property name="dst.jar.dir" value="lib/jars/transform/"/>
+  <property name="tempunpack" location="unpackedjars"/>
+  <property name="war.file" value="KBaseDataImport.war"/>
+  <property name="war.dir" value="war"/>
+
+  <fileset dir="${jarsdir}" id="lib">
+    <include name="apache_commons/commons-codec-1.8.jar"/>
+    <include name="apache_commons/commons-io-2.4.jar"/>
+    <include name="apache_commons/commons-fileupload-1.2.2.jar"/>
+    <include name="jackson/jackson-annotations-2.2.3.jar"/>
+    <include name="jackson/jackson-core-2.2.3.jar"/>
+    <include name="jackson/jackson-databind-2.2.3.jar"/>
+    <include name="google/guava-14.0.1.jar"/>
+    <include name="kbase/genomes/kbase-genomes-20140411.jar"/>
+    <include name="kbase/auth/kbase-auth-1398468950-3552bb2.jar"/>
+    <include name="kbase/genomes/kbase-genomes-20140411.jar"/>
+    <include name="kbase/common/kbase-common-0.0.6.jar"/>
+    <include name="kbase/workspace/WorkspaceClient-0.2.0.jar"/>
+    <include name="kbase/workspace/WorkspaceService-0.2.0.jar"/>
+    <!-- Might not need the following jars-->
+    <include name="kbase/kidl/kbase-kidl-parser2.jar"/>
+    <include name="servlet/servlet-api-2.5.jar"/>
+    <include name="ini4j/ini4j-0.5.2.jar"/>
+    <include name="jetty/jetty-all-7.0.0.jar"/>
+  </fileset>
+
+  <path id="compile.classpath">
+    <fileset refid="lib"/>
+  </path>
+
+  <target name="init" description="make directories">
+    <!-- Create the output directory structure-->
+    <mkdir dir="${classes}"/>
+    <mkdir dir="${dst}"/>
+    <mkdir dir="${dst.jar.dir}"/>
+  </target>
+
+  <target name="compile" depends="init" description="compile the source">
+    <!-- Compile class files-->
+    <javac destdir="${classes}" includeantruntime="false" target="1.7" source="1.7" debug="true" classpathref="compile.classpath">
+      <src path="${src}"/>
+    </javac>
+    <!-- Copy resource files-->
+    <copy todir="${classes}">
+      <fileset dir="${src}">
+      </fileset>
+    </copy>
+    <jar destfile="${dst.jar.dir}/${jar.file}" basedir="${classes}"/>
+    <delete dir="${classes}"/>
+  </target>
+
+  <target name="javadoc" description="build javadocs">
+    <unzip dest="${tempunpack}">
+      <fileset refid="lib"/>
+    </unzip>
+    <javadoc access="protected" author="false" classpathref="compile.classpath"
+      destdir="${doc}" nodeprecated="false" nodeprecatedlist="false"
+      noindex="false" nonavbar="false" notree="false"
+      source="1.7" splitindex="true" use="true" version="true">
+      <link href="http://download.oracle.com/javase/7/docs/api/"/>
+      <link href="http://fasterxml.github.io/jackson-core/javadoc/2.2.0/"/>
+      <link href="http://fasterxml.github.io/jackson-databind/javadoc/2.2.0/"/>
+      <fileset refid="client-jdoc-files"/>
+      <fileset refid="sources-jdoc-files"/>
+    </javadoc>
+    <delete dir="${tempunpack}"/>
+  </target>
+
+  <target name="clean" description="clean up" >
+    <!-- Clean up internal temporary files and folders-->
+    <delete dir="${classes}"/>
+    <delete dir="${dst}"/>
+  </target>
+</project>
+

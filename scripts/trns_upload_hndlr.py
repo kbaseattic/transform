@@ -15,6 +15,7 @@ import urllib
 import urllib2
 import json
 from biokbase import log
+from biokbase.userandjobstate.client import UserAndJobState
 from biokbase.Transform.util import download_shock_data, validation_handler, transformation_handler,upload_to_ws
 
 desc1 = '''
@@ -80,7 +81,13 @@ if __name__ == "__main__":
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
 
-    # main loop
+    
+    ujs = UserAndJobState(url=args.ujs_url)
+
+
+
+    ## main loop
+    # optional argument parsing
     args.opt_args = json.loads(args.opt_args)
     download_shock_data(args.shock_url, args.inobj_id, args.sdir, args.itmp)
     validation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.sdir, args.itmp, args.opt_args, "", args.jid)

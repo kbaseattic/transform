@@ -11,7 +11,7 @@
   <property name="jar.file" value="GenBankTransform.jar"/>
   <property name="jarsdir" value="../jars/lib/jars"/>
   <property name="doc" location="docs/javadoc"/>
-  <property name="dst.jar.dir" value="lib/jars/transform/"/>
+  <property name="dst.jar.dir" value="lib/jars/kbase/transform/"/>
   <property name="tempunpack" location="unpackedjars"/>
   <property name="war.file" value="KBaseDataImport.war"/>
   <property name="war.dir" value="war"/>

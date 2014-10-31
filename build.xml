@@ -6,7 +6,6 @@
 
   <!-- set global properties for this build -->
   <property name="src" location="src"/>
-  <property name="dist" location="dist"/>
   <property name="dst" location="lib/jars"/>
   <property name="classes" location="classes"/>
   <property name="jar.file" value="GenBankTransform.jar"/>
@@ -28,13 +27,13 @@
     <include name="kbase/genomes/kbase-genomes-20140411.jar"/>
     <include name="kbase/auth/kbase-auth-1398468950-3552bb2.jar"/>
     <include name="kbase/genomes/kbase-genomes-20140411.jar"/>
-    <include name="kbase/common/kbase-common-0.0.6.jar"/>
+    <include name="kbase/common/kbase-common-0.0.7.jar"/>
     <include name="kbase/workspace/WorkspaceClient-0.2.0.jar"/>
     <include name="kbase/workspace/WorkspaceService-0.2.0.jar"/>
-    <!-- Might not need the following jars-->
+    <include name="ini4j/ini4j-0.5.2.jar"/>
+    <!-- Might not need the following jars (may need refactoring code) -->
     <include name="kbase/kidl/kbase-kidl-parser2.jar"/>
     <include name="servlet/servlet-api-2.5.jar"/>
-    <include name="ini4j/ini4j-0.5.2.jar"/>
     <include name="jetty/jetty-all-7.0.0.jar"/>
   </fileset>
 

@@ -21,7 +21,6 @@ import java.util.*;
 public class GbkUploader {
 
     /**
-     *
      * @param files
      * @param wsUrl
      * @param wsName
@@ -47,11 +46,10 @@ public class GbkUploader {
             }
         }, wsName, id, token, null);
 
-       return ar;
+        return ar;
     }
 
     /**
-     *
      * @param files
      * @param wc
      * @param ws
@@ -61,7 +59,7 @@ public class GbkUploader {
      * @throws Exception
      */
     public static ArrayList uploadGbk(List<File> files, ObjectStorage wc, String ws, String id, String token,
-                                 Map<String, List<String>> genomeNameToPaths) throws Exception {
+                                      Map<String, List<String>> genomeNameToPaths) throws Exception {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
@@ -245,7 +243,7 @@ public class GbkUploader {
                 .withObjects(Arrays.asList(new ObjectSaveData().withName(id).withMeta(meta)
                         .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));*/
 
-        GbkUploader.uploadtoWS(wc, ws, id, token, genome, contigId, contigSet, meta);
+        //GbkUploader.uploadtoWS(wc, ws, id, token, genome, contigId, contigSet, meta);
         ArrayList ar = new ArrayList();
         ar.add(wc);
         ar.add(ws);
@@ -261,7 +259,6 @@ public class GbkUploader {
 
 
     /**
-     *
      * @param files
      * @param wc
      * @param ws
@@ -420,7 +417,7 @@ public class GbkUploader {
         if (contigMap.size() == 0) {
             throw new Exception("GBK-file has no DNA-sequence");
         }
-        String contigId = id + ".contigset";
+        String contigSetId = id + ".contigset";
         List<Long> contigLengths = new ArrayList<Long>();
         long dnaLen = 0;
         for (Contig contig : contigMap.values()) {
@@ -432,27 +429,34 @@ public class GbkUploader {
             dnaLen += contig.getLength();
         }
         ContigSet contigSet = new ContigSet().withContigs(new ArrayList<Contig>(contigMap.values()))
-                .withId(id).withMd5("md5").withName(id)
+                .withId(contigSetId).withMd5("md5").withName(id)
                 .withSource("User uploaded data").withSourceId("USER").withType("Organism");
 
-        String ctgRef = ws + "/" + contigId;
-        genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLengths)
-                .withDnaSize(dnaLen).withContigsetRef(ctgRef).withFeatures(features)
-                .withGcContent(calculateGcContent(contigSet));
+        if (ws != null) {
+            String ctgRef = ws + "/" + contigSetId;
+            genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLengths)
+                    .withDnaSize(dnaLen).withContigsetRef(ctgRef).withFeatures(features)
+                    .withGcContent(calculateGcContent(contigSet));
+        } else {
+            genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLengths)
+                    .withDnaSize(dnaLen).withFeatures(features)
+                    .withGcContent(calculateGcContent(contigSet));
+        }
+
         Map<String, String> meta = new LinkedHashMap<String, String>();
         meta.put("Scientific name", genome.getScientificName());
 
         ArrayList ar = new ArrayList();
-                ar.add(wc);
-                ar.add(ws);
-                ar.add(id);
-                ar.add(token);
-                ar.add(genome);
-                ar.add(contigId);
-                ar.add(contigSet);
-                ar.add(meta);
+        ar.add(wc);
+        ar.add(ws);
+        ar.add(id);
+        ar.add(token);
+        ar.add(genome);
+        ar.add(contigSetId);
+        ar.add(contigSet);
+        ar.add(meta);
 
-                return ar;
+        return ar;
 
     }
 

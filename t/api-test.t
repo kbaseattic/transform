@@ -24,6 +24,18 @@ my $job_id = $cc->validate({etype => "Transform.CSV", in_id => "d3eecb7f-5b52-4b
 ok(ref($job_id) eq "ARRAY","mys_example returns an array");
 ok(@{$job_id} eq 2, "returns two job ids for mys_example");
 
+my $job_id = $cc->validate({etype => "KBaseGenomes.GBK", in_id => "a2a7e05a-35a0-4ac6-8a63-a0ef98796829"});
+ok(ref($job_id) eq "ARRAY","mys_example returns an array");
+ok(@{$job_id} eq 2, "returns two job ids for mys_example");
+
+my $job_id = $cc->upload({etype => "KBaseGenomes.GBK", kb_type => "KBaseGenomes.ContigSet", in_id => "a2a7e05a-35a0-4ac6-8a63-a0ef98796829", "ws_name" => "loader_test", "obj_name" => "NC005213.cs"});
+ok(ref($job_id) eq "ARRAY","mys_example returns an array");
+ok(@{$job_id} eq 2, "returns two job ids for mys_example");
+
+my $job_id = $cc->upload({etype => "KBaseGenomes.GBK", kb_type => "KBaseGenomes.Genome", in_id => "a2a7e05a-35a0-4ac6-8a63-a0ef98796829", "ws_name" => "loader_test", "obj_name" => "NC005213.gn", "opt_args" => '{"validator":{},"transformer":{"contigset_ref":"loader_test/NC005213.cs"}}'});
+ok(ref($job_id) eq "ARRAY","mys_example returns an array");
+ok(@{$job_id} eq 2, "returns two job ids for mys_example");
+
 # TODO: wait job to be done
 
 # TODO: check the internal value to be correct

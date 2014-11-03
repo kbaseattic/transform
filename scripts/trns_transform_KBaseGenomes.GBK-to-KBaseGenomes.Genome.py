@@ -105,5 +105,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # main loop
+    if not args.in_file.endswith(".gbk"):
+      in_file = "{}.gbk".format(args.in_file)
+      shutil.copy(args.in_file, in_file)
+      args.in_file = in_file
     transform(args)
     exit(0);

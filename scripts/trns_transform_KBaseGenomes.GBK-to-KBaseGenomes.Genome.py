@@ -14,6 +14,7 @@ from biokbase.workspace.client import Workspace
 import urllib
 import urllib2
 import re
+import json
 
 desc1 = '''
 NAME
@@ -74,7 +75,19 @@ def transform (args) :
           exit(p1.returncode) 
 
       # success
-      shutil.move(out_fn, args.out_file)
+      if(args.cs is not None) :
+        with open(out_fn, 'r') as gif:
+          f = json.loads(gif.read())
+          f['contigset_ref'] = args.cs
+          with open(args.out_file, 'w') as outfile:
+            json.dump(f, outfile)
+      else:
+        with open(out_fn, 'r') as gif:
+          f = json.loads(gif.read())
+          del f['contigset_ref'] 
+          with open(args.out_file, 'w') as outfile:
+            json.dump(f, outfile)
+        #shutil.move(out_fn, args.out_file)
 
 #    except:
 #      raise Exception("Error writing to {}".format(args.out_file))

@@ -18,7 +18,7 @@ import json
 
 desc1 = '''
 NAME
-      trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome -- convert CSV format to Pair for Transform module (version 1.0)
+      trns_validate_KBaseGenomes.GBK -- convert CSV format to Pair for Transform module (version 1.0)
 
 SYNOPSIS      
       
@@ -26,7 +26,7 @@ SYNOPSIS
 
 desc2 = '''
 DESCRIPTION
-  trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome convert input GBK (GenBank) format to KBaseGenomes.Genome
+  trns_validate_KBaseGenomes.GBK convert input GBK (GenBank) format to KBaseGenomes.Genome
   json string file for KBaseGenomes module.
 
   TODO: It will support KBase log format.
@@ -35,7 +35,7 @@ DESCRIPTION
 desc3 = '''
 EXAMPLES
       CSV conversion case
-      > trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome -i input_file.csv -o ouput_file.json
+      > trns_validate_KBaseGenomes.GBK -i input_file.csv -o ouput_file.json
       
 SEE ALSO
       trns_transform_hndlr
@@ -53,15 +53,10 @@ def transform (args) :
       kb_top = os.environ.get('KB_TOP', '/kb/deployment')
       cp = impt.replace('$KB_TOP', kb_top);
 
+
       in_dir = re.sub(r'/[^/]*$','', args.in_file)
-      out_fn = re.sub(r'^.*/','',in_dir)
-      out_fn = "{}.jsonp".format(out_fn)
 
       tcmd_lst = ['java', '-cp', cp, mc, in_dir]
-
-
-      print in_dir
-      print out_fn
 
       p1 = Popen(tcmd_lst, stdout=PIPE)
       out_str = p1.communicate()
@@ -74,30 +69,13 @@ def transform (args) :
       if p1.returncode != 0: 
           exit(p1.returncode) 
 
-      # success
-      if(args.cs is not None) :
-        with open(out_fn, 'r') as gif:
-          f = json.loads(gif.read())
-          f['contigset_ref'] = args.cs
-          with open(args.out_file, 'w') as outfile:
-            json.dump(f, outfile)
-      else:
-        with open(out_fn, 'r') as gif:
-          f = json.loads(gif.read())
-          del f['contigset_ref'] 
-          with open(args.out_file, 'w') as outfile:
-            json.dump(f, outfile)
-        #shutil.move(out_fn, args.out_file)
-
 #    except:
 #      raise Exception("Error writing to {}".format(args.out_file))
 
 if __name__ == "__main__":
     # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome', epilog=desc3)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_validate_KBaseGenomes.GBK', epilog=desc3)
     parser.add_argument('-i', '--in_file', help='Input file', action='store', dest='in_file', default=None, required=True)
-    parser.add_argument('-o', '--out_file', help='Output file', action='store', dest='out_file', default=None, required=True)
-    parser.add_argument('-c', '--contigset_ref', help='Contigset reference', action='store', dest='cs', default=None, required=False)
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS

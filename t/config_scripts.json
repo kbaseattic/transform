@@ -44,7 +44,7 @@
                 "output": "-o"
             }, 
             "cmd_description": "GBK to ContigSet", 
-            "cmd_name": "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.ContigSet", 
+            "cmd_name": "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome", 
             "max_runtime": 3600, 
             "opt_args": {
                 "contigset_ref": "-c"

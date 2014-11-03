@@ -54,9 +54,8 @@ def transform (args) :
       cp = impt.replace('$KB_TOP', kb_top);
 
       in_dir = re.sub(r'/[^/]*$','', args.in_file)
-      out_fn = re.sub(r'^.*/','', args.in_file)
-      out_fn = re.sub(r'.gbk$','_ContigSet.jsonp', out_fn)
-      if not out_fn.endswith("_ContigSet.jsonp"): out_fn = "{}_ContigSet.jsonp".format(out_fn)
+      out_fn = re.sub(r'^.*/','',in_dir)
+      out_fn = "{}_ContigSet.jsonp".format(out_fn)
 
       tcmd_lst = ['java', '-cp', cp, mc, in_dir]
 

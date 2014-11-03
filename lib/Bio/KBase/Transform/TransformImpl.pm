@@ -77,10 +77,10 @@ sub new
 =begin html
 
 <pre>
-$args is an ImportParam
+$args is a Transform.ImportParam
 $result is a string
 ImportParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a type_string
+	etype has a value which is a Transform.type_string
 	url has a value which is a string
 	ws_name has a value which is a string
 	obj_name has a value which is a string
@@ -93,10 +93,10 @@ type_string is a string
 
 =begin text
 
-$args is an ImportParam
+$args is a Transform.ImportParam
 $result is a string
 ImportParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a type_string
+	etype has a value which is a Transform.type_string
 	url has a value which is a string
 	ws_name has a value which is a string
 	obj_name has a value which is a string
@@ -158,11 +158,11 @@ sub import_data
 =begin html
 
 <pre>
-$args is a ValidateParam
+$args is a Transform.ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a type_string
-	in_id has a value which is a shock_id
+	etype has a value which is a Transform.type_string
+	in_id has a value which is a Transform.shock_id
 	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
@@ -173,11 +173,11 @@ shock_id is a string
 
 =begin text
 
-$args is a ValidateParam
+$args is a Transform.ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a type_string
-	in_id has a value which is a shock_id
+	etype has a value which is a Transform.type_string
+	in_id has a value which is a Transform.shock_id
 	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
@@ -237,12 +237,12 @@ sub validate
 =begin html
 
 <pre>
-$args is an UploadParam
+$args is a Transform.UploadParam
 $result is a reference to a list where each element is a string
 UploadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a type_string
-	kb_type has a value which is a type_string
-	in_id has a value which is a shock_id
+	etype has a value which is a Transform.type_string
+	kb_type has a value which is a Transform.type_string
+	in_id has a value which is a Transform.shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 	optional_args has a value which is a string
@@ -255,12 +255,12 @@ shock_id is a string
 
 =begin text
 
-$args is an UploadParam
+$args is a Transform.UploadParam
 $result is a reference to a list where each element is a string
 UploadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a type_string
-	kb_type has a value which is a type_string
-	in_id has a value which is a shock_id
+	etype has a value which is a Transform.type_string
+	kb_type has a value which is a Transform.type_string
+	in_id has a value which is a Transform.shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 	optional_args has a value which is a string
@@ -322,12 +322,12 @@ sub upload
 =begin html
 
 <pre>
-$args is a DownloadParam
+$args is a Transform.DownloadParam
 $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a type_string
-	kb_type has a value which is a type_string
-	out_id has a value which is a shock_id
+	etype has a value which is a Transform.type_string
+	kb_type has a value which is a Transform.type_string
+	out_id has a value which is a Transform.shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 type_string is a string
@@ -339,12 +339,12 @@ shock_id is a string
 
 =begin text
 
-$args is a DownloadParam
+$args is a Transform.DownloadParam
 $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a type_string
-	kb_type has a value which is a type_string
-	out_id has a value which is a shock_id
+	etype has a value which is a Transform.type_string
+	kb_type has a value which is a Transform.type_string
+	out_id has a value which is a Transform.shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 type_string is a string
@@ -522,7 +522,7 @@ optional shock_url
 
 <pre>
 a reference to a hash where the following keys are defined:
-id has a value which is a shock_id
+id has a value which is a Transform.shock_id
 shock_url has a value which is a string
 
 </pre>
@@ -532,7 +532,7 @@ shock_url has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-id has a value which is a shock_id
+id has a value which is a Transform.shock_id
 shock_url has a value which is a string
 
 
@@ -559,9 +559,9 @@ mapping<string,string> optional_args; // optarg paramters
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
+etype has a value which is a Transform.type_string
 default_source_url has a value which is a string
-script has a value which is a shock_ref
+script has a value which is a Transform.shock_ref
 
 </pre>
 
@@ -570,9 +570,9 @@ script has a value which is a shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
+etype has a value which is a Transform.type_string
 default_source_url has a value which is a string
-script has a value which is a shock_ref
+script has a value which is a Transform.shock_ref
 
 
 =end text
@@ -598,7 +598,7 @@ mapping<string, string> optional_args; // optarg key and values
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
+etype has a value which is a Transform.type_string
 url has a value which is a string
 ws_name has a value which is a string
 obj_name has a value which is a string
@@ -611,7 +611,7 @@ ext_source_name has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
+etype has a value which is a Transform.type_string
 url has a value which is a string
 ws_name has a value which is a string
 obj_name has a value which is a string
@@ -636,8 +636,8 @@ ext_source_name has a value which is a string
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
-validation_script has a value which is a shock_ref
+etype has a value which is a Transform.type_string
+validation_script has a value which is a Transform.shock_ref
 
 </pre>
 
@@ -646,8 +646,8 @@ validation_script has a value which is a shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
-validation_script has a value which is a shock_ref
+etype has a value which is a Transform.type_string
+validation_script has a value which is a Transform.shock_ref
 
 
 =end text
@@ -673,8 +673,8 @@ json string
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
-in_id has a value which is a shock_id
+etype has a value which is a Transform.type_string
+in_id has a value which is a Transform.shock_id
 optional_args has a value which is a string
 
 </pre>
@@ -684,8 +684,8 @@ optional_args has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
-in_id has a value which is a shock_id
+etype has a value which is a Transform.type_string
+in_id has a value which is a Transform.shock_id
 optional_args has a value which is a string
 
 
@@ -707,9 +707,9 @@ optional_args has a value which is a string
 
 <pre>
 a reference to a hash where the following keys are defined:
-validator has a value which is a Validator
-kb_type has a value which is a type_string
-translation_script has a value which is a shock_ref
+validator has a value which is a Transform.Validator
+kb_type has a value which is a Transform.type_string
+translation_script has a value which is a Transform.shock_ref
 
 </pre>
 
@@ -718,9 +718,9 @@ translation_script has a value which is a shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-validator has a value which is a Validator
-kb_type has a value which is a type_string
-translation_script has a value which is a shock_ref
+validator has a value which is a Transform.Validator
+kb_type has a value which is a Transform.type_string
+translation_script has a value which is a Transform.shock_ref
 
 
 =end text
@@ -746,9 +746,9 @@ json string
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
-kb_type has a value which is a type_string
-in_id has a value which is a shock_id
+etype has a value which is a Transform.type_string
+kb_type has a value which is a Transform.type_string
+in_id has a value which is a Transform.shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 optional_args has a value which is a string
@@ -760,9 +760,9 @@ optional_args has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
-kb_type has a value which is a type_string
-in_id has a value which is a shock_id
+etype has a value which is a Transform.type_string
+kb_type has a value which is a Transform.type_string
+in_id has a value which is a Transform.shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 optional_args has a value which is a string
@@ -786,9 +786,9 @@ optional_args has a value which is a string
 
 <pre>
 a reference to a hash where the following keys are defined:
-kb_type has a value which is a type_string
-ext_type has a value which is a type_string
-translation_script has a value which is a shock_ref
+kb_type has a value which is a Transform.type_string
+ext_type has a value which is a Transform.type_string
+translation_script has a value which is a Transform.shock_ref
 
 </pre>
 
@@ -797,9 +797,9 @@ translation_script has a value which is a shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-kb_type has a value which is a type_string
-ext_type has a value which is a type_string
-translation_script has a value which is a shock_ref
+kb_type has a value which is a Transform.type_string
+ext_type has a value which is a Transform.type_string
+translation_script has a value which is a Transform.shock_ref
 
 
 =end text
@@ -825,9 +825,9 @@ mapping<string, string> optional_args; // optarg key and values
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
-kb_type has a value which is a type_string
-out_id has a value which is a shock_id
+etype has a value which is a Transform.type_string
+kb_type has a value which is a Transform.type_string
+out_id has a value which is a Transform.shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 
@@ -838,9 +838,9 @@ obj_name has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a type_string
-kb_type has a value which is a type_string
-out_id has a value which is a shock_id
+etype has a value which is a Transform.type_string
+kb_type has a value which is a Transform.type_string
+out_id has a value which is a Transform.shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 
@@ -948,7 +948,7 @@ each external type validator or external type to internal type pair transformer 
 
 <pre>
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a Transform.CommandConfig
 
 </pre>
 
@@ -957,7 +957,7 @@ config_map has a value which is a reference to a hash where the key is a string 
 =begin text
 
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a Transform.CommandConfig
 
 
 =end text

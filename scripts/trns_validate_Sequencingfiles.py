@@ -13,18 +13,46 @@ import gzip
 import io
 import cStringIO
 
+desc1 = '''
+NAME
+      trns_validate_Sequencingfiles -- Validate the Fasta and Fastq files (1.0)
+
+SYNOPSIS      
+      
+'''
+
+desc2 = '''
+DESCRIPTION
+  trns_validate_Sequencingfiles validate the fasta and fastq file and returns
+  a json string
+
+  TODO: It will support KBase log format.
+'''
+
+desc3 = '''
+EXAMPLES
+   > trns_trns_validate_Sequencingfiles -i <Input fasta or fastq file>
+
+AUTHORS
+Srividya Ramakrishnan.
+'''
+
+impt = os.environ.get("KB_TOP")+"/lib/jars/FastaValidator/FastaValidator-1.0.jar"
+
+mc = 'FVTester'
+
 #### Extensions supported for fastq and fasta
 fastq_ext = ['.fq','.fq.gz','.fastq','.fastq.gz']
 fasta_ext = ['.fa','.fa.gz','.fasta','.fasta.gz']
 
+
 ####File executables
 fval_path= "fastQValidator"
-#java_path = "/usr/bin/java"
-if os.environ.get("KB_RUNTIME") is not None:
-	fast_path = os.environ.get("KB_RUNTIME")+'/lib'
-else:
-	print("Environmental variable KB_RUNTIME" + " is not set")
-	sys.exit(1)
+#if os.environ.get("KB_RUNTIME") is not None:
+#	fast_path = os.environ.get("KB_RUNTIME")+'/lib'
+#else:
+#	print("Environmental variable KB_RUNTIME" + " is not set")
+#	sys.exit(1)
 #fast_path = "/kb/runtime/lib/"
 
 ### List of Exceptions
@@ -81,9 +109,9 @@ def validate_fasta(filename):
                         text_file.write(fh.getvalue())
                         text_file.close()
                 if ext == '.gz':
-                        cmd2 = ["java","-classpath",fast_path+"/FastaValidator-1.0.jar","FVTester",os.path.splitext(filename)[-2]]
+                        cmd2 = ["java","-classpath",impt,mc,os.path.splitext(filename)[-2]]
 		else:
-			cmd2 = ["java","-classpath",fast_path+"/FastaValidator-1.0.jar","FVTester", filename]
+			cmd2 = ["java","-classpath",impt,mc,filename]
 		#print(cmd2)
                 ret = check_output(cmd2,stderr=sys.stderr)
 	else:
@@ -126,7 +154,7 @@ class Validate(object):
                         self.error = ret["error"]
 
 def usage():
-        print("Usage : python Validate.py -i <filename> ")
+        print("Usage : trns_validate_Sequencingfiles -i <filename> ")
 
 def main(argv):
    inputfile = ''
@@ -134,11 +162,11 @@ def main(argv):
    try:
       opts, args = getopt.getopt(argv,"hi:")
    except getopt.GetoptError:
-      print('Validate.py -i <inputfile>')
+      print('trns_validate_Sequencingfiles -i <inputfile>')
       sys.exit(2)
    for opt, arg in opts:
       if opt == '-h':
-         print('Validate.py -i <inputfile>')
+         print('trns_validate_Sequencingfiles -i <inputfile>')
          sys.exit()
       elif opt == "-i":
          inputfile = arg

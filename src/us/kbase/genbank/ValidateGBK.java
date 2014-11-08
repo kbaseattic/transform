@@ -64,7 +64,7 @@ public class ValidateGBK {
                     parseAllInDir(pos, f, wc);
                 } else if (f.getName().endsWith(".gbk")) {
                     files.add(f);
-                    System.out.println("Added " + f);
+                    System.err.println("Added " + f);
                 }
             }
             if (files.size() > 0)
@@ -79,14 +79,20 @@ public class ValidateGBK {
          * @param wc
          * @throws Exception
          */
-        public static void parseGenome(int[] pos, File dir, List<File> gbkFiles, ObjectStorage wc) throws Exception {
+        public static void parseGenome(int[] pos, File dir, List<File> gbkFiles, ObjectStorage wc) { //throws Exception
             System.out.println("[" + (pos[0]++) + "] " + dir.getName());
             long time = System.currentTimeMillis();
-            ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wc, "replacewithrealWS", dir.getName(), "");
+            try {
+                ArrayList ar = GbkUploader.uploadGbk(gbkFiles, "replacewithrealWS", dir.getName(), "", true);
 
-            Genome gnm = (Genome) ar.get(4);
+                Genome gnm = (Genome) ar.get(3);
 
-            ContigSet cs = (ContigSet) ar.get(6);
+                ContigSet cs = (ContigSet) ar.get(5);
+            } catch (Exception e) {
+                System.err.print(e.getMessage());
+                System.err.print(e.getStackTrace());
+                e.printStackTrace();
+            }
 
         }
 

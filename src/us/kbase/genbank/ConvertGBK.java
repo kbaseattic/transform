@@ -3,8 +3,10 @@ package us.kbase.genbank;
 import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
+import us.kbase.auth.TokenFormatException;
 import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
+import us.kbase.common.service.UnauthorizedException;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
 import us.kbase.workspace.*;
@@ -92,7 +94,7 @@ public class ConvertGBK {
     public static void parseGenome(int[] pos, File dir, List<File> gbkFiles, String wsname, String http, boolean isTestThis) throws Exception {
         System.out.println("[" + (pos[0]++) + "] " + dir.getName());
         long time = System.currentTimeMillis();
-        ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), "", true);
+        ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
 
         Genome genome = (Genome) ar.get(4);
         final String outpath = genome.getId() + ".jsonp";
@@ -136,10 +138,17 @@ public class ConvertGBK {
 
             System.out.println(wshttp);
 
-            if (isTestThis) {
-                AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
-                WorkspaceClient wc = new WorkspaceClient(new URL(http),
-                        at);
+            try {
+
+                WorkspaceClient wc = null;
+
+                if (isTestThis) {
+                    AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
+                    wc = new WorkspaceClient(new URL(wshttp), at);
+                } else {
+                    wc = new WorkspaceClient(new URL(wshttp), new AuthToken(kbtok));
+                }
+
                 wc.setAuthAllowedForHttp(true);
                 wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                         .withObjects(Arrays.asList(new ObjectSaveData().withName(contigSetId)
@@ -148,8 +157,21 @@ public class ConvertGBK {
                 wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                         .withObjects(Arrays.asList(new ObjectSaveData().withName(genomeid).withMeta(meta)
                                 .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
-            } else {
-
+            } catch (UnauthorizedException e) {
+                System.err.println("WS UnauthorizedException");
+                System.err.print(e.getMessage());
+                System.err.print(e.getStackTrace());
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.err.println("WS IOException");
+                System.err.print(e.getMessage());
+                System.err.print(e.getStackTrace());
+                e.printStackTrace();
+            } catch (TokenFormatException e) {
+                System.err.println("WS TokenFormatException");
+                System.err.print(e.getMessage());
+                System.err.print(e.getStackTrace());
+                e.printStackTrace();
             }
         }
 

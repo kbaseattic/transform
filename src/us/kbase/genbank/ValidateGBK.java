@@ -83,7 +83,7 @@ public class ValidateGBK {
             System.out.println("[" + (pos[0]++) + "] " + dir.getName());
             long time = System.currentTimeMillis();
             try {
-                ArrayList ar = GbkUploader.uploadGbk(gbkFiles, "replacewithrealWS", dir.getName(), "", true);
+                ArrayList ar = GbkUploader.uploadGbk(gbkFiles, "replacewithrealWS", dir.getName(), true);
 
                 Genome gnm = (Genome) ar.get(3);
 

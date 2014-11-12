@@ -22,36 +22,15 @@ public class GbkUploader {
 
     /**
      * @param files
-     * @param wsUrl
      * @param wsName
      * @param id
-     * @param token
      * @throws Exception
      */
-    public static ArrayList uploadGbk(List<File> files, String wsUrl, String wsName, String id, String token) {
-        try {
-            final WorkspaceClient wc = new WorkspaceClient(new URL(wsUrl), new AuthToken(token));
-            wc.setAuthAllowedForHttp(true);
-        } catch (UnauthorizedException e) {
-            System.err.println("WS UnauthorizedException");
-            System.err.print(e.getMessage());
-            System.err.print(e.getStackTrace());
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.err.println("WS IOException");
-            System.err.print(e.getMessage());
-            System.err.print(e.getStackTrace());
-            e.printStackTrace();
-        } catch (TokenFormatException e) {
-            System.err.println("WS TokenFormatException");
-            System.err.print(e.getMessage());
-            System.err.print(e.getStackTrace());
-            e.printStackTrace();
-        }
+    public static ArrayList uploadGbk(List<File> files, String wsName, String id) {
 
         ArrayList ar = null;
         try {
-            ar = (ArrayList) uploadGbk(files, wsName, id, token, true);
+            ar = (ArrayList) uploadGbk(files, wsName, id, true);
         } catch (Exception e) {
             System.err.println("uploadGbk");
             System.err.print(e.getMessage());
@@ -64,13 +43,15 @@ public class GbkUploader {
 
 
     /**
+     *
      * @param files
      * @param ws
      * @param id
-     * @param token
+     * @param doStderr
+     * @return
      * @throws Exception
      */
-    public static ArrayList uploadGbk(List<File> files, String ws, String id, String token, boolean doStderr) throws Exception {
+    public static ArrayList uploadGbk(List<File> files, String ws, String id, boolean doStderr) throws Exception {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
@@ -349,7 +330,6 @@ public class GbkUploader {
         ArrayList ar = new ArrayList();
         ar.add(ws);
         ar.add(id);
-        ar.add(token);
         ar.add(genome);
         ar.add(contigSetId);
         ar.add(contigSet);

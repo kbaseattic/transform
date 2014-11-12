@@ -89,7 +89,7 @@ public class CommandLineTest {
     public void parseGenome(int[] pos, File dir, List<File> gbkFiles, ObjectStorage wc) throws Exception {
         System.out.println("[" + (pos[0]++) + "] " + dir.getName());
         long time = System.currentTimeMillis();
-        ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wc, "replacewithrealWS", dir.getName(), "");
+        ArrayList ar = GbkUploader.uploadGbk(gbkFiles, "replacewithrealWS", dir.getName(), true);
 
         Genome genome = (Genome) ar.get(4);
         final String outpath = genome.getId() + ".jsonp";

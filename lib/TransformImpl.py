@@ -27,52 +27,52 @@ class Transform:
         #END_CONSTRUCTOR
         pass
 
-    def import_data(self, args):
-        # self.ctx is set by the wsgi application class
+    def import_data(self, ctx, args):
+        # ctx is the context object
         # return variables are: result
         #BEGIN import_data
         #END import_data
 
-        #At some point might do deeper type checking...
+        # At some point might do deeper type checking...
         if not isinstance(result, basestring):
             raise ValueError('Method import_data return value ' +
                              'result is not type basestring as required.')
         # return the results
         return [result]
 
-    def validate(self, args):
-        # self.ctx is set by the wsgi application class
+    def validate(self, ctx, args):
+        # ctx is the context object
         # return variables are: result
         #BEGIN validate
         #END validate
 
-        #At some point might do deeper type checking...
+        # At some point might do deeper type checking...
         if not isinstance(result, list):
             raise ValueError('Method validate return value ' +
                              'result is not type list as required.')
         # return the results
         return [result]
 
-    def upload(self, args):
-        # self.ctx is set by the wsgi application class
+    def upload(self, ctx, args):
+        # ctx is the context object
         # return variables are: result
         #BEGIN upload
         #END upload
 
-        #At some point might do deeper type checking...
+        # At some point might do deeper type checking...
         if not isinstance(result, list):
             raise ValueError('Method upload return value ' +
                              'result is not type list as required.')
         # return the results
         return [result]
 
-    def download(self, args):
-        # self.ctx is set by the wsgi application class
+    def download(self, ctx, args):
+        # ctx is the context object
         # return variables are: result
         #BEGIN download
         #END download
 
-        #At some point might do deeper type checking...
+        # At some point might do deeper type checking...
         if not isinstance(result, list):
             raise ValueError('Method download return value ' +
                              'result is not type list as required.')

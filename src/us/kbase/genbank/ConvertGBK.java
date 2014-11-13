@@ -96,7 +96,7 @@ public class ConvertGBK {
         long time = System.currentTimeMillis();
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
 
-        Genome genome = (Genome) ar.get(4);
+        Genome genome = (Genome) ar.get(2);
         final String outpath = genome.getId() + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
@@ -108,7 +108,7 @@ public class ConvertGBK {
             System.err.println("IOException: " + e.getMessage());
         }
 
-        ContigSet contigSet = (ContigSet) ar.get(6);
+        ContigSet contigSet = (ContigSet) ar.get(4);
         final String contigId = genome.getId() + "_ContigSet";
         final String outpath2 = contigId + ".jsonp";
         try {
@@ -123,13 +123,21 @@ public class ConvertGBK {
 
 
         if (wsname != null) {
+
+            /*ar.add(ws);
+            ar.add(id);
+            ar.add(genome);
+            ar.add(contigSetId);
+            ar.add(contigSet);
+            ar.add(meta);*/
+
             String genomeid = (String) ar.get(1);
 
-            String token = (String) ar.get(2);
+            //String token = (String) ar.get(2);
 
-            String contigSetId = (String) ar.get(4);
+            String contigSetId = (String) ar.get(3);
 
-            Map<String, String> meta = (Map<String, String>) ar.get(6);
+            Map<String, String> meta = (Map<String, String>) ar.get(5);
 
             String user = System.getProperty("test.user");
             String pwd = System.getProperty("test.pwd");

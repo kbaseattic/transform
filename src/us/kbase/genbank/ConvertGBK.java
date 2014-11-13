@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class ConvertGBK {
 
-    public final static String wshttp = "http://dev04.berkeley.kbase.us:7058";
+    String wshttp = null;
 
     String ws = null;
 
@@ -43,8 +43,10 @@ public class ConvertGBK {
 
         File indir = new File(args[0]);
 
-        if (args.length == 2)
+        if (args.length == 3) {
             ws = args[1];
+            wshttp = args[2];
+        }
 
         parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
             @Override
@@ -144,7 +146,7 @@ public class ConvertGBK {
 
             String kbtok = System.getenv("KB_AUTH_TOKEN");
 
-            System.out.println(wshttp);
+            System.out.println(http);
 
             try {
 
@@ -152,9 +154,9 @@ public class ConvertGBK {
 
                 if (isTestThis) {
                     AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
-                    wc = new WorkspaceClient(new URL(wshttp), at);
+                    wc = new WorkspaceClient(new URL(http), at);
                 } else {
-                    wc = new WorkspaceClient(new URL(wshttp), new AuthToken(kbtok));
+                    wc = new WorkspaceClient(new URL(http), new AuthToken(kbtok));
                 }
 
                 wc.setAuthAllowedForHttp(true);
@@ -192,14 +194,14 @@ public class ConvertGBK {
      * @param args
      */
     public final static void main(String[] args) {
-        if (args.length == 1 || args.length == 2) {
+        if (args.length == 1 || args.length == 3) {
             try {
                 ConvertGBK clt = new ConvertGBK(args);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("usage: java us.kbase.genbank.ConvertGBK <dir or dir of dirs with GenBank .gbk files> <ws name>");// <convert y/n> <save y/n>");
+            System.out.println("usage: java us.kbase.genbank.ConvertGBK <dir or dir of dirs with GenBank .gbk files> <ws name> <ws url>");// <convert y/n> <save y/n>");
         }
     }
 

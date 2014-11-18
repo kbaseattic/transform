@@ -9,6 +9,15 @@
             "max_runtime": 3600, 
             "opt_args": {}
         }, 
+        "KBaseGenomes.FAST": {
+            "cmd_args": {
+                "input": "-i"
+            }, 
+            "cmd_description": "FASTA and FASTQ validator for KBaseGenomes module", 
+            "cmd_name": "trns_validate_KBaseGenomes.FAST", 
+            "max_runtime": 3600, 
+            "opt_args": {}
+        }, 
         "Transform.CSV": {
             "cmd_args": {
                 "input": "-i"

@@ -14,8 +14,10 @@ from biokbase.workspace.client import Workspace
 import urllib
 import urllib2
 import json
-from biokbase.Transform.util import download_shock_data, validation_handler, transformation_handler,upload_to_ws
 from biokbase import log
+from biokbase.userandjobstate.client import UserAndJobState
+from biokbase.Transform.util import Validator
+import datetime
 
 desc1 = '''
 NAME
@@ -53,7 +55,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--in_id', help='Input Shock node id', action='store', dest='inobj_id', default=None, required=True)
 
     parser.add_argument('-r', '--ujs_url', help='UJS url', action='store', dest='ujs_url', default='https://kbase.us/services/userandjobstate')
-    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=True)
+    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=False)
 
     parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=True)
 
@@ -79,8 +81,12 @@ if __name__ == "__main__":
 
     # main loop
     args.opt_args = json.loads(args.opt_args)
+
+    validator = Validator(args)
+
     try:
-      download_shock_data(args.shock_url, args.inobj_id, args.sdir, args.itmp)
+      #download_shock_data(args.shock_url, args.inobj_id, args.sdir, args.itmp)
+      validator.download_shock_data()
     except:
       if args.jid is not None:
         e = sys.exe_info()[0]
@@ -91,7 +97,8 @@ if __name__ == "__main__":
       ujs.update_job_progress(args.jid, kb_token, 'Data downloaded', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
     try:
-      validation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.sdir, args.itmp, args.opt_args, "", args.jid)
+      #validation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.sdir, args.itmp, args.opt_args, "", args.jid)
+      validator.validation_handler()
     except:
       if args.jid is not None:
         e = sys.exe_info()[0]

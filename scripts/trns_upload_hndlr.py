@@ -92,12 +92,10 @@ if __name__ == "__main__":
 
 
     ## main loop
-    # optional argument parsing
     args.opt_args = json.loads(args.opt_args)
     uploader = Uploader(args)
 
     try:
-      #download_shock_data(args.shock_url, args.inobj_id, args.sdir, args.itmp)
       uploader.download_shock_data()
     except:
       if args.jid is not None:
@@ -109,19 +107,17 @@ if __name__ == "__main__":
       ujs.update_job_progress(args.jid, kb_token, 'Data downloaded', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
     try:
-      #validation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.sdir, args.itmp, args.opt_args, "", args.jid)
       uploader.validation_handler()
     except:
       if args.jid is not None:
         e = sys.exe_info()[0]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data validation', e, {}) # TODO: add stderr to here
+        ujs.complete_job(args.jid, kb_token, 'Failed : data validation', e, {}) 
       exit(4);
 
     if args.jid is not None:
       ujs.update_job_progress(args.jid, kb_token, 'Data validated', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
     try:
-      #transformation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.kbtype, args.sdir, args.itmp, args.otmp, args.opt_args, "", args.jid)
       uploader.transformation_handler()
     except:
       if args.jid is not None:
@@ -132,10 +128,8 @@ if __name__ == "__main__":
     if args.jid is not None:
       ujs.update_job_progress(args.jid, kb_token, 'Data format conversion', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
-    # TODO: make try & catch
     try:
       uploader.upload_handler()
-      #upload_to_ws(args.ws_url,args.sdir, args.otmp, args.ws_id, args.kbtype, args.outobj_id, args.inobj_id, args.etype, args.jid)
     except:
       if args.jid is not None:
         e = sys.exe_info()[0]

@@ -85,7 +85,6 @@ if __name__ == "__main__":
     validator = Validator(args)
 
     try:
-      #download_shock_data(args.shock_url, args.inobj_id, args.sdir, args.itmp)
       validator.download_shock_data()
     except:
       if args.jid is not None:
@@ -97,12 +96,11 @@ if __name__ == "__main__":
       ujs.update_job_progress(args.jid, kb_token, 'Data downloaded', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
     try:
-      #validation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.sdir, args.itmp, args.opt_args, "", args.jid)
       validator.validation_handler()
     except:
       if args.jid is not None:
         e = sys.exe_info()[0]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data validation', e, {}) # TODO: add stderr to here
+        ujs.complete_job(args.jid, kb_token, 'Failed : data validation', e, {}) 
       exit(4);
 
     # clean-up

@@ -57,11 +57,10 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--dst_ws_name', help='Destination workspace name', action='store', dest='ws_id', default=None, required=True)
     parser.add_argument('-o', '--out_id', help='Output workspace object name', action='store', dest='outobj_id', default=None, required=True)
 
-    parser.add_argument('-l', '--support_dir', help='Support directory', action='store', dest='sdir', default='lib')
-    parser.add_argument('-d', '--del_lib_dir', help='Delete library directory', action='store', dest='del_tmps', default='true')
-    parser.add_argument('-g', '--out_tmp_file', help='Output temporary file name', action='store', dest='otmp', default='outfile')
+    parser.add_argument('-l', '--support_dir', help='Support directory', action='store', dest='sdir', default='lib', required=True)
+    parser.add_argument('-g', '--out_file', help='Output prefix or file name', action='store', dest='otmp', default='outfile', required=True)
     # for meta data
-    parser.add_argument('-i', '--in_id', help='Input Shock node id', action='store', dest='inobj_id', default=None, required=True)
+    parser.add_argument('-i', '--in_id', help='Input Shock node id for meta', action='store', dest='inobj_id', default='NotProvided', required=True)
     parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=True)
     parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default='NoJodID', required=False)
 

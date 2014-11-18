@@ -200,10 +200,10 @@ class Uploader(Validator):
     def upload_handler_args (self, ws_url, cfg_name, sws_id, etype, kbtype, sdir, otmp, ws_id, obj_id, opt_args, jid) :
         
         if kb_type in self.config: # upload handler is registered
-          vcmd_lst = [self.config[kb_type]['cmd_name'], self.config[kb_type]['cmd_args']['input'], "{}/{}".format(sdir,otmp), self.config[kb_type]['cmd_args']['ws_name'], ws_id ]
+          vcmd_lst = [self.config[kb_type]['cmd_name'], self.config[kb_type]['cmd_args']['ws_name'], ws_id, self.config[kb_type]['cmd_args']['outobj_id'], outobj_id,  self.config[kb_type]['cmd_args']['dir'], sdir ]
          
-          if 'transformer' in opt_args:
-            opt_args = opt_args['transformer']
+          if 'uploader' in opt_args:
+            opt_args = opt_args['uploader']
             for k in opt_args:
               if k in self.config[etype]['opt_args']:
                 vcmd_lst.append(self.config[etype]['opt_args'][k])
@@ -223,10 +223,10 @@ class Uploader(Validator):
     def upload_handler (self) :
         
         if self.kb_type in self.config: # upload handler is registered
-          vcmd_lst = [self.config[self.kb_type]['cmd_name'], self.config[self.kb_type]['cmd_args']['input'], "{}/{}".format(self.sdir,self.otmp), self.config[self.kb_type]['cmd_args']['ws_name'], self.ws_id, self.config[self.kb_type]['cmd_args']['outobj_id'], self.outobj_id]
+          vcmd_lst = [self.config[self.kb_type]['cmd_name'], self.config[self.kb_type]['cmd_args']['ws_name'], self.ws_id, self.config[self.kb_type]['cmd_args']['outobj_id'], self.outobj_id,  self.config[self.kb_type]['cmd_args']['dir'], self.sdir ]
          
-          if 'transformer' in self.opt_args:
-            opt_args = self.opt_args['transformer']
+          if 'uploader' in self.opt_args:
+            opt_args = self.opt_args['uploader']
             for k in opt_args:
               if k in self.config[self.etype]['opt_args']:
                 vcmd_lst.append(self.config[self.etype]['opt_args'][k])

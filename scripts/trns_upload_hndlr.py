@@ -93,6 +93,12 @@ if __name__ == "__main__":
 
     ## main loop
     args.opt_args = json.loads(args.opt_args)
+    if 'uploader' not in args.opt_args:
+      args.opt_args['uploader'] = {}
+      args.opt_args['uploader']['file'] = args.otmp
+      args.opt_args['uploader']['input'] = args.inobj_id
+      args.opt_args['uploader']['jid'] = args.jid
+      args.opt_args['uploader']['etype'] = args.etype
     uploader = Uploader(args)
 
     try:

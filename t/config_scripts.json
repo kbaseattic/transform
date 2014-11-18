@@ -27,6 +27,22 @@
             "max_runtime": 3600, 
             "opt_args": {}
         }, 
+        "Transform.Pair": {
+            "cmd_args": {
+                "dir": "-l",
+                "ws_id": "-w",
+                "outobj_id": "-o"
+            }, 
+            "cmd_description": "Uploader example using Transform.Pair", 
+            "cmd_name": "trns_upload_Transform.Pair", 
+            "max_runtime": 3600, 
+            "opt_args": {
+                "input": "-i",
+                "etype": "-e",
+                "jid": "-j",
+                "file": "-g"
+            }
+        }, 
         "Transform.CSV-to-Transform.Pair": {
             "cmd_args": {
                 "input": "-i", 

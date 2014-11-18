@@ -248,7 +248,7 @@ class Uploader(Validator):
         data = json.loads(jif.read())
         jif.close()
     
-        wsd.save_objects({'workspace':ws_id, 'objects' : [ {
+        self.wsd.save_objects({'workspace':ws_id, 'objects' : [ {
           'type' : kbtype, 'data' : data, 'name' : outobj_id, 
           'meta' : { 'source_id' : inobj_id, 'source_type' : etype,
                      'ujs_job_id' : jid} } ]})
@@ -258,7 +258,7 @@ class Uploader(Validator):
         data = json.loads(jif.read())
         jif.close()
     
-        wsd.save_objects({'workspace':self.ws_id, 'objects' : [ {
+        self.wsd.save_objects({'workspace':self.ws_id, 'objects' : [ {
           'type' : self.kbtype, 'data' : data, 'name' : self.outobj_id, 
           'meta' : { 'source_id' : self.inobj_id, 'source_type' : self.etype,
                      'ujs_job_id' : self.jid} } ]})

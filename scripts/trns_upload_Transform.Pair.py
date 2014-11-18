@@ -38,9 +38,6 @@ EXAMPLES
       CSV test case
       > trns_upload_Transform.Pair --ws_url 'https://kbase.us/services/ws' --ws_id kbasetest:home  --in_id '' --out_id 'my_tst_out'
       
-      Filter genes with LOR
-      > trns_upload_Transform.Pair --ws_url 'https://kbase.us/services/ws' --ws_id KBasePublicExpression  --in_id '' -out_id 'my_tst_out'
-
 
 SEE ALSO
       trns_validate_hndlr, trns_import_hndlr
@@ -52,7 +49,7 @@ First Last.
 if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_upload_Transform.Pair', epilog=desc3)
-    parser.add_argument('-u', '--ws_url', help='Workspace url', action='store', dest='ws_url', default='https://kbase.us/services/ws')
+    parser.add_argument('-u', '--ws_url', help='Workspace url', action='store', dest='ws_url', default='https://kbase.us/services/ws', required=True)
 
     parser.add_argument('-w', '--dst_ws_name', help='Destination workspace name', action='store', dest='ws_id', default=None, required=True)
     parser.add_argument('-o', '--out_id', help='Output workspace object name', action='store', dest='outobj_id', default=None, required=True)

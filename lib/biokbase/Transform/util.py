@@ -223,7 +223,7 @@ class Uploader(Validator):
     def upload_handler (self) :
         
         if self.kb_type in self.config: # upload handler is registered
-          vcmd_lst = [self.config[self.kb_type]['cmd_name'], self.config[self.kb_type]['cmd_args']['ws_name'], self.ws_id, self.config[self.kb_type]['cmd_args']['outobj_id'], self.outobj_id,  self.config[self.kb_type]['cmd_args']['dir'], self.sdir ]
+          vcmd_lst = [self.config[self.kb_type]['cmd_name'], self.config[self.kb_type]['cmd_args']['ws_url'], self.ws_url, self.config[self.kb_type]['cmd_args']['ws_name'], self.ws_id, self.config[self.kb_type]['cmd_args']['outobj_id'], self.outobj_id,  self.config[self.kb_type]['cmd_args']['dir'], self.sdir ]
          
           if 'uploader' in self.opt_args:
             opt_args = self.opt_args['uploader']

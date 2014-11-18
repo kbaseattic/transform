@@ -15,9 +15,6 @@ import urllib
 import urllib2
 import json
 
-#
-# TODO: Make the following functions to be classes
-#
 
 # Base class for Transform service
 class TransformBase:
@@ -160,7 +157,7 @@ class Uploader(Validator):
         self.outobj_id = args.outobj_id
         self.jid = args.jid
 
-    def transformation_handler (self, etype, kbtype, sdir, itmp, otmp, opt_args) :
+    def transformation_handler_args (self, etype, kbtype, sdir, itmp, otmp, opt_args) :
         conv_type = "{}-to-{}".format(etype, kbtype)
         vcmd_lst = [self.config[conv_type]['cmd_name'], self.config[conv_type]['cmd_args']['input'], "{}/{}".format(sdir,itmp), self.config[conv_type]['cmd_args']['output'],"{}/{}".format(sdir,otmp)]
     

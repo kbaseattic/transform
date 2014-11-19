@@ -1,11 +1,11 @@
 {
     "config_map": {
-        "KBaseGenomes.GBK": {
+        "KBaseGenomes.FAST": {
             "cmd_args": {
                 "input": "-i"
             }, 
-            "cmd_description": "GeneBank validator for KBaseGenomes module", 
-            "cmd_name": "trns_validate_KBaseGenomes.GBK", 
+            "cmd_description": "FASTA and FASTQ validator for KBaseGenomes module", 
+            "cmd_name": "trns_validate_KBaseGenomes.FAST", 
             "max_runtime": 3600, 
             "opt_args": {}
         }, 
@@ -18,6 +18,23 @@
             "max_runtime": 3600, 
             "opt_args": {}
         }, 
+        "Transform.Pair": {
+            "cmd_args": {
+                "dir": "-l",
+                "ws_url": "-u",
+                "ws_id": "-w",
+                "outobj_id": "-o"
+            }, 
+            "cmd_description": "Uploader example using Transform.Pair", 
+            "cmd_name": "trns_upload_Transform.Pair", 
+            "max_runtime": 3600, 
+            "opt_args": {
+                "input": "-i",
+                "etype": "-e",
+                "jid": "-j",
+                "file": "-g"
+            }
+        }, 
         "Transform.CSV-to-Transform.Pair": {
             "cmd_args": {
                 "input": "-i", 
@@ -25,6 +42,15 @@
             }, 
             "cmd_description": "Example CSV conversion to Transform.Pair typed object for Transform module", 
             "cmd_name": "trns_transform_Transform.CSV-to-Transform.Pair", 
+            "max_runtime": 3600, 
+            "opt_args": {}
+        }, 
+        "KBaseGenomes.GBK": {
+            "cmd_args": {
+                "input": "-i"
+            }, 
+            "cmd_description": "GeneBank validator for KBaseGenomes module", 
+            "cmd_name": "trns_validate_KBaseGenomes.GBK", 
             "max_runtime": 3600, 
             "opt_args": {}
         }, 

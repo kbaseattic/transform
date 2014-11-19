@@ -33,7 +33,7 @@ public class ConvertGBK {
 
     String ws = null;
 
-    boolean isTest = true;
+    boolean isTest = false;
 
     /**
      * @param args

@@ -88,8 +88,8 @@ if __name__ == "__main__":
       validator.download_shock_data()
     except:
       if args.jid is not None:
-        e = sys.exe_info()[0]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock', e, {}) 
+        e = sys.exc_info()[0]
+        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock', str(e), {}) 
       exit(3);
 
     if args.jid is not None:
@@ -99,8 +99,8 @@ if __name__ == "__main__":
       validator.validation_handler()
     except:
       if args.jid is not None:
-        e = sys.exe_info()[0]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data validation', e, {}) 
+        e = sys.exc_info()[0]
+        ujs.complete_job(args.jid, kb_token, 'Failed : data validation', str(e), {}) 
       exit(4);
 
     # clean-up

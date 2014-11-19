@@ -54,6 +54,23 @@
             "max_runtime": 3600, 
             "opt_args": {}
         }, 
+        "KBaseGenomes.Genome": {
+            "cmd_args": {
+                "dir": "-l",
+                "ws_url": "-u",
+                "ws_id": "-w",
+                "outobj_id": "-o"
+            }, 
+            "cmd_description": "Uploader for GBK Genome", 
+            "cmd_name": "trns_upload_KBaseGenomes.Genome", 
+            "max_runtime": 3600, 
+            "opt_args": {
+                "input": "-i",
+                "etype": "-e",
+                "jid": "-j",
+                "file": "-g"
+            }
+        }, 
         "KBaseGenomes.GBK-to-KBaseGenomes.ContigSet": {
             "cmd_args": {
                 "input": "-i", 

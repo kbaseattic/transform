@@ -105,8 +105,8 @@ if __name__ == "__main__":
       uploader.download_shock_data()
     except:
       if args.jid is not None:
-        e = sys.exe_info()[0]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock', e, {}) 
+        e = sys.exc_info()[0]
+        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock', str(e), {}) 
       exit(3);
 
     if args.jid is not None:
@@ -116,8 +116,8 @@ if __name__ == "__main__":
       uploader.validation_handler()
     except:
       if args.jid is not None:
-        e = sys.exe_info()[0]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data validation', e, {}) 
+        e = sys.exc_info()[0]
+        ujs.complete_job(args.jid, kb_token, 'Failed : data validation', str(e), {}) 
       exit(4);
 
     if args.jid is not None:
@@ -127,8 +127,8 @@ if __name__ == "__main__":
       uploader.transformation_handler()
     except:
       if args.jid is not None:
-        e = sys.exe_info()[0]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data format conversion', e, {})
+        e = sys.exc_info()[0]
+        ujs.complete_job(args.jid, kb_token, 'Failed : data format conversion', str(e), {})
       exit(5);
 
     if args.jid is not None:
@@ -138,8 +138,8 @@ if __name__ == "__main__":
       uploader.upload_handler()
     except:
       if args.jid is not None:
-        e = sys.exe_info()[0]
-        ujs.complete_job(args.jid, kb_token, 'Failed : upload to WS ({}/{})'.format(args.ws_id, args.outobj_id), e, {})
+        e,v = sys.exc_info()[:2]
+        ujs.complete_job(args.jid, kb_token, 'Failed : upload to WS ({}/{})\n{}:{}'.format(args.ws_id, args.outobj_id, str(e),str(v)), str(e), {})
       exit(6);
 
     # clean-up

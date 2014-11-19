@@ -154,6 +154,7 @@ class Uploader(Validator):
         Validator.__init__(self, args)
         self.kbtype = args.kbtype
         self.otmp = args.otmp
+        self.ws_id = args.ws_id
         self.outobj_id = args.outobj_id
         self.jid = args.jid
 
@@ -164,8 +165,8 @@ class Uploader(Validator):
         if 'transformer' in opt_args:
           opt_args = opt_args['transformer']
           for k in opt_args:
-            if k in self.config[etype]['opt_args']:
-              vcmd_lst.append(self.config[etype]['opt_args'][k])
+            if k in self.config[conv_type]['opt_args']:
+              vcmd_lst.append(self.config[conv_type]['opt_args'][k])
               vcmd_lst.append(opt_args[k])
     
         p1 = Popen(vcmd_lst, stdout=PIPE)
@@ -184,8 +185,8 @@ class Uploader(Validator):
         if 'transformer' in self.opt_args:
           opt_args = self.opt_args['transformer']
           for k in opt_args:
-            if k in self.config[self.etype]['opt_args']:
-              vcmd_lst.append(self.config[self.etype]['opt_args'][k])
+            if k in self.config[conv_type]['opt_args']:
+              vcmd_lst.append(self.config[conv_type]['opt_args'][k])
               vcmd_lst.append(opt_args[k])
     
         p1 = Popen(vcmd_lst, stdout=PIPE)
@@ -199,14 +200,14 @@ class Uploader(Validator):
 
     def upload_handler_args (self, ws_url, cfg_name, sws_id, etype, kbtype, sdir, otmp, ws_id, obj_id, opt_args, jid) :
         
-        if kb_type in self.config: # upload handler is registered
-          vcmd_lst = [self.config[kb_type]['cmd_name'], self.config[kb_type]['cmd_args']['ws_name'], ws_id, self.config[kb_type]['cmd_args']['outobj_id'], outobj_id,  self.config[kb_type]['cmd_args']['dir'], sdir ]
+        if kbtype in self.config: # upload handler is registered
+          vcmd_lst = [self.config[kbtype]['cmd_name'], self.config[kbtype]['cmd_args']['ws_url'], self.ws_url, self.config[kbtype]['cmd_args']['ws_id'], ws_id, self.config[kbtype]['cmd_args']['outobj_id'], outobj_id,  self.config[kbtype]['cmd_args']['dir'], sdir ]
          
           if 'uploader' in opt_args:
             opt_args = opt_args['uploader']
             for k in opt_args:
-              if k in self.config[etype]['opt_args']:
-                vcmd_lst.append(self.config[etype]['opt_args'][k])
+              if k in self.config[kbtype]['opt_args']:
+                vcmd_lst.append(self.config[kbtype]['opt_args'][k])
                 vcmd_lst.append(opt_args[k])
          
           p1 = Popen(vcmd_lst, stdout=PIPE)
@@ -218,18 +219,18 @@ class Uploader(Validator):
           if p1.returncode != 0: 
               raise Exception(out_str[1])
         else: # upload handler was not registered
-          upload_to_ws_args(sdir,otmp,ws_id,kbtype,outobj_id,inobj_id,etype,jid) # use default WS uploader
+          self.upload_to_ws_args(sdir,otmp,ws_id,kbtype,outobj_id,inobj_id,etype,jid) # use default WS uploader
     
     def upload_handler (self) :
         
-        if self.kb_type in self.config: # upload handler is registered
-          vcmd_lst = [self.config[self.kb_type]['cmd_name'], self.config[self.kb_type]['cmd_args']['ws_url'], self.ws_url, self.config[self.kb_type]['cmd_args']['ws_name'], self.ws_id, self.config[self.kb_type]['cmd_args']['outobj_id'], self.outobj_id,  self.config[self.kb_type]['cmd_args']['dir'], self.sdir ]
+        if self.kbtype in self.config: # upload handler is registered
+          vcmd_lst = [self.config[self.kbtype]['cmd_name'], self.config[self.kbtype]['cmd_args']['ws_url'], self.ws_url, self.config[self.kbtype]['cmd_args']['ws_id'], self.ws_id, self.config[self.kbtype]['cmd_args']['outobj_id'], self.outobj_id,  self.config[self.kbtype]['cmd_args']['dir'], self.sdir ]
          
           if 'uploader' in self.opt_args:
             opt_args = self.opt_args['uploader']
             for k in opt_args:
-              if k in self.config[self.etype]['opt_args']:
-                vcmd_lst.append(self.config[self.etype]['opt_args'][k])
+              if k in self.config[self.kbtype]['opt_args']:
+                vcmd_lst.append(self.config[self.kbtype]['opt_args'][k])
                 vcmd_lst.append(opt_args[k])
          
           p1 = Popen(vcmd_lst, stdout=PIPE)
@@ -241,7 +242,7 @@ class Uploader(Validator):
           if p1.returncode != 0: 
               raise Exception(out_str[1])
         else: # upload handler was not registered
-          upload_to_ws() # use default WS uploader
+          self.upload_to_ws() # use default WS uploader
     
     def upload_to_ws_args (self, sdir,otmp,ws_id,kbtype,outobj_id,inobj_id,etype,jid) :
         jif = open("{}/{}".format(sdir,otmp, 'r'))

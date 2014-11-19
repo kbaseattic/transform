@@ -36,6 +36,10 @@ my $job_id = $cc->upload({etype => "KBaseGenomes.GBK", kb_type => "KBaseGenomes.
 ok(ref($job_id) eq "ARRAY","mys_example returns an array");
 ok(@{$job_id} eq 2, "returns two job ids for mys_example");
 
+# test compressed tar.gz or zip
+my $job_id = $cc->upload({etype => "KBaseGenomes.GBK", kb_type => "KBaseGenomes.Genome", in_id => "2d1a33ec-b7ea-47e6-9f15-63ef87d19975", "ws_name" => "loader_test", "obj_name" => "compressed-tar.gz", "opt_args" => '{"validator":{},"transformer":{"contigset_ref":"loader_test/NC005213.cs"}}'});
+ok(ref($job_id) eq "ARRAY","mys_example returns an array");
+ok(@{$job_id} eq 2, "returns two job ids for mys_example");
 # TODO: wait job to be done
 
 # TODO: check the internal value to be correct

@@ -105,8 +105,8 @@ if __name__ == "__main__":
       uploader.download_shock_data()
     except:
       if args.jid is not None:
-        e,v = sys.exc_info()[:2]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock\n{}:{}.format(str(e),str(v))', str(e), {}) 
+        e,v,t = sys.exc_info()[:3]
+        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock\n{}:{}\n{}'.format(str(e),str(v),str(t)), str(e), {}) 
       exit(3);
 
     if args.jid is not None:
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     except:
       if args.jid is not None:
         e,v = sys.exc_info()[:2]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data validation\n{}:{}.format(str(e),str(v))', str(e), {}) 
+        ujs.complete_job(args.jid, kb_token, 'Failed : data validation\n{}:{}'.format(str(e),str(v)), str(e), {}) 
       exit(4);
 
     if args.jid is not None:

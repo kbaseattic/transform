@@ -14,7 +14,14 @@ from biokbase.workspace.client import Workspace
 import urllib
 import urllib2
 import json
+import tarfile
+import zipfile
+try :
+  from cStringIO import StringIO
+except:
+  from StringIO import StringIO
 
+BUF_SIZE = 8*1024 # default HTTP LIB client buffer_size
 
 # Base class for Transform service
 class TransformBase:
@@ -52,6 +59,7 @@ class TransformBase:
         dif.close()
         data.close()
 
+
     def download_shock_data(self) :
         # TODO: Improve folder checking
         try:
@@ -69,13 +77,26 @@ class TransformBase:
         meta = urllib2.urlopen(meta_req)
         md = json.loads(meta.read())
         meta.close()
-        print md
     
-        data = urllib2.urlopen(data_req)
-            
-        dif = open("{}/{}".format(self.sdir, self.itmp),'w')
-        dif.write(data.read())
-        dif.close()
+        rdata = urllib2.urlopen(data_req)
+
+        data = StringIO(rdata.read())
+        magic = data.read(4)
+        data.seek(0)
+        
+        if magic.startswith('\x1f\x8b') or magic.startswith('\x42\x5a') : # gz or bz
+          my_tar = tarfile.open(fileobj=data, mode="r|*", bufsize=BUF_SIZE) 
+          my_tar.extractall(path="{}/{}".format(self.sdir, self.itmp))
+          my_tar.close()
+        elif magic == '\x50\x4b\x03\x04': # zip
+          my_zip = zipfile.ZipFile(data, mode="r")
+          my_zip.extractall(path="{}/{}".format(self.sdir, self.itmp))
+          my_zip.close()
+        else:  
+          dif = open("{}/{}".format(self.sdir, self.itmp),'w')
+          dif.write(data.read())
+          dif.close()
+        rdata.close()
         data.close()
 
 

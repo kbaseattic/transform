@@ -19,11 +19,11 @@ import urllib
 import urllib2
 import datetime
 #from biokbase import log
-from biokbase.Transform.util import download_shock_data, validation_handler, transformation_handler,upload_to_ws
+#from biokbase.Transform.util import download_shock_data, validation_handler, transformation_handler,upload_to_ws
 
 desc1 = '''
 NAME
-      trans_convert_fastq -- Validate the Fasta and Fastq files (1.0)
+      trns_Convert_fastq -- Converts the Fasta and Fastq files to KBaseAssembly.SingleEndLibrary KBaseAssembly.PairedEndLibrary (1.0)
 
 SYNOPSIS      
       
@@ -31,18 +31,16 @@ SYNOPSIS
 
 desc2 = '''
 DESCRIPTION
-  trans_convert_fastq validate the fasta and fastq file and returns
-  a json string
+  trans_convert_fastq converts the Fasta and Fastq files to KBaseAssembly.SingleEndLibrary KBaseAssembly.PairedEndLibrary
+  and returns a  json string of the particular type
 
   TODO: It will support KBase log format.
 '''
 
 desc3 = '''
-EXAMPLES
-   > trns_trans_convert_fastq -i <Input fasta or fastq file>
-
 AUTHORS
 Srividya Ramakrishnan.
+
 '''
 
 handle_service_url  = "http://140.221.67.78:7109"

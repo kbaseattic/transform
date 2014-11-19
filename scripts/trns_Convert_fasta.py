@@ -23,7 +23,7 @@ import datetime
 
 desc1 = '''
 NAME
-      trns_Convert_fastq -- Convert the Fastq files to a kbase types SingleEndLibrary , PairedEndLibrary (1.0)
+      trns_Convert_fasta -- Convert the Fasta files to kbase types KBaseAssembly.ReferenceAssembly
 
 SYNOPSIS      
       
@@ -31,16 +31,12 @@ SYNOPSIS
 
 desc2 = '''
 DESCRIPTION
-  trans_convert_fastq validate the fasta and fastq file and returns
-  a json string
+  trns_Convert_fasta converts the external Fasta files to  kbase types KBaseAssembly.ReferenceAssembly
 
   TODO: It will support KBase log format.
 '''
 
 desc3 = '''
-EXAMPLES
-   > trns_trans_convert_fastq -i <Input fasta or fastq file>
-
 AUTHORS
 Srividya Ramakrishnan.
 '''

@@ -15,7 +15,7 @@ import cStringIO
 
 desc1 = '''
 NAME
-      trns_validate_Sequencingfiles -- Validate the Fasta and Fastq files (1.0)
+      trns_validate_KBaseAssembly.FA -- Validate the fasta files (1.0)
 
 SYNOPSIS      
       
@@ -23,7 +23,7 @@ SYNOPSIS
 
 desc2 = '''
 DESCRIPTION
-  trns_validate_Sequencingfiles validate the fasta and fastq file and returns
+  trns_validate_KBaseAssembly.FA validate the fasta file and returns
   a json string
 
   TODO: It will support KBase log format.
@@ -31,7 +31,7 @@ DESCRIPTION
 
 desc3 = '''
 EXAMPLES
-   > trns_trns_validate_Sequencingfiles -i <Input fasta or fastq file>
+   > trns_trns_validate_KBaseAssembly.FA -i <Input fasta file>
 
 AUTHORS
 Srividya Ramakrishnan.
@@ -85,14 +85,6 @@ def check_output(*popenargs, **kwargs):
         status = 'SUCCESS'
     return {'status' : status, 'error' : error}
 
-def validate_fastq(filename):
-        ## Check if the file is present in the path
-        arr =  None
-        if os.path.isfile(filename):
-                cmd = [fval_path,"--maxErrors 10","--file", filename]
-                ret = check_output(cmd,stderr=sys.stderr)
-                return ret
-
 def to_JSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
@@ -122,27 +114,12 @@ def validate_fasta(filename):
 class Validate(object):
         """ Validate the object and return 0 or exit with an error
         """
-        #fastq_ext = ['.fq','.fq.gz','.fastq','.fastq.gz']
-        #fasta_ext = ['.fa','.fa.gz','.fasta','.fasta.gz'] 
         def __init__(self,filename):
                 """ Initialize the validation function to proceed with validation
                 """
 		if os.path.isfile(filename):
                 	self.filename = filename
-                	#fileext = '.'.join(filename.split(".")[2:])
-                	fileext = os.path.splitext(filename)[-1]
-               		if fileext in fastq_ext:
-                        	func = validate_fastq
-                	elif fileext in fasta_ext:
-                        	func = validate_fasta
-                	elif fileext == '.gz':
-                        	if filename.split('.')[-2] == 'fa' or filename.split('.')[-2] == 'fasta':
-                               		 func = validate_fasta
-                        	elif filename.split('.')[-2] == 'fq' or filename.split('.')[-2] == 'fastq':
-                                	func = validate_fastq
-                	else:
-                        	print("Error: undefined file extension" + fileext)
-				sys.exit(1)   
+                        func = validate_fasta
                 else:
 		     print("File " + filename + " doesnot exist ")
 		     sys.exit(1)
@@ -154,7 +131,7 @@ class Validate(object):
                         self.error = ret["error"]
 
 def usage():
-        print("Usage : trns_validate_Sequencingfiles -i <filename> ")
+        print("Usage : trns_validate_KBaseAssembly.FA -i <filename> ")
 
 def main(argv):
    inputfile = ''
@@ -162,11 +139,11 @@ def main(argv):
    try:
       opts, args = getopt.getopt(argv,"hi:")
    except getopt.GetoptError:
-      print('trns_validate_Sequencingfiles -i <inputfile>')
+      print('trns_validate_KBaseAssembly.FA -i <inputfile>')
       sys.exit(2)
    for opt, arg in opts:
       if opt == '-h':
-         print('trns_validate_Sequencingfiles -i <inputfile>')
+         print('trns_validate_KBaseAssembly.FA -i <inputfile>')
          sys.exit()
       elif opt == "-i":
          inputfile = arg

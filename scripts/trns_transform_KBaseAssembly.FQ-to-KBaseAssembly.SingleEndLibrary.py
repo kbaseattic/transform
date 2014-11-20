@@ -2,8 +2,6 @@
 # This code is part of KBase project to validate 
 #the fastq and fasta files
 
-#from __future__ import print_function
-
 import math
 import sys, getopt
 import argparse
@@ -18,11 +16,10 @@ import urllib
 import urllib2
 import datetime
 from biokbase.AbstractHandle.Client import AbstractHandle
-#from biokbase import log
 
 desc1 = '''
 NAME
-      trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly -- Convert the Fasta files to kbase types KBaseAssembly.ReferenceAssembly
+      trns_transform_KBaseAssembly.FQ-to-KBaseAssembly.SingleEndLibrary -- Converts the Fasta and Fastq files to KBaseAssembly.SingleEndLibrary (1.0)
 
 SYNOPSIS      
       
@@ -30,7 +27,8 @@ SYNOPSIS
 
 desc2 = '''
 DESCRIPTION
-  trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly converts the external Fasta files to  kbase types KBaseAssembly.ReferenceAssembly
+  trns_transform_KBaseAssembly.FQ-to-KBaseAssembly.SingleEndLibrary converts the Fasta and Fastq files to KBaseAssembly.SingleEndLibrary 
+  and returns a  json string of the particular type
 
   TODO: It will support KBase log format.
 '''
@@ -38,44 +36,31 @@ DESCRIPTION
 desc3 = '''
 AUTHORS
 Srividya Ramakrishnan.
-'''
 
-handle_service_url  = "http://140.221.67.78:7109"
-io_method = cStringIO.StringIO
-BLOCKSIZE = 65536
+'''
 
 ### List of Exceptions
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
 
-def return_hash(filename,func):
-	hasher = func()
-	with open(filename, 'rb') as afile:
-    		buf = afile.read(BLOCKSIZE)
-    		while len(buf) > 0:
-			hasher.update(buf)
-			buf = afile.read(BLOCKSIZE)
-	return hasher.hexdigest()
-	
 def to_JSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 	
 def main(argv):
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly', epilog=desc3)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_transform_KBaseAssembly.FQ-to-KBaseAssembly.SingleEndLibrary', epilog=desc3)
     parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
     parser.add_argument('-n', '--hndl_svc_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
     parser.add_argument('-i', '--in_id', help='Input Shock node id', action='store', dest='inobj_id', default=None, required=False)
-    parser.add_argument('-w','--reference_name', help = 'Reference Name', action= 'store', dest='ref_name',default=None,required=False)
     parser.add_argument('-f','--file_name', help = 'File Name', action= 'store', dest='file_name',default=None,required=False)
-    parser.add_argument('-d','--hid', help = 'handle id', action= 'store', dest='hid',default=None,required=False)
+    parser.add_argument('-d','--hid', help = 'Handle id', action= 'store', dest='hid',default=None, required=False)
     parser.add_argument('-o', '--out_file_name', help='Output file name', action='store', dest='out_fn', default=None, required=True)
     usage = parser.format_usage()
     parser.description = desc1 + ' ' + usage + desc2
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
-    
+
     if args.inobj_id is None and args.hid is None:
       print >> sys.stderr, parser.description
       print >> sys.stderr, "Need to provide either shock node id or handle id"
@@ -98,8 +83,6 @@ def main(argv):
       exit(2)
 
     ret = { "handle" : hds[0] }
-    if args.ref_name is not None:
-      ret['reference_name'] = args.ref_name
     
     of = open(args.out_fn, "w")
     of.write(to_JSON(ret))
@@ -107,5 +90,5 @@ def main(argv):
 
 if __name__ == "__main__" :
     ret =  main(sys.argv[1:])
-
 exit(0);
+

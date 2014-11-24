@@ -1,17 +1,10 @@
 package Bio::KBase::Transform::Client;
 
 use JSON::RPC::Client;
-use POSIX;
 use strict;
 use Data::Dumper;
 use URI;
 use Bio::KBase::Exceptions;
-my $get_time = sub { time, 0 };
-eval {
-    require Time::HiRes;
-    $get_time = sub { Time::HiRes::gettimeofday() };
-};
-
 use Bio::KBase::AuthToken;
 
 # Client version should match Impl version
@@ -39,41 +32,7 @@ sub new
     my $self = {
 	client => Bio::KBase::Transform::Client::RpcClient->new,
 	url => $url,
-	headers => [],
     };
-
-    chomp($self->{hostname} = `hostname`);
-    $self->{hostname} ||= 'unknown-host';
-
-    #
-    # Set up for propagating KBRPC_TAG and KBRPC_METADATA environment variables through
-    # to invoked services. If these values are not set, we create a new tag
-    # and a metadata field with basic information about the invoking script.
-    #
-    if ($ENV{KBRPC_TAG})
-    {
-	$self->{kbrpc_tag} = $ENV{KBRPC_TAG};
-    }
-    else
-    {
-	my ($t, $us) = &$get_time();
-	$us = sprintf("%06d", $us);
-	my $ts = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
-	$self->{kbrpc_tag} = "C:$0:$self->{hostname}:$$:$ts";
-    }
-    push(@{$self->{headers}}, 'Kbrpc-Tag', $self->{kbrpc_tag});
-
-    if ($ENV{KBRPC_METADATA})
-    {
-	$self->{kbrpc_metadata} = $ENV{KBRPC_METADATA};
-	push(@{$self->{headers}}, 'Kbrpc-Metadata', $self->{kbrpc_metadata});
-    }
-
-    if ($ENV{KBRPC_ERROR_DEST})
-    {
-	$self->{kbrpc_error_dest} = $ENV{KBRPC_ERROR_DEST};
-	push(@{$self->{headers}}, 'Kbrpc-Errordest', $self->{kbrpc_error_dest});
-    }
 
     #
     # This module requires authentication.
@@ -180,7 +139,7 @@ sub import_data
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+    my $result = $self->{client}->call($self->{url}, {
 	method => "Transform.import_data",
 	params => \@args,
     });
@@ -273,7 +232,7 @@ sub validate
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+    my $result = $self->{client}->call($self->{url}, {
 	method => "Transform.validate",
 	params => \@args,
     });
@@ -372,7 +331,7 @@ sub upload
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+    my $result = $self->{client}->call($self->{url}, {
 	method => "Transform.upload",
 	params => \@args,
     });
@@ -469,7 +428,7 @@ sub download
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+    my $result = $self->{client}->call($self->{url}, {
 	method => "Transform.download",
 	params => \@args,
     });
@@ -495,7 +454,7 @@ sub download
 
 sub version {
     my ($self) = @_;
-    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+    my $result = $self->{client}->call($self->{url}, {
         method => "Transform.version",
         params => [],
     });
@@ -1097,7 +1056,7 @@ use strict;
 #
 
 sub call {
-    my ($self, $uri, $headers, $obj) = @_;
+    my ($self, $uri, $obj) = @_;
     my $result;
 
 
@@ -1107,7 +1066,7 @@ sub call {
 	}
 	else {
 	    Carp::croak "not hashref." unless (ref $obj eq 'HASH');
-	    $result = $self->_post($uri, $headers, $obj);
+	    $result = $self->_post($uri, $obj);
 	}
 
     }
@@ -1137,7 +1096,7 @@ sub call {
 
 
 sub _post {
-    my ($self, $uri, $headers, $obj) = @_;
+    my ($self, $uri, $obj) = @_;
     my $json = $self->json;
 
     $obj->{version} ||= $self->{version} || '1.1';
@@ -1164,7 +1123,6 @@ sub _post {
         Content_Type   => $self->{content_type},
         Content        => $content,
         Accept         => 'application/json',
-	@$headers,
 	($self->{token} ? (Authorization => $self->{token}) : ()),
     );
 }

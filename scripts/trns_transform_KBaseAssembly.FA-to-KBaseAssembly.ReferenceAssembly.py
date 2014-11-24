@@ -18,6 +18,7 @@ import urllib
 import urllib2
 import datetime
 from biokbase.AbstractHandle.Client import AbstractHandle
+import traceback
 #from biokbase import log
 
 desc1 = '''
@@ -85,13 +86,18 @@ def main(argv):
     hs = AbstractHandle(url=args.hndl_url, token = kb_token)
     
     if args.hid is None:
-      try:
+      try: # to create one
         args.hid = hs.persist_handle({ "id" : args.inobj_id , "type" : "shock" , "url" : args.shock_url})
-      except:
-        print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered".format(args.inobj_id)
-        exit(3)
-    
-    hds = hs.hids_to_handles([args.hid])
+        hds = hs.hids_to_handles([args.hid])
+      except: # handle is already registered
+        try:
+          hds = hs.ids_to_handles([args.inobj_id]) # look up by shock_node id
+        except:
+          traceback.print_exc(file=sys.stderr)
+          print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered".format(args.inobj_id)
+          exit(3)
+    else : # given handle_id
+      hds = hs.hids_to_handles([args.hid]) 
 
     if len(hds) <= 0: 
       print >> sys.stderr, 'Could not register a new handle with shock node id {} or wrong input handle id'.format(args.inobj_id)

@@ -16,6 +16,7 @@ import urllib
 import urllib2
 import datetime
 from biokbase.AbstractHandle.Client import AbstractHandle
+import traceback
 
 desc1 = '''
 NAME
@@ -73,8 +74,12 @@ def main(argv):
       try:
         args.hid = hs.persist_handle({ "id" : args.inobj_id , "type" : "shock" , "url" : args.shock_url})
       except:
-        print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered".format(args.inobj_id)
-        exit(3)
+        try:
+          args.hid=hs.ids_to_handles([args.inobj_id])[0]["hid"]
+        except:
+          traceback.print_exc(file=sys.stderr)
+          print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered".format(args.inobj_id)
+          exit(3)
     
     hds = hs.hids_to_handles([args.hid])
 

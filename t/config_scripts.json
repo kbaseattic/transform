@@ -107,7 +107,7 @@
                 "input": "-i", 
                 "output": "-o"
             }, 
-            "cmd_args_overide": {
+            "cmd_args_override": {
                 "input": "shock_node_id" 
             }, 
             "cmd_description": "FQ to PairedEndLibrary", 

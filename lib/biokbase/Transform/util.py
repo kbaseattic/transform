@@ -122,7 +122,7 @@ class Validator(TransformBase):
           if 'validator' in self.opt_args:
             opt_args = self.opt_args['validator']
             for k in opt_args:
-              if k in self.config[etype]['opt_args']:
+              if k in self.config[etype]['opt_args'] and opt_args[k] is not None:
                 vcmd_lst.append(self.config[self.etype]['opt_args'][k])
                 vcmd_lst.append(opt_args[k])
                
@@ -149,21 +149,21 @@ class Uploader(Validator):
         conv_type = "{}-to-{}".format(self.etype, self.kbtype)
         vcmd_lst = [self.config[conv_type]['cmd_name']]
         vcmd_lst.append(self.config[conv_type]['cmd_args']['input'])
-        if 'input' in self.config[conv_type]['cmd_args_overide']:
-          if self.config[conv_type]['cmd_args_overide']['input'] == 'shock_node_id': # use shock node id
+        if 'cmd_args_override' in self.config[conv_type] and 'input' in self.config[conv_type]['cmd_args_override']:
+          if self.config[conv_type]['cmd_args_override']['input'] == 'shock_node_id': # use shock node id
             vcmd_lst.append(self.inobj_id)
           else: vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # not defined yet
         else: vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # default input is the input file or folder
 
         vcmd_lst.append(self.config[conv_type]['cmd_args']['output'])
-        if 'output' in self.config[conv_type]['cmd_args_overide']:
+        if 'cmd_args_override' in self.config[conv_type] and 'output' in self.config[conv_type]['cmd_args_override']:
           vcmd_lst.append("{}/{}".format(self.sdir,self.otmp)) # not defined yet
         else: vcmd_lst.append("{}/{}".format(self.sdir,self.otmp))
     
         if 'transformer' in self.opt_args:
           opt_args = self.opt_args['transformer']
           for k in opt_args:
-            if k in self.config[conv_type]['opt_args']:
+            if k in self.config[conv_type]['opt_args'] and opt_args[k] is not None:
               vcmd_lst.append(self.config[conv_type]['opt_args'][k])
               vcmd_lst.append(opt_args[k])
     
@@ -184,10 +184,12 @@ class Uploader(Validator):
           if 'uploader' in self.opt_args:
             opt_args = self.opt_args['uploader']
             for k in opt_args:
-              if k in self.config[self.kbtype]['opt_args']:
+              if k in self.config[self.kbtype]['opt_args'] and opt_args[k] is not None:
                 vcmd_lst.append(self.config[self.kbtype]['opt_args'][k])
                 vcmd_lst.append(opt_args[k])
-         
+
+          print vcmd_lst
+
           p1 = Popen(vcmd_lst, stdout=PIPE)
           out_str = p1.communicate()
           # print output message for error tracking

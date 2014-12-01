@@ -87,9 +87,11 @@ if __name__ == "__main__":
     try:
       validator.download_shock_data()
     except:
+      e,v = sys.exc_info()[:2]
       if args.jid is not None:
-        e,v = sys.exc_info()[:2]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock\n{}:{}.format(str(e),str(v))', str(e), {}) 
+        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock\n{}:{}'.format(str(e),str(v)), str(e), {})
+      else:
+        print sys.stderr, 'Failed : data download from Shock\n{}:{}'.format(str(e),str(v))
       exit(3);
 
     if args.jid is not None:
@@ -98,9 +100,11 @@ if __name__ == "__main__":
     try:
       validator.validation_handler()
     except:
+      e,v = sys.exc_info()[:2]
       if args.jid is not None:
-        e,v = sys.exc_info()[:2]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data validation\n{}:{}.format(str(e),str(v))', str(e), {}) 
+        ujs.complete_job(args.jid, kb_token, 'Failed : data validation\n{}:{}'.format(str(e),str(v)), str(e), {}) 
+      else:
+        print sys.stderr, 'Failed : data validation\n{}:{}'.format(str(e),str(v))
       exit(4);
 
     # clean-up

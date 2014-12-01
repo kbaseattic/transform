@@ -1,11 +1,20 @@
 {
     "config_map": {
-        "KBaseGenomes.FAST": {
+        "KBaseAssembly.FA": {
             "cmd_args": {
                 "input": "-i"
             }, 
-            "cmd_description": "FASTA and FASTQ validator for KBaseGenomes module", 
-            "cmd_name": "trns_validate_KBaseGenomes.FAST", 
+            "cmd_description": "FASTA validator for KBaseGenomes module", 
+            "cmd_name": "trns_validate_KBaseAssembly.FA",
+            "max_runtime": 3600, 
+            "opt_args": {}
+        }, 
+        "KBaseAssembly.FQ": {
+            "cmd_args": {
+                "input": "-i"
+            }, 
+            "cmd_description": "FASTQ validator for KBaseGenomes module", 
+            "cmd_name": "trns_validate_KBaseAssembly.FQ",
             "max_runtime": 3600, 
             "opt_args": {}
         }, 

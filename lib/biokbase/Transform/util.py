@@ -34,33 +34,6 @@ class TransformBase:
         self.itmp = args.itmp
         self.token = os.environ.get('KB_AUTH_TOKEN')
 
-    def download_shock_data_args(self, shock_url, inobj_id, sdir, itmp) : # python 2.7 does not support method overloading
-        # TODO: Improve folder checking
-        try:
-            os.mkdir(sdir)
-        except:
-            pass
-    
-        #headers = {'Authorization' :  "OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')) }
-    
-        meta_req = urllib2.Request("{}/node/{}".format(shock_url, inobj_id))
-        meta_req.add_header('Authorization',"OAuth {}".format(self.token))
-        data_req = urllib2.Request("{}/node/{}?download_raw".format(shock_url, inobj_id))
-        data_req.add_header('Authorization',"OAuth {}".format(self.token))
-    
-        meta = urllib2.urlopen(meta_req)
-        md = json.loads(meta.read())
-        meta.close()
-        print md
-    
-        data = urllib2.urlopen(data_req)
-            
-        dif = open("{}/{}".format(sdir, itmp),'w')
-        dif.write(data.read())
-        dif.close()
-        data.close()
-
-
     def download_shock_data(self) :
         # TODO: Improve folder checking
         try:
@@ -68,7 +41,6 @@ class TransformBase:
         except:
             pass
     
-        #headers = {'Authorization' :  "OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')) }
         inids = self.inobj_id.split(',')
     
         for i in range(len(inids)):
@@ -130,32 +102,6 @@ class Validator(TransformBase):
             raise Exception("Object {} not found in workspace {}".format(self.cfg_name, self.sws_id))
 
 
-    def validation_handler_args (self, etype, sdir, itmp, opt_args) :
-        ###
-        # execute validation
-        ## TODO: Add logging
-        
-        if etype not in self.config:
-          raise Exception("No validation script was registered for {}".format(etype))
-
-        vcmd_lst = [self.config[etype]['cmd_name'], self.config[etype]['cmd_args']['input'], "{}/{}".format(sdir,itmp)]
-    
-        if 'validator' in opt_args:
-          opt_args = opt_args['validator']
-          for k in opt_args:
-            if k in self.config[etype]['opt_args']:
-              vcmd_lst.append(self.config[etype]['opt_args'][k])
-              vcmd_lst.append(opt_args[k])
-             
-        p1 = Popen(vcmd_lst, stdout=PIPE)
-        out_str = p1.communicate()
-        # print output message for error tracking
-        if out_str[0] is not None : print out_str[0]
-        if out_str[1] is not None : print >> sys.stderr, out_str[1]
-    
-        if p1.returncode != 0: 
-            raise Exception(out_str[1])
-
     def validation_handler (self) :
         ###
         # execute validation
@@ -168,7 +114,7 @@ class Validator(TransformBase):
         if os.path.exists("{}/{}".format(self.sdir,self.itmp)):
           fd_list.append( "{}/{}".format(self.sdir,self.itmp))
         else:
-          fd_list = glob.glob("{}/{}_*".format(self.sdir,self.itmp)
+          fd_list = glob.glob("{}/{}_*".format(self.sdir,self.itmp))
 
         for fd in fd_list:
           vcmd_lst = [self.config[self.etype]['cmd_name'], self.config[self.etype]['cmd_args']['input'], fd]
@@ -198,25 +144,6 @@ class Uploader(Validator):
         self.outobj_id = args.outobj_id
         self.jid = args.jid
 
-    def transformation_handler_args (self, etype, kbtype, sdir, itmp, otmp, opt_args) :
-        conv_type = "{}-to-{}".format(etype, kbtype)
-        vcmd_lst = [self.config[conv_type]['cmd_name'], self.config[conv_type]['cmd_args']['input'], "{}/{}".format(sdir,itmp), self.config[conv_type]['cmd_args']['output'],"{}/{}".format(sdir,otmp)]
-    
-        if 'transformer' in opt_args:
-          opt_args = opt_args['transformer']
-          for k in opt_args:
-            if k in self.config[conv_type]['opt_args']:
-              vcmd_lst.append(self.config[conv_type]['opt_args'][k])
-              vcmd_lst.append(opt_args[k])
-    
-        p1 = Popen(vcmd_lst, stdout=PIPE)
-        out_str = p1.communicate()
-        # print output message for error tracking
-        if out_str[0] is not None : print out_str[0]
-        if out_str[1] is not None : print >> sys.stderr, out_str[1]
-    
-        if p1.returncode != 0: 
-                raise Exception(out_str[1])
 
     def transformation_handler (self) :
         conv_type = "{}-to-{}".format(self.etype, self.kbtype)
@@ -238,29 +165,6 @@ class Uploader(Validator):
         if p1.returncode != 0: 
                 raise Exception(out_str[1])
 
-    def upload_handler_args (self, ws_url, cfg_name, sws_id, etype, kbtype, sdir, otmp, ws_id, obj_id, opt_args, jid) :
-        
-        if kbtype in self.config: # upload handler is registered
-          vcmd_lst = [self.config[kbtype]['cmd_name'], self.config[kbtype]['cmd_args']['ws_url'], self.ws_url, self.config[kbtype]['cmd_args']['ws_id'], ws_id, self.config[kbtype]['cmd_args']['outobj_id'], outobj_id,  self.config[kbtype]['cmd_args']['dir'], sdir ]
-         
-          if 'uploader' in opt_args:
-            opt_args = opt_args['uploader']
-            for k in opt_args:
-              if k in self.config[kbtype]['opt_args']:
-                vcmd_lst.append(self.config[kbtype]['opt_args'][k])
-                vcmd_lst.append(opt_args[k])
-         
-          p1 = Popen(vcmd_lst, stdout=PIPE)
-          out_str = p1.communicate()
-          # print output message for error tracking
-          if out_str[0] is not None : print out_str[0]
-          if out_str[1] is not None : print >> sys.stderr, out_str[1]
-         
-          if p1.returncode != 0: 
-              raise Exception(out_str[1])
-        else: # upload handler was not registered
-          self.upload_to_ws_args(sdir,otmp,ws_id,kbtype,outobj_id,inobj_id,etype,jid) # use default WS uploader
-    
     def upload_handler (self) :
         
         if self.kbtype in self.config: # upload handler is registered

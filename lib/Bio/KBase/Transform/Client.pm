@@ -1017,7 +1017,12 @@ opt_args has a value which is a reference to a hash where the key is a string an
 
 =item Description
 
-each external type validator or external type to internal type pair transformer script configuration
+each external type validator or external type to internal type pair transformer script configuration 
+"validator" => "KBaseGenome.GBK" => { "cmd_name" => "trns_validate_KBaseGenomes.GBK", ... } 
+ where "validator" is the type of command and "transform", "download", and "upload" are supported;
+ "KBaseGenomes.GBK" is the source type and KBaseGenomes is the module to use external GBK file type
+ and for "transform" it requires the source type and the kb type togeter. 
+ "transform" =>"KBaseGenomes.GBK-to-KBaseGenomes.Genome" => {"cmd_name" => "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome", ... }
 
 
 =item Definition
@@ -1026,7 +1031,7 @@ each external type validator or external type to internal type pair transformer 
 
 <pre>
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a CommandConfig
 
 </pre>
 
@@ -1035,7 +1040,7 @@ config_map has a value which is a reference to a hash where the key is a string 
 =begin text
 
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a CommandConfig
 
 
 =end text

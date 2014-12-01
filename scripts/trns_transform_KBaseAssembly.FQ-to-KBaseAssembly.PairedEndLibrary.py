@@ -51,7 +51,7 @@ def to_JSON(self):
 def main(argv):
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trnf_Convert_fastq', epilog=desc3)
     parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
-    parser.add_argument('-n', '--hndl_svc_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
+    parser.add_argument('-n', '--handle_service_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
     parser.add_argument('-i', '--in_ids', help='Two input Shock node ids (comma separated)', action='store', dest='inobj_id', default=None, required=False)
     parser.add_argument('-f','--file_names', help = 'Two optional handle file names (comma separated)', action= 'store', dest='loc_filepath',default=None,nargs=1,required=False)
     parser.add_argument('-d','--hids', help = 'Two handle ids (comma separated)', action= 'store', dest='hid',default=None,required=False)
@@ -86,7 +86,8 @@ def main(argv):
           hids.append(hs.ids_to_handles([snids[0]])[0]["hid"])
         except:
           traceback.print_exc(file=sys.stderr)
-          print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered".format(args.inobj_id)
+          e,v = sys.exc_info()[:2]
+          print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered : {} -- {}".format(snids[0], str(e), str(v))
           exit(3)
          
       try:
@@ -96,7 +97,8 @@ def main(argv):
           hids.append(hs.ids_to_handles([snids[1]])[0]["hid"])
         except:
           traceback.print_exc(file=sys.stderr)
-          print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered".format(args.inobj_id)
+          e,v = sys.exc_info()[:2]
+          print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered : {} -- {}".format(snids[1], str(e), str(v))
           exit(3)
     else:
       hids = args.hid.split(',')

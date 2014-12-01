@@ -147,7 +147,18 @@ class Uploader(Validator):
 
     def transformation_handler (self) :
         conv_type = "{}-to-{}".format(self.etype, self.kbtype)
-        vcmd_lst = [self.config[conv_type]['cmd_name'], self.config[conv_type]['cmd_args']['input'], "{}/{}".format(self.sdir,self.itmp), self.config[conv_type]['cmd_args']['output'],"{}/{}".format(self.sdir,self.otmp)]
+        vcmd_lst = [self.config[conv_type]['cmd_name']]
+        vcmd_lst.append(self.config[conv_type]['cmd_args']['input'])
+        if 'input' in self.config[conv_type]['cmd_args_overide']:
+          if self.config[conv_type]['cmd_args_overide']['input'] == 'shock_node_id': # use shock node id
+            vcmd_lst.append(self.inobj_id)
+          else: vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # not defined yet
+        else: vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # default input is the input file or folder
+
+        vcmd_lst.append(self.config[conv_type]['cmd_args']['output'])
+        if 'output' in self.config[conv_type]['cmd_args_overide']:
+          vcmd_lst.append("{}/{}".format(self.sdir,self.otmp)) # not defined yet
+        else: vcmd_lst.append("{}/{}".format(self.sdir,self.otmp))
     
         if 'transformer' in self.opt_args:
           opt_args = self.opt_args['transformer']

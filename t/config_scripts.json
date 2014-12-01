@@ -102,6 +102,22 @@
                 "contigset_ref": "-c"
             }
         }, 
+        "KBaseAssembly.FQ-to-KBaseAssembly.PairedEndLibrary": {
+            "cmd_args": {
+                "input": "-i", 
+                "output": "-o"
+            }, 
+            "cmd_args_overide": {
+                "input": "shock_node_id" 
+            }, 
+            "cmd_description": "FQ to PairedEndLibrary", 
+            "cmd_name": "trns_transform_KBaseAssembly.FQ-to-KBaseAssembly.PairedEndLibrary", 
+            "max_runtime": 3600, 
+            "opt_args": {
+                "handle_service_url": "-n",
+                "shock_url": "-s"
+            }
+        }, 
         "Transform.Pair-to-Transform.CSV": {
             "cmd_args": {
                 "in_id": "-i", 

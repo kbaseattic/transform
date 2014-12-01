@@ -15,7 +15,11 @@ print "This test requires the $in_id is stored in $ws_id(workspace)\n";
 print "It also requires read and write ability in the $ws_id(workspace)\n";
 ok( defined $cc, "Check if the server is working" );
 
-#my $job_id = $cc->validate({etype => $in_id, id => "d3eecb7f-5b52-4b63-9871-62ecedfd149e"});
+my $job_id = $cc->upload({etype => "KBaseAssembly.FQ", kb_type => "KBaseAssembly.PairedEndLibrary", in_id => "cea4071a-2c0c-4286-8d43-32710b4e8dfd,214e7a7e-bff7-48b0-b08f-cce24dcc91c9", "ws_name" => "loader_test", "obj_name" => "api-test-pel", "optional_args"=> '{"validator":{},"transformer":{"handle_service_url":"http://10.1.16.87:7109","shock_url":"http://10.1.16.87:7078"}}'});
+ok(ref($job_id) eq "ARRAY","mys_example returns an array");
+ok(@{$job_id} eq 2, "returns two job ids for mys_example");
+
+exit(1);
 my $job_id = $cc->upload({etype => "Transform.CSV", kb_type => "Transform.Pair", in_id => "d3eecb7f-5b52-4b63-9871-62ecedfd149e", "ws_name" => "loader_test", "obj_name" => "api-test-pair"});
 ok(ref($job_id) eq "ARRAY","mys_example returns an array");
 ok(@{$job_id} eq 2, "returns two job ids for mys_example");

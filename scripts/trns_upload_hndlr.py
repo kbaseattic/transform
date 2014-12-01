@@ -64,7 +64,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--ujs_url', help='UJS url', action='store', dest='ujs_url', default='https://kbase.us/services/userandjobstate')
     parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=False)
 
-    parser.add_argument('-n', '--hndl_svc_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
+    parser.add_argument('-n', '--handle_service_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
 
     parser.add_argument('-w', '--dst_ws_name', help='Destination workspace name', action='store', dest='ws_id', default=None, required=True)
     parser.add_argument('-o', '--out_id', help='Output workspace object name', action='store', dest='outobj_id', default=None, required=True)
@@ -108,7 +108,9 @@ if __name__ == "__main__":
     except:
       if args.jid is not None:
         e,v,t = sys.exc_info()[:3]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock\n{}:{}\n{}'.format(str(e),str(v),str(t)), str(e), {}) 
+        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock\n', str(v), {}) 
+      else:
+        traceback.print_exc(file=sys.stderr)
       exit(3);
 
     if args.jid is not None:
@@ -119,7 +121,9 @@ if __name__ == "__main__":
     except:
       if args.jid is not None:
         e,v = sys.exc_info()[:2]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data validation\n{}:{}'.format(str(e),str(v)), str(e), {}) 
+        ujs.complete_job(args.jid, kb_token, 'Failed : data validation\n', str(v), {}) 
+      else:
+        traceback.print_exc(file=sys.stderr)
       exit(4);
 
     if args.jid is not None:
@@ -128,9 +132,12 @@ if __name__ == "__main__":
     try:
       uploader.transformation_handler()
     except:
+      e,v = sys.exc_info()[:2]
       if args.jid is not None:
-        e,v = sys.exc_info()[:2]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data format conversion\n{}:{}'.format(str(e),str(v)), str(e), {})
+        ujs.complete_job(args.jid, kb_token, 'Failed : data format conversion\n', str(v), {})
+      else:
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, 'Failed : data format conversion\n{}:{}'.format(str(e),str(v))
       exit(5);
 
     if args.jid is not None:
@@ -139,9 +146,12 @@ if __name__ == "__main__":
     try:
       uploader.upload_handler()
     except:
+      e,v = sys.exc_info()[:2]
       if args.jid is not None:
-        e,v = sys.exc_info()[:2]
-        ujs.complete_job(args.jid, kb_token, 'Failed : upload to WS ({}/{})\n{}:{}'.format(args.ws_id, args.outobj_id, str(e),str(v)), str(e), {})
+        ujs.complete_job(args.jid, kb_token, 'Failed : upload to WS ({}/{})\n'.format(args.ws_id, args.outobj_id), str(v), {})
+      else:
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, 'Failed : upload to WS ({}/{})\n{}:{}'.format(args.ws_id, args.outobj_id, str(e),str(v))
       exit(6);
 
     # clean-up

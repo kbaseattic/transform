@@ -118,6 +118,39 @@
                 "shock_url": "-s"
             }
         }, 
+        "KBaseAssembly.FQ-to-KBaseAssembly.SingleEndLibrary": {
+            "cmd_args": {
+                "input": "-i", 
+                "output": "-o"
+            }, 
+            "cmd_args_override": {
+                "input": "shock_node_id" 
+            }, 
+            "cmd_description": "FQ to SingleEndLibrary", 
+            "cmd_name": "trns_transform_KBaseAssembly.FQ-to-KBaseAssembly.SingleEndLibrary", 
+            "max_runtime": 3600, 
+            "opt_args": {
+                "handle_service_url": "-n",
+                "shock_url": "-s"
+            }
+        }, 
+        "KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly": {
+            "cmd_args": {
+                "input": "-i", 
+                "output": "-o"
+            }, 
+            "cmd_args_override": {
+                "input": "shock_node_id" 
+            }, 
+            "cmd_description": "FA to ReferenceAssembly", 
+            "cmd_name": "trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly", 
+            "max_runtime": 3600, 
+            "opt_args": {
+                "reference_name": "-w",
+                "handle_service_url": "-n",
+                "shock_url": "-s"
+            }
+        }, 
         "Transform.Pair-to-Transform.CSV": {
             "cmd_args": {
                 "in_id": "-i", 

@@ -173,7 +173,7 @@ module Transform
 
   /* each external type validator or external type to internal type pair transformer script configuration 
      "validator" => "KBaseGenome.GBK" => { "cmd_name" => "trns_validate_KBaseGenomes.GBK", ... } 
-      where "validator" is the type of command and "transform", "download", and "upload" are supported;
+      where "validator" is the type of command and "transformer", "downloader", and "uploader" are supported;
       "KBaseGenomes.GBK" is the source type and KBaseGenomes is the module to use external GBK file type
       and for "transform" it requires the source type and the kb type togeter. 
       "transform" =>"KBaseGenomes.GBK-to-KBaseGenomes.Genome" => {"cmd_name" => "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome", ... }

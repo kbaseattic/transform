@@ -1,167 +1,173 @@
 {
     "config_map": {
-        "KBaseAssembly.FA": {
-            "cmd_args": {
-                "input": "-i"
+        "transformer": {
+            "KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_args_override": {
+                    "input": "shock_node_id"
+                }, 
+                "cmd_description": "FA to ReferenceAssembly", 
+                "cmd_name": "trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "handle_service_url": "-n", 
+                    "reference_name": "-w", 
+                    "shock_url": "-s"
+                }
             }, 
-            "cmd_description": "FASTA validator for KBaseGenomes module", 
-            "cmd_name": "trns_validate_KBaseAssembly.FA",
-            "max_runtime": 3600, 
-            "opt_args": {}
-        }, 
-        "KBaseAssembly.FQ": {
-            "cmd_args": {
-                "input": "-i"
+            "KBaseAssembly.FQ-to-KBaseAssembly.PairedEndLibrary": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_args_override": {
+                    "input": "shock_node_id"
+                }, 
+                "cmd_description": "FQ to PairedEndLibrary", 
+                "cmd_name": "trns_transform_KBaseAssembly.FQ-to-KBaseAssembly.PairedEndLibrary", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "handle_service_url": "-n", 
+                    "shock_url": "-s"
+                }
             }, 
-            "cmd_description": "FASTQ validator for KBaseGenomes module", 
-            "cmd_name": "trns_validate_KBaseAssembly.FQ",
-            "max_runtime": 3600, 
-            "opt_args": {}
-        }, 
-        "Transform.CSV": {
-            "cmd_args": {
-                "input": "-i"
+            "KBaseAssembly.FQ-to-KBaseAssembly.SingleEndLibrary": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_args_override": {
+                    "input": "shock_node_id"
+                }, 
+                "cmd_description": "FQ to SingleEndLibrary", 
+                "cmd_name": "trns_transform_KBaseAssembly.FQ-to-KBaseAssembly.SingleEndLibrary", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "handle_service_url": "-n", 
+                    "shock_url": "-s"
+                }
             }, 
-            "cmd_description": "Example CSV validator for Transform module", 
-            "cmd_name": "trns_validate_Transform.CSV", 
-            "max_runtime": 3600, 
-            "opt_args": {}
-        }, 
-        "Transform.Pair": {
-            "cmd_args": {
-                "dir": "-l",
-                "ws_url": "-u",
-                "ws_id": "-w",
-                "outobj_id": "-o"
+            "KBaseGenomes.GBK-to-KBaseGenomes.ContigSet": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_description": "GBK to ContigSet", 
+                "cmd_name": "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.ContigSet", 
+                "max_runtime": 3600, 
+                "opt_args": {}
             }, 
-            "cmd_description": "Uploader example using Transform.Pair", 
-            "cmd_name": "trns_upload_Transform.Pair", 
-            "max_runtime": 3600, 
-            "opt_args": {
-                "input": "-i",
-                "etype": "-e",
-                "jid": "-j",
-                "file": "-g"
+            "KBaseGenomes.GBK-to-KBaseGenomes.Genome": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_description": "GBK to ContigSet", 
+                "cmd_name": "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "contigset_ref": "-c"
+                }
+            }, 
+            "Transform.CSV-to-Transform.Pair": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_description": "Example CSV conversion to Transform.Pair typed object for Transform module", 
+                "cmd_name": "trns_transform_Transform.CSV-to-Transform.Pair", 
+                "max_runtime": 3600, 
+                "opt_args": {}
+            }, 
+            "Transform.Pair-to-Transform.CSV": {
+                "cmd_args": {
+                    "in_id": "-i", 
+                    "output": "-o", 
+                    "ws_id": "-w"
+                }, 
+                "cmd_description": "Example Transform.Pair to CSV conversion", 
+                "cmd_name": "trns_transform_Transform.Pair-to-Transform.CSV", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "ws_url": "-u"
+                }
             }
         }, 
-        "Transform.CSV-to-Transform.Pair": {
-            "cmd_args": {
-                "input": "-i", 
-                "output": "-o"
+        "uploader": {
+            "KBaseGenomes.Genome": {
+                "cmd_args": {
+                    "dir": "-l", 
+                    "outobj_id": "-o", 
+                    "ws_id": "-w", 
+                    "ws_url": "-u"
+                }, 
+                "cmd_description": "Uploader for GBK Genome", 
+                "cmd_name": "trns_upload_KBaseGenomes.Genome", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "etype": "-e", 
+                    "file": "-g", 
+                    "input": "-i", 
+                    "jid": "-j"
+                }
             }, 
-            "cmd_description": "Example CSV conversion to Transform.Pair typed object for Transform module", 
-            "cmd_name": "trns_transform_Transform.CSV-to-Transform.Pair", 
-            "max_runtime": 3600, 
-            "opt_args": {}
-        }, 
-        "KBaseGenomes.GBK": {
-            "cmd_args": {
-                "input": "-i"
-            }, 
-            "cmd_description": "GeneBank validator for KBaseGenomes module", 
-            "cmd_name": "trns_validate_KBaseGenomes.GBK", 
-            "max_runtime": 3600, 
-            "opt_args": {}
-        }, 
-        "KBaseGenomes.Genome": {
-            "cmd_args": {
-                "dir": "-l",
-                "ws_url": "-u",
-                "ws_id": "-w",
-                "outobj_id": "-o"
-            }, 
-            "cmd_description": "Uploader for GBK Genome", 
-            "cmd_name": "trns_upload_KBaseGenomes.Genome", 
-            "max_runtime": 3600, 
-            "opt_args": {
-                "input": "-i",
-                "etype": "-e",
-                "jid": "-j",
-                "file": "-g"
+            "Transform.Pair": {
+                "cmd_args": {
+                    "dir": "-l", 
+                    "outobj_id": "-o", 
+                    "ws_id": "-w", 
+                    "ws_url": "-u"
+                }, 
+                "cmd_description": "Uploader example using Transform.Pair", 
+                "cmd_name": "trns_upload_Transform.Pair", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "etype": "-e", 
+                    "file": "-g", 
+                    "input": "-i", 
+                    "jid": "-j"
+                }
             }
         }, 
-        "KBaseGenomes.GBK-to-KBaseGenomes.ContigSet": {
-            "cmd_args": {
-                "input": "-i", 
-                "output": "-o"
+        "validator": {
+            "KBaseAssembly.FA": {
+                "cmd_args": {
+                    "input": "-i"
+                }, 
+                "cmd_description": "FASTA validator for KBaseGenomes module", 
+                "cmd_name": "trns_validate_KBaseAssembly.FA", 
+                "max_runtime": 3600, 
+                "opt_args": {}
             }, 
-            "cmd_description": "GBK to ContigSet", 
-            "cmd_name": "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.ContigSet", 
-            "max_runtime": 3600, 
-            "opt_args": {}
-        }, 
-        "KBaseGenomes.GBK-to-KBaseGenomes.Genome": {
-            "cmd_args": {
-                "input": "-i", 
-                "output": "-o"
+            "KBaseAssembly.FQ": {
+                "cmd_args": {
+                    "input": "-i"
+                }, 
+                "cmd_description": "FASTQ validator for KBaseGenomes module", 
+                "cmd_name": "trns_validate_KBaseAssembly.FQ", 
+                "max_runtime": 3600, 
+                "opt_args": {}
             }, 
-            "cmd_description": "GBK to ContigSet", 
-            "cmd_name": "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome", 
-            "max_runtime": 3600, 
-            "opt_args": {
-                "contigset_ref": "-c"
-            }
-        }, 
-        "KBaseAssembly.FQ-to-KBaseAssembly.PairedEndLibrary": {
-            "cmd_args": {
-                "input": "-i", 
-                "output": "-o"
+            "KBaseGenomes.GBK": {
+                "cmd_args": {
+                    "input": "-i"
+                }, 
+                "cmd_description": "GeneBank validator for KBaseGenomes module", 
+                "cmd_name": "trns_validate_KBaseGenomes.GBK", 
+                "max_runtime": 3600, 
+                "opt_args": {}
             }, 
-            "cmd_args_override": {
-                "input": "shock_node_id" 
-            }, 
-            "cmd_description": "FQ to PairedEndLibrary", 
-            "cmd_name": "trns_transform_KBaseAssembly.FQ-to-KBaseAssembly.PairedEndLibrary", 
-            "max_runtime": 3600, 
-            "opt_args": {
-                "handle_service_url": "-n",
-                "shock_url": "-s"
-            }
-        }, 
-        "KBaseAssembly.FQ-to-KBaseAssembly.SingleEndLibrary": {
-            "cmd_args": {
-                "input": "-i", 
-                "output": "-o"
-            }, 
-            "cmd_args_override": {
-                "input": "shock_node_id" 
-            }, 
-            "cmd_description": "FQ to SingleEndLibrary", 
-            "cmd_name": "trns_transform_KBaseAssembly.FQ-to-KBaseAssembly.SingleEndLibrary", 
-            "max_runtime": 3600, 
-            "opt_args": {
-                "handle_service_url": "-n",
-                "shock_url": "-s"
-            }
-        }, 
-        "KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly": {
-            "cmd_args": {
-                "input": "-i", 
-                "output": "-o"
-            }, 
-            "cmd_args_override": {
-                "input": "shock_node_id" 
-            }, 
-            "cmd_description": "FA to ReferenceAssembly", 
-            "cmd_name": "trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly", 
-            "max_runtime": 3600, 
-            "opt_args": {
-                "reference_name": "-w",
-                "handle_service_url": "-n",
-                "shock_url": "-s"
-            }
-        }, 
-        "Transform.Pair-to-Transform.CSV": {
-            "cmd_args": {
-                "in_id": "-i", 
-                "output": "-o", 
-                "ws_id": "-w"
-            }, 
-            "cmd_description": "Example Transform.Pair to CSV conversion", 
-            "cmd_name": "trns_transform_Transform.Pair-to-Transform.CSV", 
-            "max_runtime": 3600, 
-            "opt_args": {
-                "ws_url": "-u"
+            "Transform.CSV": {
+                "cmd_args": {
+                    "input": "-i"
+                }, 
+                "cmd_description": "Example CSV validator for Transform module", 
+                "cmd_name": "trns_validate_Transform.CSV", 
+                "max_runtime": 3600, 
+                "opt_args": {}
             }
         }
     }

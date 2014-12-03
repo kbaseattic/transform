@@ -107,7 +107,7 @@ class Validator(TransformBase):
         # execute validation
         ## TODO: Add logging
         
-        if self.etype not in self.config:
+        if self.etype not in self.config['validator']:
           raise Exception("No validation script was registered for {}".format(self.etype))
 
         fd_list = []
@@ -147,6 +147,9 @@ class Uploader(Validator):
 
     def transformation_handler (self) :
         conv_type = "{}-to-{}".format(self.etype, self.kbtype)
+
+        if conv_type not in self.config['transformer']:
+          raise Exception("No conversion script was registered for {}".format(conv_type))
         vcmd_lst = [self.config['transformer'][conv_type]['cmd_name']]
         vcmd_lst.append(self.config['transformer'][conv_type]['cmd_args']['input'])
         if 'cmd_args_override' in self.config['transformer'][conv_type] and 'input' in self.config['transformer'][conv_type]['cmd_args_override']:

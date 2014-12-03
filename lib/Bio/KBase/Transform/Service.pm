@@ -32,6 +32,10 @@ our %return_counts = (
         'upload' => 1,
         'download' => 1,
         'version' => 1,
+        'methods' => 1,
+        'method_types' => 1,
+        'method_config' => 1,
+        'version' => 1,
 );
 
 our %method_authentication = (
@@ -39,6 +43,10 @@ our %method_authentication = (
         'validate' => 'required',
         'upload' => 'required',
         'download' => 'required',
+        'version' => 'required',
+        'methods' => 'required',
+        'method_types' => 'required',
+        'method_config' => 'required',
 );
 
 
@@ -50,6 +58,10 @@ sub _build_valid_methods
         'validate' => 1,
         'upload' => 1,
         'download' => 1,
+        'version' => 1,
+        'methods' => 1,
+        'method_types' => 1,
+        'method_config' => 1,
         'version' => 1,
     };
     return $methods;

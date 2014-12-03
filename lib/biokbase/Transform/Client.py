@@ -184,3 +184,23 @@ class Transform(object):
         resp = self._call('Transform.download',
                           [args])
         return resp[0]
+
+    def version(self):
+        resp = self._call('Transform.version',
+                          [])
+        return resp[0]
+
+    def methods(self):
+        resp = self._call('Transform.methods',
+                          [])
+        return resp[0]
+
+    def method_types(self, func):
+        resp = self._call('Transform.method_types',
+                          [func])
+        return resp[0]
+
+    def method_config(self, func, type):
+        resp = self._call('Transform.method_config',
+                          [func, type])
+        return resp[0]

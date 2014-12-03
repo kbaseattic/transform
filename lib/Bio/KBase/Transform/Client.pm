@@ -493,6 +493,328 @@ sub download
 
 
 
+=head2 version
+
+  $result = $obj->version()
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$result is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$result is a string
+
+
+=end text
+
+=item Description
+
+Returns the system version number
+TODO: support specific function version
+
+=back
+
+=cut
+
+sub version
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 0)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function version (received $n, expecting 0)");
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "Transform.version",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'version',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method version",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'version',
+				       );
+    }
+}
+
+
+
+=head2 methods
+
+  $results = $obj->methods()
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$results is a reference to a list where each element is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$results is a reference to a list where each element is a string
+
+
+=end text
+
+=item Description
+
+Returns all available functions
+
+=back
+
+=cut
+
+sub methods
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 0)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function methods (received $n, expecting 0)");
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "Transform.methods",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'methods',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method methods",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'methods',
+				       );
+    }
+}
+
+
+
+=head2 method_types
+
+  $results = $obj->method_types($func)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$func is a string
+$results is a reference to a list where each element is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$func is a string
+$results is a reference to a list where each element is a string
+
+
+=end text
+
+=item Description
+
+Returns supported types of the function.
+
+=back
+
+=cut
+
+sub method_types
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function method_types (received $n, expecting 1)");
+    }
+    {
+	my($func) = @args;
+
+	my @_bad_arguments;
+        (!ref($func)) or push(@_bad_arguments, "Invalid type for argument 1 \"func\" (value was \"$func\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to method_types:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'method_types');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "Transform.method_types",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'method_types',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method method_types",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'method_types',
+				       );
+    }
+}
+
+
+
+=head2 method_config
+
+  $result = $obj->method_config($func, $type)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$func is a string
+$type is a string
+$result is a CommandConfig
+CommandConfig is a reference to a hash where the following keys are defined:
+	cmd_name has a value which is a string
+	cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_description has a value which is a string
+	max_runtime has a value which is an int
+	opt_args has a value which is a reference to a hash where the key is a string and the value is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$func is a string
+$type is a string
+$result is a CommandConfig
+CommandConfig is a reference to a hash where the following keys are defined:
+	cmd_name has a value which is a string
+	cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_description has a value which is a string
+	max_runtime has a value which is an int
+	opt_args has a value which is a reference to a hash where the key is a string and the value is a string
+
+
+=end text
+
+=item Description
+
+Returns CommandConfig for the function and type.
+For validator, type has to be the form of <Associated KBase Module>.<external type>.
+For instance, GenBank format (GBK) is associated to KBaseGenomes' typed object.
+So, the external type should be KBaseGenomes.GBK, which can be find by method_types function call.
+In case of transformer, it requires source type and KBase typed object.
+<Associated KBase Module>.<external type>-to-<KBase Module>.<KBase type>. 
+``KBaseGenomes.GBK-to-KBaseGenomes.Genome'' will be the input type for method_config
+
+=back
+
+=cut
+
+sub method_config
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 2)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function method_config (received $n, expecting 2)");
+    }
+    {
+	my($func, $type) = @args;
+
+	my @_bad_arguments;
+        (!ref($func)) or push(@_bad_arguments, "Invalid type for argument 1 \"func\" (value was \"$func\")");
+        (!ref($type)) or push(@_bad_arguments, "Invalid type for argument 2 \"type\" (value was \"$type\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to method_config:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'method_config');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "Transform.method_config",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'method_config',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method method_config",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'method_config',
+				       );
+    }
+}
+
+
+
 sub version {
     my ($self) = @_;
     my $result = $self->{client}->call($self->{url}, $self->{headers}, {
@@ -504,16 +826,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'download',
+                method_name => 'method_config',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method download",
+            error => "Error invoking method method_config",
             status_line => $self->{client}->status_line,
-            method_name => 'download',
+            method_name => 'method_config',
         );
     }
 }
@@ -1026,6 +1348,7 @@ optional argument that is provided by json string. key is argument name and the 
 a reference to a hash where the following keys are defined:
 cmd_name has a value which is a string
 cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
 cmd_description has a value which is a string
 max_runtime has a value which is an int
 opt_args has a value which is a reference to a hash where the key is a string and the value is a string
@@ -1039,6 +1362,7 @@ opt_args has a value which is a reference to a hash where the key is a string an
 a reference to a hash where the following keys are defined:
 cmd_name has a value which is a string
 cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
 cmd_description has a value which is a string
 max_runtime has a value which is an int
 opt_args has a value which is a reference to a hash where the key is a string and the value is a string
@@ -1060,7 +1384,7 @@ opt_args has a value which is a reference to a hash where the key is a string an
 
 each external type validator or external type to internal type pair transformer script configuration 
 "validator" => "KBaseGenome.GBK" => { "cmd_name" => "trns_validate_KBaseGenomes.GBK", ... } 
- where "validator" is the type of command and "transform", "download", and "upload" are supported;
+ where "validator" is the type of command and "transformer", "downloader", and "uploader" are supported;
  "KBaseGenomes.GBK" is the source type and KBaseGenomes is the module to use external GBK file type
  and for "transform" it requires the source type and the kb type togeter. 
  "transform" =>"KBaseGenomes.GBK-to-KBaseGenomes.Genome" => {"cmd_name" => "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome", ... }

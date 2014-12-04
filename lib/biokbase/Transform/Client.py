@@ -258,6 +258,7 @@ class Transform(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
 
     def download(self, args):
+<<<<<<< HEAD
 
         arg_hash = {'method': 'Transform.download',
                     'params': [args],
@@ -291,3 +292,28 @@ class Transform(object):
             return resp['result'][0]
         else:
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
+=======
+        resp = self._call('Transform.download',
+                          [args])
+        return resp[0]
+
+    def version(self):
+        resp = self._call('Transform.version',
+                          [])
+        return resp[0]
+
+    def methods(self):
+        resp = self._call('Transform.methods',
+                          [])
+        return resp[0]
+
+    def method_types(self, func):
+        resp = self._call('Transform.method_types',
+                          [func])
+        return resp[0]
+
+    def method_config(self, func, type):
+        resp = self._call('Transform.method_config',
+                          [func, type])
+        return resp[0]
+>>>>>>> 71647cf5cbc5874bad3253a1dce8d0dc5ec9cc13

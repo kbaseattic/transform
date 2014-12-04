@@ -107,7 +107,7 @@ class Validator(TransformBase):
         # execute validation
         ## TODO: Add logging
         
-        if self.etype not in self.config:
+        if self.etype not in self.config['validator']:
           raise Exception("No validation script was registered for {}".format(self.etype))
 
         fd_list = []
@@ -117,13 +117,13 @@ class Validator(TransformBase):
           fd_list = glob.glob("{}/{}_*".format(self.sdir,self.itmp))
 
         for fd in fd_list:
-          vcmd_lst = [self.config[self.etype]['cmd_name'], self.config[self.etype]['cmd_args']['input'], fd]
+          vcmd_lst = [self.config['validator'][self.etype]['cmd_name'], self.config['validator'][self.etype]['cmd_args']['input'], fd]
          
           if 'validator' in self.opt_args:
             opt_args = self.opt_args['validator']
             for k in opt_args:
-              if k in self.config[etype]['opt_args']:
-                vcmd_lst.append(self.config[self.etype]['opt_args'][k])
+              if k in self.config['validator'][etype]['opt_args'] and opt_args[k] is not None:
+                vcmd_lst.append(self.config['validator'][self.etype]['opt_args'][k])
                 vcmd_lst.append(opt_args[k])
                
           p1 = Popen(vcmd_lst, stdout=PIPE)
@@ -147,24 +147,27 @@ class Uploader(Validator):
 
     def transformation_handler (self) :
         conv_type = "{}-to-{}".format(self.etype, self.kbtype)
-        vcmd_lst = [self.config[conv_type]['cmd_name']]
-        vcmd_lst.append(self.config[conv_type]['cmd_args']['input'])
-        if 'input' in self.config[conv_type]['cmd_args_overide']:
-          if self.config[conv_type]['cmd_args_overide']['input'] == 'shock_node_id': # use shock node id
+
+        if conv_type not in self.config['transformer']:
+          raise Exception("No conversion script was registered for {}".format(conv_type))
+        vcmd_lst = [self.config['transformer'][conv_type]['cmd_name']]
+        vcmd_lst.append(self.config['transformer'][conv_type]['cmd_args']['input'])
+        if 'cmd_args_override' in self.config['transformer'][conv_type] and 'input' in self.config['transformer'][conv_type]['cmd_args_override']:
+          if self.config['transformer'][conv_type]['cmd_args_override']['input'] == 'shock_node_id': # use shock node id
             vcmd_lst.append(self.inobj_id)
           else: vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # not defined yet
         else: vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # default input is the input file or folder
 
-        vcmd_lst.append(self.config[conv_type]['cmd_args']['output'])
-        if 'output' in self.config[conv_type]['cmd_args_overide']:
+        vcmd_lst.append(self.config['transformer'][conv_type]['cmd_args']['output'])
+        if 'cmd_args_override' in self.config['transformer'][conv_type] and 'output' in self.config['transformer'][conv_type]['cmd_args_override']:
           vcmd_lst.append("{}/{}".format(self.sdir,self.otmp)) # not defined yet
         else: vcmd_lst.append("{}/{}".format(self.sdir,self.otmp))
     
         if 'transformer' in self.opt_args:
           opt_args = self.opt_args['transformer']
           for k in opt_args:
-            if k in self.config[conv_type]['opt_args']:
-              vcmd_lst.append(self.config[conv_type]['opt_args'][k])
+            if k in self.config['transformer'][conv_type]['opt_args'] and opt_args[k] is not None:
+              vcmd_lst.append(self.config['transformer'][conv_type]['opt_args'][k])
               vcmd_lst.append(opt_args[k])
     
         p1 = Popen(vcmd_lst, stdout=PIPE)
@@ -178,16 +181,18 @@ class Uploader(Validator):
 
     def upload_handler (self) :
         
-        if self.kbtype in self.config: # upload handler is registered
-          vcmd_lst = [self.config[self.kbtype]['cmd_name'], self.config[self.kbtype]['cmd_args']['ws_url'], self.ws_url, self.config[self.kbtype]['cmd_args']['ws_id'], self.ws_id, self.config[self.kbtype]['cmd_args']['outobj_id'], self.outobj_id,  self.config[self.kbtype]['cmd_args']['dir'], self.sdir ]
+        if self.kbtype in self.config['uploader']: # upload handler is registered
+          vcmd_lst = [self.config['uploader'][self.kbtype]['cmd_name'], self.config['uploader'][self.kbtype]['cmd_args']['ws_url'], self.ws_url, self.config['uploader'][self.kbtype]['cmd_args']['ws_id'], self.ws_id, self.config['uploader'][self.kbtype]['cmd_args']['outobj_id'], self.outobj_id,  self.config['uploader'][self.kbtype]['cmd_args']['dir'], self.sdir ]
          
           if 'uploader' in self.opt_args:
             opt_args = self.opt_args['uploader']
             for k in opt_args:
-              if k in self.config[self.kbtype]['opt_args']:
-                vcmd_lst.append(self.config[self.kbtype]['opt_args'][k])
+              if k in self.config['uploader'][self.kbtype]['opt_args'] and opt_args[k] is not None:
+                vcmd_lst.append(self.config['uploader'][self.kbtype]['opt_args'][k])
                 vcmd_lst.append(opt_args[k])
-         
+
+          print vcmd_lst
+
           p1 = Popen(vcmd_lst, stdout=PIPE)
           out_str = p1.communicate()
           # print output message for error tracking

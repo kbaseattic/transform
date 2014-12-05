@@ -2,25 +2,33 @@
 import argparse
 import sys
 import os
+import os.path
+import io
 import time
 import traceback
-import sys
 import ctypes
 import subprocess
 from subprocess import Popen, PIPE
 import shutil
 from optparse import OptionParser
-from biokbase.workspace.client import Workspace
+import requests
+from requests_toolbelt import MulitpartEncoder
 import urllib
 import urllib2
 import json
 import tarfile
 import zipfile
-try :
-  from cStringIO import StringIO
-except:
-  from StringIO import StringIO
 import glob
+
+try:
+    from cStringIO import StringIO
+except:
+    from StringIO import StringIO
+
+
+from biokbase.workspace.client import Workspace
+
+
 
 BUF_SIZE = 8*1024 # default HTTP LIB client buffer_size
 
@@ -33,7 +41,39 @@ class TransformBase:
         self.sdir = args.sdir
         self.itmp = args.itmp
         self.token = os.environ.get('KB_AUTH_TOKEN')
+        self.ssl_verify = True
 
+
+    def upload_to_shock(self, filePath):
+        if self.token is None:
+            raise Exception("Unable to find token!")
+    
+        #build the header
+        header = dict()
+        header["Authorization"] = "Oauth %s" % token
+
+        dataFile = open(os.path.abspath(filePath))
+        m = MultipartEncoder(fields={'upload': (os.path.split(filePath)[-1], dataFile)})
+        header['Content-Type'] = m.content_type
+
+        try:
+            response = requests.post(self.shock_url + "/node", headers=header, data=m, allow_redirects=True, verify=ssl_verify)
+            dataFile.close()
+    
+            if not response.ok:
+                response.raise_for_status()
+
+            result = response.json()
+
+            if result['error']:
+                raise Exception(result['error'][0])
+            else:
+                return result["data"]    
+        except:
+            dataFile.close()
+            raise
+    
+    
     def download_shock_data(self) :
         # TODO: Improve folder checking
         try:
@@ -44,44 +84,44 @@ class TransformBase:
         inids = self.inobj_id.split(',')
     
         for i in range(len(inids)):
-          meta_req = urllib2.Request("{}/node/{}".format(self.shock_url, inids[i]))
-          meta_req.add_header('Authorization',"OAuth {}".format(self.token))
-          data_req = urllib2.Request("{}/node/{}?download_raw".format(self.shock_url, inids[i]))
-          data_req.add_header('Authorization',"OAuth {}".format(self.token))
+            meta_req = urllib2.Request("{}/node/{}".format(self.shock_url, inids[i]))
+            meta_req.add_header('Authorization',"OAuth {}".format(self.token))
+            data_req = urllib2.Request("{}/node/{}?download_raw".format(self.shock_url, inids[i]))
+            data_req.add_header('Authorization',"OAuth {}".format(self.token))
       
-          meta = urllib2.urlopen(meta_req)
-          md = json.loads(meta.read())
-          meta.close()
+            meta = urllib2.urlopen(meta_req)
+            md = json.loads(meta.read())
+            meta.close()
       
-          rdata = urllib2.urlopen(data_req)
+            rdata = urllib2.urlopen(data_req)
  
-          data = StringIO(rdata.read())
-          magic = data.read(4)
-          data.seek(0)
+            data = StringIO(rdata.read())
+            magic = data.read(4)
+            data.seek(0)
           
-          if magic.startswith('\x1f\x8b') or magic.startswith('\x42\x5a') : # gz or bz
-            my_tar = tarfile.open(fileobj=data, mode="r|*", bufsize=BUF_SIZE) 
-            if len(inids) > 1 :
-              my_tar.extractall(path="{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)))
-            else:
-              my_tar.extractall(path="{}/{}".format(self.sdir, self.itmp))
-            my_tar.close()
-          elif magic == '\x50\x4b\x03\x04': # zip
-            my_zip = zipfile.ZipFile(data, mode="r")
-            if len(inids) > 1 :
-              my_zip.extractall(path="{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)))
-            else:
-              my_zip.extractall(path="{}/{}".format(self.sdir, self.itmp))
-            my_zip.close()
-          else:  
-            if len(inids) > 1 :
-              dif = open("{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)),'w')
-            else:
-              dif = open("{}/{}".format(self.sdir, self.itmp),'w')
-            dif.write(data.read())
-            dif.close()
-          rdata.close()
-          data.close()
+            if magic.startswith('\x1f\x8b') or magic.startswith('\x42\x5a') : # gz or bz
+                my_tar = tarfile.open(fileobj=data, mode="r|*", bufsize=BUF_SIZE) 
+                if len(inids) > 1 :
+                    my_tar.extractall(path="{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)))
+                else:
+                    my_tar.extractall(path="{}/{}".format(self.sdir, self.itmp))
+                my_tar.close()
+            elif magic == '\x50\x4b\x03\x04': # zip
+                my_zip = zipfile.ZipFile(data, mode="r")
+                if len(inids) > 1 :
+                    my_zip.extractall(path="{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)))
+                else:
+                    my_zip.extractall(path="{}/{}".format(self.sdir, self.itmp))
+                my_zip.close()
+            else:  
+                if len(inids) > 1 :
+                    dif = open("{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)),'w')
+                else:
+                    dif = open("{}/{}".format(self.sdir, self.itmp),'w')
+                dif.write(data.read())
+                dif.close()
+            rdata.close()
+            data.close()
 
 
 

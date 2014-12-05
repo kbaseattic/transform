@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 import shutil
 from optparse import OptionParser
 import requests
-from requests_toolbelt import MulitpartEncoder
+from requests_toolbelt import MultipartEncoder
 import urllib
 import urllib2
 import json

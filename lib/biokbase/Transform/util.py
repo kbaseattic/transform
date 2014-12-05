@@ -40,13 +40,15 @@ class TransformBase:
         self.inobj_id = args.inobj_id
         self.sdir = args.sdir
         self.itmp = args.itmp
+        self.otmp = args.otmp
         self.token = os.environ.get('KB_AUTH_TOKEN')
         self.ssl_verify = True
 
 
-    def upload_to_shock(self, filePath):
+    def upload_to_shock(self):
         if self.token is None:
             raise Exception("Unable to find token!")
+        filePath = "{}/{}".format(self.sdir,self.otmp)
     
         #build the header
         header = dict()
@@ -179,7 +181,6 @@ class Uploader(Validator):
     def __init__(self, args):
         Validator.__init__(self, args)
         self.kbtype = args.kbtype
-        self.otmp = args.otmp
         self.ws_id = args.ws_id
         self.outobj_id = args.outobj_id
         self.jid = args.jid
@@ -263,3 +264,63 @@ class Uploader(Validator):
           'type' : self.kbtype, 'data' : data, 'name' : self.outobj_id, 
           'meta' : { 'source_id' : self.inobj_id, 'source_type' : self.etype,
                      'ujs_job_id' : self.jid} } ]})
+
+
+class Downloader(TransformBase):
+    def __init__(self, args):
+        TransformBase.__init__(self,args)
+        self.ws_url = args.ws_url
+        self.cfg_name = args.cfg_name
+        self.sws_id = args.sws_id
+        self.etype = args.etype
+        self.opt_args = args.opt_args
+        self.kbtype = args.kbtype
+        self.otmp = args.otmp
+        self.ws_id = args.ws_id
+        self.outobj_id = args.outobj_id
+        self.jid = args.jid
+
+        # download ws object and find where the validation script is located
+        self.wsd = Workspace(url=self.ws_url, token=self.token)
+        self.config = self.wsd.get_object({'id' : self.cfg_name, 'workspace' : self.sws_id})['data']['config_map']
+     
+        if self.config is None:
+            raise Exception("Object {} not found in workspace {}".format(self.cfg_name, self.sws_id))
+    
+    def download_ws_data () :
+        try:
+            os.mkdir(self.sdir)
+        except:
+            pass
+    
+        dif = open("{}/{}".format(self.sdir, "{}".format(self.itmp)),'w')
+        data = self.wsd.get_object({'id' : self.inobj_id 'workspace' : self.ws_id})['data']
+        json.dump(data,dif)
+        dif.close()
+
+
+    def download_handler (ws_url, cfg_name, sws_id, ws_id, in_id, etype, kbtype, sdir, otmp, opt_args, ujs_url, ujs_jid) :
+    
+        conv_type = "{}-to-{}".format(self.kbtype, self.etype)
+        if conv_type  not in self.config['downloader'] or 'ws_id'  not in self.config['downloader'][conv_type]['cmd_args'] or 'in_id'  not in self.config['downloader'][conv_type]['cmd_args'] or 'output' not in self.config['downloader'][conv_type]['cmd_args']:
+            raise Exception("{} to {} conversion was not properly defined!".format(kbtype, etype))
+        vcmd_lst = [self.config['downloader'][conv_type]['cmd_name'], 
+                    self.config['downloader'][conv_type]['cmd_args']['ws_id'], ws_id, 
+                    self.config['downloader'][conv_type]['cmd_args']['in_id'], in_id, 
+                    self.config['downloader'][conv_type]['cmd_args']['output'],"{}/{}".format(sdir,otmp)]
+    
+        if 'downloader' in self.opt_args:
+            opt_args = self.opt_args['downloader']
+            for k in opt_args:
+                if k in self.config['downloader'][conv_type]['opt_args'] and opt_args[k] is not None:
+                    vcmd_lst.append(self.config['downloader'][conv_type]['opt_args'][k])
+                    vcmd_lst.append(opt_args[k])
+    
+        p1 = Popen(vcmd_lst, stdout=PIPE)
+        out_str = p1.communicate()
+
+        if out_str[0] is not None : print out_str[0]
+        if out_str[1] is not None : print >> sys.stderr, out_str[1]
+    
+        if p1.returncode != 0: 
+            raise Exception(out_str[1])

@@ -114,4 +114,6 @@ if __name__ == "__main__":
         except:
           pass
 
+    if args.jid is not None:
+      ujs.complete_job(args.jid, kb_token, 'Succeed', None, {"shocknodes" : [], "shockurl" : args.shock_url, "workspaceids" : [], "workspaceurl" : args.ws_url ,"results" : [{"server_type" : "Workspace", "url" : args.ws_url, "id" : "None", "description" : "description"}]})
     exit(0);

@@ -52,14 +52,14 @@ class TransformBase:
     
         #build the header
         header = dict()
-        header["Authorization"] = "Oauth %s" % token
+        header["Authorization"] = "Oauth %s" % self.token
 
         dataFile = open(os.path.abspath(filePath))
         m = MultipartEncoder(fields={'upload': (os.path.split(filePath)[-1], dataFile)})
         header['Content-Type'] = m.content_type
 
         try:
-            response = requests.post(self.shock_url + "/node", headers=header, data=m, allow_redirects=True, verify=ssl_verify)
+            response = requests.post(self.shock_url + "/node", headers=header, data=m, allow_redirects=True, verify=self.ssl_verify)
             dataFile.close()
     
             if not response.ok:
@@ -77,6 +77,8 @@ class TransformBase:
     
     
     def download_shock_data(self) :
+        if self.token is None:
+            raise Exception("Unable to find token!")
         # TODO: Improve folder checking
         try:
             os.mkdir(self.sdir)
@@ -184,6 +186,7 @@ class Uploader(Validator):
         self.ws_id = args.ws_id
         self.outobj_id = args.outobj_id
         self.jid = args.jid
+        self.otmp = args.otmp
 
 
     def transformation_handler (self) :
@@ -275,9 +278,9 @@ class Downloader(TransformBase):
         self.etype = args.etype
         self.opt_args = args.opt_args
         self.kbtype = args.kbtype
-        self.otmp = args.otmp
+        #self.otmp = args.otmp
         self.ws_id = args.ws_id
-        self.outobj_id = args.outobj_id
+        #self.outobj_id = args.outobj_id
         self.jid = args.jid
 
         # download ws object and find where the validation script is located
@@ -287,33 +290,33 @@ class Downloader(TransformBase):
         if self.config is None:
             raise Exception("Object {} not found in workspace {}".format(self.cfg_name, self.sws_id))
     
-    def download_ws_data () :
+    def download_ws_data (self) :
         try:
             os.mkdir(self.sdir)
         except:
             pass
     
         dif = open("{}/{}".format(self.sdir, "{}".format(self.itmp)),'w')
-        data = self.wsd.get_object({'id' : self.inobj_id 'workspace' : self.ws_id})['data']
+        data = self.wsd.get_object({'id' : self.inobj_id, 'workspace' : self.ws_id})['data']
         json.dump(data,dif)
         dif.close()
 
 
-    def download_handler (ws_url, cfg_name, sws_id, ws_id, in_id, etype, kbtype, sdir, otmp, opt_args, ujs_url, ujs_jid) :
+    #def download_handler (ws_url, cfg_name, sws_id, ws_id, in_id, etype, kbtype, sdir, otmp, opt_args, ujs_url, ujs_jid) :
+    def download_handler (self) :
     
         conv_type = "{}-to-{}".format(self.kbtype, self.etype)
-        if conv_type  not in self.config['downloader'] or 'ws_id'  not in self.config['downloader'][conv_type]['cmd_args'] or 'in_id'  not in self.config['downloader'][conv_type]['cmd_args'] or 'output' not in self.config['downloader'][conv_type]['cmd_args']:
-            raise Exception("{} to {} conversion was not properly defined!".format(kbtype, etype))
-        vcmd_lst = [self.config['downloader'][conv_type]['cmd_name'], 
-                    self.config['downloader'][conv_type]['cmd_args']['ws_id'], ws_id, 
-                    self.config['downloader'][conv_type]['cmd_args']['in_id'], in_id, 
-                    self.config['downloader'][conv_type]['cmd_args']['output'],"{}/{}".format(sdir,otmp)]
+        if conv_type  not in self.config['transformer'] or 'input'  not in self.config['transformer'][conv_type]['cmd_args'] or 'output'  not in self.config['transformer'][conv_type]['cmd_args'] :
+            raise Exception("{} to {} conversion was not properly defined!".format(self.kbtype, self.etype))
+        vcmd_lst = [self.config['transformer'][conv_type]['cmd_name'], 
+                    self.config['transformer'][conv_type]['cmd_args']['input'], "{}/{}".format(self.sdir,self.itmp), 
+                    self.config['transformer'][conv_type]['cmd_args']['output'],"{}/{}".format(self.sdir,self.otmp)]
     
-        if 'downloader' in self.opt_args:
-            opt_args = self.opt_args['downloader']
+        if 'transformer' in self.opt_args:
+            opt_args = self.opt_args['transformer']
             for k in opt_args:
-                if k in self.config['downloader'][conv_type]['opt_args'] and opt_args[k] is not None:
-                    vcmd_lst.append(self.config['downloader'][conv_type]['opt_args'][k])
+                if k in self.config['transformer'][conv_type]['opt_args'] and opt_args[k] is not None:
+                    vcmd_lst.append(self.config['transformer'][conv_type]['opt_args'][k])
                     vcmd_lst.append(opt_args[k])
     
         p1 = Popen(vcmd_lst, stdout=PIPE)

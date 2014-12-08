@@ -15,8 +15,10 @@ import urllib
 import urllib2
 import json
 from biokbase import log
+from biokbase.userandjobstate.client import UserAndJobState
 from biokbase.Transform.util import Downloader
 import mmap
+import datetime
 
 desc1 = '''
 NAME
@@ -64,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
 
     parser.add_argument('-r', '--ujs_url', help='UJS url', action='store', dest='ujs_url', default='https://kbase.us/services/userandjobstate')
-    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=True)
+    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=False)
 
     parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=True)
     parser.add_argument('-t', '--kbase_type', help='KBase object type', action='store', dest='kbtype', default=None, required=True)
@@ -113,7 +115,7 @@ if __name__ == "__main__":
       ujs.update_job_progress(args.jid, kb_token, 'Data downloaded', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
     try:
-      uploader.download_handler()
+      downloader.download_handler()
     except:
       if args.jid is not None:
         e,v = sys.exc_info()[:2]
@@ -125,9 +127,9 @@ if __name__ == "__main__":
     if args.jid is not None:
       ujs.update_job_progress(args.jid, kb_token, 'Data converted', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
-    result
+    result = {}
     try:
-      result = uploader.upload_to_shock()
+      result = downloader.upload_to_shock()
     except:
       e,v = sys.exc_info()[:2]
       if args.jid is not None:
@@ -136,6 +138,7 @@ if __name__ == "__main__":
         traceback.print_exc(file=sys.stderr)
         print >> sys.stderr, 'Failed : data upload to shock\n{}:{}'.format(str(e),str(v))
       exit(5);
+    print result
 
     # clean-up
     if(args.del_tmps is "true") :
@@ -146,5 +149,7 @@ if __name__ == "__main__":
 
     # TODO: Fix outobj_id to shock node id or we don't need shock node id...
     if args.jid is not None:
-      ujs.complete_job(args.jid, kb_token, 'Succeed', None, {"shocknodes" : [], "shockurl" : args.shock_url, "workspaceids" : [], "workspaceurl" : args.ws_url ,"results" : [{"server_type" : "shock", "url" : args.shock_url, "id" : "{}".format(args.outobj_id), "description" : "description"}]})
+      ujs.complete_job(args.jid, kb_token, 'Succeed', None, {"shocknodes" : [result['id']], "shockurl" : args.shock_url, "workspaceids" : [], "workspaceurl" : args.ws_url ,"results" : [{"server_type" : "shock", "url" : args.shock_url, "id" : result['id'], "description" : "description"}]})
+    else:
+      print "{}/node/{}?download_raw".format(args.shock_url, result['id'])
     exit(0);

@@ -84,9 +84,8 @@
             }, 
             "Transform.Pair-to-Transform.CSV": {
                 "cmd_args": {
-                    "in_id": "-i", 
-                    "output": "-o", 
-                    "ws_id": "-w"
+                    "input": "-i", 
+                    "output": "-o" 
                 }, 
                 "cmd_description": "Example Transform.Pair to CSV conversion", 
                 "cmd_name": "trns_transform_Transform.Pair-to-Transform.CSV", 

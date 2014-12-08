@@ -1,10 +1,17 @@
 package Bio::KBase::Transform::Client;
 
 use JSON::RPC::Client;
+use POSIX;
 use strict;
 use Data::Dumper;
 use URI;
 use Bio::KBase::Exceptions;
+my $get_time = sub { time, 0 };
+eval {
+    require Time::HiRes;
+    $get_time = sub { Time::HiRes::gettimeofday() };
+};
+
 use Bio::KBase::AuthToken;
 
 # Client version should match Impl version
@@ -32,7 +39,41 @@ sub new
     my $self = {
 	client => Bio::KBase::Transform::Client::RpcClient->new,
 	url => $url,
+	headers => [],
     };
+
+    chomp($self->{hostname} = `hostname`);
+    $self->{hostname} ||= 'unknown-host';
+
+    #
+    # Set up for propagating KBRPC_TAG and KBRPC_METADATA environment variables through
+    # to invoked services. If these values are not set, we create a new tag
+    # and a metadata field with basic information about the invoking script.
+    #
+    if ($ENV{KBRPC_TAG})
+    {
+	$self->{kbrpc_tag} = $ENV{KBRPC_TAG};
+    }
+    else
+    {
+	my ($t, $us) = &$get_time();
+	$us = sprintf("%06d", $us);
+	my $ts = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
+	$self->{kbrpc_tag} = "C:$0:$self->{hostname}:$$:$ts";
+    }
+    push(@{$self->{headers}}, 'Kbrpc-Tag', $self->{kbrpc_tag});
+
+    if ($ENV{KBRPC_METADATA})
+    {
+	$self->{kbrpc_metadata} = $ENV{KBRPC_METADATA};
+	push(@{$self->{headers}}, 'Kbrpc-Metadata', $self->{kbrpc_metadata});
+    }
+
+    if ($ENV{KBRPC_ERROR_DEST})
+    {
+	$self->{kbrpc_error_dest} = $ENV{KBRPC_ERROR_DEST};
+	push(@{$self->{headers}}, 'Kbrpc-Errordest', $self->{kbrpc_error_dest});
+    }
 
     #
     # This module requires authentication.
@@ -79,10 +120,10 @@ sub new
 =begin html
 
 <pre>
-$args is a Transform.ImportParam
+$args is an ImportParam
 $result is a string
 ImportParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
+	etype has a value which is a type_string
 	url has a value which is a string
 	ws_name has a value which is a string
 	obj_name has a value which is a string
@@ -95,10 +136,10 @@ type_string is a string
 
 =begin text
 
-$args is a Transform.ImportParam
+$args is an ImportParam
 $result is a string
 ImportParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
+	etype has a value which is a type_string
 	url has a value which is a string
 	ws_name has a value which is a string
 	obj_name has a value which is a string
@@ -139,7 +180,7 @@ sub import_data
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
 	method => "Transform.import_data",
 	params => \@args,
     });
@@ -174,11 +215,11 @@ sub import_data
 =begin html
 
 <pre>
-$args is a Transform.ValidateParam
+$args is a ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	in_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	in_id has a value which is a shock_id
 	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
@@ -189,11 +230,11 @@ shock_id is a string
 
 =begin text
 
-$args is a Transform.ValidateParam
+$args is a ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	in_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	in_id has a value which is a shock_id
 	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
@@ -232,7 +273,7 @@ sub validate
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
 	method => "Transform.validate",
 	params => \@args,
     });
@@ -267,12 +308,12 @@ sub validate
 =begin html
 
 <pre>
-$args is a Transform.UploadParam
+$args is an UploadParam
 $result is a reference to a list where each element is a string
 UploadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	kb_type has a value which is a Transform.type_string
-	in_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	kb_type has a value which is a type_string
+	in_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 	optional_args has a value which is a string
@@ -285,12 +326,12 @@ shock_id is a string
 
 =begin text
 
-$args is a Transform.UploadParam
+$args is an UploadParam
 $result is a reference to a list where each element is a string
 UploadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	kb_type has a value which is a Transform.type_string
-	in_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	kb_type has a value which is a type_string
+	in_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 	optional_args has a value which is a string
@@ -331,7 +372,7 @@ sub upload
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
 	method => "Transform.upload",
 	params => \@args,
     });
@@ -366,12 +407,12 @@ sub upload
 =begin html
 
 <pre>
-$args is a Transform.DownloadParam
+$args is a DownloadParam
 $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	kb_type has a value which is a Transform.type_string
-	out_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	kb_type has a value which is a type_string
+	out_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 type_string is a string
@@ -383,12 +424,12 @@ shock_id is a string
 
 =begin text
 
-$args is a Transform.DownloadParam
+$args is a DownloadParam
 $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	kb_type has a value which is a Transform.type_string
-	out_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	kb_type has a value which is a type_string
+	out_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 type_string is a string
@@ -428,7 +469,7 @@ sub download
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
 	method => "Transform.download",
 	params => \@args,
     });
@@ -454,7 +495,7 @@ sub download
 
 sub version {
     my ($self) = @_;
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
         method => "Transform.version",
         params => [],
     });
@@ -600,7 +641,7 @@ optional shock_url
 
 <pre>
 a reference to a hash where the following keys are defined:
-id has a value which is a Transform.shock_id
+id has a value which is a shock_id
 shock_url has a value which is a string
 
 </pre>
@@ -610,7 +651,7 @@ shock_url has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-id has a value which is a Transform.shock_id
+id has a value which is a shock_id
 shock_url has a value which is a string
 
 
@@ -637,9 +678,9 @@ mapping<string,string> optional_args; // optarg paramters
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
+etype has a value which is a type_string
 default_source_url has a value which is a string
-script has a value which is a Transform.shock_ref
+script has a value which is a shock_ref
 
 </pre>
 
@@ -648,9 +689,9 @@ script has a value which is a Transform.shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
+etype has a value which is a type_string
 default_source_url has a value which is a string
-script has a value which is a Transform.shock_ref
+script has a value which is a shock_ref
 
 
 =end text
@@ -676,7 +717,7 @@ mapping<string, string> optional_args; // optarg key and values
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
+etype has a value which is a type_string
 url has a value which is a string
 ws_name has a value which is a string
 obj_name has a value which is a string
@@ -689,7 +730,7 @@ ext_source_name has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
+etype has a value which is a type_string
 url has a value which is a string
 ws_name has a value which is a string
 obj_name has a value which is a string
@@ -714,8 +755,8 @@ ext_source_name has a value which is a string
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-validation_script has a value which is a Transform.shock_ref
+etype has a value which is a type_string
+validation_script has a value which is a shock_ref
 
 </pre>
 
@@ -724,8 +765,8 @@ validation_script has a value which is a Transform.shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-validation_script has a value which is a Transform.shock_ref
+etype has a value which is a type_string
+validation_script has a value which is a shock_ref
 
 
 =end text
@@ -751,8 +792,8 @@ json string
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-in_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+in_id has a value which is a shock_id
 optional_args has a value which is a string
 
 </pre>
@@ -762,8 +803,8 @@ optional_args has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-in_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+in_id has a value which is a shock_id
 optional_args has a value which is a string
 
 
@@ -785,9 +826,9 @@ optional_args has a value which is a string
 
 <pre>
 a reference to a hash where the following keys are defined:
-validator has a value which is a Transform.Validator
-kb_type has a value which is a Transform.type_string
-translation_script has a value which is a Transform.shock_ref
+validator has a value which is a Validator
+kb_type has a value which is a type_string
+translation_script has a value which is a shock_ref
 
 </pre>
 
@@ -796,9 +837,9 @@ translation_script has a value which is a Transform.shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-validator has a value which is a Transform.Validator
-kb_type has a value which is a Transform.type_string
-translation_script has a value which is a Transform.shock_ref
+validator has a value which is a Validator
+kb_type has a value which is a type_string
+translation_script has a value which is a shock_ref
 
 
 =end text
@@ -824,9 +865,9 @@ json string
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-kb_type has a value which is a Transform.type_string
-in_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+kb_type has a value which is a type_string
+in_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 optional_args has a value which is a string
@@ -838,9 +879,9 @@ optional_args has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-kb_type has a value which is a Transform.type_string
-in_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+kb_type has a value which is a type_string
+in_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 optional_args has a value which is a string
@@ -864,9 +905,9 @@ optional_args has a value which is a string
 
 <pre>
 a reference to a hash where the following keys are defined:
-kb_type has a value which is a Transform.type_string
-ext_type has a value which is a Transform.type_string
-translation_script has a value which is a Transform.shock_ref
+kb_type has a value which is a type_string
+ext_type has a value which is a type_string
+translation_script has a value which is a shock_ref
 
 </pre>
 
@@ -875,9 +916,9 @@ translation_script has a value which is a Transform.shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-kb_type has a value which is a Transform.type_string
-ext_type has a value which is a Transform.type_string
-translation_script has a value which is a Transform.shock_ref
+kb_type has a value which is a type_string
+ext_type has a value which is a type_string
+translation_script has a value which is a shock_ref
 
 
 =end text
@@ -903,9 +944,9 @@ mapping<string, string> optional_args; // optarg key and values
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-kb_type has a value which is a Transform.type_string
-out_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+kb_type has a value which is a type_string
+out_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 
@@ -916,9 +957,9 @@ obj_name has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-kb_type has a value which is a Transform.type_string
-out_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+kb_type has a value which is a type_string
+out_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 
@@ -1026,7 +1067,7 @@ each external type validator or external type to internal type pair transformer 
 
 <pre>
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a Transform.CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
 
 </pre>
 
@@ -1035,7 +1076,7 @@ config_map has a value which is a reference to a hash where the key is a string 
 =begin text
 
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a Transform.CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
 
 
 =end text
@@ -1048,21 +1089,27 @@ config_map has a value which is a reference to a hash where the key is a string 
 
 package Bio::KBase::Transform::Client::RpcClient;
 use base 'JSON::RPC::Client';
+use POSIX;
+use strict;
 
 #
 # Override JSON::RPC::Client::call because it doesn't handle error returns properly.
 #
 
 sub call {
-    my ($self, $uri, $obj) = @_;
+    my ($self, $uri, $headers, $obj) = @_;
     my $result;
 
-    if ($uri =~ /\?/) {
-       $result = $self->_get($uri);
-    }
-    else {
-        Carp::croak "not hashref." unless (ref $obj eq 'HASH');
-        $result = $self->_post($uri, $obj);
+
+    {
+	if ($uri =~ /\?/) {
+	    $result = $self->_get($uri);
+	}
+	else {
+	    Carp::croak "not hashref." unless (ref $obj eq 'HASH');
+	    $result = $self->_post($uri, $headers, $obj);
+	}
+
     }
 
     my $service = $obj->{method} =~ /^system\./ if ( $obj );
@@ -1090,7 +1137,7 @@ sub call {
 
 
 sub _post {
-    my ($self, $uri, $obj) = @_;
+    my ($self, $uri, $headers, $obj) = @_;
     my $json = $self->json;
 
     $obj->{version} ||= $self->{version} || '1.1';
@@ -1117,6 +1164,7 @@ sub _post {
         Content_Type   => $self->{content_type},
         Content        => $content,
         Accept         => 'application/json',
+	@$headers,
 	($self->{token} ? (Authorization => $self->{token}) : ()),
     );
 }

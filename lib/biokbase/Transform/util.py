@@ -304,19 +304,24 @@ class Downloader(TransformBase):
 
     #def download_handler (ws_url, cfg_name, sws_id, ws_id, in_id, etype, kbtype, sdir, otmp, opt_args, ujs_url, ujs_jid) :
     def download_handler (self) :
+        try:
+            os.mkdir(self.sdir)
+        except:
+            pass
     
         conv_type = "{}-to-{}".format(self.kbtype, self.etype)
-        if conv_type  not in self.config['transformer'] or 'input'  not in self.config['transformer'][conv_type]['cmd_args'] or 'output'  not in self.config['transformer'][conv_type]['cmd_args'] :
+        if conv_type  not in self.config['down_transformer'] or 'inobj_id'  not in self.config['down_transformer'][conv_type]['cmd_args'] or 'ws_id'  not in self.config['down_transformer'][conv_type]['cmd_args'] or 'output'  not in self.config['down_transformer'][conv_type]['cmd_args']:
             raise Exception("{} to {} conversion was not properly defined!".format(self.kbtype, self.etype))
-        vcmd_lst = [self.config['transformer'][conv_type]['cmd_name'], 
-                    self.config['transformer'][conv_type]['cmd_args']['input'], "{}/{}".format(self.sdir,self.itmp), 
-                    self.config['transformer'][conv_type]['cmd_args']['output'],"{}/{}".format(self.sdir,self.otmp)]
+        vcmd_lst = [self.config['down_transformer'][conv_type]['cmd_name'], 
+                    self.config['down_transformer'][conv_type]['cmd_args']['ws_id'], self.ws_id, 
+                    self.config['down_transformer'][conv_type]['cmd_args']['inobj_id'], self.inobj_id, 
+                    self.config['down_transformer'][conv_type]['cmd_args']['output'],"{}/{}".format(self.sdir,self.otmp)]
     
-        if 'transformer' in self.opt_args:
-            opt_args = self.opt_args['transformer']
+        if 'down_transformer' in self.opt_args:
+            opt_args = self.opt_args['down_transformer']
             for k in opt_args:
-                if k in self.config['transformer'][conv_type]['opt_args'] and opt_args[k] is not None:
-                    vcmd_lst.append(self.config['transformer'][conv_type]['opt_args'][k])
+                if k in self.config['down_transformer'][conv_type]['opt_args'] and opt_args[k] is not None:
+                    vcmd_lst.append(self.config['down_transformer'][conv_type]['opt_args'][k])
                     vcmd_lst.append(opt_args[k])
     
         p1 = Popen(vcmd_lst, stdout=PIPE)

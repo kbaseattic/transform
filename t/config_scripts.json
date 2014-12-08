@@ -1,5 +1,20 @@
 {
     "config_map": {
+        "down_transformer": {
+            "Transform.Pair-to-Transform.CSV": {
+                "cmd_args": {
+                    "ws_id": "-w", 
+                    "inobj_id": "-i", 
+                    "output": "-o" 
+                }, 
+                "cmd_description": "Example Transform.Pair to CSV conversion", 
+                "cmd_name": "trns_transform_Transform.Pair-to-Transform.CSV", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "ws_url": "-u"
+                }
+            }
+       },
         "transformer": {
             "KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly": {
                 "cmd_args": {
@@ -81,18 +96,6 @@
                 "cmd_name": "trns_transform_Transform.CSV-to-Transform.Pair", 
                 "max_runtime": 3600, 
                 "opt_args": {}
-            }, 
-            "Transform.Pair-to-Transform.CSV": {
-                "cmd_args": {
-                    "input": "-i", 
-                    "output": "-o" 
-                }, 
-                "cmd_description": "Example Transform.Pair to CSV conversion", 
-                "cmd_name": "trns_transform_Transform.Pair-to-Transform.CSV", 
-                "max_runtime": 3600, 
-                "opt_args": {
-                    "ws_url": "-u"
-                }
             }
         }, 
         "uploader": {

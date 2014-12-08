@@ -101,18 +101,18 @@ if __name__ == "__main__":
     #  args.opt_args['uploader']['etype'] = args.etype
     downloader = Downloader(args)
 
-    try:
-      downloader.download_ws_data()
-    except:
-      if args.jid is not None:
-        e,v,t = sys.exc_info()[:3]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Workspace\n', str(v), {}) 
-      else:
-        traceback.print_exc(file=sys.stderr)
-      exit(3);
+    #try:
+    #  downloader.download_ws_data()
+    #except:
+    #  if args.jid is not None:
+    #    e,v,t = sys.exc_info()[:3]
+    #    ujs.complete_job(args.jid, kb_token, 'Failed : data download from Workspace\n', str(v), {}) 
+    #  else:
+    #    traceback.print_exc(file=sys.stderr)
+    #  exit(3);
 
-    if args.jid is not None:
-      ujs.update_job_progress(args.jid, kb_token, 'Data downloaded', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+    #if args.jid is not None:
+    #  ujs.update_job_progress(args.jid, kb_token, 'Data downloaded', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
     try:
       downloader.download_handler()

@@ -40,7 +40,10 @@ class TransformBase:
         self.inobj_id = args.inobj_id
         self.sdir = args.sdir
         self.itmp = args.itmp
-        self.otmp = args.otmp
+        if(hasattr(args, 'otmp')):
+          self.otmp = args.otmp
+        else:
+          self.otmp = "output"
         self.token = os.environ.get('KB_AUTH_TOKEN')
         self.ssl_verify = True
 

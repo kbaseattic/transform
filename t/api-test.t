@@ -15,6 +15,12 @@ print "This test requires the $in_id is stored in $ws_id(workspace)\n";
 print "It also requires read and write ability in the $ws_id(workspace)\n";
 ok( defined $cc, "Check if the server is working" );
 
+print Dumper($cc->version());
+print Dumper($cc->methods());
+print Dumper($cc->method_types('upload'));
+print Dumper($cc->method_config('upload', 'KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly'));
+
+exit(1);
 my $job_id = $cc->upload({etype => "KBaseAssembly.FA", kb_type => "KBaseAssembly.ReferenceAssembly", in_id => "80ba7a92-b7f6-410d-9571-e022ec096f48", "ws_name" => "loader_test", "obj_name" => "api-test-rl", "optional_args"=> '{"validator":{},"transformer":{"reference_name":"test_ref_name","handle_service_url":"http://10.1.16.87:7109","shock_url":"http://10.1.16.87:7078"}}'});
 ok(ref($job_id) eq "ARRAY","mys_example returns an array");
 ok(@{$job_id} eq 2, "returns two job ids for mys_example");
@@ -27,7 +33,6 @@ my $job_id = $cc->upload({etype => "KBaseAssembly.FQ", kb_type => "KBaseAssembly
 ok(ref($job_id) eq "ARRAY","mys_example returns an array");
 ok(@{$job_id} eq 2, "returns two job ids for mys_example");
 
-exit(1);
 my $job_id = $cc->upload({etype => "Transform.CSV", kb_type => "Transform.Pair", in_id => "d3eecb7f-5b52-4b63-9871-62ecedfd149e", "ws_name" => "loader_test", "obj_name" => "api-test-pair"});
 ok(ref($job_id) eq "ARRAY","mys_example returns an array");
 ok(@{$job_id} eq 2, "returns two job ids for mys_example");

@@ -567,12 +567,12 @@ sub method_types
     my($results);
     #BEGIN method_types
     if(! defined $MTD2CFG->{$func}) {
-      $result = [];
+      $results = [];
     } else {
-    my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
-    my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
-    my @list = sort keys %{$config->{'config_map'}->{$MTD2CFG->{$func}}}
-    $result = \@list;
+      my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
+      my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
+      my @list = [ sort keys %{$config->{data}->{config_map}->{$MTD2CFG->{$func}}}];
+      $results = \@list;
     }
     #END method_types
     my @_bad_returns;
@@ -668,7 +668,7 @@ sub method_config
     } else {
       my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
       my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
-      $result = $config->{'config_map'}->{$MTD2CFG->{$func}}->{$type};
+      $result = $config->{data}->{'config_map'}->{$MTD2CFG->{$func}}->{$type};
     }
     #END method_config
     my @_bad_returns;

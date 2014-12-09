@@ -116,6 +116,8 @@ def post_to_shock(shockURL, filePath):
 
     result = response.json()
 
+    print "Uploaded shock id : {}".format(result['data']['id'])
+
     if result['error']:
         raise Exception(result['error'][0])
     else:
@@ -226,9 +228,9 @@ def download_from_shock(shockURL, shock_id, filePath):
 
 
 if __name__ == "__main__":
-    services = {"shock": 'http://140.221.67.78:7078/',
-                "ujs": 'http://140.221.67.78:7083/',
-                "workspace": 'http://140.221.67.78:7058',
+    services = {"shock": 'https://kbase.us/services/shock-api',
+                "ujs": 'https://kbase.us/services/userandjobstate/',
+                "workspace": 'http://kbase.us/services/ws',
                 "awe": 'http://140.221.67.172:7080/',
                 "transform": 'http://140.221.67.172:7778'}
 

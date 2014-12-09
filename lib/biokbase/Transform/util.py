@@ -13,9 +13,9 @@ import shutil
 from optparse import OptionParser
 import requests
 from requests_toolbelt import MultipartEncoder
-import urllib
-import urllib2
 import json
+import magic
+import bz2
 import tarfile
 import zipfile
 import glob
@@ -51,6 +51,7 @@ class TransformBase:
     def upload_to_shock(self):
         if self.token is None:
             raise Exception("Unable to find token!")
+        
         filePath = "{}/{}".format(self.sdir,self.otmp)
     
         #build the header
@@ -82,53 +83,104 @@ class TransformBase:
     def download_shock_data(self) :
         if self.token is None:
             raise Exception("Unable to find token!")
+        
         # TODO: Improve folder checking
-        try:
-            os.mkdir(self.sdir)
-        except:
-            pass
+        if not os.path.isdir(self.sdir):
+            try:
+                os.mkdir(self.sdir)
+            except:
+                raise
+        
+        shock_idlist = self.inobj_id.split(',')
+        
+        header = dict()
+        header["Authorization"] = "Oauth {0}".format(self.token)
+        
+        # set chunk size to 10MB
+        chunkSize = 10 * 2**20
     
-        inids = self.inobj_id.split(',')
-    
-        for i in range(len(inids)):
-            meta_req = urllib2.Request("{}/node/{}".format(self.shock_url, inids[i]))
-            meta_req.add_header('Authorization',"OAuth {}".format(self.token))
-            data_req = urllib2.Request("{}/node/{}?download_raw".format(self.shock_url, inids[i]))
-            data_req.add_header('Authorization',"OAuth {}".format(self.token))
-      
-            meta = urllib2.urlopen(meta_req)
-            md = json.loads(meta.read())
-            meta.close()
-      
-            rdata = urllib2.urlopen(data_req)
+        for id in shock_idlist:
+            metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, id), headers=header, stream=True, verify=self.ssl_verify)
+            md = metadata.json()
+            fileName = md['data']['file']['name']
+            fileSize = md['data']['file']['size']
+            md.close()
+
+            data = requests.get("{0}/node/{1}?download_raw".format(self.shock_url, id), headers=header, stream=True, verify=self.ssl_verify)
+            size = int(data.headers['content-length'])
+            
+            filePath = os.path.join(self.sdir, fileName)
+            
+            f = io.open(filePath, 'wb')
+            try:
+                for chunk in data.iter_content(chunkSize):
+                    f.write(chunk)
+            finally:
+                data.close()
+                f.close()
+
  
-            data = StringIO(rdata.read())
-            magic = data.read(4)
-            data.seek(0)
-          
-            if magic.startswith('\x1f\x8b') or magic.startswith('\x42\x5a') : # gz or bz
-                my_tar = tarfile.open(fileobj=data, mode="r|*", bufsize=BUF_SIZE) 
-                if len(inids) > 1 :
-                    my_tar.extractall(path="{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)))
-                else:
-                    my_tar.extractall(path="{}/{}".format(self.sdir, self.itmp))
-                my_tar.close()
-            elif magic == '\x50\x4b\x03\x04': # zip
-                my_zip = zipfile.ZipFile(data, mode="r")
-                if len(inids) > 1 :
-                    my_zip.extractall(path="{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)))
-                else:
-                    my_zip.extractall(path="{}/{}".format(self.sdir, self.itmp))
-                my_zip.close()
-            else:  
-                if len(inids) > 1 :
-                    dif = open("{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)),'w')
-                else:
-                    dif = open("{}/{}".format(self.sdir, self.itmp),'w')
-                dif.write(data.read())
-                dif.close()
-            rdata.close()
-            data.close()
+            mimeType = None    
+            with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
+                mimeType = m.id_filename(filePath)
+
+
+            if mimeType == "application/x-gzip":
+                with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+                    for chunk in gzipDataFile:
+                        f.write(gzipDataFile.read(chunkSize))
+        
+                os.remove(filePath)
+            elif mimeType == "application/x-bzip2":
+                with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+                    for chunk in bz2DataFile:
+                        f.write(bz2DataFile.read(chunkSize))
+        
+                os.remove(filePath)
+            elif mimeType == "application/zip":
+                if not zipfile.is_zipfile(filePath):
+                    raise Exception("Invalid zip file!")                
+                
+                outPath = os.path.abspath("{0}/{1}_{2}".format(self.sdir, self.itmp, id))
+                os.mkdir(outPath)
+                
+                with zipfile.ZipFile(filePath, 'r') as zipDataFile:
+                    bad = zipDataFile.testzip()
+        
+                    if bad is not None:
+                        raise Exception("Encountered a bad file in the zip : " + str(bad))
+        
+                    infolist = zipDataFile.infolist()
+        
+                    # perform sanity check on file names, extract each file individually
+                    for x in infolist:
+                        infoPath = os.path.join(outPath, os.path.basename(os.path.abspath(x.filename)))
+                        if os.path.exists(infoPath):
+                            raise Exception("Extracting zip contents will overwrite an existing file!")
+            
+                        with open(infoPath, 'wb') as f:
+                            f.write(zipDataFile.read(x.filename))
+        
+                os.remove(filePath)
+            elif mimeType == "application/x-gtar":
+                if not tarfile.is_tarfile(filePath):
+                    raise Exception("Inavalid tar file " + filePath)
+        
+                outPath = os.path.abspath("{0}/{1}_{2}".format(self.sdir, self.itmp, id))
+                os.mkdir(outPath)
+                
+                with tarfile.open(filePath, 'r|*') as tarDataFile:
+                    memberlist = tarDataFile.getmembers()
+            
+                    # perform sanity check on file names, extract each file individually
+                    for member in memberlist:
+                        memberPath = os.path.join(outPath, os.path.basename(os.path.abspath(member.name)))
+            
+                        if member.isfile():
+                            with open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
+                                f.write(inputFile.read(chunkSize))
+        
+                os.remove(filePath)
 
 
 

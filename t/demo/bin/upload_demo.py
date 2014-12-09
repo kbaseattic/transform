@@ -236,49 +236,49 @@ if __name__ == "__main__":
 
     genbank_to_genome = {"external_type": "KBaseGenomes.GBK",
                          "kbase_type": "KBaseGenomes.Genome",
-                         "workspace": "client_tests",
+                         "workspace": "upload_testing",
                          "object_name": "NC_005213",
                          "filePath": "data/genbank/NC_005213/NC_005213.gbk",
                          "downloadPath": "NC_005213.gbk"}
 
     fasta_reference_to_contigs = {"external_type": "KBaseAssembly.FA",
                                   "kbase_type": "KBaseAssembly.ReferenceAssembly",
-                                  "workspace": "client_tests",
+                                  "workspace": "upload_testing",
                                   "object_name": "fasciculatum_supercontig",
                                   "filePath": "data/fasciculatum_supercontig.fasta.zip",
                                   "downloadPath": "fasciculatum_supercontig.fasta.zip"}
 
     fasta_single_to_reads = {"external_type": "KBaseAssembly.FA",
                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                             "workspace": "client_tests",
+                             "workspace": "upload_testing",
                              "object_name": "ERR670568",
                              "filePath": "data/ERR670568.fasta.gz",
                              "downloadPath": "ERR670568.fasta.gz"}
 
     fastq_single_to_reads = {"external_type": "KBaseAssembly.FQ",
                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                             "workspace": "client_tests",
+                             "workspace": "upload_testing",
                              "object_name": "ERR670568",
                              "filePath": "data/ERR670568.fastq.gz",
                              "downloadPath": "ERR670568.fastq.gz"}
 
     fasta_paired_to_reads = {"external_type": "KBaseAssembly.FA",
                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                             "workspace": "client_tests",
+                             "workspace": "upload_testing",
                              "object_name": "SRR1569976",
                              "filePath": "data/SRR1569976.fasta.gz",
                              "downloadPath": "SRR1569976.fasta.gz"}
 
     fastq_paired_to_reads = {"external_type": "KBaseAssembly.FQ",
                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                             "workspace": "client_tests",
+                             "workspace": "upload_testing",
                              "object_name": "SRR1569976",
                              "filePath": "data/SRR1569976.fastq.gz",
                              "downloadPath": "SRR1569976.fastq.gz"}
 
     sbml_to_fbamodel = {"external_type": "KBaseFBA.SBML",
                         "kbase_type": "KBaseFBA.FBAModel",
-                        "workspace": "client_tests",
+                        "workspace": "upload_testing",
                         "object_name": "",
                         "filePath": "",
                         "downloadPath": ""}

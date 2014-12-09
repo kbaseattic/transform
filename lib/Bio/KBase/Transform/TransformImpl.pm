@@ -17,6 +17,9 @@ Transform APIs
 
 #BEGIN_HEADER
 use Bio::KBase::Workflow::KBW;
+use Data::Dumper;
+our $METHODS = ['validate', 'upload', 'download'];
+our $MTD2CFG = {validate=>'validator', 'upload'=>'transformer', download=>'down_transformer'};
 #END_HEADER
 
 sub new
@@ -27,16 +30,17 @@ sub new
     bless $self, $class;
     #BEGIN_CONSTRUCTOR
     my %params;
-    my @list = qw(ws_url ws_un ws_id ws_type erdb_url ws_pw);
     if ((my $e = $ENV{KB_DEPLOYMENT_CONFIG}) && -e $ENV{KB_DEPLOYMENT_CONFIG}) {  
       my $service = $ENV{KB_SERVICE_NAME};
       if (defined($service)) {
         my %Config = ();
         tie %Config, "Config::Simple", "$e";
-        for my $p (@list) {
-          my $v = $Config{"$service.$p"};
+        my @list = grep /^$service\./, sort keys %Config;
+        for my $k (@list) {
+          my $v = $Config{$k};
+          $k =~ m/^$service\.(.*)$/;
           if ($v) {
-            $params{$p} = $v;
+            $params{$1} = $v;
           }
         }
       }
@@ -48,11 +52,13 @@ sub new
     $params{shock_url} = 'http://localhost:7078' if! defined $params{shock_url};
     $params{awe_url} = 'http://localhost:7080' if! defined $params{awe_url};
     $params{clientgroups} = 'prod' if ! defined $params{clientgroups};
-    $params{svc_ws_un} = 'kbasetest' if! defined $params{ws_un};
+    $params{svc_ws_un} = 'kbasetest' if! defined $params{svc_ws_un};
     #$params{svc_ws_pw} = '' if! defined $params{svc_ws_pw};
-    $params{svc_ws_name} = 'loader_test' if! defined $params{ws_id};
+    $params{svc_ws_name} = 'loader_test' if! defined $params{svc_ws_name};
+    $params{svc_ws_cfg_name} = 'script_configs' if! defined $params{svc_ws_cfg_name};
 
     $self->{_config} = \%params;
+
     #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
@@ -493,7 +499,7 @@ sub methods
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($results);
     #BEGIN methods
-    $results = ['upload', 'validate'];
+    $results = $METHODS;
     #END methods
     my @_bad_returns;
     (ref($results) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"results\" (value was \"$results\")");
@@ -560,8 +566,14 @@ sub method_types
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($results);
     #BEGIN method_types
-    #$params{svc_ws_name} = 'loader_test' if! defined $params{ws_id};
-    my $wsc = Bio::KBase::workspace::Client->new($self->_config{ws_url}, username=> $self->_config{svc_ws_un}, password=>$self->_config{svc_ws_pw});
+    if(! defined $MTD2CFG->{$func}) {
+      $results = [];
+    } else {
+      my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
+      my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
+      my @list = [ sort keys %{$config->{data}->{config_map}->{$MTD2CFG->{$func}}}];
+      $results = \@list;
+    }
     #END method_types
     my @_bad_returns;
     (ref($results) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"results\" (value was \"$results\")");
@@ -651,6 +663,13 @@ sub method_config
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($result);
     #BEGIN method_config
+    if(! defined $MTD2CFG->{$func}) {
+      $result = {};
+    } else {
+      my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
+      my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
+      $result = $config->{data}->{'config_map'}->{$MTD2CFG->{$func}}->{$type};
+    }
     #END method_config
     my @_bad_returns;
     (ref($result) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"result\" (value was \"$result\")");

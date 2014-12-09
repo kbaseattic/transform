@@ -15,8 +15,10 @@ import urllib
 import urllib2
 import json
 from biokbase import log
-from biokbase.Transform.util import download_shock_data, validation_handler, transformation_handler,upload_to_ws
+from biokbase.userandjobstate.client import UserAndJobState
+from biokbase.Transform.util import Downloader
 import mmap
+import datetime
 
 desc1 = '''
 NAME
@@ -50,69 +52,6 @@ AUTHORS
 First Last.
 '''
 
-def download_handler (ws_url, cfg_name, sws_id, ws_id, in_id, etype, kbtype, sdir, otmp, opt_args, ujs_url, ujs_jid) :
-    #TODO: Improve folder checking
-    try:
-        os.mkdir(sdir)
-    except:
-        pass
-
-    ###
-    # download ws object and find where the validation script is located
-    wsd = Workspace(url=ws_url, token=os.environ.get('KB_AUTH_TOKEN'))
-    # TODO: get subobject
-    config = wsd.get_object({'id' : cfg_name, 'workspace' : sws_id})['data']['config_map']
-
-    if config is None:
-        raise Exception("Object {} not found in workspace {}".format(etype, sws_id))
-    
-    ###
-    # execute validation
-    
-    ## TODO: Add input type checking
-    ## TODO: Add logging
-    
-    conv_type = "{}-to-{}".format(kbtype, etype)
-    if conv_type  not in config or 'ws_id'  not in config[conv_type]['cmd_args'] or 'in_id'  not in config[conv_type]['cmd_args'] or 'output' not in config[conv_type]['cmd_args']:
-        raise Exception("{} to {} conversion was not properly defined!".format(kbtype, etype))
-    vcmd_lst = [config[conv_type]['cmd_name'], 
-                config[conv_type]['cmd_args']['ws_id'], ws_id, 
-                config[conv_type]['cmd_args']['in_id'], in_id, 
-                config[conv_type]['cmd_args']['output'],"{}/{}".format(sdir,otmp)]
-
-    if 'downloader' in opt_args:
-        opt_args = opt_args['downloader']
-        for k in opt_args:
-            if k in config[etype]['opt_args']:
-                vcmd_lst.append(config[etype]['opt_args'][k])
-                vcmd_lst.append(opt_args[k])
-
-    p1 = Popen(vcmd_lst, stdout=PIPE)
-    out_str = p1.communicate()
-    # print output message for error tracking
-    if out_str[0] is not None : print out_str[0]
-    if out_str[1] is not None : print >> sys.stderr, out_str[1]
-
-    if p1.returncode != 0: 
-        # TODO: add ujs status update here
-        exit(p1.returncode) 
-   
-
-def upload_to_shock(surl, sdir, otmp):
-
-    f = open('{}/{}'.format(sdir,otmp), 'rb')
-    mfs = mmap.mmap(f.fileno(),0,access=mmap.ACCESS_READ)
-
-    data_req = urllib2.Request("{}/node".format(surl, mfs))
-    data_req.add_header('Authorization',"OAuth {}".format(os.environ.get('KB_AUTH_TOKEN')))
-    data_req.add_header('Content-Type',"application/octet-stream")
-    #data_req.add_header('Content-Disposition',"attachment;filename=")
-
-    response = urllib2.urlopen(data_req)
-    mfs.close()
-    f.close()
-
-    print response
         
 if __name__ == "__main__":
     # Parse options.
@@ -127,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
 
     parser.add_argument('-r', '--ujs_url', help='UJS url', action='store', dest='ujs_url', default='https://kbase.us/services/userandjobstate')
-    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=True)
+    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=False)
 
     parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=True)
     parser.add_argument('-t', '--kbase_type', help='KBase object type', action='store', dest='kbtype', default=None, required=True)
@@ -144,11 +83,62 @@ if __name__ == "__main__":
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
 
-    # main loop
+    kb_token = os.environ.get('KB_AUTH_TOKEN')
+    ujs = UserAndJobState(url=args.ujs_url, token=kb_token)
+
+    est = datetime.datetime.utcnow() + datetime.timedelta(minutes=3)
+    if args.jid is not None:
+      ujs.update_job_progress(args.jid, kb_token, 'Dispatched', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+
+
+    ## main loop
     args.opt_args = json.loads(args.opt_args)
-#def download_handler (ws_url, cfg_name, sws_id, ws_id, in_id, etype, kbtype, sdir, otmp, opt_args, ujs_url, ujs_jid) :
-    download_handler(args.ws_url, args.cfg_name, args.sws_id, args.ws_id, args.inobj_id, args.etype, args.kbtype, args.sdir, args.otmp, args.opt_args, "", args.jid)
-    upload_to_shock(args.shock_url, args.sdir, args.otmp)
+    #if 'downloader' not in args.opt_args:
+    #  args.opt_args['uploader'] = {}
+    #  args.opt_args['uploader']['file'] = args.otmp
+    #  args.opt_args['uploader']['input'] = args.inobj_id
+    #  args.opt_args['uploader']['jid'] = args.jid
+    #  args.opt_args['uploader']['etype'] = args.etype
+    downloader = Downloader(args)
+
+    #try:
+    #  downloader.download_ws_data()
+    #except:
+    #  if args.jid is not None:
+    #    e,v,t = sys.exc_info()[:3]
+    #    ujs.complete_job(args.jid, kb_token, 'Failed : data download from Workspace\n', str(v), {}) 
+    #  else:
+    #    traceback.print_exc(file=sys.stderr)
+    #  exit(3);
+
+    #if args.jid is not None:
+    #  ujs.update_job_progress(args.jid, kb_token, 'Data downloaded', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+
+    try:
+      downloader.download_handler()
+    except:
+      if args.jid is not None:
+        e,v = sys.exc_info()[:2]
+        ujs.complete_job(args.jid, kb_token, 'Failed : data conversion\n', str(v), {}) 
+      else:
+        traceback.print_exc(file=sys.stderr)
+      exit(4);
+
+    if args.jid is not None:
+      ujs.update_job_progress(args.jid, kb_token, 'Data converted', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+
+    result = {}
+    try:
+      result = downloader.upload_to_shock()
+    except:
+      e,v = sys.exc_info()[:2]
+      if args.jid is not None:
+        ujs.complete_job(args.jid, kb_token, 'Failed : data upload to shock\n', str(v), {})
+      else:
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, 'Failed : data upload to shock\n{}:{}'.format(str(e),str(v))
+      exit(5);
+    print result
 
     # clean-up
     if(args.del_tmps is "true") :
@@ -157,4 +147,9 @@ if __name__ == "__main__":
         except:
           pass
 
+    # TODO: Fix outobj_id to shock node id or we don't need shock node id...
+    if args.jid is not None:
+      ujs.complete_job(args.jid, kb_token, 'Succeed', None, {"shocknodes" : [result['id']], "shockurl" : args.shock_url, "workspaceids" : [], "workspaceurl" : args.ws_url ,"results" : [{"server_type" : "shock", "url" : args.shock_url, "id" : result['id'], "description" : "description"}]})
+    else:
+      print "{}/node/{}?download_raw".format(args.shock_url, result['id'])
     exit(0);

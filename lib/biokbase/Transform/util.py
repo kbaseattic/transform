@@ -2,25 +2,33 @@
 import argparse
 import sys
 import os
+import os.path
+import io
 import time
 import traceback
-import sys
 import ctypes
 import subprocess
 from subprocess import Popen, PIPE
 import shutil
 from optparse import OptionParser
-from biokbase.workspace.client import Workspace
-import urllib
-import urllib2
+import requests
+from requests_toolbelt import MultipartEncoder
 import json
+import magic
+import bz2
 import tarfile
 import zipfile
-try :
-  from cStringIO import StringIO
-except:
-  from StringIO import StringIO
 import glob
+
+try:
+    from cStringIO import StringIO
+except:
+    from StringIO import StringIO
+
+
+from biokbase.workspace.client import Workspace
+
+
 
 BUF_SIZE = 8*1024 # default HTTP LIB client buffer_size
 
@@ -32,56 +40,148 @@ class TransformBase:
         self.inobj_id = args.inobj_id
         self.sdir = args.sdir
         self.itmp = args.itmp
+        if(hasattr(args, 'otmp')):
+          self.otmp = args.otmp
+        else:
+          self.otmp = "output"
         self.token = os.environ.get('KB_AUTH_TOKEN')
+        self.ssl_verify = True
 
-    def download_shock_data(self) :
-        # TODO: Improve folder checking
+
+    def upload_to_shock(self):
+        if self.token is None:
+            raise Exception("Unable to find token!")
+        
+        filePath = "{}/{}".format(self.sdir,self.otmp)
+    
+        #build the header
+        header = dict()
+        header["Authorization"] = "Oauth %s" % self.token
+
+        dataFile = open(os.path.abspath(filePath))
+        m = MultipartEncoder(fields={'upload': (os.path.split(filePath)[-1], dataFile)})
+        header['Content-Type'] = m.content_type
+
         try:
-            os.mkdir(self.sdir)
+            response = requests.post(self.shock_url + "/node", headers=header, data=m, allow_redirects=True, verify=self.ssl_verify)
+            dataFile.close()
+    
+            if not response.ok:
+                response.raise_for_status()
+
+            result = response.json()
+
+            if result['error']:
+                raise Exception(result['error'][0])
+            else:
+                return result["data"]    
         except:
-            pass
+            dataFile.close()
+            raise
     
-        inids = self.inobj_id.split(',')
     
-        for i in range(len(inids)):
-          meta_req = urllib2.Request("{}/node/{}".format(self.shock_url, inids[i]))
-          meta_req.add_header('Authorization',"OAuth {}".format(self.token))
-          data_req = urllib2.Request("{}/node/{}?download_raw".format(self.shock_url, inids[i]))
-          data_req.add_header('Authorization',"OAuth {}".format(self.token))
-      
-          meta = urllib2.urlopen(meta_req)
-          md = json.loads(meta.read())
-          meta.close()
-      
-          rdata = urllib2.urlopen(data_req)
+    def download_shock_data(self) :
+        if self.token is None:
+            raise Exception("Unable to find token!")
+        
+        # TODO: Improve folder checking
+        if not os.path.isdir(self.sdir):
+            try:
+                os.mkdir(self.sdir)
+            except:
+                raise
+        
+        shock_idlist = self.inobj_id.split(',')
+        
+        header = dict()
+        header["Authorization"] = "OAuth {0}".format(self.token)
+        
+        # set chunk size to 10MB
+        chunkSize = 10 * 2**20
+    
+        
+        for sid in shock_idlist:
+            metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
+            md = metadata.json()
+            fileName = md['data']['file']['name']
+            fileSize = md['data']['file']['size']
+            metadata.close()
+
+            data = requests.get("{0}/node/{1}?download_raw".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
+            size = int(data.headers['content-length'])
+            
+            filePath = os.path.join(self.sdir, fileName)
+            
+            f = io.open(filePath, 'wb')
+            try:
+                for chunk in data.iter_content(chunkSize):
+                    f.write(chunk)
+            finally:
+                data.close()
+                f.close()
+
  
-          data = StringIO(rdata.read())
-          magic = data.read(4)
-          data.seek(0)
-          
-          if magic.startswith('\x1f\x8b') or magic.startswith('\x42\x5a') : # gz or bz
-            my_tar = tarfile.open(fileobj=data, mode="r|*", bufsize=BUF_SIZE) 
-            if len(inids) > 1 :
-              my_tar.extractall(path="{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)))
-            else:
-              my_tar.extractall(path="{}/{}".format(self.sdir, self.itmp))
-            my_tar.close()
-          elif magic == '\x50\x4b\x03\x04': # zip
-            my_zip = zipfile.ZipFile(data, mode="r")
-            if len(inids) > 1 :
-              my_zip.extractall(path="{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)))
-            else:
-              my_zip.extractall(path="{}/{}".format(self.sdir, self.itmp))
-            my_zip.close()
-          else:  
-            if len(inids) > 1 :
-              dif = open("{}/{}".format(self.sdir, "{}_{}".format(self.itmp,i)),'w')
-            else:
-              dif = open("{}/{}".format(self.sdir, self.itmp),'w')
-            dif.write(data.read())
-            dif.close()
-          rdata.close()
-          data.close()
+            mimeType = None    
+            with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
+                mimeType = m.id_filename(filePath)
+
+
+            if mimeType == "application/x-gzip":
+                with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+                    for chunk in gzipDataFile:
+                        f.write(gzipDataFile.read(chunkSize))
+        
+                os.remove(filePath)
+            elif mimeType == "application/x-bzip2":
+                with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+                    for chunk in bz2DataFile:
+                        f.write(bz2DataFile.read(chunkSize))
+        
+                os.remove(filePath)
+            elif mimeType == "application/zip":
+                if not zipfile.is_zipfile(filePath):
+                    raise Exception("Invalid zip file!")                
+                
+                outPath = os.path.abspath("{0}/{1}_{2}".format(self.sdir, self.itmp, id))
+                os.mkdir(outPath)
+                
+                with zipfile.ZipFile(filePath, 'r') as zipDataFile:
+                    bad = zipDataFile.testzip()
+        
+                    if bad is not None:
+                        raise Exception("Encountered a bad file in the zip : " + str(bad))
+        
+                    infolist = zipDataFile.infolist()
+        
+                    # perform sanity check on file names, extract each file individually
+                    for x in infolist:
+                        infoPath = os.path.join(outPath, os.path.basename(os.path.abspath(x.filename)))
+                        if os.path.exists(infoPath):
+                            raise Exception("Extracting zip contents will overwrite an existing file!")
+            
+                        with open(infoPath, 'wb') as f:
+                            f.write(zipDataFile.read(x.filename))
+        
+                os.remove(filePath)
+            elif mimeType == "application/x-gtar":
+                if not tarfile.is_tarfile(filePath):
+                    raise Exception("Inavalid tar file " + filePath)
+        
+                outPath = os.path.abspath("{0}/{1}_{2}".format(self.sdir, self.itmp, id))
+                os.mkdir(outPath)
+                
+                with tarfile.open(filePath, 'r|*') as tarDataFile:
+                    memberlist = tarDataFile.getmembers()
+            
+                    # perform sanity check on file names, extract each file individually
+                    for member in memberlist:
+                        memberPath = os.path.join(outPath, os.path.basename(os.path.abspath(member.name)))
+            
+                        if member.isfile():
+                            with open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
+                                f.write(inputFile.read(chunkSize))
+        
+                os.remove(filePath)
 
 
 
@@ -139,10 +239,10 @@ class Uploader(Validator):
     def __init__(self, args):
         Validator.__init__(self, args)
         self.kbtype = args.kbtype
-        self.otmp = args.otmp
         self.ws_id = args.ws_id
         self.outobj_id = args.outobj_id
         self.jid = args.jid
+        self.otmp = args.otmp
 
 
     def transformation_handler (self) :
@@ -223,3 +323,68 @@ class Uploader(Validator):
           'type' : self.kbtype, 'data' : data, 'name' : self.outobj_id, 
           'meta' : { 'source_id' : self.inobj_id, 'source_type' : self.etype,
                      'ujs_job_id' : self.jid} } ]})
+
+
+class Downloader(TransformBase):
+    def __init__(self, args):
+        TransformBase.__init__(self,args)
+        self.ws_url = args.ws_url
+        self.cfg_name = args.cfg_name
+        self.sws_id = args.sws_id
+        self.etype = args.etype
+        self.opt_args = args.opt_args
+        self.kbtype = args.kbtype
+        #self.otmp = args.otmp
+        self.ws_id = args.ws_id
+        #self.outobj_id = args.outobj_id
+        self.jid = args.jid
+
+        # download ws object and find where the validation script is located
+        self.wsd = Workspace(url=self.ws_url, token=self.token)
+        self.config = self.wsd.get_object({'id' : self.cfg_name, 'workspace' : self.sws_id})['data']['config_map']
+     
+        if self.config is None:
+            raise Exception("Object {} not found in workspace {}".format(self.cfg_name, self.sws_id))
+    
+    def download_ws_data (self) :
+        try:
+            os.mkdir(self.sdir)
+        except:
+            pass
+    
+        dif = open("{}/{}".format(self.sdir, "{}".format(self.itmp)),'w')
+        data = self.wsd.get_object({'id' : self.inobj_id, 'workspace' : self.ws_id})['data']
+        json.dump(data,dif)
+        dif.close()
+
+
+    #def download_handler (ws_url, cfg_name, sws_id, ws_id, in_id, etype, kbtype, sdir, otmp, opt_args, ujs_url, ujs_jid) :
+    def download_handler (self) :
+        try:
+            os.mkdir(self.sdir)
+        except:
+            pass
+    
+        conv_type = "{}-to-{}".format(self.kbtype, self.etype)
+        if conv_type  not in self.config['down_transformer'] or 'inobj_id'  not in self.config['down_transformer'][conv_type]['cmd_args'] or 'ws_id'  not in self.config['down_transformer'][conv_type]['cmd_args'] or 'output'  not in self.config['down_transformer'][conv_type]['cmd_args']:
+            raise Exception("{} to {} conversion was not properly defined!".format(self.kbtype, self.etype))
+        vcmd_lst = [self.config['down_transformer'][conv_type]['cmd_name'], 
+                    self.config['down_transformer'][conv_type]['cmd_args']['ws_id'], self.ws_id, 
+                    self.config['down_transformer'][conv_type]['cmd_args']['inobj_id'], self.inobj_id, 
+                    self.config['down_transformer'][conv_type]['cmd_args']['output'],"{}/{}".format(self.sdir,self.otmp)]
+    
+        if 'down_transformer' in self.opt_args:
+            opt_args = self.opt_args['down_transformer']
+            for k in opt_args:
+                if k in self.config['down_transformer'][conv_type]['opt_args'] and opt_args[k] is not None:
+                    vcmd_lst.append(self.config['down_transformer'][conv_type]['opt_args'][k])
+                    vcmd_lst.append(opt_args[k])
+    
+        p1 = Popen(vcmd_lst, stdout=PIPE)
+        out_str = p1.communicate()
+
+        if out_str[0] is not None : print out_str[0]
+        if out_str[1] is not None : print >> sys.stderr, out_str[1]
+    
+        if p1.returncode != 0: 
+            raise Exception(out_str[1])

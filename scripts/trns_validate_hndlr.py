@@ -91,6 +91,7 @@ if __name__ == "__main__":
       if args.jid is not None:
         ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock\n{}:{}'.format(str(e),str(v)), str(e), {})
       else:
+        traceback.print_exc(file=sys.stderr)
         print sys.stderr, 'Failed : data download from Shock\n{}:{}'.format(str(e),str(v))
       exit(3);
 
@@ -104,6 +105,7 @@ if __name__ == "__main__":
       if args.jid is not None:
         ujs.complete_job(args.jid, kb_token, 'Failed : data validation\n{}:{}'.format(str(e),str(v)), str(e), {}) 
       else:
+        traceback.print_exc(file=sys.stderr)
         print sys.stderr, 'Failed : data validation\n{}:{}'.format(str(e),str(v))
       exit(4);
 

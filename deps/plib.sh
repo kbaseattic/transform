@@ -1,1 +1,1 @@
-pip install requests_toolbelt
+pip install requests_toolbelt filemagic

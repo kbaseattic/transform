@@ -94,19 +94,20 @@ class TransformBase:
         shock_idlist = self.inobj_id.split(',')
         
         header = dict()
-        header["Authorization"] = "Oauth {0}".format(self.token)
+        header["Authorization"] = "OAuth {0}".format(self.token)
         
         # set chunk size to 10MB
         chunkSize = 10 * 2**20
     
-        for id in shock_idlist:
-            metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, id), headers=header, stream=True, verify=self.ssl_verify)
+        
+        for sid in shock_idlist:
+            metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
             md = metadata.json()
             fileName = md['data']['file']['name']
             fileSize = md['data']['file']['size']
-            md.close()
+            metadata.close()
 
-            data = requests.get("{0}/node/{1}?download_raw".format(self.shock_url, id), headers=header, stream=True, verify=self.ssl_verify)
+            data = requests.get("{0}/node/{1}?download_raw".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
             size = int(data.headers['content-length'])
             
             filePath = os.path.join(self.sdir, fileName)

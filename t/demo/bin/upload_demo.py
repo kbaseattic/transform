@@ -10,7 +10,7 @@ import gzip
 import zipfile
 import tarfile
 
-sys.path.append(os.path.abspath("venv/lib/python2.7/site-packages/"))
+sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
 
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import requests

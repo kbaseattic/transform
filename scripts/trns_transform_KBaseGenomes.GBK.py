@@ -44,9 +44,9 @@ AUTHORS
 First Last.
 '''
 
-impt = "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar:$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar:$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar:$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar"
+impt = "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar:$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar:$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar:$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar:$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar:$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"
 
-mc = 'us.kbase.genbank.ConvertGBK'
+mc = 'us.kbase.genbank.ValidateGBK'
 
 def transform (args) :
 #    try:
@@ -75,14 +75,14 @@ def transform (args) :
 if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_validate_KBaseGenomes.GBK', epilog=desc3)
-    parser.add_argument('-i', '--in_file', help='Input file', action='store', dest='in_file', default=None, required=True)
+    parser.add_argument('-i', '--in_file', help='Input file or directory', action='store', dest='in_file', default=None, required=True)
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
 
     # main loop
-    if not args.in_file.endswith(".gbk"):
+    if os.path.isfile(args.in_file) and not args.in_file.endswith(".gbk"):
       in_file = "{}.gbk".format(args.in_file)
       shutil.copy(args.in_file, in_file)
       args.in_file = in_file

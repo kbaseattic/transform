@@ -75,16 +75,16 @@ def transform (args) :
 if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_validate_KBaseGenomes.GBK', epilog=desc3)
-    parser.add_argument('-i', '--in_file', help='Input file', action='store', dest='in_file', default=None, required=True)
+    parser.add_argument('-i', '--in_file', help='Input file or directory', action='store', dest='in_file', default=None, required=True)
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
 
     # main loop
-    if not args.in_file.endswith(".gbk"):
-      in_file = "{}.gbk".format(args.in_file)
-      shutil.copy(args.in_file, in_file)
-      args.in_file = in_file
+    if os.path.isfile(args.in_file) and not args.in_file.endswith(".gbk"):
+        in_file = "{}.gbk".format(args.in_file)
+        shutil.copy(args.in_file, in_file)
+        args.in_file = in_file
     transform(args)
     exit(0);

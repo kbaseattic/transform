@@ -17,6 +17,9 @@ Transform APIs
 
 #BEGIN_HEADER
 use Bio::KBase::Workflow::KBW;
+use Data::Dumper;
+our $METHODS = ['validate', 'upload', 'download'];
+our $MTD2CFG = {validate=>'validator', 'upload'=>'transformer', download=>'down_transformer'};
 #END_HEADER
 
 sub new
@@ -27,16 +30,17 @@ sub new
     bless $self, $class;
     #BEGIN_CONSTRUCTOR
     my %params;
-    my @list = qw(ws_url ws_un ws_id ws_type erdb_url ws_pw);
     if ((my $e = $ENV{KB_DEPLOYMENT_CONFIG}) && -e $ENV{KB_DEPLOYMENT_CONFIG}) {  
       my $service = $ENV{KB_SERVICE_NAME};
       if (defined($service)) {
         my %Config = ();
         tie %Config, "Config::Simple", "$e";
-        for my $p (@list) {
-          my $v = $Config{"$service.$p"};
+        my @list = grep /^$service\./, sort keys %Config;
+        for my $k (@list) {
+          my $v = $Config{$k};
+          $k =~ m/^$service\.(.*)$/;
           if ($v) {
-            $params{$p} = $v;
+            $params{$1} = $v;
           }
         }
       }
@@ -48,11 +52,13 @@ sub new
     $params{shock_url} = 'http://localhost:7078' if! defined $params{shock_url};
     $params{awe_url} = 'http://localhost:7080' if! defined $params{awe_url};
     $params{clientgroups} = 'prod' if ! defined $params{clientgroups};
-    $params{svc_ws_un} = 'kbasetest' if! defined $params{ws_un};
+    $params{svc_ws_un} = 'kbasetest' if! defined $params{svc_ws_un};
     #$params{svc_ws_pw} = '' if! defined $params{svc_ws_pw};
-    $params{svc_ws_name} = 'loader_test' if! defined $params{ws_id};
+    $params{svc_ws_name} = 'loader_test' if! defined $params{svc_ws_name};
+    $params{svc_ws_cfg_name} = 'script_configs' if! defined $params{svc_ws_cfg_name};
 
     $self->{_config} = \%params;
+
     #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
@@ -211,6 +217,7 @@ sub validate
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($result);
     #BEGIN validate
+    $args->{optional_args} = '{}' if not defined $args->{optional_args};
     $result = Bio::KBase::Workflow::KBW::run_async($self, $ctx, $args);
     #END validate
     my @_bad_returns;
@@ -296,6 +303,7 @@ sub upload
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($result);
     #BEGIN upload
+    $args->{optional_args} = '{}' if not defined $args->{optional_args};
     $result = Bio::KBase::Workflow::KBW::run_async($self, $ctx, $args);
     #END upload
     my @_bad_returns;
@@ -386,6 +394,289 @@ sub download
 	my $msg = "Invalid returns passed to download:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
 							       method_name => 'download');
+    }
+    return($result);
+}
+
+
+
+
+=head2 version
+
+  $result = $obj->version()
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$result is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$result is a string
+
+
+=end text
+
+
+
+=item Description
+
+Returns the system version number
+TODO: support specific function version
+
+=back
+
+=cut
+
+sub version
+{
+    my $self = shift;
+
+    my $ctx = $Bio::KBase::Transform::Service::CallContext;
+    my($result);
+    #BEGIN version
+    $result = $VERSION;
+    #END version
+    my @_bad_returns;
+    (!ref($result)) or push(@_bad_returns, "Invalid type for return variable \"result\" (value was \"$result\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to version:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'version');
+    }
+    return($result);
+}
+
+
+
+
+=head2 methods
+
+  $results = $obj->methods()
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$results is a reference to a list where each element is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$results is a reference to a list where each element is a string
+
+
+=end text
+
+
+
+=item Description
+
+Returns all available functions
+
+=back
+
+=cut
+
+sub methods
+{
+    my $self = shift;
+
+    my $ctx = $Bio::KBase::Transform::Service::CallContext;
+    my($results);
+    #BEGIN methods
+    $results = $METHODS;
+    #END methods
+    my @_bad_returns;
+    (ref($results) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"results\" (value was \"$results\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to methods:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'methods');
+    }
+    return($results);
+}
+
+
+
+
+=head2 method_types
+
+  $results = $obj->method_types($func)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$func is a string
+$results is a reference to a list where each element is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$func is a string
+$results is a reference to a list where each element is a string
+
+
+=end text
+
+
+
+=item Description
+
+Returns supported types of the function.
+
+=back
+
+=cut
+
+sub method_types
+{
+    my $self = shift;
+    my($func) = @_;
+
+    my @_bad_arguments;
+    (!ref($func)) or push(@_bad_arguments, "Invalid type for argument \"func\" (value was \"$func\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to method_types:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'method_types');
+    }
+
+    my $ctx = $Bio::KBase::Transform::Service::CallContext;
+    my($results);
+    #BEGIN method_types
+    if(! defined $MTD2CFG->{$func}) {
+      $result = [];
+    } else {
+    my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
+    my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
+    my @list = sort keys %{$config->{'config_map'}->{$MTD2CFG->{$func}}}
+    $result = \@list;
+    }
+    #END method_types
+    my @_bad_returns;
+    (ref($results) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"results\" (value was \"$results\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to method_types:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'method_types');
+    }
+    return($results);
+}
+
+
+
+
+=head2 method_config
+
+  $result = $obj->method_config($func, $type)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$func is a string
+$type is a string
+$result is a CommandConfig
+CommandConfig is a reference to a hash where the following keys are defined:
+	cmd_name has a value which is a string
+	cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_description has a value which is a string
+	max_runtime has a value which is an int
+	opt_args has a value which is a reference to a hash where the key is a string and the value is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$func is a string
+$type is a string
+$result is a CommandConfig
+CommandConfig is a reference to a hash where the following keys are defined:
+	cmd_name has a value which is a string
+	cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_description has a value which is a string
+	max_runtime has a value which is an int
+	opt_args has a value which is a reference to a hash where the key is a string and the value is a string
+
+
+=end text
+
+
+
+=item Description
+
+Returns CommandConfig for the function and type.
+For validator, type has to be the form of <Associated KBase Module>.<external type>.
+For instance, GenBank format (GBK) is associated to KBaseGenomes' typed object.
+So, the external type should be KBaseGenomes.GBK, which can be find by method_types function call.
+In case of transformer, it requires source type and KBase typed object.
+<Associated KBase Module>.<external type>-to-<KBase Module>.<KBase type>. 
+``KBaseGenomes.GBK-to-KBaseGenomes.Genome'' will be the input type for method_config
+
+=back
+
+=cut
+
+sub method_config
+{
+    my $self = shift;
+    my($func, $type) = @_;
+
+    my @_bad_arguments;
+    (!ref($func)) or push(@_bad_arguments, "Invalid type for argument \"func\" (value was \"$func\")");
+    (!ref($type)) or push(@_bad_arguments, "Invalid type for argument \"type\" (value was \"$type\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to method_config:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'method_config');
+    }
+
+    my $ctx = $Bio::KBase::Transform::Service::CallContext;
+    my($result);
+    #BEGIN method_config
+    if(! defined $MTD2CFG->{$func}) {
+      $result = {};
+    } else {
+      my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
+      my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
+      $result = $config->{'config_map'}->{$MTD2CFG->{$func}}->{$type};
+    }
+    #END method_config
+    my @_bad_returns;
+    (ref($result) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"result\" (value was \"$result\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to method_config:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'method_config');
     }
     return($result);
 }
@@ -907,6 +1198,7 @@ optional argument that is provided by json string. key is argument name and the 
 a reference to a hash where the following keys are defined:
 cmd_name has a value which is a string
 cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
 cmd_description has a value which is a string
 max_runtime has a value which is an int
 opt_args has a value which is a reference to a hash where the key is a string and the value is a string
@@ -920,6 +1212,7 @@ opt_args has a value which is a reference to a hash where the key is a string an
 a reference to a hash where the following keys are defined:
 cmd_name has a value which is a string
 cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
 cmd_description has a value which is a string
 max_runtime has a value which is an int
 opt_args has a value which is a reference to a hash where the key is a string and the value is a string
@@ -939,7 +1232,12 @@ opt_args has a value which is a reference to a hash where the key is a string an
 
 =item Description
 
-each external type validator or external type to internal type pair transformer script configuration
+each external type validator or external type to internal type pair transformer script configuration 
+"validator" => "KBaseGenome.GBK" => { "cmd_name" => "trns_validate_KBaseGenomes.GBK", ... } 
+ where "validator" is the type of command and "transformer", "downloader", and "uploader" are supported;
+ "KBaseGenomes.GBK" is the source type and KBaseGenomes is the module to use external GBK file type
+ and for "transform" it requires the source type and the kb type togeter. 
+ "transform" =>"KBaseGenomes.GBK-to-KBaseGenomes.Genome" => {"cmd_name" => "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome", ... }
 
 
 =item Definition
@@ -948,7 +1246,7 @@ each external type validator or external type to internal type pair transformer 
 
 <pre>
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a CommandConfig
 
 </pre>
 
@@ -957,7 +1255,7 @@ config_map has a value which is a reference to a hash where the key is a string 
 =begin text
 
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a CommandConfig
 
 
 =end text

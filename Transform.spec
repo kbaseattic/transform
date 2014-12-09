@@ -155,7 +155,24 @@ module Transform
       /* mapping<string, string> optional_args; // optarg key and values */ 
   } DownloadParam;
   funcdef download(DownloadParam args) returns (list<string> result);
-  
+
+
+  /*  Returns the system version number
+      TODO: support specific function version
+   */
+  funcdef version() returns(string result);
+
+
+  /*  
+     Returns all available functions
+   */
+  funcdef methods() returns(list<string>results);
+
+  /*  
+      Returns supported types of the function.
+   */
+  funcdef method_types(string func) returns(list<string> results);
+
   /* Test script type */
   typedef structure {
       string key;
@@ -166,14 +183,34 @@ module Transform
   typedef structure {
       string cmd_name;
       mapping<string, string> cmd_args; /* mandatory argument name (key) and command line option (value) <input,-i>. At this time, we only support input and output as madatory for transformer and input only for validator. */
+      mapping<string, string> cmd_args_override; /* Overide the default argument behavior and the end user does not need to know this */
       string cmd_description;
       int max_runtime;
       mapping<string, string> opt_args; /* optional argument that is provided by json string. key is argument name and the key is used for retrieving json string from upload,download api call and the value is the command line option such as '-k' */
   } CommandConfig;
 
-  /* each external type validator or external type to internal type pair transformer script configuration */
+  /* each external type validator or external type to internal type pair transformer script configuration 
+     "validator" => "KBaseGenome.GBK" => { "cmd_name" => "trns_validate_KBaseGenomes.GBK", ... } 
+      where "validator" is the type of command and "transformer", "downloader", and "uploader" are supported;
+      "KBaseGenomes.GBK" is the source type and KBaseGenomes is the module to use external GBK file type
+      and for "transform" it requires the source type and the kb type togeter. 
+      "transform" =>"KBaseGenomes.GBK-to-KBaseGenomes.Genome" => {"cmd_name" => "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome", ... }
+   */
   typedef structure {
-      mapping<string, CommandConfig> config_map;
+      mapping<string,mapping<string, CommandConfig>> config_map;
   } Type2CommandConfig;
+
+  /*  
+      Returns CommandConfig for the function and type.
+      For validator, type has to be the form of <Associated KBase Module>.<external type>.
+      For instance, GenBank format (GBK) is associated to KBaseGenomes' typed object.
+      So, the external type should be KBaseGenomes.GBK, which can be find by method_types function call.
+      In case of transformer, it requires source type and KBase typed object.
+      <Associated KBase Module>.<external type>-to-<KBase Module>.<KBase type>. 
+      ``KBaseGenomes.GBK-to-KBaseGenomes.Genome'' will be the input type for method_config
+   */
+  funcdef method_config(string func, string type) returns(CommandConfig result);
+
+  
 
 };

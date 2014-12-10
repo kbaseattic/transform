@@ -106,12 +106,13 @@ class TransformBase:
             fileName = ""
             fileSize = 0
             # TODO: let's improve shock node detection using actually trying it
-            if (sid.startwith('http') or sid.startwith('ftp')) and not (re.search(r'^http[s]?.*/node/[a-fA-F0-9\-]+\?.*', sid)):
+            if (sid.startswith('http') or sid.startswith('ftp')) and not (re.search(r'^http[s]?.*/node/[a-fA-F0-9\-]+\?.*', sid)):
               surl = sid
               fileName = sid.split('/')[-1].split('#')[0].split('?')[0]
               #TODO: add file size estimation code here
             else:
-              if m = re.search(r'^(http[s]?.*/node/[a-fA-F0-9\-]+)\?.*', sid):
+              m = re.search(r'^(http[s]?.*/node/[a-fA-F0-9\-]+)\?.*', sid)
+              if m is not None:
                 metadata = requests.get(m.group(1), headers=header, stream=True, verify=self.ssl_verify)
                 md = metadata.json()
                 fileName = md['data']['file']['name']

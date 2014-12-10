@@ -136,6 +136,13 @@ module Transform
   funcdef upload(UploadParam args) returns (list<string> result);     
   
   typedef structure {
+      type_string etype;
+      type_string kb_type;
+      shock_id in_id;
+      string ws_name;
+      string optional_args; /* json string */
+  } UploadParam;
+  typedef structure {
       type_string kb_type;
       type_string ext_type;
       shock_ref translation_script;

@@ -387,6 +387,8 @@ sub download
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($result);
     #BEGIN download
+    $args->{optional_args} = '{}' if not defined $args->{optional_args};
+    $result = Bio::KBase::Workflow::KBW::run_async($self, $ctx, $args);
     #END download
     my @_bad_returns;
     (ref($result) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"result\" (value was \"$result\")");

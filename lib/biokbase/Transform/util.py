@@ -110,6 +110,8 @@ class TransformBase:
               surl = sid
               fileName = sid.split('/')[-1].split('#')[0].split('?')[0]
               #TODO: add file size estimation code here
+              # reset header here with user id and password
+              header = dict()
             else:
               m = re.search(r'^(http[s]?.*/node/[a-fA-F0-9\-]+)\?.*', sid)
               if m is not None:

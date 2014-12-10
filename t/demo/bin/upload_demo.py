@@ -2,6 +2,7 @@
 
 import sys
 import time
+import datetime
 import os
 import os.path
 import io
@@ -27,12 +28,14 @@ if token is None:
     raise Exception("Unable to find KBase token!")
 
 
-def show_workspace_object_list(workspace_url, workspace_name):
+def show_workspace_object_list(workspace_url, workspace_name, object_name):
     print "\tYour KBase data objects:"
     
     c = biokbase.workspace.client.Workspace(workspace_url, token=token)
     object_list = c.list_objects({"workspaces": [workspace_name]})
     
+    object_list = [x for x in object_list if object_name in x[1]]
+
     for x in sorted(object_list):
         print "\t\t{0:30}{1:20}{2:>16}".format(x[1], x[2], x[-2])
 
@@ -116,7 +119,7 @@ def post_to_shock(shockURL, filePath):
 
     result = response.json()
 
-    print "Uploaded shock id : {}".format(result['data']['id'])
+    print "\tUploaded shock id : {0}".format(result['data']['id'])
 
     if result['error']:
         raise Exception(result['error'][0])
@@ -194,7 +197,7 @@ def download_from_shock(shockURL, shock_id, filePath):
             infolist = zipDataFile.infolist()
         
             for x in infolist:
-                infoPath = os.path.basename(os.path.abspath(x.filename))
+                infoPath = os.path.join(os.path.dirname(filePath), os.path.basename(os.path.abspath(x.filename)))
                 if os.path.exists(infoPath):
                     raise Exception("Extracting zip contents will overwrite an existing file!")
             
@@ -213,7 +216,7 @@ def download_from_shock(shockURL, shock_id, filePath):
             memberlist = tarDataFile.getmembers()
             
             for member in memberlist:
-                memberPath = os.path.basename(os.path.abspath(member.name))
+                memberPath = os.path.join(os.path.dirname(filePath),os.path.basename(os.path.abspath(member.name)))
             
                 if member.isfile():
                     print "\t\tExtracting {0:f} MB from {1} in {2}".format(int(member.size)/float(1024*1024),memberPath,filePath)
@@ -221,8 +224,6 @@ def download_from_shock(shockURL, shock_id, filePath):
                         f.write(inputFile.read(chunkSize))
         
         os.remove(filePath)
-
-
 
 
 
@@ -313,6 +314,9 @@ if __name__ == "__main__":
                        "downloadPath": args.download_path}
     
         demos = [user_inputs]
+
+    stamp = datetime.datetime.now().isoformat()
+    os.mkdir(stamp)
     
     term = blessings.Terminal()
     for demo_inputs in demos:
@@ -321,7 +325,10 @@ if __name__ == "__main__":
         workspace = demo_inputs["workspace"]
         object_name = demo_inputs["object_name"]
         filePath = demo_inputs["filePath"]
-        downloadPath = demo_inputs["downloadPath"]
+
+        downloadPath = os.path.join(stamp, demo_inputs["downloadPath"])
+
+        print "\n\n{0}\nConverting {1} => {2}\n{3}\n\n".format("#"*80,external_type,kbase_type,"#"*80)
 
         print term.bold("Step 1: Place files in SHOCK (will soon accept any http or ftp url)")
         print "\tPreparing to upload {0}".format(filePath)
@@ -344,7 +351,6 @@ if __name__ == "__main__":
         show_job_progress(services["ujs"], upload_response[0], upload_response[1])
     
         print term.bold("Step 3: View or use workspace objects")
-        show_workspace_object_list(services["workspace"], workspace)
+        show_workspace_object_list(services["workspace"], workspace, object_name)
     
         #show_workspace_object_contents(services["workspace"], workspace, object_name)
-        print "\n\n{0}\n{1}\n\n".format("#"*80,"#"*80)

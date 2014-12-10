@@ -19,6 +19,7 @@ import bz2
 import tarfile
 import zipfile
 import glob
+import re
 
 try:
     from cStringIO import StringIO
@@ -91,7 +92,7 @@ class TransformBase:
             except:
                 raise
         
-        shock_idlist = self.inobj_id.split(',')
+        src_list = self.inobj_id.split(',')
         
         header = dict()
         header["Authorization"] = "OAuth {0}".format(self.token)
@@ -100,15 +101,37 @@ class TransformBase:
         chunkSize = 10 * 2**20
     
         
-        for sid in shock_idlist:
-            metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
-            md = metadata.json()
-            fileName = md['data']['file']['name']
-            fileSize = md['data']['file']['size']
-            metadata.close()
+        for sid in src_list:
+            surl = "";
+            fileName = ""
+            fileSize = 0
+            # TODO: let's improve shock node detection using actually trying it
+            if (sid.startwith('http') or sid.startwith('ftp')) and not (re.search(r'^http[s]?.*/node/[a-fA-F0-9\-]+\?.*', sid)):
+              surl = sid
+              fileName = sid.split('/')[-1].split('#')[0].split('?')[0]
+              #TODO: add file size estimation code here
+            else:
+              if m = re.search(r'^(http[s]?.*/node/[a-fA-F0-9\-]+)\?.*', sid):
+                metadata = requests.get(m.group(1), headers=header, stream=True, verify=self.ssl_verify)
+                md = metadata.json()
+                fileName = md['data']['file']['name']
+                fileSize = md['data']['file']['size']
+                metadata.close()
+                surl = sid;
+              else:
+                metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
+                md = metadata.json()
+                fileName = md['data']['file']['name']
+                fileSize = md['data']['file']['size']
+                metadata.close()
+                surl = "{0}/node/{1}?download_raw".format(self.shock_url, sid)
 
-            data = requests.get("{0}/node/{1}?download_raw".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
+            data = requests.get(surl, headers=header, stream=True, verify=self.ssl_verify)
+
             size = int(data.headers['content-length'])
+
+            if(size > 0 and fileSize == 0):
+              fileSize = size
             
             filePath = os.path.join(self.sdir, fileName)
             

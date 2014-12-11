@@ -288,7 +288,7 @@ class TransformBase:
             if not zipfile.is_zipfile(filePath):
                 raise Exception("Invalid zip file!")                
             
-            outPath = os.path.abspath("{0}/{1}".format(filePath, datetime.datetime.now().isoformat()))
+            outPath = os.path.abspath("{0}/{1}".format(os.path.dirname(filePath), datetime.datetime.now().isoformat()))
             os.mkdir(outPath)
             
             with zipfile.ZipFile(filePath, 'r') as zipDataFile:

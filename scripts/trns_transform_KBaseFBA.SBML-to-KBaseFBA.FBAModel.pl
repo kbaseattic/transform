@@ -32,4 +32,6 @@ my $sbml;
 while(<FH>){$sbml.=$_;}
 close(FH);
 
-$FBAImpl->import_fbamodel({workspace=>$Out_WS,genome=>"Empty",genome_workspace=>"PlantSEED",sbml=>$sbml});
+my $Model = $In_File; $Model =~ s/\.sbml$/_Model/;
+
+$FBAImpl->import_fbamodel({workspace=>$Out_WS,genome=>"Empty",genome_workspace=>"PlantSEED",sbml=>$sbml,model=>$Model});

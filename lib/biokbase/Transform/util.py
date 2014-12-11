@@ -212,7 +212,6 @@ class TransformBase:
                     
                     os.mkdir(dirname)
             
-                    print len(all_files)
                     for x in all_files:
                         with open(os.path.join(os.path.abspath(dirname), os.path.basename(x)), 'wb') as f:
                             print "Downloading {0}".format(host + x)
@@ -245,7 +244,7 @@ class TransformBase:
             elif url.startswith("https://"):
                 print "Downloading {0}".format(url)
                 # check if shock
-                data = requests.get(url, stream=True, verify=False)
+                data = requests.get(url, stream=True, verify=self.ssl_verify)
 
                 size = int(data.headers['content-length'])
 

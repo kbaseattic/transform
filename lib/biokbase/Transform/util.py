@@ -16,6 +16,7 @@ import requests
 from requests_toolbelt import MultipartEncoder
 import json
 import magic
+import gzip
 import bz2
 import tarfile
 import zipfile

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # This code is part of KBase project to validate 
 #the fastq and fasta files
 

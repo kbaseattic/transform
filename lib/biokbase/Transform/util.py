@@ -91,70 +91,6 @@ class TransformBase:
             raise
     
     
-    def extract_data(self, filePath, chunkSize = 10 * 2**20):
-        mimeType = None    
-        with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
-            mimeType = m.id_filename(filePath)
-
-
-        if mimeType == "application/x-gzip":
-            with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
-                for chunk in gzipDataFile:
-                    f.write(gzipDataFile.read(chunkSize))
-    
-            os.remove(filePath)
-        elif mimeType == "application/x-bzip2":
-            with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
-                for chunk in bz2DataFile:
-                    f.write(bz2DataFile.read(chunkSize))
-    
-            os.remove(filePath)
-        elif mimeType == "application/zip":
-            if not zipfile.is_zipfile(filePath):
-                raise Exception("Invalid zip file!")                
-            
-            outPath = os.path.abspath("{0}/{1}_{2}".format(self.sdir, self.itmp, id))
-            os.mkdir(outPath)
-            
-            with zipfile.ZipFile(filePath, 'r') as zipDataFile:
-                bad = zipDataFile.testzip()
-    
-                if bad is not None:
-                    raise Exception("Encountered a bad file in the zip : " + str(bad))
-    
-                infolist = zipDataFile.infolist()
-    
-                # perform sanity check on file names, extract each file individually
-                for x in infolist:
-                    infoPath = os.path.join(outPath, os.path.basename(os.path.abspath(x.filename)))
-                    if os.path.exists(infoPath):
-                        raise Exception("Extracting zip contents will overwrite an existing file!")
-        
-                    with open(infoPath, 'wb') as f:
-                        f.write(zipDataFile.read(x.filename))
-    
-            os.remove(filePath)
-        elif mimeType == "application/x-gtar":
-            if not tarfile.is_tarfile(filePath):
-                raise Exception("Inavalid tar file " + filePath)
-    
-            outPath = os.path.abspath("{0}/{1}_{2}".format(self.sdir, self.itmp, id))
-            os.mkdir(outPath)
-            
-            with tarfile.open(filePath, 'r|*') as tarDataFile:
-                memberlist = tarDataFile.getmembers()
-        
-                # perform sanity check on file names, extract each file individually
-                for member in memberlist:
-                    memberPath = os.path.join(outPath, os.path.basename(os.path.abspath(member.name)))
-        
-                    if member.isfile():
-                        with open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
-                            f.write(inputFile.read(chunkSize))
-    
-            os.remove(filePath)
-    
-    
     def download_shock_data(self) :
         if self.token is None:
             raise Exception("Unable to find token!")
@@ -338,39 +274,45 @@ class TransformBase:
             with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
                 for chunk in gzipDataFile:
                     f.write(gzipDataFile.read(chunkSize))
-
+            
             os.remove(filePath)
         elif mimeType == "application/x-bzip2":
             with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
                 for chunk in bz2DataFile:
                     f.write(bz2DataFile.read(chunkSize))
-
+            
             os.remove(filePath)
         elif mimeType == "application/zip":
             if not zipfile.is_zipfile(filePath):
                 raise Exception("Invalid zip file!")                
-        
+            
             outPath = os.path.abspath("{0}/{1}".format(filePath, datetime.datetime.now().isoformat()))
             os.mkdir(outPath)
-        
+            
             with zipfile.ZipFile(filePath, 'r') as zipDataFile:
                 bad = zipDataFile.testzip()
-
+            
                 if bad is not None:
                     raise Exception("Encountered a bad file in the zip : " + str(bad))
-
+            
                 infolist = zipDataFile.infolist()
-
+            
                 # perform sanity check on file names, extract each file individually
                 for x in infolist:
-                    infoPath = os.path.join(outPath, os.path.basename(os.path.abspath(x.filename)))
+                    if os.path.abspath(x.filename).startswith(os.sep):
+                        raise Exception("Invalid path for contents of zip file : {0}".format(x.filename))
+                    
+                    if os.path.exists(os.path.dirname(x.filename)):
+                        os.makedirs(os.path.dirname(x.filename))
+                    
+                    infoPath = os.path.join(outPath, os.path.abspath(x.filename))
                     
                     if os.path.exists(infoPath):
                         raise Exception("Extracting zip contents will overwrite an existing file!")
-    
+                    
                     with open(infoPath, 'wb') as f:
                         f.write(zipDataFile.read(x.filename))
-
+            
             os.remove(filePath)
         elif mimeType == "application/x-gtar":
             if not tarfile.is_tarfile(filePath):
@@ -384,6 +326,9 @@ class TransformBase:
     
                 # perform sanity check on file names, extract each file individually
                 for member in memberlist:
+                    if os.path.abspath(x.filename).startswith(os.sep):
+                        raise Exception("Invalid path for contents of zip file : {0}".format(x.filename))
+                    
                     memberPath = os.path.join(outPath, os.path.basename(os.path.abspath(member.name)))
     
                     if member.isfile():

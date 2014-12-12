@@ -22,7 +22,7 @@
                     "output": "-o"
                 }, 
                 "cmd_description": "FQ to PairedEndLibrary", 
-                "cmd_name": "KBaseFBA.SBML-to-KBaseFBA.FBAModel", 
+                "cmd_name": "trns_transform_KBaseFBA.SBML-to-KBaseFBA.FBAModel", 
                 "max_runtime": 3600, 
                 "opt_args": {
                     "ws_name": "-w" 

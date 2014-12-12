@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # This code is part of KBase project to validate 
 #the fastq and fasta files
 
@@ -98,6 +98,8 @@ def to_JSON(self):
 
 def validate_fasta(filename):
         ret = ''
+        kb_runtime = os.environ.get('KB_RUNTIME', '/kb/runtime')
+        java = "%s/java/bin/java" % kb_runtime
         if os.path.isfile(filename):
                 ext = os.path.splitext(filename)[-1]
                 if ext == '.gz':
@@ -109,9 +111,9 @@ def validate_fasta(filename):
                         text_file.write(fh.getvalue())
                         text_file.close()
                 if ext == '.gz':
-                        cmd2 = ["java","-classpath",impt,mc,os.path.splitext(filename)[-2]]
+                        cmd2 = [java,"-classpath",impt,mc,os.path.splitext(filename)[-2]]
 		else:
-			cmd2 = ["java","-classpath",impt,mc,filename]
+			cmd2 = [java,"-classpath",impt,mc,filename]
 		#print(cmd2)
                 ret = check_output(cmd2,stderr=sys.stderr)
 	else:

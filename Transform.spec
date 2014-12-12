@@ -135,12 +135,6 @@ module Transform
   } UploadParam;
   funcdef upload(UploadParam args) returns (list<string> result);     
   
-  typedef structure {
-      type_string kb_type;
-      type_string ext_type;
-      shock_ref translation_script;
-  } Downloader;
-  
   /*
   funcdef request_to_register_downloader(Downloader) returns (string result);
   funcdef release_downloader(Downloader) returns (string result);
@@ -149,10 +143,9 @@ module Transform
   typedef structure {
       type_string etype;
       type_string kb_type;
-      shock_id out_id;
       string ws_name;
-      string obj_name;
-      /* mapping<string, string> optional_args; // optarg key and values */ 
+      string in_id;
+      string optional_args; /* json string*/
   } DownloadParam;
   funcdef download(DownloadParam args) returns (list<string> result);
 

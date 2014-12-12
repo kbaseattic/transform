@@ -16,6 +16,22 @@
             }
        },
         "transformer": {
+            "Transcripts.FA-to-KBaseGenomes.Genome": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_args_override": {
+                    "input": "shock_node_id"
+                }, 
+                "cmd_description": "FQ to PairedEndLibrary", 
+                "cmd_name": "trns_transform_Transcripts.FASTA-to-KBaseGenomes.Genome", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "genome_id": "-g", 
+                    "dna": "-d"
+                }
+            }, 
             "KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly": {
                 "cmd_args": {
                     "input": "-i", 
@@ -135,6 +151,15 @@
             }
         }, 
         "validator": {
+            "Transcripts.FA": {
+                "cmd_args": {
+                    "input": "-i"
+                }, 
+                "cmd_description": "FASTA validator for Transcripts module", 
+                "cmd_name": "trns_validate_KBaseAssembly.FA", 
+                "max_runtime": 3600, 
+                "opt_args": {}
+            }, 
             "KBaseAssembly.FA": {
                 "cmd_args": {
                     "input": "-i"

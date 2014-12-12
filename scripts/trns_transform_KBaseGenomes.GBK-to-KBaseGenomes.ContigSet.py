@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import argparse
 import sys
 import os
@@ -52,12 +52,14 @@ def transform (args) :
 #    try:
       kb_top = os.environ.get('KB_TOP', '/kb/deployment')
       cp = impt.replace('$KB_TOP', kb_top);
+      kb_runtime = os.environ.get('KB_RUNTIME', '/kb/runtime')
+      java = "%s/java/bin/java" % kb_runtime
 
       in_dir = re.sub(r'/[^/]*$','', args.in_file)
       out_fn = re.sub(r'^.*/','',in_dir)
       out_fn = "{}_ContigSet.jsonp".format(out_fn)
 
-      tcmd_lst = ['java', '-cp', cp, mc, in_dir]
+      tcmd_lst = [java, '-cp', cp, mc, in_dir]
 
 
       print in_dir

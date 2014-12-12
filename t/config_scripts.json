@@ -141,6 +141,23 @@
                     "jid": "-j"
                 }
             }, 
+            "KBaseFBA.FBAModel": {
+                "cmd_args": {
+                    "dir": "-l", 
+                    "outobj_id": "-o", 
+                    "ws_id": "-w", 
+                    "ws_url": "-u"
+                }, 
+                "cmd_description": "Dummy uploader", 
+                "cmd_name": "trns_upload_Transform.Dummy", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "etype": "-e", 
+                    "file": "-g", 
+                    "input": "-i", 
+                    "jid": "-j"
+                }
+            },
             "Transform.Pair": {
                 "cmd_args": {
                     "dir": "-l", 

@@ -22,7 +22,7 @@ import datetime
 
 desc1 = '''
 NAME
-      trns_upload_Transform.Pair -- upload the input data into WS
+      trns_upload_Transform.Dummy -- not doing any action... dummy loader
 
 SYNOPSIS      
       
@@ -30,14 +30,14 @@ SYNOPSIS
 
 desc2 = '''
 DESCRIPTION
-  trns_upload_Transform.Pair upload the input data into WS
+  trns_upload_Transform.Dummy dummy uploader
   
 '''
 
 desc3 = '''
 EXAMPLES
-      CSV test case
-      > trns_upload_Transform.Pair --ws_url 'https://kbase.us/services/ws' --ws_id kbasetest:home  --in_id '' --out_id 'my_tst_out'
+      
+      > trns_upload_Transform.Dummy --ws_url 'https://kbase.us/services/ws' --ws_id kbasetest:home  --in_id '' --out_id 'my_tst_out'
       
 
 SEE ALSO
@@ -49,7 +49,7 @@ First Last.
 
 if __name__ == "__main__":
     # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_upload_Transform.Pair', epilog=desc3)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_upload_Transform.Dummy', epilog=desc3)
     parser.add_argument('-u', '--ws_url', help='Workspace url', action='store', dest='ws_url', default='https://kbase.us/services/ws', required=True)
 
     parser.add_argument('-w', '--dst_ws_name', help='Destination workspace name', action='store', dest='ws_id', default=None, required=True)
@@ -68,18 +68,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     
-    kb_token = os.environ.get('KB_AUTH_TOKEN')
+    #kb_token = os.environ.get('KB_AUTH_TOKEN')
 
     ## main loop
-    jif = open("{}/{}".format(args.sdir,args.otmp, 'r'))
-    data = json.loads(jif.read())
-    jif.close()
+    #jif = open("{}/{}".format(args.sdir,args.otmp, 'r'))
+    #data = json.loads(jif.read())
+    #jif.close()
     
-    wsd = Workspace(url=args.ws_url, token=kb_token)
-    wsd.save_objects({'workspace':args.ws_id, 'objects' : [ {
-      'type' : 'Transform.Pair', 'data' : data, 'name' : args.outobj_id, 
-      'meta' : { 'source_id' : args.inobj_id, 'source_type' : args.etype,
-                 'ujs_job_id' : args.jid} } ]})
+    #wsd = Workspace(url=args.ws_url, token=kb_token)
+    #wsd.save_objects({'workspace':args.ws_id, 'objects' : [ {
+    #  'type' : 'Transform.Dummy', 'data' : data, 'name' : args.outobj_id, 
+    #  'meta' : { 'source_id' : args.inobj_id, 'source_type' : args.etype,
+    #             'ujs_job_id' : args.jid} } ]})
     
 
     exit(0);

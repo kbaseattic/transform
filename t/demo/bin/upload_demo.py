@@ -2,6 +2,7 @@
 
 import sys
 import time
+import datetime
 import os
 import os.path
 import io
@@ -10,7 +11,7 @@ import gzip
 import zipfile
 import tarfile
 
-sys.path.append(os.path.abspath("venv/lib/python2.7/site-packages/"))
+sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
 
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import requests
@@ -27,12 +28,14 @@ if token is None:
     raise Exception("Unable to find KBase token!")
 
 
-def show_workspace_object_list(workspace_url, workspace_name):
+def show_workspace_object_list(workspace_url, workspace_name, object_name):
     print "\tYour KBase data objects:"
     
     c = biokbase.workspace.client.Workspace(workspace_url, token=token)
     object_list = c.list_objects({"workspaces": [workspace_name]})
     
+    object_list = [x for x in object_list if object_name in x[1]]
+
     for x in sorted(object_list):
         print "\t\t{0:30}{1:20}{2:>16}".format(x[1], x[2], x[-2])
 
@@ -116,6 +119,8 @@ def post_to_shock(shockURL, filePath):
 
     result = response.json()
 
+    print "\tUploaded shock id : {0}".format(result['data']['id'])
+
     if result['error']:
         raise Exception(result['error'][0])
     else:
@@ -192,7 +197,7 @@ def download_from_shock(shockURL, shock_id, filePath):
             infolist = zipDataFile.infolist()
         
             for x in infolist:
-                infoPath = os.path.basename(os.path.abspath(x.filename))
+                infoPath = os.path.join(os.path.dirname(filePath), os.path.basename(os.path.abspath(x.filename)))
                 if os.path.exists(infoPath):
                     raise Exception("Extracting zip contents will overwrite an existing file!")
             
@@ -211,7 +216,7 @@ def download_from_shock(shockURL, shock_id, filePath):
             memberlist = tarDataFile.getmembers()
             
             for member in memberlist:
-                memberPath = os.path.basename(os.path.abspath(member.name))
+                memberPath = os.path.join(os.path.dirname(filePath),os.path.basename(os.path.abspath(member.name)))
             
                 if member.isfile():
                     print "\t\tExtracting {0:f} MB from {1} in {2}".format(int(member.size)/float(1024*1024),memberPath,filePath)
@@ -223,60 +228,58 @@ def download_from_shock(shockURL, shock_id, filePath):
 
 
 
-
-
 if __name__ == "__main__":
-    services = {"shock": 'http://140.221.67.78:7078/',
-                "ujs": 'http://140.221.67.78:7083/',
-                "workspace": 'http://140.221.67.78:7058',
+    services = {"shock": 'https://kbase.us/services/shock-api',
+                "ujs": 'https://kbase.us/services/userandjobstate/',
+                "workspace": 'http://kbase.us/services/ws',
                 "awe": 'http://140.221.67.172:7080/',
                 "transform": 'http://140.221.67.172:7778'}
 
     genbank_to_genome = {"external_type": "KBaseGenomes.GBK",
                          "kbase_type": "KBaseGenomes.Genome",
-                         "workspace": "client_tests",
+                         "workspace": "upload_testing",
                          "object_name": "NC_005213",
                          "filePath": "data/genbank/NC_005213/NC_005213.gbk",
                          "downloadPath": "NC_005213.gbk"}
 
     fasta_reference_to_contigs = {"external_type": "KBaseAssembly.FA",
                                   "kbase_type": "KBaseAssembly.ReferenceAssembly",
-                                  "workspace": "client_tests",
+                                  "workspace": "upload_testing",
                                   "object_name": "fasciculatum_supercontig",
                                   "filePath": "data/fasciculatum_supercontig.fasta.zip",
                                   "downloadPath": "fasciculatum_supercontig.fasta.zip"}
 
     fasta_single_to_reads = {"external_type": "KBaseAssembly.FA",
                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                             "workspace": "client_tests",
+                             "workspace": "upload_testing",
                              "object_name": "ERR670568",
                              "filePath": "data/ERR670568.fasta.gz",
                              "downloadPath": "ERR670568.fasta.gz"}
 
     fastq_single_to_reads = {"external_type": "KBaseAssembly.FQ",
                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                             "workspace": "client_tests",
+                             "workspace": "upload_testing",
                              "object_name": "ERR670568",
                              "filePath": "data/ERR670568.fastq.gz",
                              "downloadPath": "ERR670568.fastq.gz"}
 
     fasta_paired_to_reads = {"external_type": "KBaseAssembly.FA",
                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                             "workspace": "client_tests",
+                             "workspace": "upload_testing",
                              "object_name": "SRR1569976",
                              "filePath": "data/SRR1569976.fasta.gz",
                              "downloadPath": "SRR1569976.fasta.gz"}
 
     fastq_paired_to_reads = {"external_type": "KBaseAssembly.FQ",
                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                             "workspace": "client_tests",
+                             "workspace": "upload_testing",
                              "object_name": "SRR1569976",
                              "filePath": "data/SRR1569976.fastq.gz",
                              "downloadPath": "SRR1569976.fastq.gz"}
 
     sbml_to_fbamodel = {"external_type": "KBaseFBA.SBML",
                         "kbase_type": "KBaseFBA.FBAModel",
-                        "workspace": "client_tests",
+                        "workspace": "upload_testing",
                         "object_name": "",
                         "filePath": "",
                         "downloadPath": ""}
@@ -311,6 +314,9 @@ if __name__ == "__main__":
                        "downloadPath": args.download_path}
     
         demos = [user_inputs]
+
+    stamp = datetime.datetime.now().isoformat()
+    os.mkdir(stamp)
     
     term = blessings.Terminal()
     for demo_inputs in demos:
@@ -319,7 +325,10 @@ if __name__ == "__main__":
         workspace = demo_inputs["workspace"]
         object_name = demo_inputs["object_name"]
         filePath = demo_inputs["filePath"]
-        downloadPath = demo_inputs["downloadPath"]
+
+        downloadPath = os.path.join(stamp, demo_inputs["downloadPath"])
+
+        print "\n\n{0}\nConverting {1} => {2}\n{3}\n\n".format("#"*80,external_type,kbase_type,"#"*80)
 
         print term.bold("Step 1: Place files in SHOCK (will soon accept any http or ftp url)")
         print "\tPreparing to upload {0}".format(filePath)
@@ -342,7 +351,6 @@ if __name__ == "__main__":
         show_job_progress(services["ujs"], upload_response[0], upload_response[1])
     
         print term.bold("Step 3: View or use workspace objects")
-        show_workspace_object_list(services["workspace"], workspace)
+        show_workspace_object_list(services["workspace"], workspace, object_name)
     
         #show_workspace_object_contents(services["workspace"], workspace, object_name)
-        print "\n\n{0}\n{1}\n\n".format("#"*80,"#"*80)

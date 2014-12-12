@@ -38,7 +38,7 @@ if not os.path.isdir(os.path.join(running_dir, "data")):
     print "Downloading demo data, data.tar.bz2"
 
     import requests
-    data = requests.get("http://140.221.67.242/data.tar.bz2", stream=True)
+    data = requests.get("http://140.221.67.242/data/data.tar.bz2", stream=True)
     with open(os.path.join(running_dir, "data.tar.bz2"), 'wb') as f:
         for chunk in data.iter_content(10 * 2**20):
             f.write(chunk)

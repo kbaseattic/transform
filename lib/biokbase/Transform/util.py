@@ -1,10 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
 import argparse
 import sys
 import os
 import os.path
 import io
 import time
+import datetime
 import traceback
 import ctypes
 import subprocess
@@ -15,10 +17,13 @@ import requests
 from requests_toolbelt import MultipartEncoder
 import json
 import magic
+import gzip
 import bz2
 import tarfile
 import zipfile
 import glob
+import ftplib
+import re
 
 try:
     from cStringIO import StringIO
@@ -45,7 +50,16 @@ class TransformBase:
         else:
           self.otmp = "output"
         self.token = os.environ.get('KB_AUTH_TOKEN')
-        self.ssl_verify = True
+        
+        if hasattr(args, 'ssl_verify'):
+            self.ssl_verify = args.ssl_verify
+        else:
+            self.ssl_verify = True
+            
+        if hasattr(args, 'url_list'):
+            self.url_list = args.url_list
+        else:
+            self.url_list = ["ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/Bacillus_subtilis/reference/GCF_000009045.1_ASM904v1/GCF_000009045.1_ASM904v1_genomic.gbff.gz"]
 
 
     def upload_to_shock(self):
@@ -91,7 +105,7 @@ class TransformBase:
             except:
                 raise
         
-        shock_idlist = self.inobj_id.split(',')
+        src_list = self.inobj_id.split(',')
         
         header = dict()
         header["Authorization"] = "OAuth {0}".format(self.token)
@@ -100,15 +114,40 @@ class TransformBase:
         chunkSize = 10 * 2**20
     
         
-        for sid in shock_idlist:
-            metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
-            md = metadata.json()
-            fileName = md['data']['file']['name']
-            fileSize = md['data']['file']['size']
-            metadata.close()
+        for sid in src_list:
+            surl = "";
+            fileName = ""
+            fileSize = 0
+            # TODO: let's improve shock node detection using actually trying it
+            if (sid.startswith('http') or sid.startswith('ftp')) and not (re.search(r'^http[s]?.*/node/[a-fA-F0-9\-]+\?.*', sid)):
+              surl = sid
+              fileName = sid.split('/')[-1].split('#')[0].split('?')[0]
+              #TODO: add file size estimation code here
+              # reset header here with user id and password
+              header = dict()
+            else:
+              m = re.search(r'^(http[s]?.*/node/[a-fA-F0-9\-]+)\?.*', sid)
+              if m is not None:
+                metadata = requests.get(m.group(1), headers=header, stream=True, verify=self.ssl_verify)
+                md = metadata.json()
+                fileName = md['data']['file']['name']
+                fileSize = md['data']['file']['size']
+                metadata.close()
+                surl = sid;
+              else:
+                metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
+                md = metadata.json()
+                fileName = md['data']['file']['name']
+                fileSize = md['data']['file']['size']
+                metadata.close()
+                surl = "{0}/node/{1}?download_raw".format(self.shock_url, sid)
 
-            data = requests.get("{0}/node/{1}?download_raw".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
+            data = requests.get(surl, headers=header, stream=True, verify=self.ssl_verify)
+
             size = int(data.headers['content-length'])
+
+            if(size > 0 and fileSize == 0):
+              fileSize = size
             
             filePath = os.path.join(self.sdir, fileName)
             
@@ -119,69 +158,186 @@ class TransformBase:
             finally:
                 data.close()
                 f.close()
-
- 
-            mimeType = None    
-            with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
-                mimeType = m.id_filename(filePath)
+            
+            self.extract_data(filePath)
 
 
-            if mimeType == "application/x-gzip":
-                with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
-                    for chunk in gzipDataFile:
-                        f.write(gzipDataFile.read(chunkSize))
+
+    def download_from_urls(self, url_list, chunkSize=10 * 2**20):
+        if self.token is None:
+            raise Exception("Unable to find token!")
         
-                os.remove(filePath)
-            elif mimeType == "application/x-bzip2":
-                with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
-                    for chunk in bz2DataFile:
-                        f.write(bz2DataFile.read(chunkSize))
-        
-                os.remove(filePath)
-            elif mimeType == "application/zip":
-                if not zipfile.is_zipfile(filePath):
-                    raise Exception("Invalid zip file!")                
-                
-                outPath = os.path.abspath("{0}/{1}_{2}".format(self.sdir, self.itmp, id))
-                os.mkdir(outPath)
-                
-                with zipfile.ZipFile(filePath, 'r') as zipDataFile:
-                    bad = zipDataFile.testzip()
-        
-                    if bad is not None:
-                        raise Exception("Encountered a bad file in the zip : " + str(bad))
-        
-                    infolist = zipDataFile.infolist()
-        
-                    # perform sanity check on file names, extract each file individually
-                    for x in infolist:
-                        infoPath = os.path.join(outPath, os.path.basename(os.path.abspath(x.filename)))
-                        if os.path.exists(infoPath):
-                            raise Exception("Extracting zip contents will overwrite an existing file!")
+        # TODO: Improve folder checking
+        if not os.path.isdir(self.sdir):
+            os.mkdir(self.sdir)
+    
+        for url in url_list:
+            data = None
+
+            # detect url type
+            if url.startswith("ftp://"):
+                # check if file or directory
+                host = url.split("ftp://")[1].split("/")[0]
+                path = url.split("ftp://")[1].split("/", 1)[1]
             
-                        with open(infoPath, 'wb') as f:
-                            f.write(zipDataFile.read(x.filename))
-        
-                os.remove(filePath)
-            elif mimeType == "application/x-gtar":
-                if not tarfile.is_tarfile(filePath):
-                    raise Exception("Inavalid tar file " + filePath)
-        
-                outPath = os.path.abspath("{0}/{1}_{2}".format(self.sdir, self.itmp, id))
-                os.mkdir(outPath)
+                ftp_connection = ftplib.FTP(host)
+                ftp_connection.login()
+                file_list = ftp_connection.sendcmd("MLST {0}".format(path))
+            
+                if file_list.find("type=dir") > -1:
+                    file_list = ftp_connection.nlst(path)
+            
+                if len(file_list) > 1:            
+                    if len(file_list) > threshold:
+                        raise Exception("Too many files to process, found so far {0:d}".format(len(file_list)))
                 
-                with tarfile.open(filePath, 'r|*') as tarDataFile:
-                    memberlist = tarDataFile.getmembers()
+                    dirname = path.split("/")[-1]
+                
+                    if len(dirname) == 0:
+                        dirname = path.split("/")[-2]                
+                
+                    all_files = list()
+                    check = file_list[:]
+                    while len(check) > 0:
+                        x = check.pop()
+                
+                        new_files = ftp_connection.nlst(x)
+                    
+                        for n in new_files:
+                            details = ftp_connection.sendcmd("MLST {0}".format(n))
+                            
+                            if "type=file" in details:
+                                all_files.append(n)
+                            elif "type=dir" in details:
+                                check.append(n)
+                            if len(all_files) > threshold:
+                                raise Exception("Too many files to process, found so far {0:d}".format(len(all_files)))
+                    
+                    os.mkdir(dirname)
             
-                    # perform sanity check on file names, extract each file individually
-                    for member in memberlist:
-                        memberPath = os.path.join(outPath, os.path.basename(os.path.abspath(member.name)))
+                    for x in all_files:
+                        with open(os.path.join(os.path.abspath(dirname), os.path.basename(x)), 'wb') as f:
+                            print "Downloading {0}".format(host + x)
+                            ftp_connection.retrbinary("RETR {0}".format(x), lambda s: f.write(s), 10 * 2**20)
+                        extract_data(os.path.join(os.path.abspath(dirname), os.path.basename(x)))
+                else:
+                    with open(os.path.join(self.sdir, os.path.split(path)[-1]), 'wb') as f:
+                        print "Downloading {0}".format(url)
+                        ftp_connection.retrbinary("RETR {0}".format(path), lambda s: f.write(s), 10 * 2**20)  
+                    extract_data(os.path.join(self.sdir, os.path.split(path)[-1]))
             
-                        if member.isfile():
-                            with open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
-                                f.write(inputFile.read(chunkSize))
+                ftp_connection.close()            
+            elif url.startswith("http://"):
+                print "Downloading {0}".format(url)
+                # check if shock
+                data = requests.get(url, stream=True)
+
+                fileName = url.split("/")[-1]            
+                filePath = os.path.join(self.sdir, fileName)
         
-                os.remove(filePath)
+                f = io.open(filePath, 'wb')
+                try:
+                    for chunk in data.iter_content(chunkSize):
+                        f.write(chunk)
+                finally:
+                    data.close()
+                    f.close()      
+                
+                self.extract_data(filePath)
+            elif url.startswith("https://"):
+                print "Downloading {0}".format(url)
+                # check if shock
+                data = requests.get(url, stream=True, verify=self.ssl_verify)
+
+                size = int(data.headers['content-length'])
+
+                fileName = url.split("/")[-1]            
+                filePath = os.path.join(self.sdir, fileName)
+        
+                f = io.open(filePath, 'wb')
+                try:
+                    for chunk in data.iter_content(chunkSize):
+                        f.write(chunk)
+                finally:
+                    data.close()
+                    f.close()
+
+                self.extract_data(filePath)
+            
+        
+    def extract_data(self, filePath, chunkSize=10 * 2**20):
+        mimeType = None    
+        with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
+            mimeType = m.id_filename(filePath)
+
+        print "Extracting {0} as {1}".format(filePath, mimeType)
+
+        if mimeType == "application/x-gzip":
+            with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+                for chunk in gzipDataFile:
+                    f.write(gzipDataFile.read(chunkSize))
+            
+            os.remove(filePath)
+        elif mimeType == "application/x-bzip2":
+            with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+                for chunk in bz2DataFile:
+                    f.write(bz2DataFile.read(chunkSize))
+            
+            os.remove(filePath)
+        elif mimeType == "application/zip":
+            if not zipfile.is_zipfile(filePath):
+                raise Exception("Invalid zip file!")                
+            
+            outPath = os.path.abspath("{0}/{1}".format(os.path.dirname(filePath), datetime.datetime.now().isoformat()))
+            os.mkdir(outPath)
+            
+            with zipfile.ZipFile(filePath, 'r') as zipDataFile:
+                bad = zipDataFile.testzip()
+            
+                if bad is not None:
+                    raise Exception("Encountered a bad file in the zip : " + str(bad))
+            
+                infolist = zipDataFile.infolist()
+            
+                # perform sanity check on file names, extract each file individually
+                for x in infolist:
+                    if os.path.abspath(x.filename).startswith(os.sep):
+                        raise Exception("Invalid path for contents of zip file : {0}".format(x.filename))
+                    
+                    if os.path.exists(os.path.dirname(x.filename)):
+                        os.makedirs(os.path.dirname(x.filename))
+                    
+                    infoPath = os.path.join(outPath, os.path.abspath(x.filename))
+                    
+                    if os.path.exists(infoPath):
+                        raise Exception("Extracting zip contents will overwrite an existing file!")
+                    
+                    with open(infoPath, 'wb') as f:
+                        f.write(zipDataFile.read(x.filename))
+            
+            os.remove(filePath)
+        elif mimeType == "application/x-gtar":
+            if not tarfile.is_tarfile(filePath):
+                raise Exception("Inavalid tar file " + filePath)
+
+            outPath = os.path.abspath("{0}/{1}".format(filePath, datetime.datetime.now().isoformat()))
+            os.mkdir(outPath)
+        
+            with tarfile.open(filePath, 'r|*') as tarDataFile:
+                memberlist = tarDataFile.getmembers()
+    
+                # perform sanity check on file names, extract each file individually
+                for member in memberlist:
+                    if os.path.abspath(x.filename).startswith(os.sep):
+                        raise Exception("Invalid path for contents of zip file : {0}".format(x.filename))
+                    
+                    memberPath = os.path.join(outPath, os.path.basename(os.path.abspath(member.name)))
+    
+                    if member.isfile():
+                        with open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
+                            f.write(inputFile.read(chunkSize))
+
+            os.remove(filePath)
 
 
 

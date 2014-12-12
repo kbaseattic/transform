@@ -335,11 +335,10 @@ $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
 	kb_type has a value which is a type_string
-	out_id has a value which is a shock_id
 	ws_name has a value which is a string
-	obj_name has a value which is a string
+	in_id has a value which is a string
+	optional_args has a value which is a string
 type_string is a string
-shock_id is a string
 
 </pre>
 
@@ -352,11 +351,10 @@ $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
 	etype has a value which is a type_string
 	kb_type has a value which is a type_string
-	out_id has a value which is a shock_id
 	ws_name has a value which is a string
-	obj_name has a value which is a string
+	in_id has a value which is a string
+	optional_args has a value which is a string
 type_string is a string
-shock_id is a string
 
 
 =end text
@@ -387,6 +385,8 @@ sub download
     my $ctx = $Bio::KBase::Transform::Service::CallContext;
     my($result);
     #BEGIN download
+    $args->{optional_args} = '{}' if not defined $args->{optional_args};
+    $result = Bio::KBase::Workflow::KBW::run_async($self, $ctx, $args);
     #END download
     my @_bad_returns;
     (ref($result) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"result\" (value was \"$result\")");
@@ -567,12 +567,12 @@ sub method_types
     my($results);
     #BEGIN method_types
     if(! defined $MTD2CFG->{$func}) {
-      $result = [];
+      $results = [];
     } else {
-    my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
-    my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
-    my @list = sort keys %{$config->{'config_map'}->{$MTD2CFG->{$func}}}
-    $result = \@list;
+      my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
+      my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
+      my @list = [ sort keys %{$config->{data}->{config_map}->{$MTD2CFG->{$func}}}];
+      $results = \@list;
     }
     #END method_types
     my @_bad_returns;
@@ -668,7 +668,7 @@ sub method_config
     } else {
       my $wsc = Bio::KBase::workspace::Client->new($self->{_config}{ws_url}, username=> $self->{_config}{svc_ws_un}, password=>$self->{_config}{svc_ws_pw});
       my $config = $wsc->get_object({id => $self->{_config}{svc_ws_cfg_name},workspace => $self->{_config}{svc_ws_name}});
-      $result = $config->{'config_map'}->{$MTD2CFG->{$func}}->{$type};
+      $result = $config->{data}->{'config_map'}->{$MTD2CFG->{$func}}->{$type};
     }
     #END method_config
     my @_bad_returns;
@@ -1065,40 +1065,6 @@ optional_args has a value which is a string
 
 
 
-=head2 Downloader
-
-=over 4
-
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-kb_type has a value which is a type_string
-ext_type has a value which is a type_string
-translation_script has a value which is a shock_ref
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-kb_type has a value which is a type_string
-ext_type has a value which is a type_string
-translation_script has a value which is a shock_ref
-
-
-=end text
-
-=back
-
-
-
 =head2 DownloadParam
 
 =over 4
@@ -1107,7 +1073,7 @@ translation_script has a value which is a shock_ref
 
 =item Description
 
-mapping<string, string> optional_args; // optarg key and values
+json string
 
 
 =item Definition
@@ -1118,9 +1084,9 @@ mapping<string, string> optional_args; // optarg key and values
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
 kb_type has a value which is a type_string
-out_id has a value which is a shock_id
 ws_name has a value which is a string
-obj_name has a value which is a string
+in_id has a value which is a string
+optional_args has a value which is a string
 
 </pre>
 
@@ -1131,9 +1097,9 @@ obj_name has a value which is a string
 a reference to a hash where the following keys are defined:
 etype has a value which is a type_string
 kb_type has a value which is a type_string
-out_id has a value which is a shock_id
 ws_name has a value which is a string
-obj_name has a value which is a string
+in_id has a value which is a string
+optional_args has a value which is a string
 
 
 =end text

@@ -16,13 +16,22 @@
             }
        },
         "transformer": {
-            "Transcripts.FA-to-KBaseGenomes.Genome": {
+            "KBaseFBA.SBML-to-KBaseFBA.FBAModel": {
                 "cmd_args": {
                     "input": "-i", 
                     "output": "-o"
                 }, 
-                "cmd_args_override": {
-                    "input": "shock_node_id"
+                "cmd_description": "FQ to PairedEndLibrary", 
+                "cmd_name": "KBaseFBA.SBML-to-KBaseFBA.FBAModel", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "ws_name": "-w" 
+                }
+            }, 
+            "Transcripts.FA-to-KBaseGenomes.Genome": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
                 }, 
                 "cmd_description": "FQ to PairedEndLibrary", 
                 "cmd_name": "trns_transform_Transcripts.FASTA-to-KBaseGenomes.Genome", 
@@ -187,6 +196,15 @@
                 "max_runtime": 3600, 
                 "opt_args": {}
             }, 
+            "KBaseFBA.SBML": {
+                "cmd_args": {
+                    "input": "-i"
+                }, 
+                "cmd_description": "Temporary validator... this one always say no problem", 
+                "cmd_name": "trns_validate_Transform.CSV", 
+                "max_runtime": 3600, 
+                "opt_args": {}
+            },
             "Transform.CSV": {
                 "cmd_args": {
                     "input": "-i"

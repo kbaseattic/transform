@@ -5,6 +5,26 @@ use Data::Dumper;
 use Getopt::Long;
 use Digest::MD5;
 
+=head1 NAME
+
+trns_transform_Transcripts.FASTA-to-KBaseGenomes.Genome.pl
+
+=head1 SYNOPSIS
+
+trns_transform_Transcripts.FASTA-to-KBaseGenomes.Genome.pl --input fasta-file --output genome-id
+
+=head1 DESCRIPTION
+
+Transform a FASTA file into a KBaseGenomes.Genome object in the workspace.
+
+=head1 COMMAND-LINE OPTIONS
+trns_transform_KBaseFBA.SBML-to-KBaseFBA.FBAModel.pl --input --output
+	-i --input      sbml file
+	-o --output     id under which KBaseGenomes.Genome is to be saved
+	--help          print usage message and exit
+
+=cut
+
 my %genetic_code = (TTT => 'F',  TCT => 'S',  TAT => 'Y',  TGT => 'C',
 		    TTC => 'F',  TCC => 'S',  TAC => 'Y',  TGC => 'C',
 		    TTA => 'L',  TCA => 'S',  TAA => '*',  TGA => '*',
@@ -50,13 +70,16 @@ my $In_File   = "";
 my $Out_File  = "";
 my $Genome_ID = "";
 my $IsDNA     = "";
+my $Help      = 0;
 GetOptions("in_file|i=s"   => \$In_File,
 	   "out_file|o=s"  => \$Out_File,
 	   "genome_id|g=s" => \$Genome_ID,
-	   "dna|d"         => \$IsDNA);
+	   "dna|d"         => \$IsDNA,
+           "help|h"        => \$Help);
 
-if(!$In_File || !$Out_File){
-    die($0." --in_file|-i <Input Fasta File> --out_file|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (in_file used by default)> --dna|d");
+if($Help || !$In_File || !$Out_File){
+    print($0." --in_file|-i <Input Fasta File> --out_file|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (in_file used by default)> --dna|d");
+    exit();
 }
 
 if(!-f $In_File){

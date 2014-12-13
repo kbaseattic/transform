@@ -1,6 +1,6 @@
 /**
  * @file    validateSBML.cpp
- * @brief   Validates an SBML file against the appropriate schema
+ * @brief   Validates an SBML file against the appropriate schema; compiled as g++ -o ../bin/validateSBML ../src/trns_validate_SBML.cpp -lsbml
  * @author  Sam Seaver (heavily borrowed from libsbml example)
  */
 
@@ -62,15 +62,16 @@ bool validateSBML(const string& filename){
     isValid = false;
   }
 
-  cout << "      validation error(s) : " << numReadErrors << endl;
-  cout << "    validation warning(s) : " << numReadWarnings << endl;
-
-  if ( !errMsgRead.empty() ){
-    cout << "\n===== validation error/warning messages =====\n";
-    cout << errMsgRead << endl;
+  if(numReadErrors > 0){
+    cout << "validation error(s) : " << numReadErrors << endl;
+    if ( !errMsgRead.empty() ){
+      cout << "\n===== validation error/warning messages =====\n";
+      cout << errMsgRead << endl;
+    }
   }
-
+  //  cout << "    validation warning(s) : " << numReadWarnings << endl;
+  
   delete document;
 
-  return (isValid) ? true: false;
+  return (isValid) ? false: true;
 }

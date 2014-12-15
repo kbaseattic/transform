@@ -111,8 +111,9 @@ def check_interleavedPE(filename):
 		header1 = re.split('/', first_line)[0]
 		#print(header1)
 	elif ':N:' in first_line:
-		pattern  = re.compile(r'[1-2]:N')
-		header1 = re.split(pattern,first_line)[0]
+		#pattern  = re.compile('[1-2]:N:.*')
+		#print(pattern)
+		header1 = re.split('[1,2]:[Y,N]:',first_line)[0]
 		#print(header1)
 	if header1:
 		for line in infile:

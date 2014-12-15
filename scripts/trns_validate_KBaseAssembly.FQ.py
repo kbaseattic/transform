@@ -12,6 +12,9 @@ import json
 import gzip
 import io
 import cStringIO
+import pipes
+import tempfile
+import re
 
 desc1 = '''
 NAME
@@ -85,41 +88,43 @@ def check_output(*popenargs, **kwargs):
         status = 'SUCCESS'
     return {'status' : status, 'error' : error}
 
-def validate_fastq(filename):
+def validate_fastq(filename,inter_stat):
         ## Check if the file is present in the path
         arr =  None
         if os.path.isfile(filename):
-                cmd = [fval_path,"--maxErrors 10","--file", filename]
+		if inter_stat == "yes":
+			cmd =  [fval_path,"--maxErrors 10","--disableSeqIDCheck","--file", filename]
+		else:
+               	        cmd = [fval_path,"--maxErrors 10","--file", filename]
                 ret = check_output(cmd,stderr=sys.stderr)
                 return ret
 
 def to_JSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-def validate_fasta(filename):
-        ret = ''
-        kb_runtime = os.environ.get('KB_RUNTIME', '/kb/runtime')
-        java = "%s/java/bin/java" % kb_runtime
-        if os.path.isfile(filename):
-                ext = os.path.splitext(filename)[-1]
-                if ext == '.gz':
-                        decomp_file = os.path.splitext(filename)[-2]
-                        p = subprocess.Popen(["zcat", filename], stdout = subprocess.PIPE)
-                        fh = io_method(p.communicate()[0])
-                        assert p.returncode == 0
-                        text_file = open(decomp_file, "w")
-                        text_file.write(fh.getvalue())
-                        text_file.close()
-                if ext == '.gz':
-                        cmd2 = [java,"-classpath",impt,mc,os.path.splitext(filename)[-2]]
-		else:
-			cmd2 = [java,"-classpath",impt,mc,filename]
-		#print(cmd2)
-                ret = check_output(cmd2,stderr=sys.stderr)
+def check_interleavedPE(filename):
+	count  = 0
+	
+	infile  = open(filename, 'r')
+  	first_line = infile.readline()
+	if '/' in first_line:	
+		header1 = re.split('/', first_line)[0]
+		#print(header1)
+	elif ':N:' in first_line:
+		#pattern  = re.compile('[1-2]:N:.*')
+		#print(pattern)
+		header1 = re.split('[1,2]:[Y,N]:',first_line)[0]
+		#print(header1)
+	if header1:
+		for line in infile:
+			if re.match(header1,line):
+				count = count + 1 
+	infile.close()
+	if count == 1 :
+		stat = "yes"
 	else:
-		print("File " + filename + " doesnot exist ")
-		sys.exit(1)
-        return ret
+		stat = "no"
+	return stat
 
 class Validate(object):
         """ Validate the object and return 0 or exit with an error
@@ -132,11 +137,29 @@ class Validate(object):
 		if os.path.isfile(filename):
                 	self.filename = filename
                         func = validate_fastq
+			ext = os.path.splitext(filename)[-1]
+        	        if ext == '.gz':
+                	        decomp_file = os.path.splitext(filename)[-2]
+                       		p = subprocess.Popen(["zcat", filename], stdout = subprocess.PIPE)
+                        	fh = io_method(p.communicate()[0])
+                       		assert p.returncode == 0
+                        	text_file = open(decomp_file, "w")
+                        	text_file.write(fh.getvalue())
+                        	text_file.close()
+				#print(decomp_file)
+				stat = check_interleavedPE(decomp_file)
+				#print("stat from gz option" + stat)
+			else:
+				### grep the first line of the decomp file
+				stat = check_interleavedPE(filename)
+			#print(stat)
                 else:
 		     print("File " + filename + " doesnot exist ")
 		     sys.exit(1)
-	
-                ret = func(filename)
+			
+                ret = func(filename,stat)
+		if stat:
+			self.interleaved = stat
                 if "status" in ret.keys():
                         self.status = ret["status"]
                 if "error" in ret.keys():

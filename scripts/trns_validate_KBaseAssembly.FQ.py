@@ -48,9 +48,13 @@ mc = 'FVTester'
 fastq_ext = ['.fq','.fq.gz','.fastq','.fastq.gz']
 fasta_ext = ['.fa','.fa.gz','.fasta','.fasta.gz']
 
-
+##### Format specifications for Illumina, CASAVA 1.8, NCBI SRA interleaved format
+sep_illumina = '/'
+sep_casava_1 = ':Y:'
+sep_casava_2 = ':N:'
 ####File executables
 fval_path= "fastQValidator"
+
 #if os.environ.get("KB_RUNTIME") is not None:
 #	fast_path = os.environ.get("KB_RUNTIME")+'/lib'
 #else:
@@ -107,14 +111,12 @@ def check_interleavedPE(filename):
 	
 	infile  = open(filename, 'r')
   	first_line = infile.readline()
-	if '/' in first_line:	
+	if sep_illumina in first_line:	
 		header1 = re.split('/', first_line)[0]
-		#print(header1)
-	elif ':N:' in first_line:
-		#pattern  = re.compile('[1-2]:N:.*')
-		#print(pattern)
+	elif sep_casava_1 in first_line or sep_casava_2 in first_line :
 		header1 = re.split('[1,2]:[Y,N]:',first_line)[0]
-		#print(header1)
+	else:
+		header1 = first_line
 	if header1:
 		for line in infile:
 			if re.match(header1,line):

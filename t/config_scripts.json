@@ -16,6 +16,31 @@
             }
        },
         "transformer": {
+            "KBaseFBA.SBML-to-KBaseFBA.FBAModel": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_description": "FQ to PairedEndLibrary", 
+                "cmd_name": "trns_transform_KBaseFBA.SBML-to-KBaseFBA.FBAModel", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "ws_name": "-w" 
+                }
+            }, 
+            "Transcripts.FA-to-KBaseGenomes.Genome": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_description": "FQ to PairedEndLibrary", 
+                "cmd_name": "trns_transform_Transcripts.FASTA-to-KBaseGenomes.Genome", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "genome_id": "-g", 
+                    "dna": "-d"
+                }
+            }, 
             "KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly": {
                 "cmd_args": {
                     "input": "-i", 
@@ -116,6 +141,23 @@
                     "jid": "-j"
                 }
             }, 
+            "KBaseFBA.FBAModel": {
+                "cmd_args": {
+                    "dir": "-l", 
+                    "outobj_id": "-o", 
+                    "ws_id": "-w", 
+                    "ws_url": "-u"
+                }, 
+                "cmd_description": "Dummy uploader", 
+                "cmd_name": "trns_upload_Transform.Dummy", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "etype": "-e", 
+                    "file": "-g", 
+                    "input": "-i", 
+                    "jid": "-j"
+                }
+            },
             "Transform.Pair": {
                 "cmd_args": {
                     "dir": "-l", 
@@ -135,6 +177,15 @@
             }
         }, 
         "validator": {
+            "Transcripts.FA": {
+                "cmd_args": {
+                    "input": "-i"
+                }, 
+                "cmd_description": "FASTA validator for Transcripts module", 
+                "cmd_name": "trns_validate_KBaseAssembly.FA", 
+                "max_runtime": 3600, 
+                "opt_args": {}
+            }, 
             "KBaseAssembly.FA": {
                 "cmd_args": {
                     "input": "-i"
@@ -162,6 +213,15 @@
                 "max_runtime": 3600, 
                 "opt_args": {}
             }, 
+            "KBaseFBA.SBML": {
+                "cmd_args": {
+                    "input": "-i"
+                }, 
+                "cmd_description": "Temporary validator... this one always say no problem", 
+                "cmd_name": "trns_validate_Transform.CSV", 
+                "max_runtime": 3600, 
+                "opt_args": {}
+            },
             "Transform.CSV": {
                 "cmd_args": {
                     "input": "-i"

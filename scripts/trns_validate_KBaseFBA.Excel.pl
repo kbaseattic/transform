@@ -39,7 +39,7 @@ if($In_File =~ /\.xlsx$/){
 }else{
     my $parser   = Spreadsheet::ParseExcel->new();
     my $workbook = $parser->parse($In_File);
-    if ( !defined $workbook ) {
+    if (!defined $workbook) {
 	#logging
 	#print $parser->error(),".\n";
 	exit(1);

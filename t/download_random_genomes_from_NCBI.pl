@@ -126,6 +126,7 @@ print "each genome is stored in a sub-directory in $tmpdir and $tmpdir2\n";
 print "some genome may contain several Genbank files\n";
 print "Now, you're ready to use those genomes for testing\n";
 
+unlink($logfile);
 
 
 

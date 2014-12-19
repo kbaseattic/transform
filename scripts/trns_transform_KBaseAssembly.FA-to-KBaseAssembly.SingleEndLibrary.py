@@ -39,7 +39,7 @@ def convert(shock_url, shock_id, handle_url, handle_id, input_filename, output_f
     token = os.environ.get('KB_AUTH_TOKEN')
     
     logger.info("Gathering information.")
-    handles = script_utils.getHandles(logger, shock_url, handle_url, [shock_id], [handle_id])   
+    handles = script_utils.getHandles(logger, shock_url, handle_url, [shock_id], [handle_id], token)   
     
     assert len(handles) != 0
     

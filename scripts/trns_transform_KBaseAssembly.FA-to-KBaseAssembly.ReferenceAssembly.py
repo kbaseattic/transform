@@ -1,117 +1,80 @@
 #!/usr/bin/env python
-# This code is part of KBase project to validate 
-#the fastq and fasta files
 
-#from __future__ import print_function
-
-import math
-import sys, getopt
-import argparse
-import os.path
-import subprocess
-import json
-import gzip
-import io
-import cStringIO
-import hashlib
-import urllib
-import urllib2
-import datetime
-from biokbase.AbstractHandle.Client import AbstractHandle
+# standard library imports
+import os
+import sys
 import traceback
-#from biokbase import log
+import argparse
+import json
+import logging
 
-desc1 = '''
-NAME
-      trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly -- Convert the Fasta files to kbase types KBaseAssembly.ReferenceAssembly
+# 3rd party imports
+import requests
 
-SYNOPSIS      
-      
-'''
+# KBase imports
+import biokbase.Transform.script_utils as script_utils
 
-desc2 = '''
-DESCRIPTION
-  trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly converts the external Fasta files to  kbase types KBaseAssembly.ReferenceAssembly
 
-  TODO: It will support KBase log format.
-'''
+# conversion method that can be called if this module is imported
+def convert(shock_url, shock_id, handle_url, handle_id, input_filename, output_filename, level=logging.INFO, logger=None):
+    """
+    Converts FASTA file to KBaseAssembly.SingleEndLibrary json string.
 
-desc3 = '''
-AUTHORS
-Srividya Ramakrishnan.
-'''
+    Args:
+        shock_url: A url for the KBase SHOCK service.
+        handle_url: A url for the KBase Handle Service.
+        shock_id: A KBase SHOCK node id.
+        handle_id: A KBase Handle id.
+        input_filename: A file name for the input FASTA data.
+        output_filename: A file name where the output JSON string should be stored.
+        level: Logging level, defaults to logging.INFO.
 
-handle_service_url  = "http://140.221.67.78:7109"
-io_method = cStringIO.StringIO
-BLOCKSIZE = 65536
+    """
 
-### List of Exceptions
-class Error(Exception):
-    """Base class for exceptions in this module."""
-    pass
+    if logger is None:
+        logger = script_utils.getStderrLogger(__file__)
+    
+    logger.info("Starting conversion of FASTA to KBaseAssembly.SingleEndLibrary.")
 
-def return_hash(filename,func):
-	hasher = func()
-	with open(filename, 'rb') as afile:
-    		buf = afile.read(BLOCKSIZE)
-    		while len(buf) > 0:
-			hasher.update(buf)
-			buf = afile.read(BLOCKSIZE)
-	return hasher.hexdigest()
-	
-def to_JSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+    token = os.environ.get('KB_AUTH_TOKEN')
+    
+    logger.info("Gathering information.")
+    handles = script_utils.getHandles(logger, shock_url, handle_url, [shock_id], [handle_id],token)   
+    
+    assert len(handles) != 0
+    
+    objectString = json.dumps({"handle" : handles[0]}, sort_keys=True, indent=4)
+    
+    return objectString
 
-	
-def main(argv):
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly', epilog=desc3)
-    parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
-    parser.add_argument('-n', '--hndl_svc_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
-    parser.add_argument('-i', '--in_id', help='Input Shock node id', action='store', dest='inobj_id', default=None, required=False)
-    parser.add_argument('-w','--reference_name', help = 'Reference Name', action= 'store', dest='ref_name',default=None,required=False)
-    parser.add_argument('-f','--file_name', help = 'File Name', action= 'store', dest='file_name',default=None,required=False)
-    parser.add_argument('-d','--hid', help = 'handle id', action= 'store', dest='hid',default=None,required=False)
-    parser.add_argument('-o', '--out_file_name', help='Output file name', action='store', dest='out_fn', default=None, required=True)
-    usage = parser.format_usage()
-    parser.description = desc1 + ' ' + usage + desc2
-    parser.usage = argparse.SUPPRESS
+# called only if script is run from command line
+if __name__ == "__main__":	
+    parser = argparse.ArgumentParser(prog='trns_transform_KBaseAssembly.FA-to-KBaseAssembly.SingleEndLibrary', 
+                                     description='Converts FASTA file to KBaseAssembly.SingleEndLibrary json string.',
+                                     epilog='Authors: Matt Henderson')
+    parser.add_argument('-s', '--shock_url', help='Shock url', action='store', type=str, default='https://kbase.us/services/shock-api/', nargs='?')
+    parser.add_argument('-n', '--handle_url', help='Handle service url', action='store', type=str, default='https://kbase.us/services/handle_service/', nargs='?')
+    parser.add_argument('-f','--input_filename', help ='Input file name', action='store', type=str, nargs='?', required=False)
+    parser.add_argument('-o', '--output_filename', help='Output file name', action='store', type=str, nargs='?', required=True)
+    parser.add_argument('-r','--reference_name',help='Reference name', action='store', type=str, nargs='?',default=None)
+
+    data_id = parser.add_mutually_exclusive_group(required=True)
+    data_id.add_argument('-i', '--shock_id', help='Shock node id', action='store', type=str, nargs='?')
+    data_id.add_argument('-d','--handle_id', help ='Handle id', action= 'store', type=str, nargs='?')
+
     args = parser.parse_args()
-    
-    if args.inobj_id is None and args.hid is None:
-      print >> sys.stderr, parser.description
-      print >> sys.stderr, "Need to provide either shock node id or handle id"
-      exit(1)
-    
-    kb_token = os.environ.get('KB_AUTH_TOKEN')
-    hs = AbstractHandle(url=args.hndl_url, token = kb_token)
-    
-    if args.hid is None:
-      try: # to create one
-        args.hid = hs.persist_handle({ "id" : args.inobj_id , "type" : "shock" , "url" : args.shock_url})
-        hds = hs.hids_to_handles([args.hid])
-      except: # handle is already registered
-        try:
-          hds = hs.ids_to_handles([args.inobj_id]) # look up by shock_node id
-        except:
-          traceback.print_exc(file=sys.stderr)
-          print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered".format(args.inobj_id)
-          exit(3)
-    else : # given handle_id
-      hds = hs.hids_to_handles([args.hid]) 
 
-    if len(hds) <= 0: 
-      print >> sys.stderr, 'Could not register a new handle with shock node id {} or wrong input handle id'.format(args.inobj_id)
-      exit(2)
-
-    ret = { "handle" : hds[0] }
-    if args.ref_name is not None:
-      ret['reference_name'] = args.ref_name
+    logger = script_utils.getStderrLogger(__file__)
+    try:
+        ret_json = json.loads(convert(args.shock_url, args.shock_id, args.handle_url, args.handle_id, args.input_filename, args.output_filename,logger=logger))
+	if args.reference_name is not None:
+		ret_json["reference_name"] = args.reference_name
+	logger.info("Writing out JSON.")
+    	with open(args.output_filename, "w") as outFile:
+        	outFile.write(json.dumps(ret_json,sort_keys = True, indent = 4))
+   	logger.info("Conversion completed.")
+    except:
+        logger.exception("".join(traceback.format_exc()))
+        sys.exit(1)
     
-    of = open(args.out_fn, "w")
-    of.write(to_JSON(ret))
-    of.close()
-
-if __name__ == "__main__" :
-    ret =  main(sys.argv[1:])
-
-exit(0);
+    sys.exit(0)

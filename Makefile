@@ -192,6 +192,8 @@ build-libs:
 		--psgi $(SERVICE_PSGI_FILE) \
 		--impl Bio::KBase::$(SERVICE_NAME)::$(SERVICE_NAME)Impl \
 		--service Bio::KBase::$(SERVICE_NAME)::Service \
+		--pyimpl biokbase.$(SERVICE_NAME).Impl \
+		--pyserver biokbase.$(SERVICE_NAME).Server \
 		--client Bio::KBase::$(SERVICE_NAME)::Client \
 		--py biokbase/$(SERVICE_NAME)/Client \
 		--js javascript/$(SERVICE_NAME)/Client \

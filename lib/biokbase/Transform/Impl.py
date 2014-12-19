@@ -33,6 +33,8 @@ class Transform:
         # ctx is the context object
         # return variables are: result
         #BEGIN import_data
+        if 'optional_args' not in args: args['optional_args'] = '{}'
+        result = run_async(self.config, ctx, args)
         #END import_data
 
         # At some point might do deeper type checking...
@@ -46,9 +48,6 @@ class Transform:
         # ctx is the context object
         # return variables are: result
         #BEGIN validate
-        print self.config
-        print ctx
-        print args
         if 'optional_args' not in args: args['optional_args'] = '{}'
         result = run_async(self.config, ctx, args)
         #END validate
@@ -64,6 +63,8 @@ class Transform:
         # ctx is the context object
         # return variables are: result
         #BEGIN upload
+        if 'optional_args' not in args: args['optional_args'] = '{}'
+        result = run_async(self.config, ctx, args)
         #END upload
 
         # At some point might do deeper type checking...
@@ -77,6 +78,8 @@ class Transform:
         # ctx is the context object
         # return variables are: result
         #BEGIN download
+        if 'optional_args' not in args: args['optional_args'] = '{}'
+        result = run_async(self.config, ctx, args)
         #END download
 
         # At some point might do deeper type checking...

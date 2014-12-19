@@ -39,7 +39,7 @@ def convert(shock_url, shock_id, handle_url, handle_id, input_filename, output_f
     token = os.environ.get('KB_AUTH_TOKEN')
     
     logger.info("Gathering information.")
-    handles = script_utils.getHandles(logger, shock_url, handle_url, [shock_id], [handle_id],token)   
+    handles = script_utils.getHandles(logger, shock_url, handle_url, [shock_id], [handle_id], token)   
     
     assert len(handles) != 0
     
@@ -49,11 +49,11 @@ def convert(shock_url, shock_id, handle_url, handle_id, input_filename, output_f
 
 # called only if script is run from command line
 if __name__ == "__main__":	
-    parser = argparse.ArgumentParser(prog='trns_transform_KBaseAssembly.FA-to-KBaseAssembly.SingleEndLibrary', 
-                                     description='Converts FASTA file to KBaseAssembly.SingleEndLibrary json string.',
-                                     epilog='Authors: Matt Henderson')
-    parser.add_argument('-s', '--shock_url', help='Shock url', action='store', type=str, default='https://kbase.us/services/shock-api/', nargs='?')
-    parser.add_argument('-n', '--handle_url', help='Handle service url', action='store', type=str, default='https://kbase.us/services/handle_service/', nargs='?')
+    parser = argparse.ArgumentParser(prog='trns_transform_KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly', 
+                                     description='Converts FASTA file to KBaseAssembly.ReferenceAssembly json string.',
+                                     epilog='Authors: Srividya Ramakrishnan, Matt Henderson')
+    parser.add_argument('-s', '--shock_url', help='Shock url', action='store', type=str, default='https://kbase.us/services/shock-api/', nargs='?', required=True)
+    parser.add_argument('-n', '--handle_url', help='Handle service url', action='store', type=str, default='https://kbase.us/services/handle_service/', nargs='?', required=True)
     parser.add_argument('-f','--input_filename', help ='Input file name', action='store', type=str, nargs='?', required=False)
     parser.add_argument('-o', '--output_filename', help='Output file name', action='store', type=str, nargs='?', required=True)
     parser.add_argument('-r','--reference_name',help='Reference name', action='store', type=str, nargs='?',default=None)
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     logger = script_utils.getStderrLogger(__file__)
     try:
-        ret_json = json.loads(convert(args.shock_url, args.shock_id, args.handle_url, args.handle_id, args.input_filename, args.output_filename,logger=logger))
+        ret_json = json.loads(convert(args.shock_url, args.shock_id, args.handle_url, args.handle_id, args.input_filename, args.output_filename, logger=logger))
 	if args.reference_name is not None:
 		ret_json["reference_name"] = args.reference_name
 	logger.info("Writing out JSON.")

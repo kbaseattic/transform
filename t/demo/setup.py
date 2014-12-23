@@ -12,7 +12,7 @@ virtualenv_dir = os.path.join(running_dir,"venv")
 # create a virtualenv under the services directory
 import subprocess
 subprocess.call(["virtualenv","--python","python2.7","--system-site-packages",virtualenv_dir])
-subprocess.call([os.path.join(virtualenv_dir, "bin/pip"), "install","pip","requests","httplib2","requests_toolbelt","gitpython","filemagic","blessings"])
+subprocess.call([os.path.join(virtualenv_dir, "bin/pip"), "install","pip","requests","httplib2","requests_toolbelt","gitpython","filemagic","blessings","python-dateutil"])
 
 sys.path.append("./venv/lib/python2.7/site-packages/")
 

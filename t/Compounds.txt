@@ -1,0 +1,1040 @@
+id	name	aliases	charge	formula
+10fthf	10-Formyltetrahydrofolate	BIGG:10fthf;KEGG:C00234;	-2	C20H21N7O7
+12dgr120	1,2-Diacyl-sn-glycerol (didodecanoyl, n-C12:0)	BIGG:12dgr120;KEGG:C00641;	0	C27H52O5
+12dgr140	1,2-Diacyl-sn-glycerol (ditetradecanoyl, n-C14:0)	BIGG:12dgr140;KEGG:C00641;	0	C31H60O5
+12dgr141	1,2-Diacyl-sn-glycerol (ditetradec-7-enoyl, n-C14:1)	BIGG:12dgr141;KEGG:C00641;	0	C31H56O5
+12dgr160	1,2-Diacyl-sn-glycerol (dihexadecanoyl, n-C16:0)	BIGG:12dgr160;KEGG:C00641;	0	C35H68O5
+12dgr161	1,2-Diacyl-sn-glycerol (dihexadec-9-enoyl, n-C16:1)	BIGG:12dgr161;KEGG:C00641;	0	C35H64O5
+12dgr180	1,2-Diacyl-sn-glycerol (dioctadecanoyl, n-C18:0)	BIGG:12dgr180;KEGG:C00641;	0	C39H76O5
+12dgr181	1,2-Diacyl-sn-glycerol (dioctadec-11-enoyl, n-C18:1)	BIGG:12dgr181;KEGG:C00641;	0	C39H72O5
+12ppd-R	(R)-Propane-1,2-diol	CAS:4254-14-2;BIGG:12ppd-R;KEGG:C02912;	0	C3H8O2
+12ppd-S	(S)-Propane-1,2-diol	CAS:4254-14-3;BIGG:12ppd-S;KEGG:C02917;	0	C3H8O2
+13dpg	3-Phospho-D-glyceroyl phosphate	BIGG:13dpg;KEGG:C00236;	-4	C3H4O10P2
+14glucan	1,4-alpha-D-glucan	BIGG:14glucan;	0	C36H62O31
+15dap	1,5-Diaminopentane	CAS:462-94-2;BIGG:15dap;KEGG:C01672;	2	C5H16N2
+1agpe120	1-Acyl-sn-glycero-3-phosphoethanolamine (n-C12:0)	BIGG:1agpe120;KEGG:C04438;	0	C17H36NO7P1
+1agpe140	1-Acyl-sn-glycero-3-phosphoethanolamine (n-C14:0)	BIGG:1agpe140;KEGG:C04438;	0	C19H40NO7P1
+1agpe141	1-Acyl-sn-glycero-3-phosphoethanolamine (n-C14:1)	BIGG:1agpe141;KEGG:C04438;	0	C19H38NO7P1
+1agpe160	1-Acyl-sn-glycero-3-phosphoethanolamine (n-C16:0)	BIGG:1agpe160;KEGG:C04438;	0	C21H44NO7P1
+1agpe161	1-Acyl-sn-glycero-3-phosphoethanolamine (n-C16:1)	BIGG:1agpe161;KEGG:C04438;	0	C21H42NO7P1
+1agpe180	1-Acyl-sn-glycero-3-phosphoethanolamine (n-C18:0)	BIGG:1agpe180;KEGG:C04438;	0	C23H48NO7P1
+1agpe181	1-Acyl-sn-glycero-3-phosphoethanolamine (n-C18:1)	BIGG:1agpe181;KEGG:C04438;	0	C23H46NO7P1
+1agpg120	1-Acyl-sn-glycero-3-phosphoglycerol (n-C12:0)	BIGG:1agpg120;	-1	C18H36O9P1
+1agpg140	1-Acyl-sn-glycero-3-phosphoglycerol (n-C14:0)	BIGG:1agpg140;	-1	C20H40O9P1
+1agpg141	1-Acyl-sn-glycero-3-phosphoglycerol (n-C14:1)	BIGG:1agpg141;	-1	C20H38O9P1
+1agpg160	1-Acyl-sn-glycero-3-phosphoglycerol (n-C16:0)	BIGG:1agpg160;	-1	C22H44O9P1
+1agpg161	1-Acyl-sn-glycero-3-phosphoglycerol (n-C16:1)	BIGG:1agpg161;	-1	C22H42O9P1
+1agpg180	1-Acyl-sn-glycero-3-phosphoglycerol (n-C18:0)	BIGG:1agpg180;	-1	C24H48O9P1
+1agpg181	1-Acyl-sn-glycero-3-phosphoglycerol (n-C18:1)	BIGG:1agpg181;	-1	C24H46O9P1
+1ddecg3p	1-dodecanoyl-sn-glycerol 3-phosphate	BIGG:1ddecg3p;KEGG:C00681;	-2	C15H29O7P1
+1hdec9eg3p	1-hexadec-9-enoyl-sn-glycerol 3-phosphate	BIGG:1hdec9eg3p;	-2	C19H35O7P1
+1hdecg3p	1-hexadecanoyl-sn-glycerol 3-phosphate	BIGG:1hdecg3p;KEGG:C00681;	-2	C19H37O7P1
+1odec11eg3p	1-octadec-11-enoyl-sn-glycerol 3-phosphate	BIGG:1odec11eg3p;	-2	C21H39O7P1
+1odecg3p	1-octadecanoyl-sn-glycerol 3-phosphate	BIGG:1odecg3p;KEGG:C00681;	-2	C21H41O7P1
+1pyr5c	1-Pyrroline-5-carboxylate	BIGG:1pyr5c;KEGG:C03912;	-1	C5H6NO2
+1tdec7eg3p	1-tetradec-7-enoyl-sn-glycerol 3-phosphate	BIGG:1tdec7eg3p;KEGG:C00681;	-2	C17H31O7P1
+1tdecg3p	1-tetradecanoyl-sn-glycerol 3-phosphate	BIGG:1tdecg3p;KEGG:C00681;	-2	C17H33O7P1
+23camp	2',3'-Cyclic AMP	BIGG:23camp;KEGG:C02353;	-1	C10H11N5O6P
+23ccmp	2',3'-Cyclic CMP	BIGG:23ccmp;KEGG:C02354;	-1	C9H11N3O7P
+23cgmp	2',3'-Cyclic GMP	BIGG:23cgmp;KEGG:C06194;	-1	C10H11N5O7P
+23cump	2',3'-Cyclic UMP	BIGG:23cump;KEGG:C02355;	-1	C9H10N2O8P
+23dappa	2,3-diaminopropionate	BIGG:23dappa;KEGG:C06393;	1	C3H9N2O2
+23ddhb	2,3-Dihydro-2,3-dihydroxybenzoate	BIGG:23ddhb;KEGG:C04171;	-1	C7H7O4
+23dhb	2,3-Dihydroxybenzoate	CAS:303-38-8;BIGG:23dhb;KEGG:C00196;	-1	C7H5O4
+23dhba	(2,3-Dihydroxybenzoyl)adenylate	BIGG:23dhba;KEGG:C04030;	-1	C17H17N5O10P
+23dhbzs	2,3-dihydroxybenzoylserine	BIGG:23dhbzs;	-1	C10H10NO6
+23dhdp	2,3-Dihydrodipicolinate	BIGG:23dhdp;KEGG:C03340;	-2	C7H5NO4
+23dhmb	(R)-2,3-Dihydroxy-3-methylbutanoate	BIGG:23dhmb;KEGG:C04272;	-1	C5H9O4
+23dhmp	(R)-2,3-Dihydroxy-3-methylpentanoate	BIGG:23dhmp;KEGG:C06007;	-1	C6H11O4
+23doguln	2,3-Dioxo-L-gulonate	BIGG:23doguln;KEGG:C05409;	-1	C6H7O7
+25aics	(S)-2-[5-Amino-1-(5-phospho-D-ribosyl)imidazole-4-carboxamido]succinate	BIGG:25aics;KEGG:C04823;	-4	C13H15N4O12P
+25dkglcn	2,5-diketo-D-gluconate	BIGG:25dkglcn;KEGG:C02780;	-1	C6H7O7
+25drapp	2,5-Diamino-6-(ribosylamino)-4-(3H)-pyrimidinone 5'-phosphate	BIGG:25drapp;	-2	C9H14N5O8P
+26dap-LL	LL-2,6-Diaminoheptanedioate	CAS:583-93-7;BIGG:26dap-LL;KEGG:C00666;	0	C7H14N2O4
+26dap-M	meso-2,6-Diaminoheptanedioate	BIGG:26dap-M;KEGG:C00680;	0	C7H14N2O4
+2agpe120	2-Acyl-sn-glycero-3-phosphoethanolamine (n-C12:0)	BIGG:2agpe120;KEGG:C05973;	0	C17H36NO7P1
+2agpe140	2-Acyl-sn-glycero-3-phosphoethanolamine (n-C14:0)	BIGG:2agpe140;KEGG:C05973;	0	C19H40NO7P1
+2agpe141	2-Acyl-sn-glycero-3-phosphoethanolamine (n-C14:1)	BIGG:2agpe141;KEGG:C05973;	0	C19H38NO7P1
+2agpe160	2-Acyl-sn-glycero-3-phosphoethanolamine (n-C16:0)	BIGG:2agpe160;KEGG:C05973;	0	C21H44NO7P1
+2agpe161	2-Acyl-sn-glycero-3-phosphoethanolamine (n-C16:1)	BIGG:2agpe161;KEGG:C05973;	0	C21H42NO7P1
+2agpe180	2-Acyl-sn-glycero-3-phosphoethanolamine (n-C18:0)	BIGG:2agpe180;KEGG:C05973;	0	C23H48NO7P1
+2agpe181	2-Acyl-sn-glycero-3-phosphoethanolamine (n-C18:1)	BIGG:2agpe181;KEGG:C05973;	0	C23H46NO7P1
+2agpg120	2-Acyl-sn-glycero-3-phosphoglycerol (n-C12:0)	BIGG:2agpg120;	-1	C18H36O9P1
+2agpg140	2-Acyl-sn-glycero-3-phosphoglycerol (n-C14:0)	BIGG:2agpg140;	-1	C20H40O9P1
+2agpg141	2-Acyl-sn-glycero-3-phosphoglycerol (n-C14:1)	BIGG:2agpg141;	-1	C20H38O9P1
+2agpg160	2-Acyl-sn-glycero-3-phosphoglycerol (n-C16:0)	BIGG:2agpg160;	-1	C22H44O9P1
+2agpg161	2-Acyl-sn-glycero-3-phosphoglycerol (n-C16:1)	BIGG:2agpg161;	-1	C22H42O9P1
+2agpg180	2-Acyl-sn-glycero-3-phosphoglycerol (n-C18:0)	BIGG:2agpg180;	-1	C24H48O9P1
+2agpg181	2-Acyl-sn-glycero-3-phosphoglycerol (n-C18:1)	BIGG:2agpg181;	-1	C24H46O9P1
+2ahbut	(S)-2-Aceto-2-hydroxybutanoate	BIGG:2ahbut;KEGG:C06006;	-1	C6H9O4
+2amsa	2-Aminomalonate semialdehyde	BIGG:2amsa;KEGG:C11822;	0	C3H5NO3
+2aobut	L-2-Amino-3-oxobutanoate	BIGG:2aobut;KEGG:C03508;	0	C4H7NO3
+2cpr5p	1-(2-Carboxyphenylamino)-1-deoxy-D-ribulose 5-phosphate	BIGG:2cpr5p;KEGG:C01302;	-3	C12H13NO9P
+2dda7p	2-Dehydro-3-deoxy-D-arabino-heptonate 7-phosphate	BIGG:2dda7p;KEGG:C04691;	-3	C7H10O10P
+2ddecg3p	2-dodecanoyl-sn-glycerol 3-phosphate	BIGG:2ddecg3p;KEGG:C03974;	-1	C15H30O7P1
+2ddg6p	2-Dehydro-3-deoxy-D-gluconate 6-phosphate	BIGG:2ddg6p;KEGG:C04442;	-3	C6H8O9P
+2ddglcn	2-Dehydro-3-deoxy-D-gluconate	BIGG:2ddglcn;KEGG:C00204;	-1	C6H9O6
+2dh3dgal	2-Dehydro-3-deoxy-D-galactonate	BIGG:2dh3dgal;KEGG:C01216;	-1	C6H9O6
+2dh3dgal6p	2-Dehydro-3-deoxy-D-galactonate 6-phosphate	BIGG:2dh3dgal6p;KEGG:C01286;	-3	C6H8O9P
+2dhglcn	2-Dehydro-D-gluconate	BIGG:2dhglcn;KEGG:C00629;	-1	C6H9O7
+2dhguln	2-Dehydro-L-gulonate	BIGG:2dhguln;	-1	C6H9O7
+2dhp	2-Dehydropantoate	BIGG:2dhp;KEGG:C00966;	-1	C6H9O4
+2dmmq8	2-Demethylmenaquinone 8	BIGG:2dmmq8;KEGG:C05818;	0	C50H70O2
+2dmmql8	2-Demethylmenaquinol 8	BIGG:2dmmql8;	0	C50H72O2
+2dr1p	2-Deoxy-D-ribose 1-phosphate	BIGG:2dr1p;KEGG:C00672;	-2	C5H9O7P
+2dr5p	2-Deoxy-D-ribose 5-phosphate	CAS:102916-66-5;BIGG:2dr5p;KEGG:C00673;	-2	C5H9O7P
+2h3oppan	2-Hydroxy-3-oxopropanoate	BIGG:2h3oppan;KEGG:C01146;	-1	C3H3O4
+2hdec9eg3p	2-hexadec-9-enoyl-sn-glycerol 3-phosphate	BIGG:2hdec9eg3p;KEGG:C03974;	-1	C19H36O7P1
+2hdecg3p	2-hexadecanoyl-sn-glycerol 3-phosphate	BIGG:2hdecg3p;KEGG:C03974;	-1	C19H38O7P1
+2ippm	2-Isopropylmaleate	BIGG:2ippm;KEGG:C02631;	-2	C7H8O4
+2kmb	2-keto-4-methylthiobutyrate	BIGG:2kmb;	-1	C5H7O3S
+2mahmp	2-Methyl-4-amino-5-hydroxymethylpyrimidine diphosphate	CAS:745-65-3;BIGG:2mahmp;KEGG:C04752;	-3	C6H8N3O7P2
+2mcacn	cis-2-Methylaconitate	CAS:99-98-9;BIGG:2mcacn;KEGG:C04225;	-3	C7H5O6
+2mcit	2-Methylcitrate	CAS:96-17-3;BIGG:2mcit;KEGG:C02225;	-3	C7H7O7
+2me4p	2-C-methyl-D-erythritol 4-phosphate	BIGG:2me4p;KEGG:C11434;	-2	C5H11O7P
+2mecdp	2-C-methyl-D-erythritol 2,4-cyclodiphosphate	BIGG:2mecdp;KEGG:C11453;	-2	C5H10O9P2
+2obut	2-Oxobutanoate	CAS:600-18-0;BIGG:2obut;KEGG:C00109;	-1	C4H5O3
+2odec11eg3p	2-octadec-11-enoyl-sn-glycerol 3-phosphate	BIGG:2odec11eg3p;KEGG:C03974;	-1	C21H40O7P1
+2odecg3p	2-octadecanoyl-sn-glycerol 3-phosphate	BIGG:2odecg3p;KEGG:C03974;	-1	C21H42O7P1
+2ohph	2-Octaprenyl-6-hydroxyphenol	BIGG:2ohph;KEGG:C05811;	0	C46H70O2
+2ombzl	2-Octaprenyl-6-methoxy-1,4-benzoquinol	BIGG:2ombzl;	0	C47H72O3
+2omhmbl	2-Octaprenyl-3-methyl-5-hydroxy-6-methoxy-1,4-benzoquinol	BIGG:2omhmbl;	0	C48H74O4
+2ommbl	2-Octaprenyl-3-methyl-6-methoxy- 1,4-benzoquinol	BIGG:2ommbl;	0	C48H74O3
+2omph	2-Octaprenyl-6-methoxyphenol	BIGG:2omph;KEGG:C05812;	0	C47H72O2
+2oph	2-Octaprenylphenol	BIGG:2oph;KEGG:C05810;	0	C46H70O
+2p4c2me	2-phospho-4-(cytidine 5'-diphospho)-2-C-methyl-D-erythritol	BIGG:2p4c2me;	-4	C14H22N3O17P3
+2pg	D-Glycerate 2-phosphate	BIGG:2pg;KEGG:C00631;	-3	C3H4O7P
+2pglyc	2-Phosphoglycolate	BIGG:2pglyc;KEGG:C00988;	-3	C2H2O6P
+2shchc	2-Succinyl-6-hydroxy-2,4-cyclohexadiene-1-carboxylate	BIGG:2shchc;KEGG:C05817;	-2	C11H10O6
+2tdec7eg3p	2-tetradec-7-enoyl-sn-glycerol 3-phosphate	BIGG:2tdec7eg3p;KEGG:C03974;	-1	C17H32O7P1
+2tdecg3p	2-tetradecanoyl-sn-glycerol 3-phosphate	BIGG:2tdecg3p;KEGG:C03974;	-1	C17H34O7P1
+2tpr3dpcoa	2'-(5''-triphosphoribosyl)-3'-dephospho-CoA	BIGG:2tpr3dpcoa;	-6	C26H40N7O26P5S
+34dhpac	3,4-Dihydroxyphenylacetaldehyde	BIGG:34dhpac;KEGG:C04043;	0	C8H8O3
+34hpp	3-(4-Hydroxyphenyl)pyruvate	BIGG:34hpp;KEGG:C01179;	-1	C9H7O4
+3amp	3'-AMP	CAS:84-21-9;BIGG:3amp;KEGG:C01367;	-2	C10H12N5O7P
+3c2hmp	3-Carboxy-2-hydroxy-4-methylpentanoate	BIGG:3c2hmp;KEGG:C04411;	-2	C7H10O5
+3c3hmp	3-Carboxy-3-hydroxy-4-methylpentanoate	BIGG:3c3hmp;KEGG:C02504;	-2	C7H10O5
+3c4mop	3-Carboxy-4-methyl-2-oxopentanoate	BIGG:3c4mop;KEGG:C04236;	-2	C7H8O5
+3cmp	3'-cmp	BIGG:3cmp;KEGG:C05822;	-2	C9H12N3O8P
+3dhguln	3-Dehydro-L-gulonate	BIGG:3dhguln;KEGG:C00618;	-1	C6H9O7
+3dhgulnp	3-keto-L-gulonate-6-phosphate	BIGG:3dhgulnp;	-3	C6H8O10P
+3dhq	3-Dehydroquinate	BIGG:3dhq;KEGG:C00944;	-1	C7H9O6
+3dhsk	3-Dehydroshikimate	BIGG:3dhsk;KEGG:C02637;	-1	C7H7O5
+3gmp	3'-GMP	BIGG:3gmp;KEGG:C06193;	-2	C10H12N5O8P
+3haACP	(3R)-3-Hydroxyacyl-[acyl-carrier protein]	BIGG:3haACP;KEGG:C01271;	-1	C15H27N2O9PRS
+3hbcoa	(S)-3-Hydroxybutanoyl-CoA	BIGG:3hbcoa;KEGG:C01144;	-4	C25H38N7O18P3S
+3hcddec5eACP	(R)-3-hydroxy-cis-dodec-5-enoyl-[acyl-carrier protein]	BIGG:3hcddec5eACP;	-1	C23H41N2O9PRS
+3hcinnm	3-hydroxycinnamic acid	BIGG:3hcinnm;	-1	C9H7O3
+3hcmrs7eACP	(R)-3-hydroxy-cis-myristol-7-eoyl-[acyl-carrier protein]	BIGG:3hcmrs7eACP;	-1	C25H45N2O9PRS
+3hcpalm9eACP	(R)-3-hydroxy-cis-palm-9-eoyl-[acyl-carrier protein]	BIGG:3hcpalm9eACP;	-1	C27H49N2O9PRS
+3hcvac11eACP	(R)-3-hydroxy-cis-vacc-11-enoyl-[acyl-carrier protein]	BIGG:3hcvac11eACP;	-1	C29H53N2O9PRS
+3hdcoa	(S)-3-Hydroxydecanoyl-CoA	BIGG:3hdcoa;KEGG:C05264;	-4	C31H50N7O18P3S
+3hddcoa	(S)-3-Hydroxydodecanoyl-CoA	BIGG:3hddcoa;KEGG:C05262;	-4	C33H54N7O18P3S
+3hddecACP	(R)-3-Hydroxydodecanoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:3hddecACP;KEGG:C05757;	-1	C23H43N2O9PRS
+3hdecACP	(R)-3-Hydroxydecanoyl-[acyl-carrier protein]	CAS:320-77-4;BIGG:3hdecACP;KEGG:C04619;	-1	C21H39N2O9PRS
+3hhcoa	(S)-3-Hydroxyhexanoyl-CoA	BIGG:3hhcoa;KEGG:C05268;	-4	C27H42N7O18P3S
+3hhdcoa	(S)-3-Hydroxyhexadecanoyl-CoA	BIGG:3hhdcoa;KEGG:C05258;	-4	C37H62N7O18P3S
+3hhexACP	(R)-3-Hydroxyhexanoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:3hhexACP;KEGG:C05747;	-1	C17H31N2O9PRS
+3hmrsACP	(R)-3-Hydroxytetradecanoyl-[acyl-carrier protein]	BIGG:3hmrsACP;KEGG:C04688;	-1	C25H47N2O9PRS
+3hocoa	(S)-3-Hydroxyoctanoyl-CoA	BIGG:3hocoa;KEGG:C05266;	-4	C29H46N7O18P3S
+3hoctaACP	(R)-3-Hydroxyoctadecanoyl-[acyl-carrier protein]	BIGG:3hoctaACP;	-1	C29H55N2O9PRS
+3hoctACP	(R)-3-Hydroxyoctanoyl-[acyl-carrier protein]	BIGG:3hoctACP;KEGG:C04620;	-1	C19H35N2O9PRS
+3hodcoa	(S)-3-Hydroxyoctadecanoyl-CoA	BIGG:3hodcoa;	-4	C39H66N7O18P3S
+3hpalmACP	R-3-hydroxypalmitoyl-[acyl-carrier protein]	BIGG:3hpalmACP;KEGG:C04633;	-1	C27H51N2O9PRS
+3hpppn	3-(3-hydroxy-phenyl)propionate	BIGG:3hpppn;	-1	C9H9O3
+3htdcoa	(S)-3-Hydroxytetradecanoyl-CoA	BIGG:3htdcoa;KEGG:C05260;	-4	C35H58N7O18P3S
+3ig3p	C'-(3-Indolyl)-glycerol 3-phosphate	BIGG:3ig3p;KEGG:C03506;	-2	C11H12NO6P
+3mob	3-Methyl-2-oxobutanoate	BIGG:3mob;KEGG:C00141;	-1	C5H7O3
+3mop	(S)-3-Methyl-2-oxopentanoate	BIGG:3mop;KEGG:C00671;	-1	C6H9O3
+3ocddec5eACP	3-oxo-cis-dodec-5-enoyl-[acyl-carrier protein]	BIGG:3ocddec5eACP;	-1	C23H39N2O9PRS
+3ocmrs7eACP	3-oxo-cis-myristol-7-eoyl-[acyl-carrier protein]	BIGG:3ocmrs7eACP;	-1	C25H43N2O9PRS
+3ocpalm9eACP	3-oxo-cis-palm-9-eoyl-[acyl-carrier protein]	BIGG:3ocpalm9eACP;	-1	C27H47N2O9PRS
+3ocvac11eACP	3-oxo-cis-vacc-11-enoyl-[acyl-carrier protein]	BIGG:3ocvac11eACP;	-1	C29H51N2O9PRS
+3odcoa	3-Oxodecanoyl-CoA	BIGG:3odcoa;KEGG:C05265;	-4	C31H48N7O18P3S
+3oddcoa	3-Oxododecanoyl-CoA	BIGG:3oddcoa;KEGG:C05263;	-4	C33H52N7O18P3S
+3oddecACP	3-Oxododecanoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:3oddecACP;KEGG:C05756;	-1	C23H41N2O9PRS
+3odecACP	3-Oxodecanoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:3odecACP;KEGG:C05753;	-1	C21H37N2O9PRS
+3ohcoa	3-Oxohexanoyl-CoA	CAS:5096-70-8;BIGG:3ohcoa;KEGG:C05269;	-4	C27H40N7O18P3S
+3ohdcoa	3-Oxohexadecanoyl-CoA	BIGG:3ohdcoa;KEGG:C05259;	-4	C37H60N7O18P3S
+3ohexACP	3-Oxohexanoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:3ohexACP;KEGG:C05746;	-1	C17H29N2O9PRS
+3omrsACP	3-Oxotetradecanoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:3omrsACP;KEGG:C05759;	-1	C25H45N2O9PRS
+3oocoa	3-Oxooctanoyl-CoA	BIGG:3oocoa;KEGG:C05267;	-4	C29H44N7O18P3S
+3ooctACP	3-Oxooctanoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:3ooctACP;KEGG:C05750;	-1	C19H33N2O9PRS
+3ooctdACP	3-Oxooctadecanoyl-[acyl-carrier protein]	BIGG:3ooctdACP;	-1	C29H53N2O9PRS
+3oodcoa	3-Oxooctadecanoyl-CoA	BIGG:3oodcoa;	-4	C39H64N7O18P3S
+3opalmACP	3-Oxohexadecanoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:3opalmACP;KEGG:C05762;	-1	C27H49N2O9PRS
+3ophb	3-Octaprenyl-4-hydroxybenzoate	BIGG:3ophb;KEGG:C05809;	-1	C47H69O3
+3otdcoa	3-Oxotetradecanoyl-CoA	BIGG:3otdcoa;KEGG:C05261;	-4	C35H56N7O18P3S
+3pg	3-Phospho-D-glycerate	BIGG:3pg;KEGG:C00197;	-3	C3H4O7P
+3php	3-Phosphohydroxypyruvate	BIGG:3php;KEGG:C03232;	-3	C3H2O7P
+3psme	5-O-(1-Carboxyvinyl)-3-phosphoshikimate	BIGG:3psme;KEGG:C01269;	-4	C10H9O10P
+3sala	3-Sulfino-L-alanine	CAS:1115-65-7;BIGG:3sala;KEGG:C00606;	-2	C3H5NO4S
+3ump	3'-UMP	CAS:35170-03-7;BIGG:3ump;KEGG:C01368;	-2	C9H11N2O9P
+4abut	4-Aminobutanoate	CAS:56-12-2;BIGG:4abut;KEGG:C00334;	0	C4H9NO2
+4abutn	4-Aminobutanal	BIGG:4abutn;KEGG:C00555;	1	C4H10NO
+4abz	4-Aminobenzoate	CAS:150-13-0;BIGG:4abz;KEGG:C00568;	-1	C7H6NO2
+4adcho	4-amino-4-deoxychorismate	BIGG:4adcho;KEGG:C11355;	-1	C10H10NO5
+4ahmmp	4-Amino-5-hydroxymethyl-2-methylpyrimidine	CAS:73-67-6;BIGG:4ahmmp;KEGG:C01279;	0	C6H9N3O
+4ampm	4-Amino-2-methyl-5-phosphomethylpyrimidine	BIGG:4ampm;KEGG:C04556;	-2	C6H8N3O4P
+4c2me	4-(cytidine 5'-diphospho)-2-C-methyl-D-erythritol	BIGG:4c2me;KEGG:C11435;	-2	C14H23N3O14P2
+4h2opntn	4-Hydroxy-2-oxopentanoate	CAS:111844-33-8;BIGG:4h2opntn;KEGG:C03589;	-1	C5H7O4
+4hba	4-Hydroxy-benzyl alcohol	BIGG:4hba;	0	C7H8O2
+4hbz	4-Hydroxybenzoate	CAS:99-96-7;BIGG:4hbz;KEGG:C00156;	-1	C7H5O3
+4hoxpacd	4-Hydroxyphenylacetaldehyde	CAS:60-11-7;BIGG:4hoxpacd;KEGG:C03765;	0	C8H8O2
+4hthr	4-Hydroxy-L-threonine	BIGG:4hthr;KEGG:C06056;	0	C4H9NO4
+4mhetz	4-Methyl-5-(2-hydroxyethyl)-thiazole	CAS:137-00-8;BIGG:4mhetz;KEGG:C04294;	0	C6H9NOS
+4mop	4-Methyl-2-oxopentanoate	BIGG:4mop;KEGG:C00233;	-1	C6H9O3
+4mpetz	4-Methyl-5-(2-phosphoethyl)-thiazole	BIGG:4mpetz;KEGG:C04327;	-2	C6H8NO4PS
+4pasp	4-Phospho-L-aspartate	BIGG:4pasp;KEGG:C03082;	-2	C4H6NO7P
+4per	4-Phospho-D-erythronate	BIGG:4per;KEGG:C03393;	-3	C4H6O8P
+4ppan	D-4'-Phosphopantothenate	BIGG:4ppan;KEGG:C03492;	-3	C9H15NO8P
+4ppcys	N-((R)-4-Phosphopantothenoyl)-L-cysteine	BIGG:4ppcys;KEGG:C04352;	-3	C12H20N2O9PS
+4r5au	4-(1-D-Ribitylamino)-5-aminouracil	BIGG:4r5au;KEGG:C04732;	0	C9H16N4O6
+5aizc	5-amino-1-(5-phospho-D-ribosyl)imidazole-4-carboxylate	BIGG:5aizc;KEGG:C04751;	-3	C9H11N3O9P
+5aop	5-Amino-4-oxopentanoate	CAS:106-60-5;BIGG:5aop;KEGG:C00430;	0	C5H9NO3
+5aprbu	5-Amino-6-(5'-phosphoribitylamino)uracil	BIGG:5aprbu;KEGG:C04454;	-2	C9H15N4O9P
+5apru	5-Amino-6-(5'-phosphoribosylamino)uracil	BIGG:5apru;KEGG:C01268;	-2	C9H13N4O9P
+5caiz	5-phosphoribosyl-5-carboxyaminoimidazole	BIGG:5caiz;	-3	C9H11N3O9P
+5dglcn	5-Dehydro-D-gluconate	BIGG:5dglcn;KEGG:C01062;	-1	C6H9O7
+5dh4dglc	5-Dehydro-4-deoxy-D-glucarate	BIGG:5dh4dglc;KEGG:C00679;	-2	C6H6O7
+5drib	5'-deoxyribose	BIGG:5drib;	0	C5H10O4
+5mdr1p	5-Methylthio-5-deoxy-D-ribose 1-phosphate	BIGG:5mdr1p;KEGG:C04188;	-2	C6H11O7PS
+5mdru1p	5-Methylthio-5-deoxy-D-ribulose 1-phosphate	BIGG:5mdru1p;KEGG:C04582;	-2	C6H11O7PS
+5mta	5-Methylthioadenosine	CAS:2457-80-9;BIGG:5mta;KEGG:C00170;	0	C11H15N5O3S
+5mthf	5-Methyltetrahydrofolate	BIGG:5mthf;KEGG:C00440;	-1	C20H24N7O6
+5mtr	5-Methylthio-D-ribose	BIGG:5mtr;KEGG:C03089;	0	C6H12O4S
+5prdmbz	N1-(5-Phospho-alpha-D-ribosyl)-5,6-dimethylbenzimidazole	BIGG:5prdmbz;KEGG:C04778;	-2	C14H17N2O7P
+6hmhpt	6-hydroxymethyl dihydropterin	BIGG:6hmhpt;	0	C7H9N5O2
+6hmhptpp	6-hydroxymethyl-dihydropterin pyrophosphate	BIGG:6hmhptpp;	-3	C7H8N5O8P2
+6pgc	6-Phospho-D-gluconate	BIGG:6pgc;KEGG:C00345;	-3	C6H10O10P
+6pgl	6-phospho-D-glucono-1,5-lactone	BIGG:6pgl;KEGG:C01236;	-2	C6H9O9P
+8aonn	8-Amino-7-oxononanoate	BIGG:8aonn;KEGG:C01092;	0	C9H17NO3
+aacald	Aminoacetaldehyde	CAS:452-86-8;BIGG:aacald;KEGG:C06735;	1	C2H6NO
+aacoa	Acetoacetyl-CoA	CAS:1420-36-6;BIGG:aacoa;KEGG:C00332;	-4	C25H36N7O18P3S
+aact	Aminoacetone	CAS:298-08-8;BIGG:aact;KEGG:C01888;	1	C3H8NO
+ac	Acetate	CAS:71-50-1;BIGG:ac;KEGG:C00033;	-1	C2H3O2
+acac	Acetoacetate	CAS:541-50-4;BIGG:acac;KEGG:C00164;	-1	C4H5O3
+acACP	Acetyl-ACP	BIGG:acACP;	-1	C13H23N2O8PRS
+acald	Acetaldehyde	CAS:75-07-0;BIGG:acald;KEGG:C00084;	0	C2H4O
+acanth	N-Acetylanthranilate	CAS:89-52-1;BIGG:acanth;KEGG:C06332;	-1	C9H8NO3
+accoa	Acetyl-CoA	CAS:72-89-9;BIGG:accoa;KEGG:C00024;	-4	C23H34N7O17P3S
+acetol	Acetol	CAS:116-09-6;BIGG:acetol;KEGG:C05235;	0	C3H6O2
+acg5p	N-Acetyl-L-glutamyl 5-phosphate	BIGG:acg5p;KEGG:C04133;	-3	C7H9NO8P
+acg5sa	N-Acetyl-L-glutamate 5-semialdehyde	BIGG:acg5sa;KEGG:C01250;	-1	C7H10NO4
+acgal	N-Acetyl-D-galactosamine	CAS:14215-68-0;BIGG:acgal;KEGG:C01132;	0	C8H15NO6
+acgal1p	N-Acetyl-D-galactosamine 1-phosphate	BIGG:acgal1p;	-2	C8H14NO9P
+acgam	N-Acetyl-D-glucosamine	CAS:7512-17-6;BIGG:acgam;KEGG:C00140;	0	C8H15NO6
+acgam1p	N-Acetyl-D-glucosamine 1-phosphate	BIGG:acgam1p;KEGG:C04256;	-2	C8H14NO9P
+acgam6p	N-Acetyl-D-glucosamine 6-phosphate	CAS:102029-88-9;BIGG:acgam6p;KEGG:C00357;	-2	C8H14NO9P
+acglc-D	6-Acetyl-D-glucose	CAS:107-85-7;BIGG:acglc-D;KEGG:C02655;	0	C8H14O7
+acglu	N-Acetyl-L-glutamate	CAS:1188-37-0;BIGG:acglu;KEGG:C00624;	-2	C7H9NO5
+acmalt	Acetyl-maltose	BIGG:acmalt;KEGG:C02130;	0	C14H24O12
+acmana	N-Acetyl-D-mannosamine	CAS:3615-17-6;BIGG:acmana;KEGG:C00645;	0	C8H15NO6
+acmanap	N-Acetyl-D-mannosamine 6-phosphate	CAS:157296-99-6;BIGG:acmanap;KEGG:C04257;	-2	C8H14NO9P
+acmum	N-Acetylmuramate	CAS:61633-75-8;BIGG:acmum;KEGG:C02713;	-1	C11H18NO8
+acmum6p	N-acetylmuramate 6-phosphate	BIGG:acmum6p;	-3	C11H17NO11P
+acnam	N-Acetylneuraminate	CAS:131-48-6;BIGG:acnam;KEGG:C00270;	-1	C11H18NO9
+acolipa	4-Amino-4-deoxy-L-arabinose modified core oligosaccharide lipid A	BIGG:acolipa;	-9	C181H314N3O103P4
+acon-C	cis-Aconitate	CAS:585-84-2;BIGG:acon-C;KEGG:C00417;	-3	C6H3O6
+aconm	E-3-carboxy-2-pentenedioate 6-methyl ester	BIGG:aconm;	-2	C7H6O6
+acon-T	trans-Aconitate	CAS:4023-65-8;BIGG:acon-T;KEGG:C02341;	-3	C6H3O6
+acorn	N2-Acetyl-L-ornithine	BIGG:acorn;KEGG:C00437;	0	C7H14N2O3
+ACP	acyl carrier protein	BIGG:ACP;KEGG:C00229;	-1	C11H21N2O7PRS
+acser	O-Acetyl-L-serine	CAS:66638-22-0;BIGG:acser;KEGG:C00979;	0	C5H9NO4
+actACP	Acetoacetyl-ACP	BIGG:actACP;KEGG:C05744;	-1	C15H25N2O9PRS
+actp	Acetyl phosphate	CAS:19926-71-7;BIGG:actp;KEGG:C00227;	-2	C2H3O5P
+ade	Adenine	CAS:73-24-5;BIGG:ade;KEGG:C00147;	0	C5H5N5
+adn	Adenosine	CAS:58-61-7;BIGG:adn;KEGG:C00212;	0	C10H13N5O4
+adocbi	Adenosyl cobinamide	BIGG:adocbi;KEGG:C06508;	1	C58H84CoN16O11
+adocbip	Adenosyl cobinamide phosphate	BIGG:adocbip;KEGG:C06509;	-1	C58H83CoN16O14P
+adocbl	Adenosylcobalamin	CAS:13870-90-1;BIGG:adocbl;KEGG:C00194;	0	C72H100CoN18O17P
+adp	ADP	CAS:58-64-0;BIGG:adp;KEGG:C00008;	-3	C10H12N5O10P2
+adpglc	ADPglucose	BIGG:adpglc;KEGG:C00498;	-2	C16H23N5O15P2
+adphep-DD	ADP-D-glycero-D-manno-heptose	CAS:119-61-9;BIGG:adphep-DD;KEGG:C06397;	-2	C17H25N5O16P2
+adphep-LD	ADP-L-glycero-D-manno-heptose	BIGG:adphep-LD;KEGG:C06398;	-2	C17H25N5O16P2
+adprib	ADPribose	BIGG:adprib;KEGG:C00301;	-2	C15H21N5O14P2
+ag	silver	CAS:7440-22-4;BIGG:ag;KEGG:C06710;	1	Ag
+agdpcbi	Adenosine-GDP-cobinamide	BIGG:agdpcbi;KEGG:C06510;	-1	C68H95CoN21O21P2
+agm	Agmatine	CAS:306-60-5;BIGG:agm;KEGG:C00179;	2	C5H16N4
+ahcys	S-Adenosyl-L-homocysteine	CAS:979-92-0;BIGG:ahcys;KEGG:C00021;	0	C14H20N6O5S
+ahdt	2-Amino-4-hydroxy-6-(erythro-1,2,3-trihydroxypropyl)dihydropteridine triphosphate	BIGG:ahdt;KEGG:C04895;	-4	C9H12N5O13P3
+aicar	5-Amino-1-(5-Phospho-D-ribosyl)imidazole-4-carboxamide	CAS:3031-94-5;BIGG:aicar;KEGG:C04677;	-2	C9H13N4O8P
+air	5-amino-1-(5-phospho-D-ribosyl)imidazole	CAS:25635-88-5;BIGG:air;KEGG:C03373;	-2	C8H12N3O7P
+akg	2-Oxoglutarate	CAS:328-50-7;BIGG:akg;KEGG:C00026;	-2	C5H4O5
+alaala	D-Alanyl-D-alanine	CAS:923-16-0;BIGG:alaala;KEGG:C00993;	0	C6H12N2O3
+ala-B	beta-Alanine	CAS:107-95-9;BIGG:ala-B;KEGG:C00099;	0	C3H7NO2
+alac-S	(S)-2-Acetolactate	BIGG:alac-S;KEGG:C06010;	-1	C5H7O4
+ala-D	D-Alanine	CAS:338-69-2;BIGG:ala-D;KEGG:C00133;	0	C3H7NO2
+ala-L	L-Alanine	CAS:56-41-7;BIGG:ala-L;KEGG:C00041;	0	C3H7NO2
+alatrna	L-Alanyl-tRNA(Ala)	BIGG:alatrna;KEGG:C00886;	1	C3H6NOR
+all6p	D-Allose 6-phosphate	CAS:147-94-4;BIGG:all6p;KEGG:C02962;	-2	C6H11O9P
+all-D	D-Allose	CAS:2595-97-3;BIGG:all-D;KEGG:C01487;	0	C6H12O6
+alltn	Allantoin	CAS:97-59-6;BIGG:alltn;KEGG:C01551;	0	C4H6N4O3
+alltt	Allantoate	CAS:99-16-1;BIGG:alltt;KEGG:C00499;	-1	C4H7N4O4
+allul6p	Allulose 6-phosphate	BIGG:allul6p;	-2	C6H11O9P
+alpp	applipoprotein	BIGG:alpp;KEGG:C01834;	0	X
+altrn	D-Altronate	BIGG:altrn;KEGG:C00817;	-1	C6H11O7
+amet	S-Adenosyl-L-methionine	CAS:29908-03-0;BIGG:amet;KEGG:C00019;	1	C15H23N6O5S
+ametam	S-Adenosylmethioninamine	BIGG:ametam;KEGG:C01137;	2	C14H24N6O3S
+amob	S-Adenosyl-4-methylthio-2-oxobutanoate	BIGG:amob;KEGG:C04425;	0	C15H19N5O6S
+amp	AMP	CAS:61-19-8;BIGG:amp;KEGG:C00020;	-2	C10H12N5O7P
+anhgm	N-Acetyl-D-glucosamine(anhydrous)N-Acetylmuramic acid	BIGG:anhgm;	-1	C19H29N2O12
+anhgm3p	N-Acetyl-D-glucosamine(anhydrous)N-Acetylmuramyl-tripeptide	BIGG:anhgm3p;	-2	C34H52N6O19
+anhgm4p	N-Acetyl-D-glucosamine(anhydrous)N-Acetylmuramyl-tetrapeptide	BIGG:anhgm4p;	-2	C37H57N7O20
+anhm	1,6-anhydrous-N-Acetylmuramate	BIGG:anhm;	-1	C11H16NO7
+anhm3p	1,6-anhydrous-N-Acetylmuramyl-tripeptide	BIGG:anhm3p;	-2	C26H39N5O14
+anhm4p	1,6-anhydrous-N-Acetylmuramyl-tetrapeptide	BIGG:anhm4p;	-2	C29H44N6O15
+anth	Anthranilate	CAS:118-92-3;BIGG:anth;KEGG:C00108;	-1	C7H6NO2
+ap4a	P1,P4-Bis(5'-adenosyl) tetraphosphate	BIGG:ap4a;KEGG:C01260;	-4	C20H24N10O19P4
+ap5a	P1,P5-Bis(5'-adenosyl) pentaphosphate	CAS:4637-56-3;BIGG:ap5a;KEGG:C04058;	-5	C20H24N10O22P5
+apg120	acyl phosphatidylglycerol (n-C12:0)	BIGG:apg120;	-1	C42H80O11P
+apg140	acyl phosphatidylglycerol (n-C14:0)	BIGG:apg140;	-1	C48H92O11P
+apg141	acyl phosphatidylglycerol (n-C14:1)	BIGG:apg141;	-1	C48H86O11P
+apg160	acyl phosphatidylglycerol (n-C16:0)	BIGG:apg160;	-1	C54H104O11P
+apg161	acyl phosphatidylglycerol (n-C16:1)	BIGG:apg161;	-1	C54H98O11P
+apg180	acyl phosphatidylglycerol (n-C18:0)	BIGG:apg180;	-1	C60H116O11P
+apg181	acyl phosphatidylglycerol (n-C18:1)	BIGG:apg181;	-1	C60H110O11P
+apoACP	apoprotein [acyl carrier protein]	BIGG:apoACP;	0	RHO
+aps	Adenosine 5'-phosphosulfate	BIGG:aps;KEGG:C00224;	-2	C10H12N5O10PS
+ara5p	D-Arabinose 5-phosphate	BIGG:ara5p;KEGG:C01112;	-2	C5H9O8P
+arab-L	L-Arabinose	CAS:147-81-9;BIGG:arab-L;KEGG:C00259;	0	C5H10O5
+aragund	O-acetyl-rhamanosyl-N-acetylglucosamyl-undecaprenyl diphosphate	BIGG:aragund;	-2	C71H115N1O17P2
+arbt6p	Arbutin 6-phosphate	BIGG:arbt6p;KEGG:C06187;	-2	C12H15O10P
+arbtn	aerobactin minus Fe3	BIGG:arbtn;	-3	C22H33N4O13
+arbtn-fe3	Aerobactin	CAS:61-33-6;BIGG:arbtn-fe3;KEGG:C05554;	0	C22H33FeN4O13
+arg-L	L-Arginine	CAS:74-79-3;BIGG:arg-L;KEGG:C00062;	1	C6H15N4O2
+argsuc	N(omega)-(L-Arginino)succinate	BIGG:argsuc;KEGG:C03406;	-1	C10H17N4O6
+argtrna	L-Arginyl-tRNA(Arg)	BIGG:argtrna;KEGG:C02163;	2	C6H14N4OR
+ascb6p	L-ascorbate-6-phosphate	BIGG:ascb6p;	-2	C6H7O9P
+ascb-L	L-Ascorbate	CAS:50-81-7;BIGG:ascb-L;KEGG:C00072;	0	C6H8O6
+asn-L	L-Asparagine	CAS:70-47-3;BIGG:asn-L;KEGG:C00152;	0	C4H8N2O3
+asntrna	L-Asparaginyl-tRNA(Asn)	BIGG:asntrna;KEGG:C03402;	1	C4H7N2O2R
+aso3	arsenite	BIGG:aso3;KEGG:C06697;	-3	AsO3
+aso4	arsenate	CAS:7778-39-4;BIGG:aso4;KEGG:C01478;	-3	AsO4
+asp-L	L-Aspartate	CAS:56-84-8;BIGG:asp-L;KEGG:C00049;	-1	C4H6NO4
+aspsa	L-Aspartate 4-semialdehyde	BIGG:aspsa;KEGG:C00441;	0	C4H7NO3
+asptrna	L-Aspartyl-tRNA(Asp)	BIGG:asptrna;KEGG:C02984;	0	C4H5NO3R
+athr-L	L-Allo-threonine	CAS:28954-12-3;BIGG:athr-L;KEGG:C05519;	0	C4H9NO3
+atp	ATP	CAS:56-65-5;BIGG:atp;KEGG:C00002;	-4	C10H12N5O13P3
+b2coa	Crotonoyl-CoA	CAS:102680-35-3;BIGG:b2coa;KEGG:C00877;	-4	C25H36N7O17P3S
+bbtcoa	gamma-butyrobetainyl-CoA	BIGG:bbtcoa;	-3	C28H46N8O17P3S
+betald	Betaine aldehyde	BIGG:betald;KEGG:C00576;	1	C5H12NO
+bglycogen	branching glycogen	BIGG:bglycogen;	0	C6H10O5
+btal	Butanal	CAS:123-72-8;BIGG:btal;KEGG:C01412;	0	C4H8O
+btcoa	Butanoyl-CoA	BIGG:btcoa;KEGG:C00136;	-4	C25H38N7O17P3S
+btn	Biotin	CAS:58-85-5;BIGG:btn;KEGG:C00120;	-1	C10H15N2O3S
+btnso	d-biotin d-sulfoxide	BIGG:btnso;	-1	C10H15N2O4S
+but	Butyrate (n-C4:0)	CAS:107-92-6;BIGG:but;KEGG:C00246;	-1	C4H7O2
+but2eACP	But-2-enoyl-[acyl-carrier protein]	CAS:128-33-6;BIGG:but2eACP;KEGG:C04246;	-1	C15H25N2O8PRS
+butACP	Butyryl-ACP (n-C4:0ACP)	CAS:7783-08-6;BIGG:butACP;KEGG:C05745;	-1	C15H27N2O8PRS
+butso3	butanesulfonate	BIGG:butso3;	-1	C4H9O3S
+ca2	Calcium	CAS:7440-70-2;BIGG:ca2;KEGG:C00076;	2	Ca
+camp	cAMP	BIGG:camp;KEGG:C00575;	-1	C10H11N5O6P
+cbasp	N-Carbamoyl-L-aspartate	BIGG:cbasp;KEGG:C00438;	-2	C5H6N2O5
+cbi	Cobinamide	CAS:1867-62-5;BIGG:cbi;KEGG:C05774;	0	C48H72CoN11O8
+cbl1	Cob(I)alamin	CAS:18534-66-2;BIGG:cbl1;KEGG:C00853;	-1	C62H88CoN13O14P
+cbp	Carbamoyl phosphate	BIGG:cbp;KEGG:C00169;	-2	CH2NO5P
+cd2	Cadmium	BIGG:cd2;KEGG:C01413;	2	Cd
+cddec5eACP	cis-dodec-5-enoyl-[acyl-carrier protein] (n-C12:1)	BIGG:cddec5eACP;	-1	C23H41N2O8PRS
+cdec3eACP	cis-dec-3-enoyl-[acyl-carrier protein] (n-C10:1)	BIGG:cdec3eACP;	-1	C21H37N2O8PRS
+cdp	CDP	CAS:63-38-7;BIGG:cdp;KEGG:C00112;	-3	C9H12N3O11P2
+cdpdddecg	CDP-1,2-didodecanoylglycerol	BIGG:cdpdddecg;KEGG:C00269;	-2	C36H63N3O15P2
+cdpdhdec9eg	CDP-1,2-dihexadec-9-enoylglycerol	BIGG:cdpdhdec9eg;KEGG:C00269;	-2	C44H75N3O15P2
+cdpdhdecg	CDP-1,2-dihexadecanoylglycerol	BIGG:cdpdhdecg;KEGG:C00269;	-2	C44H79N3O15P2
+cdpdodec11eg	CDP-1,2-dioctadec-11-enoylglycerol	BIGG:cdpdodec11eg;KEGG:C00269;	-2	C48H83N3O15P2
+cdpdodecg	CDP-1,2-dioctadecanoylglycerol	BIGG:cdpdodecg;KEGG:C00269;	-2	C48H87N3O15P2
+cdpdtdec7eg	CDP-1,2-ditetradec-7-enoylglycerol	BIGG:cdpdtdec7eg;KEGG:C00269;	-2	C40H67N3O15P2
+cdpdtdecg	CDP-1,2-ditetradecanoylglycerol	BIGG:cdpdtdecg;KEGG:C00269;	-2	C40H71N3O15P2
+cechddd	cis-3-(3-carboxyethyl)-3,5-cyclohexadiene-1,2-diol	BIGG:cechddd;	-1	C9H11O4
+cenchddd	cis-3-(3-carboxyethenyl)-3,5-cyclohexadiene-1,2-diol	BIGG:cenchddd;	-1	C9H9O4
+cgly	Cys-Gly	CAS:19246-18-5;BIGG:cgly;KEGG:C01419;	0	C5H10N2O3S
+chol	Choline	CAS:123-41-1;BIGG:chol;KEGG:C00114;	1	C5H14NO
+chor	chorismate	CAS:55508-12-8;BIGG:chor;KEGG:C00251;	-2	C10H8O6
+cinnm	trans-Cinnamate	CAS:140-10-3;BIGG:cinnm;KEGG:C00423;	-1	C9H7O2
+cit	Citrate	CAS:77-92-9;BIGG:cit;KEGG:C00158;	-3	C6H5O7
+citr-L	L-Citrulline	CAS:372-75-8;BIGG:citr-L;KEGG:C00327;	0	C6H13N3O3
+ckdo	CMP-3-deoxy-D-manno-octulosonate	BIGG:ckdo;	-2	C17H24N3O15P
+cl	Chloride	BIGG:cl;KEGG:C00115;	-1	Cl
+clpn120	cardiolipin (tetradodecanoyl, n-C12:0)	BIGG:clpn120;KEGG:C05980;	-2	C57H108O17P2
+clpn140	cardiolipin (tetratetradecanoyl, n-C14:0)	BIGG:clpn140;KEGG:C05980;	-2	C65H124O17P2
+clpn141	cardiolipin (tetratetradec-7-enoyl, n-C14:1)	BIGG:clpn141;KEGG:C05980;	-2	C65H116O17P2
+clpn160	cardiolipin (tetrahexadecanoyl, n-C16:0)	BIGG:clpn160;KEGG:C05980;	-2	C73H140O17P2
+clpn161	cardiolipin (tetrahexadec-9-enoyl, n-C16:1)	BIGG:clpn161;KEGG:C05980;	-2	C73H132O17P2
+clpn180	cardiolipin (tetraoctadecanoyl, n-C18:0)	BIGG:clpn180;KEGG:C05980;	-2	C81H156O17P2
+clpn181	cardiolipin (tetraoctadec-11-enoyl, n-C18:1)	BIGG:clpn181;KEGG:C05980;	-2	C81H148O17P2
+cmp	CMP	BIGG:cmp;KEGG:C00055;	-2	C9H12N3O8P
+co2	CO2	CAS:124-38-9;BIGG:co2;KEGG:C00011;	0	CO2
+coa	Coenzyme A	CAS:85-61-0;BIGG:coa;KEGG:C00010;	-4	C21H32N7O16P3S
+cobalt2	Co2+	CAS:7440-48-4;BIGG:cobalt2;KEGG:C00175;	2	Co
+colipa	core oligosaccharide lipid A	BIGG:colipa;	-11	C176H303N2O100P4
+cpe160	cyclopropane phosphatidylethanolamine (dihexadec-9,10-cyclo-anoyl, n-C16:0 cyclo)	BIGG:cpe160;	0	C39H74N1O8P1
+cpe180	cyclopropane phosphatidylethanolamine (dioctadec-11,12-cyclo-anoyl, n-C18:0 cyclo)	BIGG:cpe180;	0	C43H82N1O8P1
+cpg160	cyclopropane phosphatidylglycerol (dihexadec-9,10-cyclo-anoyl, n-C16:0 cyclo)	BIGG:cpg160;	-1	C40H74O10P1
+cpg180	cyclopropane phosphatidylglycerol (dioctadec-11,12-cyclo-anoyl, n-C18:0 cyclo)	BIGG:cpg180;	-1	C44H82O10P1
+cpgn	coprogen	BIGG:cpgn;	-1	C35H52N6O13Fe
+cpgn-un	coprogen unloaded (no Fe(III))	BIGG:cpgn-un;	-4	C35H52N6O13
+cpppg3	Coproporphyrinogen III	CAS:2624-63-7;BIGG:cpppg3;KEGG:C03263;	-4	C36H40N4O8
+crn	L-Carnitine	CAS:541-15-1;BIGG:crn;KEGG:C00318;	0	C7H15NO3
+crncoa	L-Carnitinyl-CoA	BIGG:crncoa;	-3	C28H46N8O18P3S
+crn-D	D-Carnitine	BIGG:crn-D;KEGG:C00487;	0	C7H15NO3
+crnDcoa	D-carnitinyl-CoA	BIGG:crnDcoa;	-3	C28H46N8O18P3S
+csn	Cytosine	CAS:71-30-7;BIGG:csn;KEGG:C00380;	0	C4H5N3O
+ctbt	crotonobetaine	CAS:6666-46-2;BIGG:ctbt;KEGG:C04114;	0	C7H13NO2
+ctbtcoa	crotonobetainyl-CoA	BIGG:ctbtcoa;	-3	C28H44N8O17P3S
+ctp	CTP	CAS:65-47-4;BIGG:ctp;KEGG:C00063;	-4	C9H12N3O14P3
+cu	Cu+	BIGG:cu;	1	Cu
+cu2	Cu2+	BIGG:cu2;	2	Cu
+cyan	Hydrogen cyanide	CAS:57-12-5;BIGG:cyan;KEGG:C01326;	0	CHN
+cynt	Cyanate	CAS:420-05-3;BIGG:cynt;KEGG:C01417;	-1	CNO
+cys-D	D-Cysteine	CAS:921-01-7;BIGG:cys-D;KEGG:C00793;	0	C3H7NO2S
+cys-L	L-Cysteine	CAS:52-90-4;BIGG:cys-L;KEGG:C00097;	0	C3H7NO2S
+cyst-L	L-Cystathionine	CAS:56-88-2;BIGG:cyst-L;KEGG:C02291;	0	C7H14N2O4S
+cystrna	L-Cysteinyl-tRNA(Cys)	BIGG:cystrna;KEGG:C03125;	1	C3H6NOSR
+cytd	Cytidine	CAS:65-46-3;BIGG:cytd;KEGG:C00475;	0	C9H13N3O5
+dad-2	Deoxyadenosine	CAS:958-09-8;BIGG:dad-2;KEGG:C00559;	0	C10H13N5O3
+dad-5	5'-Deoxyadenosine	BIGG:dad-5;KEGG:C05198;	0	C10H13N5O3
+dadp	dADP	BIGG:dadp;KEGG:C00206;	-3	C10H12N5O9P2
+damp	dAMP	CAS:653-63-4;BIGG:damp;KEGG:C00360;	-2	C10H12N5O6P
+dann	7,8-Diaminononanoate	BIGG:dann;KEGG:C01037;	1	C9H21N2O2
+datp	dATP	CAS:1927-31-7;BIGG:datp;KEGG:C00131;	-4	C10H12N5O12P3
+db4p	3,4-dihydroxy-2-butanone 4-phosphate	BIGG:db4p;	-2	C4H7O6P
+dc2coa	trans-Dec-2-enoyl-CoA	BIGG:dc2coa;KEGG:C05275;	-4	C31H48N7O17P3S
+dca	Decanoate (n-C10:0)	CAS:334-48-5;BIGG:dca;KEGG:C01571;	-1	C10H19O2
+dcaACP	Decanoyl-ACP (n-C10:0ACP)	BIGG:dcaACP;KEGG:C05755;	-1	C21H39N2O8PRS
+dcacoa	Decanoyl-CoA (n-C10:0CoA)	BIGG:dcacoa;KEGG:C05274;	-4	C31H50N7O17P3S
+dcamp	N6-(1,2-Dicarboxyethyl)-AMP	BIGG:dcamp;KEGG:C03794;	-4	C14H14N5O11P
+dcdp	dCDP	BIGG:dcdp;KEGG:C00705;	-3	C9H12N3O10P2
+dcmp	dCMP	CAS:1032-65-1;BIGG:dcmp;KEGG:C00239;	-2	C9H12N3O7P
+dctp	dCTP	CAS:2056-98-6;BIGG:dctp;KEGG:C00458;	-4	C9H12N3O13P3
+dcyt	Deoxycytidine	CAS:951-77-9;BIGG:dcyt;KEGG:C00881;	0	C9H13N3O4
+dd2coa	trans-Dodec-2-enoyl-CoA	BIGG:dd2coa;KEGG:C03221;	-4	C33H52N7O17P3S
+ddca	Dodecanoate (n-C12:0)	CAS:143-07-7;BIGG:ddca;KEGG:C02679;	-1	C12H23O2
+ddcaACP	Dodecanoyl-ACP (n-C12:0ACP)	BIGG:ddcaACP;KEGG:C05223;	-1	C23H43N2O8PRS
+ddcacoa	Dodecanoyl-CoA (n-C12:0CoA)	CAS:6244-92-4;BIGG:ddcacoa;KEGG:C01832;	-4	C33H54N7O17P3S
+dgdp	dGDP	BIGG:dgdp;KEGG:C00361;	-3	C10H12N5O10P2
+dgmp	dGMP	CAS:902-04-5;BIGG:dgmp;KEGG:C00362;	-2	C10H12N5O7P
+dgsn	Deoxyguanosine	CAS:961-07-9;BIGG:dgsn;KEGG:C00330;	0	C10H13N5O4
+dgtp	dGTP	CAS:2564-35-4;BIGG:dgtp;KEGG:C00286;	-4	C10H12N5O13P3
+dha	Dihydroxyacetone	CAS:96-26-4;BIGG:dha;KEGG:C00184;	0	C3H6O3
+dhap	Dihydroxyacetone phosphate	CAS:57-04-5;BIGG:dhap;KEGG:C00111;	-2	C3H5O6P
+dhcinnm	2,3-dihydroxicinnamic acid	BIGG:dhcinnm;	-1	C9H7O4
+dhf	7,8-Dihydrofolate	CAS:4033-27-6;BIGG:dhf;KEGG:C00415;	-2	C19H19N7O6
+dhmptp	dihydromonapterin-triphosphate	BIGG:dhmptp;	-4	C9H12N5O13P3
+dhna	1,4-Dihydroxy-2-naphthoate	BIGG:dhna;KEGG:C03657;	-1	C11H7O4
+dhnpt	Dihydroneopterin	BIGG:dhnpt;KEGG:C04874;	0	C9H13N5O4
+dhor-S	(S)-Dihydroorotate	CAS:5988-19-2;BIGG:dhor-S;KEGG:C00337;	-1	C5H5N2O4
+dhpmp	Dihydroneopterin monophosphate	BIGG:dhpmp;KEGG:C05925;	-2	C9H12N5O7P
+dhpppn	3-(2,3-Dihydroxyphenyl)propanoate	BIGG:dhpppn;KEGG:C04044;	-1	C9H9O4
+dhpt	Dihydropteroate	BIGG:dhpt;KEGG:C00921;	-1	C14H13N6O3
+dhptd	4,5-dihydroxy-2,3-pentanedione	BIGG:dhptd;KEGG:C11838;	0	C5H8O4
+didp	dIDP	BIGG:didp;KEGG:C01344;	-3	C10H11N4O10P2
+dimp	dIMP	BIGG:dimp;KEGG:C06196;	-2	C10H11N4O7P
+din	Deoxyinosine	CAS:890-38-0;BIGG:din;KEGG:C05512;	0	C10H12N4O4
+ditp	dITP	BIGG:ditp;KEGG:C01345;	-4	C10H11N4O13P3
+dkmpp	2,3-diketo-5-methylthio-1-phosphopentane	BIGG:dkmpp;	-2	C6H9O6PS
+dmbzid	5,6-Dimethylbenzimidazole	CAS:582-60-5;BIGG:dmbzid;KEGG:C03114;	0	C9H10N2
+dmlz	6,7-Dimethyl-8-(1-D-ribityl)lumazine	BIGG:dmlz;KEGG:C04332;	0	C13H18N4O6
+dmpp	Dimethylallyl diphosphate	CAS:358-71-4;BIGG:dmpp;KEGG:C00235;	-3	C5H9O7P2
+dms	Dimethyl sulfide	CAS:75-18-3;BIGG:dms;KEGG:C00580;	0	C2H6S
+dmso	Dimethyl sulfoxide	BIGG:dmso;KEGG:C11143;	0	C2H6OS
+dnad	Deamino-NAD+	BIGG:dnad;KEGG:C00857;	-2	C21H24N6O15P2
+dopa	Dopamine	CAS:51-61-6;BIGG:dopa;KEGG:C03758;	1	C8H12NO2
+dpcoa	Dephospho-CoA	BIGG:dpcoa;KEGG:C00882;	-2	C21H33N7O13P2S
+dsbaox	periplasmic protein disulfide isomerase I (oxidized)	BIGG:dsbaox;	0	X
+dsbard	periplasmic protein disulfide isomerase I (reduced)	BIGG:dsbard;	0	XH2
+dsbcox	protein disulfide isomerase II (oxidized)	BIGG:dsbcox;	0	X
+dsbcrd	protein disulfide isomerase II (reduced)	BIGG:dsbcrd;	0	XH2
+dsbdox	fused thiol:disulfide interchange protein (oxidized)	BIGG:dsbdox;	0	X
+dsbdrd	fused thiol:disulfide interchange protein (reduced)	BIGG:dsbdrd;	0	XH2
+dsbgox	periplasmic disulfide isomerase/thiol-disulphide oxidase (oxidized)	BIGG:dsbgox;	0	X
+dsbgrd	periplasmic disulfide isomerase/thiol-disulphide oxidase (reduced)	BIGG:dsbgrd;	0	XH2
+dscl	dihydrosirohydrochlorin	CAS:65207-12-7;BIGG:dscl;KEGG:C02463;	-7	C42H41N4O16
+dtbt	Dethiobiotin	BIGG:dtbt;KEGG:C01909;	-1	C10H17N2O3
+dtdp	dTDP	BIGG:dtdp;KEGG:C00363;	-3	C10H13N2O11P2
+dtdp4aaddg	dTDP-4-acetamido-4,6-dideoxy-D-galactose	BIGG:dtdp4aaddg;	-2	C18H27N3O15P2
+dtdp4addg	dTDP-4-amino-4,6-dideoxy-D-galactose	BIGG:dtdp4addg;KEGG:C04268;	-1	C16H26N3O14P2
+dtdp4d6dg	dTDP-4-dehydro-6-deoxy-D-glucose	BIGG:dtdp4d6dg;KEGG:C00687;	-2	C16H22N2O15P2
+dtdp4d6dm	dTDP-4-dehydro-6-deoxy-L-mannose	BIGG:dtdp4d6dm;KEGG:C00688;	-2	C16H22N2O15P2
+dtdpglu	dTDPglucose	CAS:2009-24-7;BIGG:dtdpglu;KEGG:C00842;	-2	C16H24N2O16P2
+dtdprmn	dTDP-L-rhamnose	CAS:572-96-3;BIGG:dtdprmn;KEGG:C03319;	-2	C16H24N2O15P2
+dtmp	dTMP	CAS:365-07-1;BIGG:dtmp;KEGG:C00364;	-2	C10H13N2O8P
+dttp	dTTP	BIGG:dttp;KEGG:C00459;	-4	C10H13N2O14P3
+dudp	dUDP	BIGG:dudp;KEGG:C01346;	-3	C9H11N2O11P2
+dump	dUMP	CAS:964-26-1;BIGG:dump;KEGG:C00365;	-2	C9H11N2O8P
+duri	Deoxyuridine	CAS:951-78-0;BIGG:duri;KEGG:C00526;	0	C9H12N2O5
+dutp	dUTP	BIGG:dutp;KEGG:C00460;	-4	C9H11N2O14P3
+dxyl	1-deoxy-D-xylulose	BIGG:dxyl;KEGG:C06257;	0	C5H10O4
+dxyl5p	1-deoxy-D-xylulose 5-phosphate	BIGG:dxyl5p;KEGG:C11437;	-2	C5H9O7P
+e4p	D-Erythrose 4-phosphate	CAS:585-18-2;BIGG:e4p;KEGG:C00279;	-2	C4H7O7P
+eca2und	(enterobacterial common antigen)x2 undecaprenyl-diphosphate	BIGG:eca2und;	-4	C103H162N6O37P2
+eca3und	(enterobacterial common antigen)x3 undecaprenyl-diphosphate	BIGG:eca3und;	-5	C127H198N9O52P2
+eca4colipa	(enterobacterial common antigen)x4 core oligosaccharide lipid A	BIGG:eca4colipa;	-15	C272H447N14O160P4
+eca4und	(enterobacterial common antigen)x4 undecaprenyl-diphosphate	BIGG:eca4und;	-6	C151H234N12O67P2
+eig3p	D-erythro-1-(Imidazol-4-yl)glycerol 3-phosphate	BIGG:eig3p;KEGG:C04666;	-2	C6H9N2O6P
+enlipa	phosphoethanolamine KDO(2)-lipid (A)	BIGG:enlipa;	-6	C112H202N3O42P3
+enter	Enterochelin	BIGG:enter;	0	C30H27N3O15
+etha	Ethanolamine	CAS:141-43-5;BIGG:etha;KEGG:C00189;	1	C2H8NO
+ethso3	ethanesulfonate	BIGG:ethso3;	-1	C2H5O3S
+etoh	Ethanol	CAS:64-17-5;BIGG:etoh;KEGG:C00469;	0	C2H6O
+f1p	D-Fructose 1-phosphate	CAS:15978-08-2;BIGG:f1p;KEGG:C02976;	-2	C6H11O9P
+f6p	D-Fructose 6-phosphate	CAS:643-13-0;BIGG:f6p;KEGG:C00085;	-2	C6H11O9P
+fad	Flavin adenine dinucleotide oxidized	CAS:146-14-5;BIGG:fad;KEGG:C00016;	-2	C27H31N9O15P2
+fadh2	Flavin adenine dinucleotide reduced	BIGG:fadh2;KEGG:C01352;	-2	C27H33N9O15P2
+fald	Formaldehyde	CAS:50-00-0;BIGG:fald;KEGG:C00067;	0	CH2O
+fc1p	L-Fuculose 1-phosphate	BIGG:fc1p;KEGG:C01099;	-2	C6H11O8P
+fcl-L	L-fuculose	BIGG:fcl-L;KEGG:C01721;	0	C6H12O5
+fdp	D-Fructose 1,6-bisphosphate	CAS:488-69-7;BIGG:fdp;KEGG:C00354;	-4	C6H10O12P2
+fe2	Fe2+	BIGG:fe2;KEGG:C00023;	2	Fe
+fe3	Fe3+	BIGG:fe3;	3	Fe
+fe3dcit	Fe(III)dicitrate	BIGG:fe3dcit;KEGG:C06229;	-3	C12H10FeO14
+fe3dhbzs	ferric 2,3-dihydroxybenzoylserine	BIGG:fe3dhbzs;	2	C10H10NO6Fe
+fe3hox	Fe(III)hydroxamate	BIGG:fe3hox;KEGG:C06227;	0	C9H18O6N3Fe
+fe3hox-un	Fe(III)hydoxamate, unloaded	BIGG:fe3hox-un;	-3	C9H18O6N3
+fecrm	Ferrichrome	BIGG:fecrm;KEGG:C06228;	0	C27H42FeN9O12
+fecrm-un	Ferrichrome minus Fe(III)	BIGG:fecrm-un;	-3	C27H42N9O12
+feenter	Fe-enterobactin	BIGG:feenter;KEGG:C06230;	3	C30H27FeN3O15
+feoxam	ferroxamine	BIGG:feoxam;	1	C25H46FeN6O8
+feoxam-un	ferroxamine minus Fe(3)	BIGG:feoxam-un;	-2	C25H46N6O8
+fgam	N2-Formyl-N1-(5-phospho-D-ribosyl)glycinamide	BIGG:fgam;KEGG:C04376;	-2	C8H13N2O9P
+fldox	flavodoxin (oxidized)	BIGG:fldox;KEGG:C02869;	0	X
+fldrd	flavodoxin (reduced)	BIGG:fldrd;KEGG:C02745;	0	XH2
+fmettrna	N-Formylmethionyl-tRNA	BIGG:fmettrna;KEGG:C03294;	0	C6H9NO2SR
+fmn	FMN	CAS:146-17-8;BIGG:fmn;KEGG:C00061;	-2	C17H19N4O9P
+fmnh2	Reduced FMN	CAS:67-63-0;BIGG:fmnh2;	-2	C17H21N4O9P
+for	Formate	CAS:64-18-6;BIGG:for;KEGG:C00058;	-1	CH1O2
+fpram	2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine	BIGG:fpram;KEGG:C04640;	-1	C8H15N3O8P
+fprica	5-Formamido-1-(5-phospho-D-ribosyl)imidazole-4-carboxamide	BIGG:fprica;KEGG:C04734;	-2	C10H13N4O9P
+frdp	Farnesyl diphosphate	CAS:13058-04-3;BIGG:frdp;KEGG:C00448;	-3	C15H25O7P2
+fru	D-Fructose	CAS:57-48-7;BIGG:fru;KEGG:C00095;	0	C6H12O6
+frulys	fructoselysine	BIGG:frulys;	1	C12H25N2O7
+frulysp	fructoselysine Phosphate	BIGG:frulysp;	-1	C12H24N2O10P
+fruur	D-Fructuronate	CAS:669-90-9;BIGG:fruur;KEGG:C00905;	-1	C6H9O7
+fuc-L	L-Fucose	CAS:2438-80-4;BIGG:fuc-L;KEGG:C01019;	0	C6H12O5
+fum	Fumarate	CAS:110-17-8;BIGG:fum;KEGG:C00122;	-2	C4H2O4
+g1p	D-Glucose 1-phosphate	CAS:59-56-3;BIGG:g1p;KEGG:C00103;	-2	C6H11O9P
+g3p	Glyceraldehyde 3-phosphate	CAS:142-10-9;BIGG:g3p;KEGG:C00661;	-2	C3H5O6P
+g3pc	sn-Glycero-3-phosphocholine	BIGG:g3pc;KEGG:C00670;	0	C8H20NO6P
+g3pe	sn-Glycero-3-phosphoethanolamine	BIGG:g3pe;KEGG:C01233;	0	C5H14NO6P
+g3pg	Glycerophosphoglycerol	CAS:11034-93-8;BIGG:g3pg;KEGG:C03274;	-1	C6H14O8P
+g3pi	sn-Glycero-3-phospho-1-inositol	BIGG:g3pi;KEGG:C01225;	-1	C9H18O11P
+g3ps	Glycerophosphoserine	BIGG:g3ps;	-1	C6H13NO8P
+g6p	D-Glucose 6-phosphate	CAS:56-73-5;BIGG:g6p;KEGG:C00092;	-2	C6H11O9P
+gagicolipa	galactosyl-glucosyl-inner core oligosaccharide lipid A	BIGG:gagicolipa;	-11	C157H271N2O84P4
+gal	D-Galactose	CAS:59-23-4;BIGG:gal;KEGG:C00124;	0	C6H12O6
+gal1p	alpha-D-Galactose 1-phosphate	CAS:2255-14-3;BIGG:gal1p;KEGG:C00446;	-2	C6H11O9P
+gal-bD	beta D-Galactose	CAS:33419-42-0;BIGG:gal-bD;KEGG:C01582;	0	C6H12O6
+galct-D	D-Galactarate	CAS:526-99-8;BIGG:galct-D;KEGG:C00879;	-2	C6H8O8
+galctn-D	D-Galactonate	BIGG:galctn-D;KEGG:C00880;	-1	C6H11O7
+galctn-L	L-Galactonate	BIGG:galctn-L;	-1	C6H11O7
+galt	Galactitol	CAS:608-66-2;BIGG:galt;KEGG:C01697;	0	C6H14O6
+galt1p	Galactitol 1-phosphate	BIGG:galt1p;KEGG:C06311;	-2	C6H13O9P
+galur	D-Galacturonate	CAS:685-73-4;BIGG:galur;KEGG:C00333;	-1	C6H9O7
+gam	D-Glucosamine	CAS:3416-24-8;BIGG:gam;KEGG:C00329;	1	C6H14NO5
+gam1p	D-Glucosamine 1-phosphate	BIGG:gam1p;KEGG:C06156;	-1	C6H13NO8P
+gam6p	D-Glucosamine 6-phosphate	CAS:3616-42-0;BIGG:gam6p;KEGG:C00352;	-1	C6H13NO8P
+gar	N1-(5-Phospho-D-ribosyl)glycinamide	BIGG:gar;KEGG:C03838;	-1	C7H14N2O8P
+garagund	glucosyl-O-acetyl-rhamanosyl-N-acetylglucosamyl-undecaprenyl diphosphate	BIGG:garagund;	-2	C77H125N1O22P2
+gbbtn	gamma-butyrobetaine	BIGG:gbbtn;	0	C7H15NO2
+gcald	Glycolaldehyde	BIGG:gcald;KEGG:C00266;	0	C2H4O2
+gdp	GDP	CAS:146-91-8;BIGG:gdp;KEGG:C00035;	-3	C10H12N5O11P2
+gdpddman	GDP-4-dehydro-6-deoxy-D-mannose	BIGG:gdpddman;KEGG:C01222;	-2	C16H21N5O15P2
+gdpfuc	GDP-L-fucose	BIGG:gdpfuc;KEGG:C00325;	-2	C16H23N5O15P2
+gdpmann	GDP-D-mannose	BIGG:gdpmann;KEGG:C00096;	-2	C16H23N5O16P2
+gdpofuc	GDP-4-oxo-L-fucose	BIGG:gdpofuc;	-2	C16H21N5O15P2
+gdptp	Guanosine 3'-diphosphate 5'-triphosphate	BIGG:gdptp;KEGG:C04494;	-7	C10H11N5O20P5
+gfgaragund	galactofuranosyl-glucosyl-O-acetyl-rhamanosyl-N-acetylglucosamyl-undecaprenyl diphosphate	BIGG:gfgaragund;	-2	C83H135N1O27P2
+gg4abut	gamma-glutamyl-gamma aminobutyric acid	BIGG:gg4abut;	-1	C9H15O5N2
+ggagicolipa	glucosyl-galactosyl-glucosyl-inner core oligosaccharide lipid A	BIGG:ggagicolipa;	-11	C163H281N2O89P4
+ggbutal	gamma-glutamyl-gamma-butyraldehyde	BIGG:ggbutal;	0	C9H16O4N2
+gggagicolipa	glucosyl-glucosyl-galactosyl-glucosyl-inner core oligosaccharide lipid A	BIGG:gggagicolipa;	-11	C169H291N2O94P4
+ggptrc	gamma-glutamyl-putrescine	BIGG:ggptrc;	1	C9H20O3N3
+gicolipa	glucosyl-inner core oligosaccharide lipid A	BIGG:gicolipa;	-11	C151H261N2O79P4
+glc-D	D-Glucose	CAS:50-99-7;BIGG:glc-D;KEGG:C00031;	0	C6H12O6
+glcn	D-Gluconate	CAS:526-95-4;BIGG:glcn;KEGG:C00257;	-1	C6H11O7
+glcr	D-Glucarate	CAS:87-73-0;BIGG:glcr;KEGG:C00818;	-2	C6H8O8
+glcur	D-Glucuronate	CAS:6556-12-3;BIGG:glcur;KEGG:C00191;	-1	C6H9O7
+glcur1p	D-Glucuronate 1-phosphate	BIGG:glcur1p;KEGG:C05385;	-3	C6H8O10P
+gln-L	L-Glutamine	CAS:56-85-9;BIGG:gln-L;KEGG:C00064;	0	C5H10N2O3
+glntrna	L-Glutaminyl-tRNA(Gln)	BIGG:glntrna;KEGG:C02282;	1	C5H9N2O2R
+glu1sa	L-Glutamate 1-semialdehyde	BIGG:glu1sa;KEGG:C03741;	0	C5H9NO3
+glu5p	L-Glutamate 5-phosphate	BIGG:glu5p;KEGG:C03287;	-2	C5H8NO7P
+glu5sa	L-Glutamate 5-semialdehyde	BIGG:glu5sa;KEGG:C01165;	0	C5H9NO3
+glucys	gamma-L-Glutamyl-L-cysteine	CAS:686-58-8;BIGG:glucys;KEGG:C00669;	-1	C8H13N2O5S
+glu-D	D-Glutamate	CAS:6893-26-1;BIGG:glu-D;KEGG:C00217;	-1	C5H8NO4
+glu-L	L-Glutamate	CAS:56-86-0;BIGG:glu-L;KEGG:C00025;	-1	C5H8NO4
+glutrna	L-Glutamyl-tRNA(Glu)	BIGG:glutrna;KEGG:C02987;	0	C5H7NO3R
+glx	Glyoxylate	CAS:298-12-4;BIGG:glx;KEGG:C00048;	-1	C2H1O3
+gly	Glycine	CAS:56-40-6;BIGG:gly;KEGG:C00037;	0	C2H5NO2
+glyald	D-Glyceraldehyde	CAS:453-17-8;BIGG:glyald;KEGG:C00577;	0	C3H6O3
+glyb	Glycine betaine	CAS:107-43-7;BIGG:glyb;KEGG:C00719;	0	C5H11NO2
+glyc	Glycerol	CAS:56-81-5;BIGG:glyc;KEGG:C00116;	0	C3H8O3
+glyc2p	Glycerol 2-phosphate	CAS:3249-68-1;BIGG:glyc2p;KEGG:C02979;	-2	C3H7O6P
+glyc3p	Glycerol 3-phosphate	BIGG:glyc3p;KEGG:C00093;	-2	C3H7O6P
+glyclt	Glycolate	CAS:79-14-1;BIGG:glyclt;KEGG:C00160;	-1	C2H3O3
+glycogen	glycogen	BIGG:glycogen;KEGG:C00182;	0	C6H10O5
+glyc-R	(R)-Glycerate	CAS:473-81-4;BIGG:glyc-R;KEGG:C00258;	-1	C3H5O4
+glytrna	Glycyl-tRNA(Gly)	BIGG:glytrna;KEGG:C02412;	1	C2H4NOR
+gmhep17bp	D-Glycero-D-manno-heptose 1,7-bisphosphate	BIGG:gmhep17bp;KEGG:C11472;	-4	C7H12O13P2
+gmhep1p	D-Glycero-D-manno-heptose 1-phosphate	BIGG:gmhep1p;KEGG:C07838;	-2	C7H13O10P
+gmhep7p	D-Glycero-D-manno-heptose 7-phosphate	BIGG:gmhep7p;KEGG:C07836;	-2	C7H13O10P
+gmp	GMP	CAS:85-32-5;BIGG:gmp;KEGG:C00144;	-2	C10H12N5O8P
+gp4g	P1,P4-Bis(5'-guanosyl) tetraphosphate	BIGG:gp4g;KEGG:C01261;	-4	C20H24N10O21P4
+grdp	Geranyl diphosphate	BIGG:grdp;KEGG:C00341;	-3	C10H17O7P2
+grxox	glutaredoxin (oxidized)	BIGG:grxox;	0	X
+grxrd	glutaredoxin (reduced)	BIGG:grxrd;	0	XH2
+gsn	Guanosine	CAS:118-00-3;BIGG:gsn;KEGG:C00387;	0	C10H13N5O5
+gthox	Oxidized glutathione	BIGG:gthox;KEGG:C00127;	-2	C20H30N6O12S2
+gthrd	Reduced glutathione	CAS:70-18-8;BIGG:gthrd;KEGG:C00051;	-1	C10H16N3O6S
+gtp	GTP	CAS:86-01-1;BIGG:gtp;KEGG:C00044;	-4	C10H12N5O14P3
+gtspmd	Glutathionylspermidine	CAS:7783-08-6;BIGG:gtspmd;KEGG:C05730;	2	C17H36N6O5S
+gua	Guanine	CAS:73-40-5;BIGG:gua;KEGG:C00242;	0	C5H5N5O
+h	H+	CAS:12408-02-5;BIGG:h;KEGG:C00080;	1	H
+h2	H2	CAS:1333-74-0;BIGG:h2;KEGG:C00282;	0	H2
+h2mb4p	1-hydroxy-2-methyl-2-(E)-butenyl 4-diphosphate	BIGG:h2mb4p;KEGG:C11811;	-3	C5H9O8P2
+h2o	H2O	CAS:7732-18-5;BIGG:h2o;KEGG:C00001;	0	H2O
+h2o2	Hydrogen peroxide	CAS:7722-84-1;BIGG:h2o2;KEGG:C00027;	0	H2O2
+h2s	Hydrogen sulfide	CAS:7783-06-4;BIGG:h2s;KEGG:C00283;	0	H2S
+hacolipa	hepta-acylated core oligosaccharide lipid A (E. coli)	BIGG:hacolipa;	-11	C192H333N2O101P4
+halipa	hepta-acylated KDO(2)-lipid (A)	BIGG:halipa;	-6	C126H226N2O40P2
+hco3	Bicarbonate	CAS:71-52-3;BIGG:hco3;KEGG:C00288;	-1	CHO3
+hcys-L	L-Homocysteine	CAS:6027-13-0;BIGG:hcys-L;KEGG:C00155;	0	C4H9NO2S
+hdca	Hexadecanoate (n-C16:0)	CAS:57-10-3;BIGG:hdca;KEGG:C00249;	-1	C16H31O2
+hdcea	Hexadecenoate (n-C16:1)	BIGG:hdcea;	-1	C16H29O2
+hdcoa	Hexadecenoyl-CoA (n-C16:1CoA)	BIGG:hdcoa;	-4	C37H60N7O17P3S
+hdd2coa	trans-Hexadec-2-enoyl-CoA	BIGG:hdd2coa;KEGG:C05272;	-4	C37H60N7O17P3S
+hdeACP	cis-hexadec-9-enoyl-[acyl-carrier protein] (n-C16:1)	BIGG:hdeACP;	-1	C27H49N2O8PRS
+hemeO	Heme O	BIGG:hemeO;	-2	C49H56FeN4O5
+hexACP	Hexanoyl-ACP (n-C6:0ACP)	CAS:7783-08-6;BIGG:hexACP;KEGG:C05749;	-1	C17H31N2O8PRS
+hg2	Hg2+	BIGG:hg2;KEGG:C00703;	2	Hg
+hhlipa	heptosyl-heptosyl-kdo2-lipidA	BIGG:hhlipa;	-6	C124H220N2O51P2
+his-L	L-Histidine	CAS:71-00-1;BIGG:his-L;KEGG:C00135;	0	C6H9N3O2
+hisp	L-Histidinol phosphate	CAS:25679-93-0;BIGG:hisp;KEGG:C01100;	-1	C6H11N3O4P
+histd	L-Histidinol	BIGG:histd;KEGG:C00860;	1	C6H12N3O
+histrna	L-Histidyl-tRNA(His)	BIGG:histrna;KEGG:C02988;	1	C6H8N3OR
+hkndd	2-Hydroxy-6-oxonona-2,4-diene-1,9-dioate	CAS:53-42-9;BIGG:hkndd;KEGG:C04479;	-2	C9H8O6
+hkntd	2-hydroxy-6-ketononatrienedioate	BIGG:hkntd;	-2	C9H6O6
+hlipa	heptosyl-kdo2-lipidA	BIGG:hlipa;	-6	C117H208N2O45P2
+hmbil	Hydroxymethylbilane	CAS:73023-76-4;BIGG:hmbil;KEGG:C01024;	-8	C40H38N4O17
+hmfurn	4-hydroxy-5-methyl-3(2H)-furanone	BIGG:hmfurn;	0	C5H6O3
+hmgth	hydroxymethylglutathione	BIGG:hmgth;	-1	C11H18N3O7S
+hom-L	L-Homoserine	CAS:672-15-1;BIGG:hom-L;KEGG:C00263;	0	C4H9NO3
+hphhlipa	heptosyl-phospho-heptosyl-heptosyl-kdo2-lipidA	BIGG:hphhlipa;	-8	C131H231N2O60P3
+hpyr	Hydroxypyruvate	CAS:1113-60-6;BIGG:hpyr;KEGG:C00168;	-1	C3H3O4
+hqn	Hydroquinone	CAS:123-31-9;BIGG:hqn;KEGG:C00530;	0	C6H6O2
+hx2coa	trans-Hex-2-enoyl-CoA	BIGG:hx2coa;KEGG:C05271;	-4	C27H40N7O17P3S
+hxa	Hexanoate (n-C6:0)	CAS:142-62-1;BIGG:hxa;KEGG:C01585;	-1	C6H11O2
+hxan	Hypoxanthine	CAS:68-94-0;BIGG:hxan;KEGG:C00262;	0	C5H4N4O
+hxcoa	Hexanoyl-CoA (n-C6:0CoA)	BIGG:hxcoa;KEGG:C05270;	-4	C27H42N7O17P3S
+iasp	Iminoaspartate	BIGG:iasp;KEGG:C05840;	-2	C4H3NO4
+ichor	Isochorismate	BIGG:ichor;KEGG:C00885;	-2	C10H8O6
+icit	Isocitrate	CAS:30810-51-6;BIGG:icit;KEGG:C00311;	-3	C6H5O7
+icolipa	inner core oligosaccharide lipid A (E coli)	BIGG:icolipa;	-11	C145H251N2O74P4
+idon-L	L-Idonate	CAS:1114-17-6;BIGG:idon-L;KEGG:C00770;	-1	C6H11O7
+idp	IDP	CAS:86-04-4;BIGG:idp;KEGG:C00104;	-3	C10H11N4O11P2
+ile-L	L-Isoleucine	CAS:73-32-5;BIGG:ile-L;KEGG:C00407;	0	C6H13NO2
+iletrna	L-Isoleucyl-tRNA(Ile)	BIGG:iletrna;KEGG:C03127;	1	C6H12NOR
+imacp	3-(Imidazol-4-yl)-2-oxopropyl phosphate	BIGG:imacp;KEGG:C01267;	-2	C6H7N2O5P
+imp	IMP	CAS:131-99-7;BIGG:imp;KEGG:C00130;	-2	C10H11N4O8P
+indole	Indole	CAS:120-72-9;BIGG:indole;KEGG:C00463;	0	C8H7N
+inost	myo-Inositol	CAS:87-89-8;BIGG:inost;KEGG:C00137;	0	C6H12O6
+ins	Inosine	CAS:58-63-9;BIGG:ins;KEGG:C00294;	0	C10H12N4O5
+ipdp	Isopentenyl diphosphate	BIGG:ipdp;KEGG:C00129;	-3	C5H9O7P2
+isetac	Isethionic acid	CAS:107-36-8;BIGG:isetac;KEGG:C05123;	-1	C2H5O4S
+itp	ITP	CAS:132-06-9;BIGG:itp;KEGG:C00081;	-4	C10H11N4O14P3
+k	potassium	BIGG:k;KEGG:C00238;	1	K
+kdo	3-Deoxy-D-manno-2-octulosonate	BIGG:kdo;KEGG:C01187;	-1	C8H13O8
+kdo2lipid4	KDO(2)-lipid IV(A)	BIGG:kdo2lipid4;KEGG:C06025;	-6	C84H148N2O37P2
+kdo2lipid4L	KDO(2)-lipid IV(A) with laurate	BIGG:kdo2lipid4L;KEGG:C06251;	-6	C96H170N2O38P2
+kdo2lipid4p	KDO(2)-lipid IV(A) with palmitoleoyl	BIGG:kdo2lipid4p;	-6	C100H176N2O38P2
+kdo8p	3-Deoxy-D-manno-octulosonate 8-phosphate	BIGG:kdo8p;KEGG:C04478;	-3	C8H12O11P
+kdolipid4	KDO-lipid IV(A)	BIGG:kdolipid4;KEGG:C06024;	-5	C76H137N2O30P2
+kphphhlipa	kdo-phospho-heptosyl-phospho-heptosyl-heptosyl-kdo2-lipidA	BIGG:kphphhlipa;	-11	C139H241N2O70P4
+lac-D	D-Lactate	CAS:10326-41-7;BIGG:lac-D;KEGG:C00256;	-1	C3H5O3
+lac-L	L-Lactate	CAS:79-33-4;BIGG:lac-L;KEGG:C00186;	-1	C3H5O3
+LalaDglu	L-alanine-D-glutamate	BIGG:LalaDglu;	-1	C8H13N2O5
+LalaDgluMdap	L-alanine-D-glutamate-meso-2,6-diaminoheptanedioate	BIGG:LalaDgluMdap;	-1	C15H25N4O8
+LalaDgluMdapDala	L-alanine-D-glutamate-meso-2,6-diaminoheptanedioate-D-alanine	BIGG:LalaDgluMdapDala;	-1	C18H30N5O9
+LalaLglu	L-alanine-L-glutamate	BIGG:LalaLglu;	-1	C8H13N2O5
+lald-D	D-Lactaldehyde	BIGG:lald-D;KEGG:C00937;	0	C3H6O2
+lald-L	L-Lactaldehyde	CAS:598-35-6;BIGG:lald-L;KEGG:C00424;	0	C3H6O2
+lcts	Lactose	CAS:63-42-3;BIGG:lcts;KEGG:C00243;	0	C12H22O11
+leu-L	L-Leucine	CAS:61-90-5;BIGG:leu-L;KEGG:C00123;	0	C6H13NO2
+leutrna	L-Leucyl-tRNA(Leu)	BIGG:leutrna;KEGG:C02047;	1	C6H12NOR
+lgt-S	(R)-S-Lactoylglutathione	CAS:59-85-8;BIGG:lgt-S;KEGG:C03451;	-1	C13H20N3O8S
+lipa	KDO(2)-lipid (A)	BIGG:lipa;KEGG:C06026;	-6	C110H196N2O39P2
+lipa_cold	cold adapted KDO(2)-lipid (A)	BIGG:lipa_cold;	-6	C114H202N2O39P2
+lipidA	2,3,2'3'-Tetrakis(beta-hydroxymyristoyl)-D-glucosaminyl-1,6-beta-D-glucosamine 1,4'-bisphosphate	BIGG:lipidA;	-4	C68H126N2O23P2
+lipidAds	Lipid A Disaccharide	BIGG:lipidAds;KEGG:C04932;	-2	C68H127N2O20P
+lipidX	2,3-Bis(3-hydroxytetradecanoyl)-beta-D-glucosaminyl 1-phosphate	BIGG:lipidX;KEGG:C04824;	-2	C34H64NO12P
+lpp	lipoprotein	BIGG:lpp;KEGG:C01834;	0	XC16H30O1
+lys-L	L-Lysine	CAS:56-87-1;BIGG:lys-L;KEGG:C00047;	1	C6H15N2O2
+lystrna	L-Lysine-tRNA (Lys)	BIGG:lystrna;KEGG:C01931;	2	C6H14N2OR
+lyx-L	L-Lyxose	CAS:1949-78-6;BIGG:lyx-L;KEGG:C01508;	0	C5H10O5
+malACP	Malonyl-[acyl-carrier protein]	BIGG:malACP;KEGG:C01209;	-2	C14H22N2O10PRS
+malcoa	Malonyl-CoA	CAS:524-14-1;BIGG:malcoa;KEGG:C00083;	-5	C24H33N7O19P3S
+mal-D	D-Malate	CAS:636-61-3;BIGG:mal-D;KEGG:C00497;	-2	C4H4O5
+mal-L	L-Malate	CAS:97-67-6;BIGG:mal-L;KEGG:C00149;	-2	C4H4O5
+malt	Maltose	CAS:69-79-4;BIGG:malt;KEGG:C00208;	0	C12H22O11
+malt6p	Maltose 6'-phosphate	BIGG:malt6p;KEGG:C02995;	-2	C12H21O14P
+malthp	Maltoheptaose	BIGG:malthp;	0	C42H72O36
+malthx	Maltohexaose	CAS:34620-77-4;BIGG:malthx;KEGG:C01936;	0	C36H62O31
+maltpt	Maltopentaose	BIGG:maltpt;	0	C30H52O26
+malttr	Maltotriose	CAS:1109-28-0;BIGG:malttr;KEGG:C01835;	0	C18H32O16
+maltttr	Maltotetraose	CAS:34612-38-9;BIGG:maltttr;KEGG:C02052;	0	C24H42O21
+man	D-Mannose	CAS:3458-28-4;BIGG:man;KEGG:C00159;	0	C6H12O6
+man1p	D-Mannose 1-phosphate	BIGG:man1p;KEGG:C03812;	-2	C6H11O9P
+man6p	D-Mannose 6-phosphate	BIGG:man6p;KEGG:C00275;	-2	C6H11O9P
+man6pglyc	2(alpha-D-Mannosyl-6-phosphate)-D-glycerate	BIGG:man6pglyc;	-3	C9H14O12P
+mana	D-Mannonate	BIGG:mana;KEGG:C00514;	-1	C6H11O7
+manglyc	2(alpha-D-Mannosyl)-D-glycerate	BIGG:manglyc;KEGG:C11544;	-1	C9H15O9
+melib	Melibiose	CAS:585-99-9;BIGG:melib;KEGG:C05402;	0	C12H22O11
+mercppyr	Mercaptopyruvate	BIGG:mercppyr;KEGG:C00957;	-1	C3H3O3S
+met-D	D-Methionine	CAS:348-67-4;BIGG:met-D;KEGG:C00855;	0	C5H10NO2S
+methf	5,10-Methenyltetrahydrofolate	BIGG:methf;KEGG:C00445;	-1	C20H20N7O6
+met-L	L-Methionine	CAS:63-68-3;BIGG:met-L;KEGG:C00073;	0	C5H11NO2S
+metsox-R-L	L-methionine-R-sulfoxide	BIGG:metsox-R-L;	0	C5H11NO3S
+metsox-S-L	L-Methionine Sulfoxide	BIGG:metsox-S-L;KEGG:C02989;	0	C5H11NO3S
+mettrna	L-Methionyl-tRNA (Met)	BIGG:mettrna;KEGG:C02430;	1	C5H10NOSR
+mg2	magnesium	BIGG:mg2;KEGG:C00305;	2	Mg
+mi1p-D	1D-myo-Inositol 1-phosphate	BIGG:mi1p-D;KEGG:C01177;	-2	C6H11O9P
+micit	methylisocitrate	CAS:20298-95-7;BIGG:micit;KEGG:C04593;	-3	C7H7O7
+minohp	myo-Inositol hexakisphosphate	BIGG:minohp;KEGG:C01204;	-12	C6H6O24P6
+mlthf	5,10-Methylenetetrahydrofolate	BIGG:mlthf;KEGG:C00143;	-2	C20H21N7O6
+mmcoa-R	(R)-Methylmalonyl-CoA	BIGG:mmcoa-R;KEGG:C01213;	-5	C25H35N7O19P3S
+mmcoa-S	(S)-Methylmalonyl-CoA	BIGG:mmcoa-S;KEGG:C00683;	-5	C25H35N7O19P3S
+mmet	S-Methyl-L-methionine	BIGG:mmet;KEGG:C03172;	1	C6H14NO2S
+mn2	Mn2+	BIGG:mn2;KEGG:C00034;	2	Mn
+mnl	D-Mannitol	CAS:69-65-8;BIGG:mnl;KEGG:C00392;	0	C6H14O6
+mnl1p	D-Mannitol 1-phosphate	BIGG:mnl1p;KEGG:C00644;	-2	C6H13O9P
+mobd	Molybdate	BIGG:mobd;KEGG:C06232;	-2	MoO4
+mql8	Menaquinol 8	BIGG:mql8;KEGG:C05819;	0	C51H74O2
+mqn8	Menaquinone 8	CAS:84-81-1;BIGG:mqn8;KEGG:C00828;	0	C51H72O2
+mso3	methanesulfonate	BIGG:mso3;	-1	CH3O3S
+mthgxl	Methylglyoxal	CAS:78-98-8;BIGG:mthgxl;KEGG:C00546;	0	C3H4O2
+murein3p3p	two linked disacharide tripeptide murein units (uncrosslinked, middle of chain)	BIGG:murein3p3p;	-4	C68H104N12O38
+murein3px3p	two disacharide linked murein units, tripeptide crosslinked tripeptide (A2pm->A2pm) (middle of chain)	BIGG:murein3px3p;	-4	C68H102N12O37
+murein3px4p	two disacharide linked murein units, tripeptide crosslinked tetrapeptide (A2pm->D-ala) (middle of chain)	BIGG:murein3px4p;	-4	C71H107N13O38
+murein4p3p	two linked disacharide tetrapeptide and tripeptide murein units (uncrosslinked, middle of chain)	BIGG:murein4p3p;	-4	C71H109N13O39
+murein4p4p	two linked disacharide tetrapeptide murein units (uncrosslinked, middle of chain)	BIGG:murein4p4p;	-4	C74H114N14O40
+murein4px4p	two disacharide linked murein units, tetrapeptide corsslinked tetrapeptide (A2pm->D-ala) (middle of chain)	BIGG:murein4px4p;	-4	C74H112N14O39
+murein4px4p4p	three disacharide linked murein units (tetrapeptide crosslinked tetrapeptide (A2pm->D-ala), one uncrosslinked tetrapaptide) (middle of chain)	BIGG:murein4px4p4p;	-6	C111H169N21O59
+murein4px4px4p	three disacharide linked murein units (tetrapeptide crosslinked tetrapeptide (A2pm->D-ala) & tetrapeptide corsslinked tetrapeptide (A2pm->D-ala)) (middle of chain)	BIGG:murein4px4px4p;	-6	C111H167N21O58
+murein5p3p	two linked disacharide pentapeptide and tripeptide murein units (uncrosslinked, middle of chain)	BIGG:murein5p3p;	-4	C74H114N14O40
+murein5p4p	two linked disacharide pentapeptide and tetrapeptide murein units (uncrosslinked, middle of chain)	BIGG:murein5p4p;	-4	C77H119N15O41
+murein5p5p	two linked disacharide pentapeptide murein units (uncrosslinked, middle of chain)	BIGG:murein5p5p;	-4	C80H124N16O42
+murein5p5p5p	three linked disacharide pentapeptide murein units (uncrosslinked, middle of chain)	BIGG:murein5p5p5p;	-6	C120H186N24O63
+murein5px3p	two disacharide linked murein units, pentapeptide corsslinked tripeptide (A2pm->A2pm) (middle of chain)	BIGG:murein5px3p;	-4	C74H112N14O39
+murein5px4p	two disacharide linked murein units, pentapeptide crosslinked tetrapeptide (A2pm->D-ala) (middle of chain)	BIGG:murein5px4p;	-4	C77H117N15O40
+murein5px4px4p	three disacharide linked murein units (pentapeptide crosslinked tetrapeptide (A2pm->D-ala) tetrapeptide corsslinked tetrapeptide (A2pm->D-ala)) (middle of chain)	BIGG:murein5px4px4p;	-6	C114H172N22O59
+myrsACP	Myristoyl-ACP (n-C14:0ACP)	BIGG:myrsACP;KEGG:C05761;	-1	C25H47N2O8PRS
+N1aspmd	N1-Acetylspermidine	CAS:34450-16-3;BIGG:N1aspmd;KEGG:C00612;	2	C9H23N3O
+n2o	Nitrous oxide	CAS:10024-97-2;BIGG:n2o;KEGG:C00887;	0	N2O
+n8aspmd	N8-Acetylspermidine	CAS:34450-15-2;BIGG:n8aspmd;KEGG:C01029;	2	C9H23N3O
+na1	Sodium	CAS:7440-23-5;BIGG:na1;KEGG:C01330;	1	Na
+nac	Nicotinate	CAS:59-67-6;BIGG:nac;KEGG:C00253;	-1	C6H4NO2
+nad	Nicotinamide adenine dinucleotide	CAS:53-84-9;BIGG:nad;KEGG:C00003;	-1	C21H26N7O14P2
+nadh	Nicotinamide adenine dinucleotide - reduced	CAS:58-68-4;BIGG:nadh;KEGG:C00004;	-2	C21H27N7O14P2
+nadp	Nicotinamide adenine dinucleotide phosphate	CAS:53-59-8;BIGG:nadp;KEGG:C00006;	-3	C21H25N7O17P3
+nadph	Nicotinamide adenine dinucleotide phosphate - reduced	CAS:2646-71-1;BIGG:nadph;KEGG:C00005;	-4	C21H26N7O17P3
+ncam	Nicotinamide	CAS:98-92-0;BIGG:ncam;KEGG:C00153;	0	C6H6N2O
+nh4	Ammonium	CAS:14798-03-9;BIGG:nh4;KEGG:C01342;	1	H4N
+ni2	nickel	BIGG:ni2;KEGG:C00291;	2	Ni
+nicrnt	Nicotinate D-ribonucleotide	BIGG:nicrnt;KEGG:C01185;	-2	C11H12NO9P
+nmn	NMN	CAS:1094-61-7;BIGG:nmn;KEGG:C00455;	-1	C11H14N2O8P
+Nmtrp	N-Methyltryptophan	CAS:526-31-8;BIGG:Nmtrp;KEGG:C02983;	0	C12H14N2O2
+no	Nitric oxide	CAS:10102-43-9;BIGG:no;KEGG:C00533;	0	NO
+no2	Nitrite	CAS:7697-37-2;BIGG:no2;KEGG:C00088;	-1	NO2
+no3	Nitrate	BIGG:no3;KEGG:C00244;	-1	NO3
+o16a2und	(O16 antigen)x2 undecaprenyl diphosphate	BIGG:o16a2und;	-2	C123H200N2O57P2
+o16a3und	(O16 antigen)x3 undecaprenyl diphosphate	BIGG:o16a3und;	-2	C157H255N3O82P2
+o16a4colipa	(O16 antigen)x4 core oligosaccharide lipid A	BIGG:o16a4colipa;	-11	C312H523N6O200P4
+o16a4und	(O16 antigen)x4 undecaprenyl diphosphate	BIGG:o16a4und;	-2	C191H310N4O107P2
+o16aund	O16 antigen undecaprenyl diphosphate	BIGG:o16aund;	-2	C89H145N1O32P2
+o2	O2	CAS:7782-44-7;BIGG:o2;KEGG:C00007;	0	O2
+o2s	Superoxide anion	BIGG:o2s;KEGG:C00704;	-1	O2
+oaa	Oxaloacetate	CAS:328-42-7;BIGG:oaa;KEGG:C00036;	-2	C4H2O5
+oc2coa	trans-Oct-2-enoyl-CoA	BIGG:oc2coa;KEGG:C05276;	-4	C29H44N7O17P3S
+ocACP	Octanoyl-ACP (n-C8:0ACP)	BIGG:ocACP;KEGG:C05752;	-1	C19H35N2O8PRS
+occoa	Octanoyl-CoA (n-C8:0CoA)	BIGG:occoa;KEGG:C01944;	-4	C29H46N7O17P3S
+ocdca	octadecanoate (n-C18:0)	CAS:57-11-4;BIGG:ocdca;KEGG:C01530;	-1	C18H35O2
+ocdcaACP	Octadecanoyl-ACP (n-C18:0ACP)	BIGG:ocdcaACP;	-1	C29H55N2O8PRS
+ocdcea	octadecenoate (n-C18:1)	BIGG:ocdcea;	-1	C18H33O2
+octa	octanoate (n-C8:0)	CAS:124-07-2;BIGG:octa;KEGG:C06423;	-1	C8H15O2
+octdp	all-trans-Octaprenyl diphosphate	BIGG:octdp;KEGG:C04146;	-3	C40H65O7P2
+octeACP	cis-octadec-11-enoyl-[acyl-carrier protein] (n-C18:1)	BIGG:octeACP;	-1	C29H53N2O8PRS
+od2coa	trans-Octadec-2-enoyl-CoA	BIGG:od2coa;	-4	C39H64N7O17P3S
+odecoa	Octadecenoyl-CoA (n-C18:1CoA)	BIGG:odecoa;	-4	C39H64N7O17P3S
+ohpb	2-Oxo-3-hydroxy-4-phosphobutanoate	BIGG:ohpb;KEGG:C06054;	-3	C4H4O8P
+op4en	2-Oxopent-4-enoate	BIGG:op4en;KEGG:C00596;	-1	C5H5O3
+orn	Ornithine	CAS:70-26-8;BIGG:orn;KEGG:C01602;	1	C5H13N2O2
+orot	Orotate	CAS:65-86-1;BIGG:orot;KEGG:C00295;	-1	C5H3N2O4
+orot5p	Orotidine 5'-phosphate	CAS:2149-82-8;BIGG:orot5p;KEGG:C01103;	-3	C10H10N2O11P
+oxam	Oxamate	CAS:471-47-6;BIGG:oxam;KEGG:C01444;	-1	C2H2NO3
+oxur	Oxalureate	CAS:585-05-7;BIGG:oxur;KEGG:C00802;	-1	C3H3N2O4
+pa120	1,2-didodecanoyl-sn-glycerol 3-phosphate	BIGG:pa120;KEGG:C00416;	-2	C27H51O8P1
+pa140	1,2-ditetradecanoyl-sn-glycerol 3-phosphate	BIGG:pa140;KEGG:C00416;	-2	C31H59O8P1
+pa141	1,2-ditetradec-7-enoyl-sn-glycerol 3-phosphate	BIGG:pa141;KEGG:C00416;	-2	C31H55O8P1
+pa160	1,2-dihexadecanoyl-sn-glycerol 3-phosphate	BIGG:pa160;KEGG:C00416;	-2	C35H67O8P1
+pa161	1,2-dihexadec-9-enoyl-sn-glycerol 3-phosphate	BIGG:pa161;KEGG:C00416;	-2	C35H63O8P1
+pa180	1,2-dioctadecanoyl-sn-glycerol 3-phosphate	BIGG:pa180;KEGG:C00416;	-2	C39H75O8P1
+pa181	1,2-dioctadec-11-enoyl-sn-glycerol 3-phosphate	BIGG:pa181;KEGG:C00416;	-2	C39H71O8P1
+pac	Phenylacetic acid	CAS:103-82-2;BIGG:pac;KEGG:C07086;	-1	C8H7O2
+pacald	Phenylacetaldehyde	CAS:122-78-1;BIGG:pacald;KEGG:C00601;	0	C8H8O
+palmACP	Palmitoyl-ACP (n-C16:0ACP)	BIGG:palmACP;KEGG:C05764;	-1	C27H51N2O8PRS
+pan4p	Pantetheine 4'-phosphate	BIGG:pan4p;KEGG:C01134;	-2	C11H21N2O7PS
+pant-R	(R)-Pantoate	CAS:470-29-1;BIGG:pant-R;KEGG:C00522;	-1	C6H11O4
+pap	Adenosine 3',5'-bisphosphate	CAS:1053-73-2;BIGG:pap;KEGG:C00054;	-4	C10H11N5O10P2
+paps	3'-Phosphoadenylyl sulfate	CAS:482-67-7;BIGG:paps;KEGG:C00053;	-4	C10H11N5O13P2S
+pdx5p	Pyridoxine 5'-phosphate	CAS:447-05-2;BIGG:pdx5p;KEGG:C00627;	-2	C8H10NO6P
+pe120	phosphatidylethanolamine (didodecanoyl, n-C12:0)	BIGG:pe120;KEGG:C00350;	0	C29H58N1O8P1
+pe140	phosphatidylethanolamine (ditetradecanoyl, n-C14:0)	BIGG:pe140;KEGG:C00350;	0	C33H66N1O8P1
+pe141	phosphatidylethanolamine (ditetradec-7-enoyl, n-C14:1)	BIGG:pe141;KEGG:C00350;	0	C33H62N1O8P1
+pe160	phosphatidylethanolamine (dihexadecanoyl, n-C16:0)	BIGG:pe160;KEGG:C00350;	0	C37H74N1O8P1
+pe161	phosphatidylethanolamine (dihexadec-9enoyl, n-C16:1)	BIGG:pe161;KEGG:C00350;	0	C37H70N1O8P1
+pe180	phosphatidylethanolamine (dioctadecanoyl, n-C18:0)	BIGG:pe180;KEGG:C00350;	0	C41H82N1O8P1
+pe181	phosphatidylethanolamine (dioctadec-11-enoyl, n-C18:1)	BIGG:pe181;KEGG:C00350;	0	C41H78N1O8P1
+peamn	Phenethylamine	CAS:64-04-0;BIGG:peamn;KEGG:C05332;	1	C8H12N
+pep	Phosphoenolpyruvate	CAS:138-08-9;BIGG:pep;KEGG:C00074;	-3	C3H2O6P
+pg120	Phosphatidylglycerol (didodecanoyl, n-C12:0)	BIGG:pg120;KEGG:C00344;	-1	C30H58O10P1
+pg140	Phosphatidylglycerol (ditetradecanoyl, n-C14:0)	BIGG:pg140;KEGG:C00344;	-1	C34H66O10P1
+pg141	Phosphatidylglycerol (ditetradec-7-enoyl, n-C14:1)	BIGG:pg141;KEGG:C00344;	-1	C34H62O10P1
+pg160	Phosphatidylglycerol (dihexadecanoyl, n-C16:0)	BIGG:pg160;KEGG:C00344;	-1	C38H74O10P1
+pg161	Phosphatidylglycerol (dihexadec-9-enoyl, n-C16:1)	BIGG:pg161;KEGG:C00344;	-1	C38H70O10P1
+pg180	Phosphatidylglycerol (dioctadecanoyl, n-C18:0)	BIGG:pg180;KEGG:C00344;	-1	C42H82O10P1
+pg181	Phosphatidylglycerol (dioctadec-11-enoyl, n-C18:1)	BIGG:pg181;KEGG:C00344;	-1	C42H78O10P1
+pgp120	Phosphatidylglycerophosphate (didodecanoyl, n-C12:0)	BIGG:pgp120;KEGG:C03892;	-3	C30H57O13P2
+pgp140	Phosphatidylglycerophosphate (ditetradecanoyl, n-C14:0)	BIGG:pgp140;KEGG:C03892;	-3	C34H65O13P2
+pgp141	Phosphatidylglycerophosphate (ditetradec-7-enoyl, n-C14:1)	BIGG:pgp141;KEGG:C03892;	-3	C34H61O13P2
+pgp160	Phosphatidylglycerophosphate (dihexadecanoyl, n-C16:0)	BIGG:pgp160;KEGG:C03892;	-3	C38H73O13P2
+pgp161	Phosphatidylglycerophosphate (dihexadec-9-enoyl, n-C16:1)	BIGG:pgp161;	-3	C38H69O13P2
+pgp180	Phosphatidylglycerophosphate (dioctadecanoyl, n-C18:0)	BIGG:pgp180;KEGG:C03892;	-3	C42H81O13P2
+pgp181	Phosphatidylglycerophosphate (dioctadec-11-enoyl, n-C18:1)	BIGG:pgp181;KEGG:C03892;	-3	C42H77O13P2
+phaccoa	Phenylacetyl-CoA	BIGG:phaccoa;KEGG:C00582;	-4	C29H38N7O17P3S
+phe-L	L-Phenylalanine	CAS:63-91-2;BIGG:phe-L;KEGG:C00079;	0	C9H11NO2
+pheme	Protoheme	CAS:14875-96-8;BIGG:pheme;KEGG:C00032;	-2	C34H30FeN4O4
+phetrna	L-Phenylalanyl-tRNA(Phe)	BIGG:phetrna;KEGG:C03511;	1	C9H10NOR
+phhlipa	phospho-heptosyl-heptosyl-kdo2-lipidA	BIGG:phhlipa;	-8	C124H219N2O54P3
+phom	O-Phospho-L-homoserine	BIGG:phom;KEGG:C01102;	-2	C4H8NO6P
+phphhlipa	phospho-heptosyl-phospho-heptosyl-heptosyl-kdo2-lipidA	BIGG:phphhlipa;	-10	C131H230N2O63P4
+phpyr	Phenylpyruvate	CAS:156-06-9;BIGG:phpyr;KEGG:C00166;	-1	C9H7O3
+phthr	O-Phospho-4-hydroxy-L-threonine	BIGG:phthr;KEGG:C06055;	-2	C4H8NO7P
+pi	Phosphate	CAS:14265-44-2;BIGG:pi;KEGG:C00009;	-2	HO4P
+pmcoa	Pimeloyl-CoA	BIGG:pmcoa;KEGG:C01063;	-5	C28H41N7O19P3S
+pmtcoa	Palmitoyl-CoA (n-C16:0CoA)	BIGG:pmtcoa;KEGG:C00154;	-4	C37H62N7O17P3S
+pnto-R	(R)-Pantothenate	CAS:79-83-4;BIGG:pnto-R;KEGG:C00864;	-1	C9H16NO5
+ppa	Propionate (n-C3:0)	CAS:79-09-4;BIGG:ppa;KEGG:C00163;	-1	C3H5O2
+ppal	Propanal	CAS:123-38-6;BIGG:ppal;KEGG:C00479;	0	C3H6O
+ppap	Propanoyl phosphate	BIGG:ppap;KEGG:C02876;	-2	C3H5O5P
+ppbng	Porphobilinogen	CAS:487-90-1;BIGG:ppbng;KEGG:C00931;	-1	C10H13N2O4
+ppcoa	Propanoyl-CoA	CAS:317-66-8;BIGG:ppcoa;KEGG:C00100;	-4	C24H36N7O17P3S
+ppgpp	Guanosine 3',5'-bis(diphosphate)	BIGG:ppgpp;KEGG:C01228;	-6	C10H11N5O17P4
+pphn	Prephenate	CAS:126-49-8;BIGG:pphn;KEGG:C00254;	-2	C10H8O6
+ppi	Diphosphate	CAS:2466-09-3;BIGG:ppi;KEGG:C00013;	-3	HO7P2
+ppp9	Protoporphyrin	CAS:553-12-8;BIGG:ppp9;KEGG:C02191;	-2	C34H32N4O4
+pppg9	Protoporphyrinogen IX	BIGG:pppg9;KEGG:C01079;	-2	C34H38N4O4
+pppi	Inorganic triphosphate	BIGG:pppi;KEGG:C03279;	-4	HO10P3
+pppn	Phenylpropanoate	CAS:2628-17-3;BIGG:pppn;KEGG:C05629;	-1	C9H9O2
+ppt	Phosphonate	CAS:13598-36-2;BIGG:ppt;KEGG:C06701;	-2	HO3P
+pram	5-Phospho-beta-D-ribosylamine	BIGG:pram;KEGG:C03090;	-1	C5H11NO7P
+pran	N-(5-Phospho-D-ribosyl)anthranilate	BIGG:pran;KEGG:C04302;	-3	C12H13NO9P
+prbamp	1-(5-Phosphoribosyl)-AMP	BIGG:prbamp;KEGG:C02741;	-4	C15H19N5O14P2
+prbatp	1-(5-Phosphoribosyl)-ATP	BIGG:prbatp;KEGG:C02739;	-6	C15H19N5O20P4
+prfp	1-(5-Phosphoribosyl)-5-[(5-phosphoribosylamino)methylideneamino]imidazole-4-carboxamide	BIGG:prfp;KEGG:C04896;	-4	C15H21N5O15P2
+prlp	5-[(5-phospho-1-deoxyribulos-1-ylamino)methylideneamino]-1-(5-phosphoribosyl)imidazole-4-carboxamide	BIGG:prlp;KEGG:C04916;	-4	C15H21N5O15P2
+progly	L-Prolinylglycine	BIGG:progly;	0	C7H12N2O3
+pro-L	L-Proline	CAS:147-85-3;BIGG:pro-L;KEGG:C00148;	0	C5H9NO2
+protrna	L-Prolyl-tRNA(Pro)	BIGG:protrna;KEGG:C02702;	1	C5H8NOR
+prpp	5-Phospho-alpha-D-ribose 1-diphosphate	BIGG:prpp;KEGG:C00119;	-5	C5H8O14P3
+ps120	phosphatidylserine (didodecanoyl, n-C12:0)	BIGG:ps120;KEGG:C02737;	-1	C30H57N1O10P1
+ps140	phosphatidylserine (ditetradecanoyl, n-C14:0)	BIGG:ps140;KEGG:C02737;	-1	C34H65N1O10P1
+ps141	phosphatidylserine (ditetradec-7-enoyl, n-C14:1)	BIGG:ps141;KEGG:C02737;	-1	C34H61N1O10P1
+ps160	phosphatidylserine (dihexadecanoyl, n-C16:0)	BIGG:ps160;KEGG:C02737;	-1	C38H73N1O10P1
+ps161	phosphatidylserine (dihexadec-9-enoyl, n-C16:1)	BIGG:ps161;KEGG:C02737;	-1	C38H69N1O10P1
+ps180	phosphatidylserine (dioctadecanoyl, n-C18:0)	BIGG:ps180;KEGG:C02737;	-1	C42H81N1O10P1
+ps181	phosphatidylserine (dioctadec-11-enoyl, n-C18:1)	BIGG:ps181;KEGG:C02737;	-1	C42H77N1O10P1
+psclys	psicoselysine	BIGG:psclys;	1	C12H25N2O7
+pser-L	O-Phospho-L-serine	CAS:407-41-0;BIGG:pser-L;KEGG:C01005;	-2	C3H6NO6P
+ptrc	Putrescine	CAS:110-60-1;BIGG:ptrc;KEGG:C00134;	2	C4H14N2
+pyam5p	Pyridoxamine 5'-phosphate	CAS:529-96-4;BIGG:pyam5p;KEGG:C00647;	-1	C8H12N2O5P
+pydam	Pyridoxamine	CAS:85-87-0;BIGG:pydam;KEGG:C00534;	1	C8H13N2O2
+pydx	Pyridoxal	CAS:66-72-8;BIGG:pydx;KEGG:C00250;	0	C8H9NO3
+pydx5p	Pyridoxal 5'-phosphate	CAS:54-47-7;BIGG:pydx5p;KEGG:C00018;	-2	C8H8NO6P
+pydxn	Pyridoxine	CAS:65-23-6;BIGG:pydxn;KEGG:C00314;	0	C8H11NO3
+pyr	Pyruvate	CAS:127-17-3;BIGG:pyr;KEGG:C00022;	-1	C3H3O3
+q8	Ubiquinone-8	CAS:1339-63-5;BIGG:q8;KEGG:C00399;	0	C49H74O4
+q8h2	Ubiquinol-8	BIGG:q8h2;KEGG:C00390;	0	C49H76O4
+quln	Quinolinate	CAS:89-00-9;BIGG:quln;KEGG:C03722;	-2	C7H3NO4
+r15bp	D-Ribose 1,5-bisphosphate	BIGG:r15bp;KEGG:C01151;	-4	C5H8O11P2
+r1p	alpha-D-Ribose 1-phosphate	CAS:58459-37-3;BIGG:r1p;KEGG:C00442;	-2	C5H9O8P
+r5p	alpha-D-Ribose 5-phosphate	CAS:4300-28-1;BIGG:r5p;KEGG:C00117;	-2	C5H9O8P
+ragund	rhamanosyl-N-acetylglucosamyl-undecaprenyl diphosphate	BIGG:ragund;	-2	C69H113N1O16P2
+rbflvrd	Reduced riboflavin	BIGG:rbflvrd;KEGG:C01007;	0	C17H22N4O6
+rbl-L	L-Ribulose	BIGG:rbl-L;KEGG:C00508;	0	C5H10O5
+rdmbzi	N1-(alpha-D-ribosyl)-5,6-dimethylbenzimidazole	BIGG:rdmbzi;KEGG:C05775;	0	C14H18N2O4
+rhcys	S-Ribosyl-L-homocysteine	CAS:37558-16-0;BIGG:rhcys;KEGG:C03539;	0	C9H17NO6S
+rib-D	D-Ribose	CAS:50-69-1;BIGG:rib-D;KEGG:C00121;	0	C5H10O5
+ribflv	Riboflavin	CAS:83-88-5;BIGG:ribflv;KEGG:C00255;	0	C17H20N4O6
+rml	L-Rhamnulose	BIGG:rml;KEGG:C00861;	0	C6H12O5
+rml1p	L-Rhamnulose 1-phosphate	BIGG:rml1p;KEGG:C01131;	-2	C6H11O8P
+rmn	L-Rhamnose	CAS:3615-41-6;BIGG:rmn;KEGG:C00507;	0	C6H12O5
+ru5p-D	D-Ribulose 5-phosphate	CAS:4151-19-3;BIGG:ru5p-D;KEGG:C00199;	-2	C5H9O8P
+ru5p-L	L-Ribulose 5-phosphate	BIGG:ru5p-L;KEGG:C01101;	-2	C5H9O8P
+s	Sulfur	CAS:7704-34-9;BIGG:s;KEGG:C00087;	0	S
+s7p	Sedoheptulose 7-phosphate	BIGG:s7p;KEGG:C00281;	-2	C7H13O10P
+sarcs	Sarcosine	CAS:107-97-1;BIGG:sarcs;KEGG:C00213;	0	C3H7NO2
+sbt6p	D-Sorbitol 6-phosphate	CAS:108392-12-7;BIGG:sbt6p;KEGG:C01096;	-2	C6H13O9P
+sbt-D	D-Sorbitol	CAS:50-70-4;BIGG:sbt-D;KEGG:C00794;	0	C6H14O6
+sbzcoa	O-Succinylbenzoyl-CoA	BIGG:sbzcoa;KEGG:C03160;	-5	C32H39N7O20P3S
+scl	sirohydrochlorin	BIGG:scl;KEGG:C05778;	-7	C42H39N4O16
+sectrna	L-Selenocysteinyl-tRNA(Sec)	BIGG:sectrna;KEGG:C05173;	1	C3H6NOSeR
+seln	Selenide	CAS:531-44-2;BIGG:seln;KEGG:C01528;	-1	HSe
+selnp	Selenophosphate	BIGG:selnp;KEGG:C05172;	-1	H2O3PSe
+seramp	L-seryl-AMP	BIGG:seramp;	0	C13H19N6O9P
+ser-D	D-Serine	CAS:312-84-5;BIGG:ser-D;KEGG:C00740;	0	C3H7NO3
+ser-L	L-Serine	CAS:56-45-1;BIGG:ser-L;KEGG:C00065;	0	C3H7NO3
+sertrna	L-Seryl-tRNA(Ser)	BIGG:sertrna;KEGG:C02553;	1	C3H6NO2R
+sertrna(sec)	L-Seryl-tRNA(Sec)	BIGG:sertrna(sec);	1	C3H6NO2R
+Sfglutth	S-Formylglutathione	BIGG:Sfglutth;KEGG:C01031;	-1	C11H16N3O7S
+sheme	Siroheme	BIGG:sheme;KEGG:C00748;	-8	C42H36FeN4O16
+skm	Shikimate	CAS:138-59-0;BIGG:skm;KEGG:C00493;	-1	C7H9O5
+skm5p	Shikimate 5-phosphate	BIGG:skm5p;KEGG:C03175;	-3	C7H8O8P
+sl26da	N-Succinyl-LL-2,6-diaminoheptanedioate	BIGG:sl26da;KEGG:C04421;	-2	C11H16N2O7
+sl2a6o	N-Succinyl-2-L-amino-6-oxoheptanedioate	BIGG:sl2a6o;KEGG:C04462;	-3	C11H12NO8
+so2	sulfur dioxide	BIGG:so2;KEGG:C09306;	0	O2S
+so3	Sulfite	CAS:7782-99-2;BIGG:so3;KEGG:C00094;	-2	O3S
+so4	Sulfate	CAS:7664-93-9;BIGG:so4;KEGG:C00059;	-2	O4S
+spmd	Spermidine	CAS:124-20-9;BIGG:spmd;KEGG:C00315;	3	C7H22N3
+ssaltpp	Succinate semialdehyde-thiamin diphosphate anion	BIGG:ssaltpp;KEGG:C05816;	-3	C16H21N4O10P2S
+stcoa	Stearoyl-CoA (n-C18:0CoA)	CAS:362-66-3;BIGG:stcoa;KEGG:C00412;	-4	C39H66N7O17P3S
+suc6p	Sucrose 6-phosphate	BIGG:suc6p;KEGG:C02591;	-2	C12H21O14P
+sucarg	N2-Succinyl-L-arginine	CAS:1758-80-1;BIGG:sucarg;KEGG:C03296;	-1	C10H17N4O5
+sucbz	o-Succinylbenzoate	BIGG:sucbz;KEGG:C02730;	-2	C11H8O5
+succ	Succinate	CAS:110-15-6;BIGG:succ;KEGG:C00042;	-2	C4H4O4
+succoa	Succinyl-CoA	CAS:604-98-8;BIGG:succoa;KEGG:C00091;	-5	C25H35N7O19P3S
+sucglu	N2-Succinyl-L-glutamate	CAS:33981-72-5;BIGG:sucglu;KEGG:C05931;	-3	C9H10NO7
+sucgsa	N2-Succinyl-L-glutamate 5-semialdehyde	BIGG:sucgsa;KEGG:C05932;	-2	C9H11NO6
+suchms	O-Succinyl-L-homoserine	CAS:1492-23-5;BIGG:suchms;KEGG:C01118;	-1	C8H12NO6
+sucorn	N2-Succinyl-L-ornithine	CAS:80102-04-1;BIGG:sucorn;KEGG:C03415;	-1	C9H15N2O5
+sucr	Sucrose	CAS:57-50-1;BIGG:sucr;KEGG:C00089;	0	C12H22O11
+sucsal	Succinic semialdehyde	CAS:692-29-5;BIGG:sucsal;KEGG:C00232;	-1	C4H5O3
+sulfac	sulfoacetate	BIGG:sulfac;	-2	C2H2O5S
+t3c11vaceACP	trans-3-cis-11-vacceoyl-[acyl-carrier protein]	BIGG:t3c11vaceACP;	-1	C29H51N2O8PRS
+t3c5ddeceACP	trans-3-cis-5-dodecenoyl-[acyl-carrier protein]	BIGG:t3c5ddeceACP;	-1	C23H39N2O8PRS
+t3c7mrseACP	trans-3-cis-7-myristoleoyl-[acyl-carrier protein]	BIGG:t3c7mrseACP;	-1	C25H43N2O8PRS
+t3c9palmeACP	trans-3-cis-9-palmitoleoyl-[acyl-carrier protein]	BIGG:t3c9palmeACP;	-1	C27H47N2O8PRS
+tag6p-D	D-Tagatose 6-phosphate	BIGG:tag6p-D;KEGG:C01097;	-2	C6H11O9P
+tagdp-D	D-Tagatose 1,6-biphosphate	BIGG:tagdp-D;KEGG:C03785;	-4	C6H10O12P2
+tagur	D-Tagaturonate	BIGG:tagur;KEGG:C00558;	-1	C6H9O7
+tartr-L	L-tartrate	CAS:87-69-4;BIGG:tartr-L;KEGG:C00898;	-2	C4H4O6
+taur	Taurine	CAS:107-35-7;BIGG:taur;KEGG:C00245;	0	C2H7NO3S
+tcynt	Thiocyanate	CAS:463-56-9;BIGG:tcynt;KEGG:C01755;	-1	CNS
+td2coa	trans-Tetradec-2-enoyl-CoA	BIGG:td2coa;KEGG:C05273;	-4	C35H56N7O17P3S
+tdcoa	Tetradecanoyl-CoA (n-C14:0CoA)	BIGG:tdcoa;KEGG:C02593;	-4	C35H58N7O17P3S
+tddec2eACP	trans-Dodec-2-enoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:tddec2eACP;KEGG:C05758;	-1	C23H41N2O8PRS
+tdeACP	cis-tetradec-7-enoyl-[acyl-carrier protein] (n-C14:1)	BIGG:tdeACP;	-1	C25H45N2O8PRS
+tdec2eACP	trans-Dec-2-enoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:tdec2eACP;KEGG:C05754;	-1	C21H37N2O8PRS
+tdecoa	Tetradecenoyl-CoA (n-C14:1CoA)	BIGG:tdecoa;	-4	C35H56N7O17P3S
+thdp	2,3,4,5-Tetrahydrodipicolinate	BIGG:thdp;KEGG:C03972;	-2	C7H7NO4
+thex2eACP	trans-Hex-2-enoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:thex2eACP;KEGG:C05748;	-1	C17H29N2O8PRS
+thf	5,6,7,8-Tetrahydrofolate	CAS:135-16-0;BIGG:thf;KEGG:C00101;	-2	C19H21N7O6
+thm	Thiamin	CAS:67-03-8;BIGG:thm;KEGG:C00378;	1	C12H17N4OS
+thmmp	Thiamin monophosphate	CAS:532-40-1;BIGG:thmmp;KEGG:C01081;	-1	C12H16N4O4PS
+thmpp	Thiamine diphosphate	CAS:154-87-0;BIGG:thmpp;KEGG:C00068;	-2	C12H16N4O7P2S
+thr-L	L-Threonine	CAS:72-19-5;BIGG:thr-L;KEGG:C00188;	0	C4H9NO3
+thrp	L-Threonine O-3-phosphate	BIGG:thrp;KEGG:C12147;	-2	C4H8NO6P
+thrtrna	L-Threonyl-tRNA(Thr)	BIGG:thrtrna;KEGG:C02992;	1	C4H8NO2R
+thym	Thymine	CAS:65-71-4;BIGG:thym;KEGG:C00178;	0	C5H6N2O2
+thymd	Thymidine	CAS:50-89-5;BIGG:thymd;KEGG:C00214;	0	C10H14N2O5
+tma	trimethylamine	CAS:75-50-3;BIGG:tma;KEGG:C00565;	1	C3H10N
+tmao	Trimethylamine N-oxide	CAS:1184-78-7;BIGG:tmao;KEGG:C01104;	0	C3H9NO
+tmrs2eACP	trans-Tetradec-2-enoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:tmrs2eACP;KEGG:C05760;	-1	C25H45N2O8PRS
+toct2eACP	trans-Oct-2-enoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:toct2eACP;KEGG:C05751;	-1	C19H33N2O8PRS
+toctd2eACP	trans-octadec-2-enoyl-[acyl-carrier protein]	BIGG:toctd2eACP;	-1	C29H53N2O8PRS
+tpalm2eACP	trans-Hexadec-2-enoyl-[acyl-carrier protein]	CAS:7783-08-6;BIGG:tpalm2eACP;KEGG:C05763;	-1	C27H49N2O8PRS
+trdox	Oxidized thioredoxin	BIGG:trdox;KEGG:C00343;	0	X
+trdrd	Reduced thioredoxin	BIGG:trdrd;KEGG:C00342;	0	XH2
+tre	Trehalose	CAS:99-20-7;BIGG:tre;KEGG:C01083;	0	C12H22O11
+tre6p	alpha,alpha'-Trehalose 6-phosphate	CAS:4484-88-2;BIGG:tre6p;KEGG:C00689;	-2	C12H21O14P
+trnaala	tRNA(Ala)	BIGG:trnaala;KEGG:C01635;	0	R
+trnaarg	tRNA(Arg)	BIGG:trnaarg;KEGG:C01636;	0	R
+trnaasn	tRNA(Asn)	BIGG:trnaasn;KEGG:C01637;	0	R
+trnaasp	tRNA(Asp)	BIGG:trnaasp;KEGG:C01638;	0	R
+trnacys	tRNA(Cys)	BIGG:trnacys;KEGG:C01639;	0	R
+trnagln	tRNA(Gln)	BIGG:trnagln;KEGG:C01640;	0	R
+trnaglu	tRNA (Glu)	BIGG:trnaglu;KEGG:C01641;	0	R
+trnagly	tRNA(Gly)	BIGG:trnagly;KEGG:C01642;	0	R
+trnahis	tRNA(His)	BIGG:trnahis;KEGG:C01643;	0	R
+trnaile	tRNA(Ile)	BIGG:trnaile;KEGG:C01644;	0	R
+trnaleu	tRNA(Leu)	BIGG:trnaleu;KEGG:C01645;	0	R
+trnalys	tRNA(Lys)	BIGG:trnalys;KEGG:C01646;	0	R
+trnamet	tRNA(Met)	BIGG:trnamet;KEGG:C01647;	0	R
+trnaphe	tRNA(Phe)	BIGG:trnaphe;KEGG:C01648;	0	R
+trnapro	tRNA(Pro)	BIGG:trnapro;KEGG:C01649;	0	R
+trnasecys	tRNA(SeCys)	BIGG:trnasecys;	0	R
+trnaser	tRNA(Ser)	BIGG:trnaser;KEGG:C01650;	0	R
+trnathr	tRNA(Thr)	BIGG:trnathr;KEGG:C01651;	0	R
+trnatrp	tRNA(Trp)	BIGG:trnatrp;KEGG:C01652;	0	R
+trnatyr	tRNA(Tyr)	BIGG:trnatyr;KEGG:C00787;	0	R
+trnaval	tRNA(Val)	BIGG:trnaval;KEGG:C01653;	0	R
+trp-L	L-Tryptophan	CAS:73-22-3;BIGG:trp-L;KEGG:C00078;	0	C11H12N2O2
+trptrna	L-Tryptophanyl-tRNA(Trp)	BIGG:trptrna;KEGG:C03512;	1	C11H11N2OR
+tsul	Thiosulfate	BIGG:tsul;KEGG:C00320;	-2	O3S2
+ttdca	tetradecanoate (n-C14:0)	CAS:544-63-8;BIGG:ttdca;KEGG:C06424;	-1	C14H27O2
+ttdcea	tetradecenoate (n-C14:1)	BIGG:ttdcea;	-1	C14H25O2
+tungs	tungstate	BIGG:tungs;	-2	O4W1
+tym	Tyramine	CAS:51-67-2;BIGG:tym;KEGG:C00483;	1	C8H12NO
+tyr-L	L-Tyrosine	CAS:60-18-4;BIGG:tyr-L;KEGG:C00082;	0	C9H11NO3
+tyrp	Phosphotyrosine	BIGG:tyrp;KEGG:C06501;	-2	C9H10NO6P
+tyrtrna	L-Tyrosyl-tRNA(Tyr)	BIGG:tyrtrna;KEGG:C02839;	1	C9H10NO2R
+u23ga	UDP-2,3-bis(3-hydroxytetradecanoyl)glucosamine	BIGG:u23ga;KEGG:C04652;	-2	C43H75N3O20P2
+u3aga	UDP-3-O-(3-hydroxytetradecanoyl)-N-acetylglucosamine	BIGG:u3aga;KEGG:C04738;	-2	C31H51N3O19P2
+u3hga	UDP-3-O-(3-hydroxytetradecanoyl)-D-glucosamine	BIGG:u3hga;KEGG:C06022;	-1	C29H50N3O18P2
+uaagmda	Undecaprenyl-diphospho-N-acetylmuramoyl-(N-acetylglucosamine)-L-ala-D-glu-meso-2,6-diaminopimeloyl-D-ala-D-ala	BIGG:uaagmda;KEGG:C05898;	-4	C95H152N8O28P2
+uaccg	UDP-N-acetyl-3-O-(1-carboxyvinyl)-D-glucosamine	BIGG:uaccg;KEGG:C04631;	-3	C20H26N3O19P2
+uacgam	UDP-N-acetyl-D-glucosamine	BIGG:uacgam;KEGG:C00043;	-2	C17H25N3O17P2
+uacmam	UDP-N-acetyl-D-mannosamine	BIGG:uacmam;KEGG:C01170;	-2	C17H25N3O17P2
+uacmamu	UDP-N-acetyl-D-mannosaminouronate	BIGG:uacmamu;KEGG:C06240;	-3	C17H22N3O18P2
+uagmda	Undecaprenyl-diphospho-N-acetylmuramoyl-L-alanyl-D-glutamyl-meso-2,6-diaminopimeloyl-D-alanyl-D-alanine	BIGG:uagmda;KEGG:C05897;	-4	C87H139N7O23P2
+uama	UDP-N-acetylmuramoyl-L-alanine	BIGG:uama;KEGG:C01212;	-3	C23H33N4O20P2
+uamag	UDP-N-acetylmuramoyl-L-alanyl-D-glutamate	BIGG:uamag;KEGG:C00692;	-4	C28H39N5O23P2
+uamr	UDP-N-acetylmuramate	BIGG:uamr;KEGG:C01050;	-3	C20H28N3O19P2
+udcpdp	Undecaprenyl diphosphate	BIGG:udcpdp;KEGG:C03543;	-3	C55H89O7P2
+udcpp	Undecaprenyl phosphate	BIGG:udcpp;KEGG:C00348;	-2	C55H89O4P
+udp	UDP	CAS:58-98-0;BIGG:udp;KEGG:C00015;	-3	C9H11N2O12P2
+udpacgal	UDP-N-acetyl-D-galactosamine	BIGG:udpacgal;KEGG:C00203;	-2	C17H25N3O17P2
+udpg	UDPglucose	BIGG:udpg;KEGG:C00029;	-2	C15H22N2O17P2
+udpgal	UDPgalactose	BIGG:udpgal;KEGG:C00052;	-2	C15H22N2O17P2
+udpgalfur	UDP-D-galacto-1,4-furanose	CAS:638-23-3;BIGG:udpgalfur;KEGG:C03733;	-2	C15H22N2O17P2
+udpglcur	UDP-D-glucuronate	BIGG:udpglcur;KEGG:C00167;	-3	C15H19N2O18P2
+udpLa4fn	uridine 5''-diphospho-{beta}-4-deoxy-4-formamido-L-arabinose	BIGG:udpLa4fn;	-2	C15H21N3O16P2
+udpLa4n	uridine 5''-diphospho-{beta}-4-deoxy-4-amino-L-arabinose	BIGG:udpLa4n;	-1	C14H22N3O15P2
+udpLa4o	UDP-4-keto-pyranose	BIGG:udpLa4o;	-2	C14H18N2O16P2
+ugmd	UDP-N-acetylmuramoyl-L-alanyl-D-gamma-glutamyl-meso-2,6-diaminopimelate	BIGG:ugmd;KEGG:C04877;	-4	C35H51N7O26P2
+ugmda	UDP-N-acetylmuramoyl-L-alanyl-D-glutamyl-meso-2,6-diaminopimeloyl-D-alanyl-D-alanine	BIGG:ugmda;KEGG:C04882;	-4	C41H61N9O28P2
+uLa4fn	undecaprenyl phosphate-4-amino-4-formyl-L-arabinose	BIGG:uLa4fn;	-1	C61H99N1O8P1
+uLa4n	undecaprenyl phosphate-4-amino-4-deoxy-L-arabinose	BIGG:uLa4n;	0	C60H100N1O7P1
+um4p	UDP-N-acetylmuramoyl-L-alanyl-D-gamma-glutamyl-meso-2,6-diaminopimelate-D-alanine	BIGG:um4p;	-4	C38H56N8O27P2
+ump	UMP	CAS:58-97-9;BIGG:ump;KEGG:C00105;	-2	C9H11N2O9P
+unaga	Undecaprenyl diphospho N-acetyl-glucosamine	BIGG:unaga;	-2	C63H103NO12P2
+unagamu	Undecaprenyl-diphospho-N-acetylglucosamine-N-acetylmannosaminuronate	BIGG:unagamu;	-3	C71H113N2O18P2
+unagamuf	Undecaprenyl-diphospho N-acetylglucosamine-N-acetylmannosaminuronate-N-acetamido-4,6-dideoxy-D-galactose	BIGG:unagamuf;	-3	C79H126N3O22P2
+uppg3	Uroporphyrinogen III	CAS:1976-85-8;BIGG:uppg3;KEGG:C01051;	-8	C40H36N4O16
+ura	Uracil	CAS:66-22-8;BIGG:ura;KEGG:C00106;	0	C4H4N2O2
+urate	Urate	CAS:69-93-2;BIGG:urate;KEGG:C00366;	0	C5H4N4O3
+urdglyc	(-)-Ureidoglycolate	BIGG:urdglyc;KEGG:C00603;	-1	C3H5N2O4
+urea	Urea	CAS:57-13-6;BIGG:urea;KEGG:C00086;	0	CH4N2O
+uri	Uridine	CAS:58-96-8;BIGG:uri;KEGG:C00299;	0	C9H12N2O6
+utp	UTP	CAS:63-39-8;BIGG:utp;KEGG:C00075;	-4	C9H11N2O15P3
+val-L	L-Valine	CAS:72-18-4;BIGG:val-L;KEGG:C00183;	0	C5H11NO2
+valtrna	L-Valyl-tRNA(Val)	BIGG:valtrna;KEGG:C02554;	1	C5H10NOR
+xan	Xanthine	CAS:69-89-6;BIGG:xan;KEGG:C00385;	0	C5H4N4O2
+xdp	XDP	BIGG:xdp;KEGG:C01337;	-3	C10H11N4O12P2
+xmp	Xanthosine 5'-phosphate	CAS:523-98-8;BIGG:xmp;KEGG:C00655;	-2	C10H11N4O9P
+xtp	XTP	BIGG:xtp;KEGG:C00700;	-4	C10H11N4O15P3
+xtsn	Xanthosine	CAS:146-80-5;BIGG:xtsn;KEGG:C01762;	0	C10H12N4O6
+xu5p-D	D-Xylulose 5-phosphate	BIGG:xu5p-D;KEGG:C00231;	-2	C5H9O8P
+xu5p-L	L-Xylulose 5-phosphate	BIGG:xu5p-L;KEGG:C03291;	-2	C5H9O8P
+xyl-D	D-Xylose	CAS:58-86-6;BIGG:xyl-D;KEGG:C00181;	0	C5H10O5
+xylu-D	D-Xylulose	CAS:551-84-8;BIGG:xylu-D;KEGG:C00310;	0	C5H10O5
+xylu-L	L-Xylulose	CAS:527-50-4;BIGG:xylu-L;KEGG:C00312;	0	C5H10O5
+zn2	Zinc	CAS:7440-66-6;BIGG:zn2;KEGG:C00038;	2	Zn

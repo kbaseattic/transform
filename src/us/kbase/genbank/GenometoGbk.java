@@ -1,7 +1,7 @@
 package us.kbase.genbank;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import us.kbase.common.service.Tuple7;
+import us.kbase.common.service.Tuple4;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Feature;
@@ -9,6 +9,7 @@ import us.kbase.kbasegenomes.Genome;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -49,7 +50,8 @@ public class GenometoGbk {
 
             Contig curcontig = contigs.get(j);
             String out = "";
-            out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
+            //out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
+            out += "LOCUS       " + "" + "             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
             out += "DEFINITION  " + genome.getScientificName() + " chromosome, complete genome.\n";
             out += "ACCESSION   NC_005213\n";
             out += "VERSION     NC_005213.1  GI:38349555\n";
@@ -60,7 +62,10 @@ public class GenometoGbk {
             out += "  ORGANISM  " + genome.getScientificName() + "\n";
             out += "            Archaea; Nanoarchaeota; Nanoarchaeum.\n";
 
-            //typedef tuple<int id, string source_db, string article_title, string link, string pubdate, string authors, string journal_name> publication;
+
+            /*TODO populate references in Genome objects */
+            /*
+             //typedef tuple<int id, string source_db, string article_title, string link, string pubdate, string authors, string journal_name> publication;
             List<Tuple7<Long, String, String, String, String, String, String>> pubs = genome.getPublications();
 
             for (int k = 0; k < pubs.size(); k++) {
@@ -70,44 +75,59 @@ public class GenometoGbk {
                 System.out.println(curpub.getE6());
 
                 out += "REFERENCE   1  (bases " + 1 + " to " + curcontig.getLength() + ")\n";
-                out += "  AUTHORS   Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,\n";
-                out += "            Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,\n";//59
-                out += "  TITLE     The genome of Nanoarchaeum equitans: insights into early archaeal\n";//64
-                out += "  JOURNAL   Proc. Natl. Acad. Sci. U.S.A. 100 (22), 12984-12988 (2003)\n";
+                out += "  AUTHORS   ";//Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,\n";
+
+                for(int m=0;m<(curpub.getE6()).length();m++) {
+                out+=
+                //out += "            Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,\n";//59
+                }
+                out += "  TITLE     "+curpub.getE3()+"\n";//64
+                out += "  JOURNAL   "+curpub.getE7()+"\n";
+                //TODO missing JOURNAL volume issue pages etc.
+                //+" 100 (22), 12984-12988 (2003)\n";
                 if (curpub.getE2().equalsIgnoreCase("PUBMED"))
                     out += "   PUBMED   " + curpub.getE1() + "\n";
             }
+        */
 
-            out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
-            out += "            NCBI review. The reference sequence was derived from AE017199.\n";
-            out += "            COMPLETENESS: full length.\n";
+            //out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
+            //out += "            NCBI review. The reference sequence was derived from AE017199.\n";
+            //out += "            COMPLETENESS: full length.\n";
 
 
             out += "FEATURES             Location/Qualifiers\n";
             out += "     source          1.." + curcontig.getLength() + "\n";
             out += "                     /organism=\"" + genome.getScientificName() + "\"\n";
             out += "                     /mol_type=\"" + molecule_type_long + "\"\n";
-            out += "                     /strain=\"Kin4-M\"\n";
-            out += "                     /db_xref=\"taxon:228908\"\n";
+            //out += "                     /strain=\"\"\n";
+            out += "                     /db_xref=\"taxon:" + genome.getSourceId() + "\"\n";
 
             List<Feature> features = genome.getFeatures();
 
 
             for (int i = 0; i < features.size(); i++) {
                 Feature cur = features.get(i);
+                List<Tuple4<java.lang.String, java.lang.Long, java.lang.String, java.lang.Long>> location = cur.getLocation();
                 cur.getAliases();
-                out += "gene            complement(join(490883..490885,1..879))\n";
-                out += "                     /locus_tag=\"NEQ001\"\n";
-                out += "                     /db_xref=\"GeneID:2732620\"\n";
-                out += "     CDS             complement(join(490883..490885,1..879))\n";
-                out += "                     /locus_tag=\"NEQ001\"\n";
-                out += "                     /note=\"conserved hypothetical [Methanococcus jannaschii]\"\n";
-                out += "                     /codon_start=1\n";
-                out += "                     /transl_table=11\n";
-                out += "                     /product=\"hypothetical protein\"\n";
-                out += "                     /protein_id=\"NP_963295.1\"\n";
-                out += "                     /db_xref=\"GI:41614797\"\n";
-                out += "                     /db_xref=\"GeneID:2732620\"\n";
+                //out += "gene            complement(join(490883..490885,1..879))\n";
+                //"location":[["kb|g.0.c.1",3378378,"+",1368]]
+
+                out += "gene            ";
+                out += getCDS(out, location);
+
+                //out += "                     /locus_tag=\"NEQ001\"\n";
+                //out += "                     /db_xref=\"GeneID:2732620\"\n";
+                out += "     CDS             ";
+                out += getCDS(out, location);
+
+                //out += "                     /locus_tag=\"NEQ001\"\n";
+                out += "                     /note=\"" + cur.getFunction() + "\"\n";
+                //out += "                     /codon_start=1\n";
+                //out += "                     /transl_table=11\n";
+                //out += "                     /product=\"hypothetical protein\"\n";
+                //out += "                     /protein_id=\"NP_963295.1\"\n";
+                //out += "                     /db_xref=\"GI:41614797\"\n";
+                //out += "                     /db_xref=\"GeneID:2732620\"\n";
 
                 out += "                     /translation=\"" + formatString(cur.getProteinTranslation(), 44, 58) + "\n";
                 //out += "                     /translation=\"MRLLLELKALNSIDKKQLSNYLIQGFIYNILKNTEYSWLHNWKK\n";
@@ -121,12 +141,38 @@ public class GenometoGbk {
 
             int start = Math.max(0, args[0].lastIndexOf("/"));
             int end = args[0].indexOf(".", start + 1);
-            File outf = new File(args[0].substring(start, end) + "_fromKBGenome.gbk");
+            File outf = new File(args[0].substring(start, end) + "_fromKBaseGenome.gbk");
             PrintWriter pw = new PrintWriter(outf);
             pw.print(out);
             pw.close();
 
         }
+    }
+
+    private String getCDS(String out, List<Tuple4<String, Long, String, Long>> location) {
+        int added = 0;
+        boolean complement = false;
+        for (int n = 0; n < location.size(); n++) {
+            Tuple4<String, Long, String, Long> now4 = location.get(n);
+            if (added == 0 && now4.getE3().equals("-")) {
+                out += "complement(join(";
+                complement = true;
+            } else {
+                out += "join(";
+            }
+
+            out += now4.getE2() + ".." + (now4.getE2() + (long) now4.getE4());
+
+            if (added > 0)
+                out += ",";
+            added++;
+        }
+        if (complement)
+            out += "))\n";
+        else {
+            out += ")\n";
+        }
+        return out;
     }
 
 
@@ -157,9 +203,34 @@ public class GenometoGbk {
      * @return
      */
     public String formatDNASequence(String s, int charnum, int linenum) {
+        String out = "";
 
+        int last = 0;
+        //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
 
-        return s;
+        out += "        1 ";
+        int index = 1;
+        int counter = 0;
+        for (int i = 0; i < s.length(); i++) {
+            int end = last + charnum;
+            if (end > s.length())
+                end = s.length();
+            out += s.substring(last, end);
+            last += charnum;
+            counter++;
+            if (counter == 6 && s.length() > end) {
+                index += 60;
+                String indexStr = "" + index;
+                int len = indexStr.length();
+                char[] ch = new char[9 - len];
+                Arrays.fill(ch, ' ');
+                String padStr = new String(ch);
+                out += padStr + indexStr + " ";
+                counter = 0;
+            }
+        }
+
+        return out;
     }
 
 

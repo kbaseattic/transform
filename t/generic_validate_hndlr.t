@@ -22,9 +22,33 @@ use Bio::KBase::workspace::Client;
 #it checks if a shock node stores a gene bank file in the right format
 #...
 #it roughly checks if the new objects are as expected, but it does not check any possible error in the data conversion
-die "Usage: generic_upload.t <input_test_config_filename>" if $#ARGV != 0;
+die "Usage: generic_validate_hndlr.t <input_test_server_config_filename> <input_test_config_filename>" if $#ARGV != 1;
 
-my $cfg_fn = $ARGV[0];
+my %params;
+if ($ARGV[0] ne "") {  
+	my %Config = ();
+	tie %Config, "Config::Simple", $ARGV[0];
+        my $service = "Transform";
+	my @list = grep /^$service\./, sort keys %Config;
+	for my $k (@list) {
+		my $v = $Config{$k};
+		$k =~ m/^$service\.(.*)$/;
+		if ($v) {
+			$params{$1} = $v;
+		}
+	}
+}
+
+# set default values for testing
+#$params{ujs_url} = 'http://localhost:7083' if! defined $params{ujs_url};
+$params{ws_url} = 'http://localhost:7058' if! defined $params{ws_url};
+$params{shock_url} = 'http://localhost:7078' if! defined $params{shock_url};
+$params{awe_url} = 'http://localhost:7080' if! defined $params{awe_url};
+$params{svc_ws_un} = 'kbasetest' if! defined $params{svc_ws_un};
+$params{svc_ws_name} = 'loader_test' if! defined $params{svc_ws_name};
+$params{svc_ws_cfg_name} = 'script_configs' if! defined $params{svc_ws_cfg_name};
+
+my $cfg_fn = $ARGV[1];
 
 open CFG, "$cfg_fn" or die "Couldn't open $cfg_fn\n";
 my @lines = <CFG>;
@@ -68,19 +92,16 @@ my $opt_args = "{}";
 $opt_args = $conf->{optional_args} if $conf->{optional_args};
 
 
-## Setup clients
-#my $cc = Bio::KBase::Transform::Client->new($transform_url);
-ok(defined $cc, "Transform server is working");
-
-#my $uc = Bio::KBase::userandjobstate::Client->new($ujs_url);
-ok(defined $uc, "ujs server is working");
-
 ## Execute validation
 #my $job_id = $cc->validate({etype => $etype, in_id => $in_id, "optional_args" => $opt_args});
 
-my $rst = `trns_validate_hndlr -u ws_url -x svc_ws_name -c config_obj -s shock_url -i $in_id -r $ujs_url -e $etype -a $opt_args`;
+my $rst = `trns_validate_hndlr -u $params{ws_url} -x $params{svc_ws_name} -c $params{svc_ws_cfg_name} -s $params{shock_url} -i $in_id -r $ujs_url -e $etype -a $opt_args`;
+
+print "======Output Dump======\n";
+print $rst;
+print "\n=======================\n$?\n";
 
 ## Result checking
-$check = 1;
-$check = 0 if $? >> 8 == 0;
-ok($check==$conf->{expected_result}, "validattion test for the data for $in_id successfully\n");
+my $check = 0;
+$check = 1 if $? == 0;
+ok($check==$conf->{expected_result}, "Done upload test for the data $in_id successfully\n");

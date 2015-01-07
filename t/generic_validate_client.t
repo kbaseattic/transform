@@ -22,9 +22,33 @@ use Bio::KBase::workspace::Client;
 #it checks if a shock node stores a gene bank file in the right format
 #...
 #it roughly checks if the new objects are as expected, but it does not check any possible error in the data conversion
-die "Usage: generic_upload.t <input_test_config_filename>" if $#ARGV != 0;
+die "Usage: generic_validate_client.t <input_test_server_config_filename> <input_test_config_filename>" if $#ARGV != 1;
 
-my $cfg_fn = $ARGV[0];
+my %params;
+if ($ARGV[0] ne "") {  
+	my %Config = ();
+	tie %Config, "Config::Simple", $ARGV[0];
+        my $service = "Transform";
+	my @list = grep /^$service\./, sort keys %Config;
+	for my $k (@list) {
+		my $v = $Config{$k};
+		$k =~ m/^$service\.(.*)$/;
+		if ($v) {
+			$params{$1} = $v;
+		}
+	}
+}
+
+# set default values for testing
+#$params{ujs_url} = 'http://localhost:7083' if! defined $params{ujs_url};
+$params{ws_url} = 'http://localhost:7058' if! defined $params{ws_url};
+$params{shock_url} = 'http://localhost:7078' if! defined $params{shock_url};
+$params{awe_url} = 'http://localhost:7080' if! defined $params{awe_url};
+$params{svc_ws_un} = 'kbasetest' if! defined $params{svc_ws_un};
+$params{svc_ws_name} = 'loader_test' if! defined $params{svc_ws_name};
+$params{svc_ws_cfg_name} = 'script_configs' if! defined $params{svc_ws_cfg_name};
+
+my $cfg_fn = $ARGV[1];
 
 open CFG, "$cfg_fn" or die "Couldn't open $cfg_fn\n";
 my @lines = <CFG>;
@@ -37,8 +61,9 @@ my $transform_url="http://127.0.0.1:7778";
 $transform_url = $conf->{test_server_url} if defined $conf->{test_server_url};
 $transform_url = $ENV{TEST_SERVER_URL} if defined $ENV{TEST_SERVER_URL};
 
-my $ujs_url = "http://10.1.16.87:7083";
+my $ujs_url = 'http://localhost:7083';
 $ujs_url = $conf->{ujs_url} if defined $conf->{ujs_url};
+$ujs_url = $params{ujs_url} if defined $params{ujs_url};
 $ujs_url = $ENV{UJS_URL} if defined $ENV{UJS_URL};
 
 my $check_interval = 3;

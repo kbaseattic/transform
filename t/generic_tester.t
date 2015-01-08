@@ -193,5 +193,5 @@ if ($mode eq "client") {
 	$check = 1 if $? == 0;
 }
 ## Result checking
-ok($check==$conf->{expected_result}, "Done upload test for the data $in_id successfully\n");
+ok($check==$conf->{expected_result}, "Done $function test using $mode for the data $in_id successfully\n");
 done_testing();

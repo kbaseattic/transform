@@ -30,7 +30,7 @@ KB=$5;
 SUB=$6;
 
 
-if [ -z "$KB_AUTH_TOKEN" ] && [ $MODE == "hndlr"]; then
+if [ -z "$KB_AUTH_TOKEN" ] && [ $MODE == "hndlr" ]; then
 # set the token
   export KB_AUTH_TOKEN=$(cat ~/.kbase_config | grep '^token' | sed "s/^token=//");
 fi

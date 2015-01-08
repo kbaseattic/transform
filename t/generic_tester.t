@@ -139,7 +139,7 @@ if ($mode eq "client") {
 ## Execute validation
 	my $job_id = [];
 	if( $function eq "upload") {
-        $job_id = $cc->upload( 
+		$job_id = $cc->upload( 
 			{etype => $etype, 
 			kb_type => $kb_type, 
 			ws_name => $ws_name, 
@@ -148,8 +148,8 @@ if ($mode eq "client") {
 			optional_args => $opt_args}
 			);
 	} elsif ($function eq "validate") {
-	} elsif ($function eq "download") {
 		$job_id = $cc->validate({etype => $etype, in_id => $in_id, "optional_args" => $opt_args});
+	} elsif ($function eq "download") {
 	} else {
 		# this should not be happen because of the above parameter settings
 	}

@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 if [ -z "$KB_TOP" ]; then
 	echo "Need to set KB ENV variables";

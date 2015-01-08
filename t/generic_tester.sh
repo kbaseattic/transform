@@ -6,6 +6,7 @@ if [ -z "$KB_TOP" ]; then
 	exit 1;
 fi
 
+
 DENV=$(echo "$KB_TOP" | grep "deployment" | wc -l);
 
 if (( $DENV != 1 )); then
@@ -19,12 +20,20 @@ if (( $# != 6 )); then
 	exit 3;
 fi
 
+
+
 CFG=`readlink -f $1`;
 FUNC=$2
 MODE=$3
 EXT=$4;
 KB=$5;
 SUB=$6;
+
+
+if [ -z "$KB_AUTH_TOKEN" ] && [ $MODE == "hndlr"]; then
+# set the token
+  export KB_AUTH_TOKEN=$(cat ~/.kbase_config | grep '^token' | sed "s/^token=//");
+fi
 
 FFUNC=$FUNC;
 if [ "$FUNC" == "validate" ]; then

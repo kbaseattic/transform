@@ -175,6 +175,8 @@ class TransformBase:
 
             # detect url type
             if url.startswith("ftp://"):
+                threshold = 1024
+                
                 # check if file or directory
                 host = url.split("ftp://")[1].split("/")[0]
                 path = url.split("ftp://")[1].split("/", 1)[1]
@@ -421,7 +423,7 @@ class Validator(TransformBase):
           if 'validator' in self.opt_args:
             opt_args = self.opt_args['validator']
             for k in opt_args:
-              if k in self.config['validator'][etype]['opt_args'] and opt_args[k] is not None:
+              if k in self.config['validator'][self.etype]['opt_args'] and opt_args[k] is not None:
                 vcmd_lst.append(self.config['validator'][self.etype]['opt_args'][k])
                 vcmd_lst.append(opt_args[k])
                

@@ -22,7 +22,7 @@ use Bio::KBase::workspace::Client;
 #it checks if a shock node stores a gene bank file in the right format
 #...
 #it roughly checks if the new objects are as expected, but it does not check any possible error in the data conversion
-die "Usage: generic_upload.t <input_test_server_config_filename> <input_test_config_filename> <function> <mode> " if $#ARGV != 3;
+die "Usage: generic_tester.t <input_test_server_config_filename> <input_test_config_filename> <function> <mode> " if $#ARGV != 3;
 
 my %params;
 if ($ARGV[0] ne "") {  
@@ -58,7 +58,7 @@ if ($mode ne "client" and $mode ne "hndlr") {
 	print STDERR "WARNING: mode to be enforced to hdnlr\n";
 }
 
-if ($function ne "upload" or $function ne "validate" or $function ne "donwload") {
+if ($function ne "upload" and $function ne "validate" and $function ne "donwload") {
 	$function = "upload";
 	print STDERR "WARNING: function to be enforced to upload test\n";
 }

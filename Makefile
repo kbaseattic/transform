@@ -172,6 +172,8 @@ deploy-service: deploy-cfg
 	chmod +x $(SERVICE_DIR)/process.$(SERVICE_NAME); 
 	mkdir -p $(SERVICE_DIR)/awf
 	cat deploy.cfg service.cfg > $(SERVICE_DIR)/service.cfg;
+	cp config.json $(SERVICE_DIR)/config.json;
+	cp -R plugins $(SERVICE_DIR)/;
 
 # the above service.cfg is not correct at the moment
 # Use this if you want to unlink the generation of the docs from

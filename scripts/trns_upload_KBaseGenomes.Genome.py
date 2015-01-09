@@ -58,8 +58,8 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--support_dir', help='Support directory', action='store', dest='sdir', default='lib', required=True)
     parser.add_argument('-g', '--out_file', help='Output prefix or file name', action='store', dest='otmp', default='outfile', required=False)
     # for meta data
-    parser.add_argument('-i', '--in_id', help='Input Shock node id for meta', action='store', dest='inobj_id', default='NotProvided', required=True)
-    parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=True)
+    parser.add_argument('-i', '--in_id', help='Input Shock node id for meta', action='store', dest='inobj_id', default='NotProvided', required=False)
+    parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=False)
     parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default='NoJodID', required=False)
 
     usage = parser.format_usage()

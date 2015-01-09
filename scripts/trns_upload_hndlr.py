@@ -56,8 +56,6 @@ if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trnf_upload_handler', epilog=desc3)
     parser.add_argument('-u', '--ws_url', help='Workspace url', action='store', dest='ws_url', default='https://kbase.us/services/ws')
-    parser.add_argument('-x', '--svc_ws_name', help='Service workspace name', action='store', dest='sws_id', default=None, required=True)
-    parser.add_argument('-c', '--config_name', help='Script configuration workspace object name', action='store', dest='cfg_name', default=None, required=True)
 
     parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
     parser.add_argument('-i', '--in_id', help='Input Shock node id', action='store', dest='inobj_id', default=None, required=True)
@@ -74,6 +72,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--kbase_type', help='KBase object type', action='store', dest='kbtype', default=None, required=True)
 
     parser.add_argument('-a', '--opt_args', help='Optional argument json string', action='store', dest='opt_args', default='{"validator":{},"transformer":{}}')
+    parser.add_argument('-z', '--job_details', help='Info needed to run the upload job.', action='store', dest='job_details', default=None)
 
     parser.add_argument('-l', '--support_dir', help='Support directory', action='store', dest='sdir', default='lib')
     parser.add_argument('-d', '--del_lib_dir', help='Delete library directory', action='store', dest='del_tmps', default='true')
@@ -95,7 +94,12 @@ if __name__ == "__main__":
 
 
     ## main loop
-    args.opt_args = json.loads(args.opt_args)
+    print >> sys.stderr, args.job_details
+    print >> sys.stderr, args.opt_args
+
+    args.job_details = json.loads(args.job_details.replace("\\", ""))
+    
+    args.opt_args = json.loads(args.opt_args.replace("\\", ""))
     if 'uploader' not in args.opt_args:
       args.opt_args['uploader'] = {}
       args.opt_args['uploader']['file'] = args.otmp
@@ -105,7 +109,7 @@ if __name__ == "__main__":
     uploader = Uploader(args)
 
     try:
-      uploader.download_shock_data()
+      uploader.download_from_urls()
     except:
       if args.jid is not None:
         e,v,t = sys.exc_info()[:3]
@@ -135,7 +139,7 @@ if __name__ == "__main__":
     except:
       e,v = sys.exc_info()[:2]
       if args.jid is not None:
-        ujs.complete_job(args.jid, kb_token, 'Failed : data format conversion\n', str(v), {})
+        ujs.complete_job(args.jid, kb_token, 'Failed : data format conversion\n{0}:{1}'.format(str(e),str(v)), {}, {})
       else:
         traceback.print_exc(file=sys.stderr)
         print >> sys.stderr, 'Failed : data format conversion\n{}:{}'.format(str(e),str(v))

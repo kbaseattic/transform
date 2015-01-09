@@ -1,0 +1,33 @@
+{
+    "external_type": "Assembly.FASTA",
+    "conversions": {
+        "KBaseGenomes.ContigSet": {
+            "script": {
+                "name": "trns_transform_Assembly.FASTA-to-KBaseGenomes.ContigSet.py"            
+            },
+            "inputs": {
+                "required": {
+                    "url": {
+                        "type": "string",
+                        "description": "URL that contains the FASTA Assembly."
+                    }
+                },
+                "optional": {}
+            }
+        },
+        "KBaseAssembly.ReferenceAssembly": {
+            "script": {
+                "name": "trns_transform_Assembly.FASTA-to-KBaseAssembly.ReferenceAssembly.py"            
+            },
+            "inputs": {
+                "required": {
+                    "url": {
+                        "type": "string",
+                        "description": "URL that contains the FASTA Assembly."
+                    }
+                },
+                "optional": {}
+            }
+        }
+    }
+}

@@ -26,68 +26,23 @@ class Transform:
     # the latter method is running.
     #########################################
     #BEGIN_CLASS_HEADER
-    #END_CLASS_HEADER
 
-    # config contains contents of config file in a hash or None if it couldn't
-    # be found
-    def __init__(self, config):
-        #BEGIN_CONSTRUCTOR
-        self.config = config
-        self.kbaseLogger = biokbase.log.log('transform')
-        self.kbaseLogger.set_log_file('transform_service.log')
-
-        #self.scripts_config = {"external_types": [],
-        #                       "kbase_types": [],
-        #                       "validate": {},
-        #                       "upload": {},
-        #                       "transform": {}}
-        #pluginsDir = '/kb/deployment/services/Transform/plugins/'
-        #plugins = os.listdir(pluginsDir)
-        
-        #for p in plugins:
-        #    try:
-        #        f = open(os.path.join(pluginsDir, p), 'r')
-        #        pconfig = json.loads(f.read())
-        #        f.close()
-        #
-        #        if "external_type" in pconfig:
-        #            self.scripts_config["external_types"].append(pconfig["external_type"])
-        #            self.scripts_config["transform"][pconfig["external_type"]] = pconfig["transform"]
-        #        elif "kbase_type" in pconfig:
-        #            self.scripts_config["kbase_types"].append(pconfig["kbase_type"])
-        #            self.scripts_config["transform"][pconfig["kbase_type"]] = pconfig["transform"]
-        #    except:
-        #        self.kbaseLogger.log_message("WARNING", "Unable to read plugin {0}".format(p))
-
-        self.kbaseLogger.log_message("INFO", "CONFIG")        
-        self.kbaseLogger.log_message("INFO", dir(self.config))        
-
-        f = open(self.config["scripts_config"], 'r')
-        self.scripts_config = json.loads(f.read())
-        f.close()
-
-        #self.kbaseLogger.log_message("INFO", json.dumps(self.scripts_config, indent=4, sort_keys=True))        
-
-        #END_CONSTRUCTOR
-        pass
-
-
-    def _get_memcache_client(self):
-        try:
-            client = pymemcache.client.Client(('localhost', 11211))
-            return client
-        except pymemcache.MemcacheClientError, e:
-            raise
-        except pymemcache.MemcacheUnknownCommandError, e:
-            raise
-        except pymemcache.MemcacheIllegalInputError, e:
-            raise
-        except pymemcache.MemcacheServerError, e:
-            raise
-        except pymemcache.MemcacheUnknownError, e:
-            raise
-        except pymemcache.MemcacheUnexpectedCloseError, e:
-            raise
+    #def _get_memcache_client(self):
+    #    try:
+    #        client = pymemcache.client.Client(('localhost', 11211))
+    #        return client
+    #    except pymemcache.MemcacheClientError, e:
+    #        raise
+    #    except pymemcache.MemcacheUnknownCommandError, e:
+    #        raise
+    #    except pymemcache.MemcacheIllegalInputError, e:
+    #        raise
+    #    except pymemcache.MemcacheServerError, e:
+    #        raise
+    #    except pymemcache.MemcacheUnknownError, e:
+    #        raise
+    #    except pymemcache.MemcacheUnexpectedCloseError, e:
+    #        raise
 
 
     def _run_job(self, method, ctx, args):
@@ -128,9 +83,50 @@ class Transform:
         args["job_details"] = json.dumps(job_details)
 
         return run_async(self.config, ctx, args)
+
+    #END_CLASS_HEADER
+
+    # config contains contents of config file in a hash or None if it couldn't
+    # be found
+    def __init__(self, config):
+        #BEGIN_CONSTRUCTOR
+        self.config = config
+        self.kbaseLogger = biokbase.log.log('transform')
+        self.kbaseLogger.set_log_file('transform_service.log')
+
+        #self.scripts_config = {"external_types": [],
+        #                       "kbase_types": [],
+        #                       "validate": {},
+        #                       "upload": {},
+        #                       "transform": {}}
+        #pluginsDir = '/kb/deployment/services/Transform/plugins/'
+        #plugins = os.listdir(pluginsDir)
+        
+        #for p in plugins:
+        #    try:
+        #        f = open(os.path.join(pluginsDir, p), 'r')
+        #        pconfig = json.loads(f.read())
+        #        f.close()
+        #
+        #        if "external_type" in pconfig:
+        #            self.scripts_config["external_types"].append(pconfig["external_type"])
+        #            self.scripts_config["transform"][pconfig["external_type"]] = pconfig["transform"]
+        #        elif "kbase_type" in pconfig:
+        #            self.scripts_config["kbase_types"].append(pconfig["kbase_type"])
+        #            self.scripts_config["transform"][pconfig["kbase_type"]] = pconfig["transform"]
+        #    except:
+        #        self.kbaseLogger.log_message("WARNING", "Unable to read plugin {0}".format(p))
+
+        f = open(self.config["scripts_config"], 'r')
+        self.scripts_config = json.loads(f.read())
+        f.close()
+
+        #self.kbaseLogger.log_message("INFO", json.dumps(self.scripts_config, indent=4, sort_keys=True))        
+
+        #END_CONSTRUCTOR
+        pass
+
     
-
-
     def import_data(self, ctx, args):
         # ctx is the context object
         # return variables are: result

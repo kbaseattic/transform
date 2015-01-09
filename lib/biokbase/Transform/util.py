@@ -220,12 +220,12 @@ class TransformBase:
                         with open(os.path.join(os.path.abspath(dirname), os.path.basename(x)), 'wb') as f:
                             print "Downloading {0}".format(host + x)
                             ftp_connection.retrbinary("RETR {0}".format(x), lambda s: f.write(s), 10 * 2**20)
-                        extract_data(os.path.join(os.path.abspath(dirname), os.path.basename(x)))
+                        self.extract_data(os.path.join(os.path.abspath(dirname), os.path.basename(x)))
                 else:
                     with open(os.path.join(self.sdir, os.path.split(path)[-1]), 'wb') as f:
                         print "Downloading {0}".format(url)
                         ftp_connection.retrbinary("RETR {0}".format(path), lambda s: f.write(s), 10 * 2**20)  
-                    extract_data(os.path.join(self.sdir, os.path.split(path)[-1]))
+                    self.extract_data(os.path.join(self.sdir, os.path.split(path)[-1]))
             
                 ftp_connection.close()            
             elif url.startswith("http://"):
@@ -295,39 +295,44 @@ class TransformBase:
         print "Extracting {0} as {1}".format(filePath, mimeType)
 
         if mimeType == "application/x-gzip":
-            with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+            outFile = os.path.splitext(filePath)[0]
+
+            with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(outFile, 'wb') as f:
                 for chunk in gzipDataFile:
-                    f.write(gzipDataFile.read(chunkSize))
+                    f.write(chunk)
             
             os.remove(filePath)
+            outPath = os.path.dirname(filePath)
 
             # check for tar        
             with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
-                mimeType = m.id_filename(outPath)
+                mimeType = m.id_filename(outFile)
 
             if mimeType == "application/x-tar":
-                print "Extracting {0} as tar".format(outPath)
-                extract_tar(outPath)
+                print "Extracting {0} as tar".format(outFile)
+                extract_tar(os.path.dirname(outFile))
         elif mimeType == "application/x-bzip2":
-            with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+            outFile = os.path.splitext(filePath)[0]
+
+            with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(outFile, 'wb') as f:
                 for chunk in bz2DataFile:
-                    f.write(bz2DataFile.read(chunkSize))
+                    f.write(chunk)
             
             os.remove(filePath)
+            outPath = os.path.dirname(filePath)
 
             # check for tar        
             with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
-                mimeType = m.id_filename(outPath)
+                mimeType = m.id_filename(outFile)
 
             if mimeType == "application/x-tar":
-                print "Extracting {0} as tar".format(outPath)
-                extract_tar(outPath)
+                print "Extracting {0} as tar".format(outFile)
+                extract_tar(os.path.dirname(outFile))
         elif mimeType == "application/zip":
             if not zipfile.is_zipfile(filePath):
                 raise Exception("Invalid zip file!")                
-            
-            outPath = os.path.abspath("{0}/{1}".format(os.path.dirname(filePath), datetime.datetime.now().isoformat()))
-            os.mkdir(outPath)
+
+            outPath = os.path.dirname(filePath)
             
             with zipfile.ZipFile(filePath, 'r') as zipDataFile:
                 bad = zipDataFile.testzip()
@@ -339,15 +344,12 @@ class TransformBase:
             
                 # perform sanity check on file names, extract each file individually
                 for x in infolist:
-                    if x.filename.startswith(os.sep):
-                        raise Exception("Invalid path for contents of zip file : {0}".format(x.filename))
+                    infoPath = os.path.join(outPath, os.path.basename(os.path.abspath(x.filename)))
                     
-                    if os.path.dirname(x.filename) != '' and not os.path.exists(os.path.dirname(x.filename)):
-                        os.makedirs(os.path.dirname(x.filename))
+                    if not os.path.exists(os.path.dirname(x.filename)):
+                        os.makedirs(infoPath)                    
                     
-                    infoPath = os.path.join(outPath, os.path.abspath(x.filename))
-                    
-                    if os.path.exists(infoPath):
+                    if os.path.exists(os.path.join(infoPath,os.path.split(x.filename)[-1])):
                         raise Exception("Extracting zip contents will overwrite an existing file!")
                     
                     with open(infoPath, 'wb') as f:
@@ -358,29 +360,24 @@ class TransformBase:
             if not tarfile.is_tarfile(filePath):
                 raise Exception("Inavalid tar file " + filePath)
 
-            outPath = os.path.abspath("{0}/{1}".format(filePath, datetime.datetime.now().isoformat()))
-            os.mkdir(outPath)
+            outPath = os.path.dirname(filePath)
         
             with tarfile.open(filePath, 'r|*') as tarDataFile:
                 memberlist = tarDataFile.getmembers()
     
                 # perform sanity check on file names, extract each file individually
                 for member in memberlist:
-                    if member.name.startswith(os.sep):
-                        raise Exception("Invalid path for contents of tar file : {0}".format(member.name))
-
-                    if os.path.dirname(member.name) != '' and not os.path.exists(os.path.dirname(member.name)):
-                        os.makedirs(os.path.dirname(member.name))
-                    
                     memberPath = os.path.join(outPath, os.path.basename(os.path.abspath(member.name)))
 
-                    if os.path.exists(memberPath):
+                    if os.path.exists(os.path.dirname(infoPath)):
+                        os.makedirs(infoPath)                    
+
+                    if os.path.exists(os.path.join(infoPath,os.path.split(member.name)[-1])):
                         raise Exception("Extracting tar contents will overwrite an existing file!")
                     
                     if member.isfile():
                         with open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
-                            for chunk in inputFile:
-                                f.write(inputFile.read())
+                            f.write(inputFile.read(chunkSize))
 
             os.remove(filePath)
 

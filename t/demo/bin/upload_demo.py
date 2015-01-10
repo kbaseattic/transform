@@ -262,6 +262,18 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    token = os.environ.get("KB_AUTH_TOKEN")
+    if token is None:
+        if os.path.exists("~/.kbase_config"):
+            f = open("~/.kbase_config", 'r')
+            config = f.read()
+            if "token=" in config:
+                token = config.split("token=")[1].split("\n",1)[0]            
+            else:
+                raise Exception("Unable to find KBase token!")
+        else:
+            raise Exception("Unable to find KBase token!")
+
     if not args.demo:
         user_inputs = {"external_type": args.external_type,
                        "kbase_type": args.kbase_type,
@@ -384,18 +396,6 @@ if __name__ == "__main__":
                 "workspace": 'https://kbase.us/services/ws/',
                 "awe": 'http://140.221.67.172:7080/',
                 "transform": 'http://140.221.67.172:7778/'}
-
-    token = os.environ.get("KB_AUTH_TOKEN")
-    if token is None:
-        if os.path.exists("~/.kbase_config"):
-            f = open("~/.kbase_config", 'r')
-            config = f.read()
-            if "token=" in config:
-                token = config.split("token=")[1].split("\n",1)[0]            
-            else:
-                raise Exception("Unable to find KBase token!")
-        else:
-            raise Exception("Unable to find KBase token!")
     
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)

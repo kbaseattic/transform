@@ -428,16 +428,19 @@ if __name__ == "__main__":
         download_from_shock(services["shock"], shock_response["id"], downloadPath, token)
         print "\tShock download of {0} successful.\n\n".format(downloadPath)
 
-        print term.bold("Step 2: Make KBase upload request")
-        upload_response = upload(services["transform"], {"etype": external_type, "kb_type": kbase_type, "in_id": "{0}/node/{1}".format(services["shock"],shock_response["id"]), "ws_name": workspace, "obj_name": object_name}, token)
-        print "\tTransform service upload requested:"
-        print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
-        print "\tTransform service responded with job ids:"
-        print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(upload_response[0], upload_response[1])
+        try:
+            print term.bold("Step 2: Make KBase upload request")
+            upload_response = upload(services["transform"], {"etype": external_type, "kb_type": kbase_type, "in_id": "{0}/node/{1}".format(services["shock"],shock_response["id"]), "ws_name": workspace, "obj_name": object_name}, token)
+            print "\tTransform service upload requested:"
+            print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
+            print "\tTransform service responded with job ids:"
+            print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(upload_response[0], upload_response[1])
     
-        show_job_progress(services["ujs"], services["awe"], upload_response[0], upload_response[1], token)
+            show_job_progress(services["ujs"], services["awe"], upload_response[0], upload_response[1], token)
     
-        print term.bold("Step 3: View or use workspace objects")
-        show_workspace_object_list(services["workspace"], workspace, object_name, token)
+            print term.bold("Step 3: View or use workspace objects")
+            show_workspace_object_list(services["workspace"], workspace, object_name, token)
     
-        #show_workspace_object_contents(services["workspace"], workspace, object_name, token)
+            #show_workspace_object_contents(services["workspace"], workspace, object_name, token)
+        except Exception, e:
+            print e.message

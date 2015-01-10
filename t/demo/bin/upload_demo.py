@@ -249,18 +249,6 @@ def download_from_shock(shockURL, shock_id, filePath, token):
 
 
 if __name__ == "__main__":
-    token = os.environ.get("KB_AUTH_TOKEN")
-    if token is None:
-        if os.path.exists("~/.kbase_config"):
-            f = open("~/.kbase_config", 'r')
-            config = f.read()
-            if "token=" in config:
-                token = config.split("token=")[1].split("\n",1)[0]            
-            else:
-                raise Exception("Unable to find KBase token!")
-        else:
-            raise Exception("Unable to find KBase token!")
-
     import argparse
 
     parser = argparse.ArgumentParser(description='KBase Upload demo and client')
@@ -291,98 +279,91 @@ if __name__ == "__main__":
             if args.workspace is not None:
                 workspace = args.workspace
 
-    
-    services = {"shock": 'https://kbase.us/services/shock-api/',
-                "ujs": 'https://kbase.us/services/userandjobstate/',
-                "workspace": 'https://kbase.us/services/ws/',
-                "awe": 'http://140.221.67.172:7080/',
-                "transform": 'http://140.221.67.172:7778/'}
-
-    genbank_to_genome = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome = {"external_type": "KBaseGenomes.GBK",
                          "kbase_type": "KBaseGenomes.Genome",
                          "object_name": "NC_005213",
                          "filePath": "data/genbank/NC_005213/NC_005213.gbk",
                          "downloadPath": "NC_005213.gbk"}
 
-    genbank_to_genome_gz = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_gz = {"external_type": "KBaseGenomes.GBK",
                             "kbase_type": "KBaseGenomes.Genome",
                             "object_name": "NC_005213_gz",
                             "filePath": "data/NC_005213.gbk.gz",
                             "downloadPath": "NC_005213.gbk.gz"}
 
-    genbank_to_genome_bz2 = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_bz2 = {"external_type": "KBaseGenomes.GBK",
                              "kbase_type": "KBaseGenomes.Genome",
                              "object_name": "NC_005213_bz2",
                              "filePath": "data/NC_005213.gbk.bz2",
                              "downloadPath": "NC_005213.gbk.bz2"}
 
-    genbank_to_genome_tar_bz2 = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_tar_bz2 = {"external_type": "KBaseGenomes.GBK",
                                  "kbase_type": "KBaseGenomes.Genome",
                                  "object_name": "NC_005213_tar_bz2",
                                  "filePath": "data/NC_005213.gbk.tar.bz2",
                                  "downloadPath": "NC_005213.gbk.tar.bz2"}
 
-    genbank_to_genome_tar_gz = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_tar_gz = {"external_type": "KBaseGenomes.GBK",
                                 "kbase_type": "KBaseGenomes.Genome",
                                 "object_name": "NC_005213_tar_gz",
                                 "filePath": "data/NC_005213.gbk.tar.gz",
                                 "downloadPath": "NC_005213.gbk.tar.gz"}
 
-    genbank_to_genome_zip = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_zip = {"external_type": "KBaseGenomes.GBK",
                              "kbase_type": "KBaseGenomes.Genome",
                              "object_name": "NC_005213_zip",
                              "filePath": "data/NC_005213.gbk.zip",
                              "downloadPath": "NC_005213.gbk.zip"}
 
-    fasta_to_reference = {"external_type": "KBaseAssembly.FA",
+        fasta_to_reference = {"external_type": "KBaseAssembly.FA",
                           "kbase_type": "KBaseAssembly.ReferenceAssembly",
                           "object_name": "fasciculatum_supercontig",
                           "filePath": "data/fasciculatum_supercontig.fasta.zip",
                           "downloadPath": "fasciculatum_supercontig.fasta.zip"}
 
-    fasta_to_contigset = {"external_type": "Assembly.FASTA",
+        fasta_to_contigset = {"external_type": "Assembly.FASTA",
                           "kbase_type": "KBaseGenomes.ContigSet",
                           "object_name": "fasciculatum_supercontig",
                           "filePath": "data/fasciculatum_supercontig.fasta.zip",
                           "downloadPath": "fasciculatum_supercontig.fasta.zip"}
 
-    fasta_single_to_reads = {"external_type": "KBaseAssembly.FA",
+        fasta_single_to_reads = {"external_type": "KBaseAssembly.FA",
                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
                              "object_name": "ERR670568",
                              "filePath": "data/ERR670568.fasta.gz",
                              "downloadPath": "ERR670568.fasta.gz"}
 
-    fastq_single_to_reads = {"external_type": "KBaseAssembly.FQ",
+        fastq_single_to_reads = {"external_type": "KBaseAssembly.FQ",
                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
                              "object_name": "ERR670568",
                              "filePath": "data/ERR670568.fastq.gz",
                              "downloadPath": "ERR670568.fastq.gz"}
 
-    fasta_paired_to_reads = {"external_type": "KBaseAssembly.FA",
+        fasta_paired_to_reads = {"external_type": "KBaseAssembly.FA",
                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
                              "object_name": "SRR1569976",
                              "filePath": "data/SRR1569976.fasta.bz2",
                              "downloadPath": "SRR1569976.fasta.bz2"}
 
-    fastq_paired1_to_reads = {"external_type": "KBaseAssembly.FQ",
+        fastq_paired1_to_reads = {"external_type": "KBaseAssembly.FQ",
                               "kbase_type": "KBaseAssembly.PairedEndLibrary",
                               "object_name": "SRR1569976",
                               "filePath": "data/SRR1569976.fastq.bz2",
                               "downloadPath": "SRR1569976.fastq.bz2"}
 
-    fastq_paired2_to_reads = {"external_type": "KBaseAssembly.FQ",
+        fastq_paired2_to_reads = {"external_type": "KBaseAssembly.FQ",
                               "kbase_type": "KBaseAssembly.PairedEndLibrary",
                               "object_name": "SRR1569976_split",
                               "filePath": "data/SRR1569976_split.tar.bz2",
                               "downloadPath": "SRR1569976_split.tar.bz2"}
 
-    sbml_to_fbamodel = {"external_type": "KBaseFBA.SBML",
+        sbml_to_fbamodel = {"external_type": "KBaseFBA.SBML",
                         "kbase_type": "KBaseFBA.FBAModel",
                         "object_name": "",
                         "filePath": "",
                         "downloadPath": ""}
 
-    demos = [genbank_to_genome,
+        demos = [genbank_to_genome,
              genbank_to_genome_gz, 
              genbank_to_genome_bz2, 
              genbank_to_genome_tar_bz2, 
@@ -396,11 +377,29 @@ if __name__ == "__main__":
              fastq_paired1_to_reads, 
              fastq_paired2_to_reads, 
              fasta_paired_to_reads]
+    
 
+    services = {"shock": 'https://kbase.us/services/shock-api/',
+                "ujs": 'https://kbase.us/services/userandjobstate/',
+                "workspace": 'https://kbase.us/services/ws/',
+                "awe": 'http://140.221.67.172:7080/',
+                "transform": 'http://140.221.67.172:7778/'}
 
+    token = os.environ.get("KB_AUTH_TOKEN")
+    if token is None:
+        if os.path.exists("~/.kbase_config"):
+            f = open("~/.kbase_config", 'r')
+            config = f.read()
+            if "token=" in config:
+                token = config.split("token=")[1].split("\n",1)[0]            
+            else:
+                raise Exception("Unable to find KBase token!")
+        else:
+            raise Exception("Unable to find KBase token!")
+    
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)
-
+    
     term = blessings.Terminal()
     for demo_inputs in demos:
         external_type = demo_inputs["external_type"]
@@ -430,7 +429,7 @@ if __name__ == "__main__":
         print "\tShock download of {0} successful.\n\n".format(downloadPath)
 
         print term.bold("Step 2: Make KBase upload request")
-        upload_response = upload(services["transform"], {"etype": external_type, "kb_type": kbase_type, "in_id": shock_response["id"], "ws_name": workspace, "obj_name": object_name}, token)
+        upload_response = upload(services["transform"], {"etype": external_type, "kb_type": kbase_type, "in_id": "{0}/node/{1}".format(services["shock"],shock_response["id"]), "ws_name": workspace, "obj_name": object_name}, token)
         print "\tTransform service upload requested:"
         print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
         print "\tTransform service responded with job ids:"

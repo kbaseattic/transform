@@ -2,7 +2,6 @@ package us.kbase.genbank;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import us.kbase.common.service.Tuple4;
-import us.kbase.common.service.UObject;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Feature;
@@ -38,53 +37,31 @@ public class GenometoGbk {
      */
     public GenometoGbk(String[] args) throws Exception {
 
-        /*TODO get object with references and handles from WS */
-        ObjectMapper mapper = UObject.getMapper();//new ObjectMapper();
-        File loadGenome = new File(args[0]);
-        File loadContigs = new File(args[1]);
-        genome = mapper.readValue(loadGenome, Genome.class);
-        contigSet = mapper.readValue(loadContigs, ContigSet.class);
+        ObjectMapper mapper = new ObjectMapper();
+        genome = mapper.readValue(args[0], Genome.class);
+        //contigSet = mapper.readValue(args[1], ContigSet.class);
+
 
         System.out.println(genome.getTaxonomy());
+
 
         List<Contig> contigs = contigSet.getContigs();
         for (int j = 0; j < contigs.size(); j++) {
 
             Contig curcontig = contigs.get(j);
-            StringBuffer out = new StringBuffer("");
+            String out = "";
             //out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
-            out.append("LOCUS       " + "" + "             " + curcontig.getLength() + " bp    " +
-                    molecule_type_short + "\n");// + "     circular CON 10-JUN-2013\n");
-            out.append("DEFINITION  " + genome.getScientificName() + " genome.\n");
-            //out.append("ACCESSION   NC_005213\n");
-            //out.append("VERSION     NC_005213.1  GI:38349555\n");
+            out += "LOCUS       " + "" + "             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
+            out += "DEFINITION  " + genome.getScientificName() + " chromosome, complete genome.\n";
+            out += "ACCESSION   NC_005213\n";
+            out += "VERSION     NC_005213.1  GI:38349555\n";
             //out += "DBLINK      Project: 58009\n";
             //out += "            BioProject: PRJNA58009\n";
-            out.append("KEYWORDS    .\n");
-            out.append("SOURCE      " + genome.getScientificName() + "\n");
-            out.append("  ORGANISM  " + genome.getScientificName() + "\n");
-            final String rawTaxonomy = genome.getTaxonomy();
+            out += "KEYWORDS    .\n";
+            out += "SOURCE      " + genome.getScientificName() + "\n";
+            out += "  ORGANISM  " + genome.getScientificName() + "\n";
+            out += "            Archaea; Nanoarchaeota; Nanoarchaeum.\n";
 
-            String[] alltax = rawTaxonomy.split(" ");
-
-            StringBuffer formatTax = new StringBuffer("");
-
-            int counter = 0;
-            int index = 0;
-            while (index < alltax.length) {
-                formatTax.append(alltax[index]);
-                if (index < alltax.length - 1)
-                    formatTax.append(" ");
-                counter += alltax[index].length() + 1;
-                index++;
-                if (counter >= 65 || rawTaxonomy.length() < 80) {
-                    formatTax.append("\n");
-                    formatTax.append("            ");
-                    counter = 0;
-                }
-            }
-
-            out.append("            " + formatTax + ".\n");
 
             /*TODO populate references in Genome objects */
             /*
@@ -106,7 +83,7 @@ public class GenometoGbk {
                 }
                 out += "  TITLE     "+curpub.getE3()+"\n";//64
                 out += "  JOURNAL   "+curpub.getE7()+"\n";
-                //TODO Genome object missing JOURNAL volume issue pages etc.
+                //TODO missing JOURNAL volume issue pages etc.
                 //+" 100 (22), 12984-12988 (2003)\n";
                 if (curpub.getE2().equalsIgnoreCase("PUBMED"))
                     out += "   PUBMED   " + curpub.getE1() + "\n";
@@ -118,12 +95,12 @@ public class GenometoGbk {
             //out += "            COMPLETENESS: full length.\n";
 
 
-            out.append("FEATURES             Location/Qualifiers\n");
-            out.append("     source          1.." + curcontig.getLength() + "\n");
-            out.append("                     /organism=\"" + genome.getScientificName() + "\"\n");
-            out.append("                     /mol_type=\"" + molecule_type_long + "\"\n");
+            out += "FEATURES             Location/Qualifiers\n";
+            out += "     source          1.." + curcontig.getLength() + "\n";
+            out += "                     /organism=\"" + genome.getScientificName() + "\"\n";
+            out += "                     /mol_type=\"" + molecule_type_long + "\"\n";
             //out += "                     /strain=\"\"\n";
-            out.append("                     /db_xref=\"taxon:" + genome.getSourceId() + "\"\n");
+            out += "                     /db_xref=\"taxon:" + genome.getSourceId() + "\"\n";
 
             List<Feature> features = genome.getFeatures();
 
@@ -135,217 +112,86 @@ public class GenometoGbk {
                 //out += "gene            complement(join(490883..490885,1..879))\n";
                 //"location":[["kb|g.0.c.1",3378378,"+",1368]]
 
-                //System.out.println("*" + cur.getType() + "*");
+                out += "gene            ";
+                out += getCDS(out, location);
 
-                String id = null;
-                final List<String> aliases = cur.getAliases();
-                if (aliases != null)
-                    id = aliases.get(0);
-                else
-                    id = cur.getId();
+                //out += "                     /locus_tag=\"NEQ001\"\n";
+                //out += "                     /db_xref=\"GeneID:2732620\"\n";
+                out += "     CDS             ";
+                out += getCDS(out, location);
 
-                String function = cur.getFunction();
-                String[] allfunction = function.split(" ");
-                boolean debug = false;
-                if (id.equals("P75809")) {
-                    debug = true;
-                    System.out.println("allfunction " + allfunction.length + "\t" + function.length());
-                }
-                StringBuffer formatNote = getProduct(function, allfunction, 51, 58, debug);
-                StringBuffer formatProduct = getProduct(function, allfunction, 47, 58, debug);//51,58);
+                //out += "                     /locus_tag=\"NEQ001\"\n";
+                out += "                     /note=\"" + cur.getFunction() + "\"\n";
+                //out += "                     /codon_start=1\n";
+                //out += "                     /transl_table=11\n";
+                //out += "                     /product=\"hypothetical protein\"\n";
+                //out += "                     /protein_id=\"NP_963295.1\"\n";
+                //out += "                     /db_xref=\"GI:41614797\"\n";
+                //out += "                     /db_xref=\"GeneID:2732620\"\n";
 
-
-                /*TODO add operons and promoteres and terminators as gene features ? */
-                if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
-
-                    if (cur.getType().equals("CDS")) //id.indexOf(".rna.") == -1)
-                        out.append("     gene            ");
-                    else {
-                        if (function.indexOf("tRNA") != -1) {
-                            out.append("     tRNA            ");
-                        } else {
-                            out.append("     misc_RNA        ");
-                        }
-                    }
-                    out = getCDS(out, location);
-                    out.append("                     /locus_tag=\"" + id + "\"\n");
-                    //out += "                     /db_xref=\"GeneID:2732620\"\n";
-                    if (cur.getType().equals("CDS")) {
-                        out.append("     CDS             ");
-                        out = getCDS(out, location);
-                        out.append("                     /locus_tag=\"" + id + "\"\n");
-                    }
-
-                    out.append("                     /note=\"" + formatNote);
-                    //out += "                     /codon_start=1\n";
-                    //out += "                     /transl_table=11\n";
-                    out.append("                     /product=\"" + formatProduct);
-
-                    out.append("                     /protein_id=\"" + id + "\"\n");
-                    //out += "                     /db_xref=\"GI:41614797\"\n";
-                    //out += "                     /db_xref=\"GeneID:2732620\"\n";
-
-                    final String proteinTranslation = cur.getProteinTranslation();
-                    //System.out.println(proteinTranslation);
-                    if (proteinTranslation != null)
-                        out.append("                     /translation=\"" + formatString(proteinTranslation, 44, 58));
-                    else
-                        System.out.println("op? " + id);
-                    //out += "                     /translation=\"MRLLLELKALNSIDKKQLSNYLIQGFIYNILKNTEYSWLHNWKK\n";
-                    //out += "                     EKYFNFTLIPKKDIIENKRYYLIISSPDKRFIEVLHNKIKDLDIITIGLAQFQLRKTK\"\n";//58
-                }
+                out += "                     /translation=\"" + formatString(cur.getProteinTranslation(), 44, 58) + "\n";
+                //out += "                     /translation=\"MRLLLELKALNSIDKKQLSNYLIQGFIYNILKNTEYSWLHNWKK\n";
+                //out += "                     EKYFNFTLIPKKDIIENKRYYLIISSPDKRFIEVLHNKIKDLDIITIGLAQFQLRKTK\"\n";//58
             }
 
 
-            out.append("ORIGIN\n");
-            out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
+            out += "ORIGIN\n";
+            out += formatDNASequence(curcontig.getSequence(), 10, 60);
             //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
 
             int start = Math.max(0, args[0].lastIndexOf("/"));
-            int end = args[0].lastIndexOf(".");
-            final String outpath = args[0].substring(start, end) + "_fromKBaseGenome.gbk";
-            System.out.println(outpath);
-            File outf = new File(outpath);
+            int end = args[0].indexOf(".", start + 1);
+            File outf = new File(args[0].substring(start, end) + "_fromKBaseGenome.gbk");
             PrintWriter pw = new PrintWriter(outf);
             pw.print(out);
             pw.close();
+
         }
     }
 
-    /**
-     * @param function
-     * @param allfunction
-     * @return
-     */
-    private StringBuffer getProduct(String function, String[] allfunction, int first, int next, boolean debug) {
-        StringBuffer formatFunction = new StringBuffer("");
-        //73
-        boolean isfirst = true;
-        if (function.length() < first) {
-            formatFunction.append(function + "\"\n");
-        } else {
-            int counter2 = 0;
-            int index2 = 0;//allfunction[0].length();
-            while (index2 < allfunction.length) {
-                counter2 = allfunction[index2].length();
-                if (debug) {
-                    System.out.println("allfunction " + index2 + "\t" + allfunction[index2]);
-                    System.out.println("allfunction counter2 " + counter2);
-                }
-                formatFunction.append(allfunction[index2]);
-                if (index2 < allfunction.length - 1)
-                    formatFunction.append(" ");
-
-                if (index2 + 1 < allfunction.length) {
-                    counter2 += allfunction[index2 + 1].length() + 1;
-                    if (debug)
-                        System.out.println("allfunction " + (allfunction[index2].length() + 1) + "\t" + counter2);
-                    index2++;
-                    if (((isfirst && counter2 >= first) || counter2 >= next) && index2 < allfunction.length) {
-                        if (isfirst)
-                            isfirst = false;
-                        formatFunction.append("\n");
-                        if (index2 < allfunction.length - 1)
-                            formatFunction.append("                     ");
-                        counter2 = 0;
-                    } else if (index2 == allfunction.length) {
-                        formatFunction.append("\"\n");
-                    }
-                } else {
-                    formatFunction.append("\"\n");
-                    break;
-                }
-            }
-        }
-        if (formatFunction.length() == 0) {
-            formatFunction.append("\"\n");
-        }
-        return formatFunction;
-    }
-
-    /**
-     * @param out
-     * @param location
-     * @return
-     */
-    private StringBuffer getCDS(StringBuffer out, List<Tuple4<String, Long, String, Long>> location) {
+    private String getCDS(String out, List<Tuple4<String, Long, String, Long>> location) {
         int added = 0;
         boolean complement = false;
-        boolean join = false;
         for (int n = 0; n < location.size(); n++) {
             Tuple4<String, Long, String, Long> now4 = location.get(n);
             if (added == 0 && now4.getE3().equals("-")) {
-                out.append("complement(");
-
+                out += "complement(join(";
                 complement = true;
-            }
-            if (location.size() > 1) {
-                if (added == 0)
-                    out.append("join(");
-                join = true;
+            } else {
+                out += "join(";
             }
 
-            out.append(now4.getE2() + ".." + (now4.getE2() + (long) now4.getE4()));
+            out += now4.getE2() + ".." + (now4.getE2() + (long) now4.getE4());
 
-            if (location.size() > 0 && n < location.size() - 1)
-                out.append(",");
+            if (added > 0)
+                out += ",";
             added++;
         }
-        if (complement && join)
-            out.append("))\n");
-        else if (complement || join) {
-            out.append(")\n");
-        } else
-            out.append("\n");
-
+        if (complement)
+            out += "))\n";
+        else {
+            out += ")\n";
+        }
         return out;
     }
 
 
     /**
      * @param s
-     * @param one
-     * @param two
      * @return
      */
-    public StringBuffer formatString(String s, int one, int two) {
-        //StringBuilder out = new StringBuilder("");
-        StringBuffer out = new StringBuffer("");
+    public String formatString(String s, int one, int two) {
+        String out = "";
         boolean first = true;
-        for (int start = 0; start < s.length(); ) {
+        int start = 0;
+        for (int a = 0; a < s.length(); a++) {
             if (first) {
-                int last = Math.min(s.length(), start + one);
-                boolean isLast = false;
-                if (last == s.length())
-                    isLast = true;
-                out.append(s.substring(start, last));
-                if (isLast)
-                    out.append("\"\n");
-                else {
-                    out.append("\n");
-                }
+                out += s.substring(start, start + one);
                 first = false;
                 start += one;
             } else {
-                int last = Math.min(s.length(), start + two);
-                //System.out.println(s.length() + "\t" + (start + two));
-                out.append("                     ");
-                boolean isLast = false;
-                if (last == s.length())
-                    isLast = true;
-                out.append(s.substring(start, last));
+                out += s.substring(start, start + two);
                 start += two;
-                if (isLast) {
-                    //out.append(s.substring(start, s.length()-1));
-                    out.append("\"\n");
-                }
-                //} else if (start < s.length()) {
-                else
-                    out.append("\n");
-                //} //else if (start < s.length()) {
-                //    out.append("\n");
-                //} //else
-                //  out.append("\n");
             }
         }
 
@@ -354,42 +200,35 @@ public class GenometoGbk {
 
     /**
      * @param s
-     * @param charnum
-     * @param linenum
      * @return
      */
-    public StringBuffer formatDNASequence(String s, int charnum, int linenum) {
-        //StringBuilder out = new StringBuilder("");
-        StringBuffer out = new StringBuffer("");
+    public String formatDNASequence(String s, int charnum, int linenum) {
+        String out = "";
 
+        int last = 0;
         //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
 
-        out.append("        1 ");
+        out += "        1 ";
         int index = 1;
         int counter = 0;
-        for (int last = 0; last < s.length(); ) {
-            int end = Math.min(s.length(), last + charnum);
-            //if (end > s.length())
-            //   end = s.length();
-            //System.out.println("DNA " + last + "\t" + end);
-            out.append(s.substring(last, end));
+        for (int i = 0; i < s.length(); i++) {
+            int end = last + charnum;
+            if (end > s.length())
+                end = s.length();
+            out += s.substring(last, end);
             last += charnum;
             counter++;
             if (counter == 6 && s.length() > end) {
-                out.append("\n");
                 index += 60;
                 String indexStr = "" + index;
                 int len = indexStr.length();
                 char[] ch = new char[9 - len];
                 Arrays.fill(ch, ' ');
                 String padStr = new String(ch);
-                out.append(padStr + indexStr + " ");
+                out += padStr + indexStr + " ";
                 counter = 0;
-            } else
-                out.append(" ");
+            }
         }
-        if (out.charAt(out.length() - 1) == (' '))
-            out.deleteCharAt(out.length() - 1);
 
         return out;
     }
@@ -401,7 +240,7 @@ public class GenometoGbk {
     public final static void main(String[] args) {
         if (args.length == 1 || args.length == 2) {
             try {
-                GenometoGbk gtg = new GenometoGbk(args);
+                GenometoGbk clt = new GenometoGbk(args);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -469,7 +308,7 @@ LOCUS       NC_005213             490885 bp    DNA     circular CON 10-JUN-2013
                  GIIYIQDATIIPNGIKITVNGLAELKNIKINPNDPSITVQKVVGEQNTYIIKTSKDSV
                  KITISADFVVKAEKWLFIQ"
  promoter        486983..486988
-                 /note="archaeal RNA pol III promoter consensus box Aaaaaaa
+                 /note="archaeal RNA pol III promoter consensus box A
                  motif"
  misc_feature    487009..487022
                  /locus_tag="NEQ_t33"

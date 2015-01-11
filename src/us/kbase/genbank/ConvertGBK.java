@@ -7,7 +7,6 @@ import us.kbase.auth.TokenFormatException;
 import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
-import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
 import us.kbase.workspace.*;
@@ -16,10 +15,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.math.BigInteger;
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -127,13 +123,6 @@ public class ConvertGBK {
             System.err.println("IOException: " + e.getMessage());
         }
 
-        List<Contig> contigs = contigSet.getContigs();
-        for (int j = 0; j < contigs.size(); j++) {
-            Contig curcontig = (Contig) contigs.get(j);
-            curcontig.setMd5(MD5(curcontig.getSequence()));
-            contigs.set(j, curcontig);
-        }
-        contigSet.setContigs(contigs);
 
         if (wsname != null) {
 
@@ -196,23 +185,10 @@ public class ConvertGBK {
             }
         }
 
+        /*TODO add SHOCK upload? */
 
         System.out.println("    time: " + (System.currentTimeMillis() - time) + " ms");
     }
-
-
-    /**
-     * @param s
-     * @return
-     */
-    public static String MD5(String s) throws NoSuchAlgorithmException {
-        MessageDigest m = MessageDigest.getInstance("MD5");
-        m.update(s.getBytes(), 0, s.length());
-        final String s1 = new BigInteger(1, m.digest()).toString(16);
-        System.out.println("MD5: " + s1);
-        return s1;
-    }
-
 
     /**
      * @param args

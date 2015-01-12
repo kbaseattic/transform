@@ -77,7 +77,7 @@ public class ConvertGBK {
         for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
                 parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-            } else if (f.getName().endsWith(".gbk")) {
+            } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbff)$")) {
                 files.add(f);
                 System.out.println("Added " + f);
             }

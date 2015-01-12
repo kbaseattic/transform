@@ -7,6 +7,8 @@ use JSON;
 use Bio::KBase::userandjobstate::Client;
 use Bio::KBase::AuthToken;
 use Bio::KBase::workspace::Client;
+use Cwd 'abs_path';
+use File::Basename;
 
 #authors:
 #Fei He(plane83@gmail.com)
@@ -23,6 +25,10 @@ use Bio::KBase::workspace::Client;
 #...
 #it roughly checks if the new objects are as expected, but it does not check any possible error in the data conversion
 die "Usage: generic_tester.t <input_test_server_config_filename> <input_test_config_filename> <function> <mode> " if $#ARGV != 3;
+
+my $cwd = dirname(__FILE__);
+my $job_config_fn = "$cwd/../config.json";
+
 
 my %params;
 if ($ARGV[0] ne "") {  
@@ -66,6 +72,7 @@ if ($function ne "upload" and $function ne "validate" and $function ne "donwload
 
 open CFG, "$cfg_fn" or die "Couldn't open $cfg_fn\n";
 my @lines = <CFG>;
+close CFG;
 my $cfg_json = join ' ', @lines;
 my $conf = from_json($cfg_json);
 note($conf->{test_name}) if defined $conf->{test_name};
@@ -109,6 +116,7 @@ if ($kb_type eq "" and $function eq "upload") {
 	print STDERR "CRITICAL: kbase_type is not defined\n";
 	exit(3);
 }
+
 
 my $ws_name = "";
 $ws_name = $conf->{ws_name} if $conf->{ws_name};
@@ -173,13 +181,35 @@ if ($mode eq "client") {
 	}
 
 } else { # it has to be hndlr
+
+
+	open JCFG, "$job_config_fn" or die "Could not open \[$job_config_fn\]\n";
+	my @lines = <JCFG>;
+        close JCFG;
+        my $lines = join ' ', @lines;
+        my $jcfg = from_json($lines);
+        my $job_details = {};
+	die "CRITICAL: $etype validator was not defined in job configuration $job_config_fn\n" 
+          if ! defined $jcfg->{config_map}->{validator}->{$etype};
+        my $job_details->{validator} = $jcfg->{config_map}->{validator}->{$etype};
+
+        my $conv_type = "$etype-to-$kb_type";
+	die "CRITICAL: $conv_type transformer was not defined in job configuration $job_config_fn\n" 
+          if ! defined $jcfg->{config_map}->{transformer}->{$conv_type};
+        $job_details->{transformer} = $jcfg->{config_map}->{transformer}->{$conv_type};
+
+        $job_details->{uploader} = $jcfg->{config_map}->{uploader}->{$kb_type} 
+          if defined $jcfg->{config_map}->{validator}->{$etype};
+	
+	my $jds = to_json($job_details);
+
 	my $rst = '';
 	if( $function eq "upload") {
-		$rst = `trns_upload_hndlr -u $params{ws_url} -x $params{svc_ws_name} -c $params{svc_ws_cfg_name} -s $params{shock_url} -i $in_id -w $ws_name -o $obj_name -e $etype -t $kb_type -a $opt_args 2>&1`;
+		$rst = `trns_upload_hndlr -u $params{ws_url} -s $params{shock_url} -i $in_id -w $ws_name -o $obj_name -e $etype -t $kb_type -a $opt_args -z '$jds' 2>&1`;
 	}elsif( $function eq "download") {
 		$rst = `date`; # do nothing yet
 	}elsif( $function eq "validate") {
-		$rst = `trns_validate_hndlr -u $params{ws_url} -x $params{svc_ws_name} -c $params{svc_ws_cfg_name} -s $params{shock_url} -i $in_id -r $ujs_url -e $etype -a $opt_args 2>&1`;
+		$rst = `trns_validate_hndlr -u $params{ws_url} -s $params{shock_url} -i $in_id -r $ujs_url -e $etype -a $opt_args -z '$jds' 2>&1`;
 	} else {
 		# this should not be happen because of the above parameter settings
 	}

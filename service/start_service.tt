@@ -15,5 +15,5 @@ pid_file=$KB_SERVICE_DIR/service.pid
 wsgi_file=$KB_TOP/lib/biokbase/$KB_SERVICE_NAME/Server.py
 
 uwsgi --master --processes 20 --cheaper 4 \
-    --http :[% kb_service_port %] --http-timeout 600 --pidfile $pid_file --daemonize $KB_SERVICE_DIR/error.log \
+    --http :[% kb_service_port %] --http-timeout 600 --pidfile $pid_file --daemonize $KB_SERVICE_DIR/uwsgi.log \
     --wsgi-file $wsgi_file

@@ -1,0 +1,28 @@
+#
+# The deploy.cfg file is located in the module top dir is a necessary file
+# needed for deployments. This file contains config variables, such as 
+# mongodb-host, mysqldb-host. Standard variable names are listed on the trac
+# wiki at https://trac.kbase.us/projects/kbase/wiki/DeployCfgStandards
+#
+# The variables in the deploy.cfg file will get "injected" into the module
+# makefile. In short, the variable is uppercased and dashes become underscores,
+# so mongodb-host in the deploy.cfg file becomes MONGODB_HOST in the module
+# makefile when the module makefile is invoked by the system make file at the
+# top level of the dev container.
+#
+#
+#
+# Deployment configuration for the service template module
+#
+
+# Note: do not document after each field defined
+[Transform]
+awe_url=http://10.1.16.87:7080
+ujs_url=http://10.1.16.87:7083
+shock_url=http://10.1.16.87:7078
+ws_url=http://10.1.16.87:7058
+clientgroups=prod
+svc_ws_name=loader_test
+svc_ws_cfg_name=script_configs
+svc_ws_un=kbasetest
+svc_ws_pw=@Suite525

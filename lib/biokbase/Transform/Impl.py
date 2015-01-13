@@ -63,25 +63,24 @@ class Transform:
 
         if self.scripts_config["config_map"]["validator"].has_key(args["etype"]):
             job_details["validator"] = self.scripts_config["config_map"]["validator"][args["etype"]]
-            self.kbaseLogger.log_message("INFO", job_details["validator"])
         else:
             self.kbaseLogger.log_message("WARNING", "No validation available for {0} => {1}".format(args["etype"],args["kb_type"]))
 
         if self.scripts_config["config_map"]["transformer"].has_key(args["etype"] + "-to-" + args["kb_type"]):
             job_details["transformer"] = self.scripts_config["config_map"]["transformer"][args["etype"] + "-to-" + args["kb_type"]]
-            self.kbaseLogger.log_message("INFO", job_details["transformer"])
         else:
             raise Exception("No conversion available for {0} => {1}".format(args["etype"],args["kb_type"]))
 
         if self.scripts_config["config_map"]["uploader"].has_key(args["kb_type"]):
             job_details["uploader"] = self.scripts_config["config_map"]["uploader"][args["kb_type"]]
-            self.kbaseLogger.log_message("INFO", job_details["uploader"])
         else:
             pass
             #raise Exception("No upload available for {0} => {1}".format(args["etype"],args["kb_type"]))
 
         args["job_details"] = json.dumps(job_details)
 
+        self.kbaseLogger.log_message("INFO", "Invoking {0} => {1}".format(args["etype"],args["kb_type"]))
+        
         return run_async(self.config, ctx, args)
 
     #END_CLASS_HEADER

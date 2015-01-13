@@ -11,7 +11,7 @@ import traceback
 import ctypes
 import subprocess
 from subprocess import Popen, PIPE
-import shutil
+import shutil 
 from optparse import OptionParser
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -506,13 +506,15 @@ class Downloader(TransformBase):
         self.ws_id = args.ws_id
         #self.outobj_id = args.outobj_id
         self.jid = args.jid
+        self.compress = args.compress
 
         # download ws object and find where the validation script is located
         #self.wsd = Workspace(url=self.ws_url, token=self.token)
         #self.config = self.wsd.get_object({'id' : self.cfg_name, 'workspace' : self.sws_id})['data']['config_map']
      
-        if self.config is None:
-            raise Exception("Object {} not found in workspace {}".format(self.cfg_name, self.sws_id))
+        self.config = args.job_details
+        #if self.config is None:
+        #    raise Exception("Object {} not found in workspace {}".format(self.cfg_name, self.sws_id))
     
     def download_ws_data (self) :
         try:
@@ -556,3 +558,15 @@ class Downloader(TransformBase):
     
         if p1.returncode != 0: 
             raise Exception(out_str[1])
+
+        cf = self.compress;
+        if (self.compress ==  'bz2'): cf = 'bztar' 
+        if(cf != "none"):
+          shutil.make_archive("{}/{}".format(self.sdir,self.otmp),cf)
+          # update output tmp file name
+          if(cf == "zip"):
+            self.otmp = "%s.zip" % self.otmp
+          elif(cf == "bz2"):
+            self.otmp = "%s.tar.gz2" % self.otmp 
+          else:
+            raise Exception("Unsupported compression format : %s (should be either zip or bz2)" % cf)

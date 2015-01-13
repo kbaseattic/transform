@@ -1,6 +1,21 @@
 {
     "config_map": {
         "down_transformer": {
+            "KBaseAssembly.SingleEndLibrary-to-KBaseAssembly.FA": {
+                "cmd_args": {
+                    "inobj_id": "-f", 
+                    "output": "-o", 
+                    "ws_id": "-k"
+                }, 
+                "cmd_description": "KBaseAssembly.SingleEndLibrary to KBaseAssembly.FA conversion", 
+                "cmd_name": "trns_transform_KBaseAssembly.SingleEndLibrary-to-KBaseAssembly.FA", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "ws_url": "-u",
+                    "handle_url": "-n",
+                    "shock_url": "-s"
+                }
+            },
             "Transform.Pair-to-Transform.CSV": {
                 "cmd_args": {
                     "inobj_id": "-i", 
@@ -16,6 +31,22 @@
             }
         }, 
         "transformer": {
+            "KBaseAssembly.FA-to-KBaseAssembly.SingleEndLibrary": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_args_override": {
+                    "input": "shock_node_id"
+                }, 
+                "cmd_description": "FA to SingleEndLibrary", 
+                "cmd_name": "trns_transform_KBaseAssembly.FA-to-KBaseAssembly.SingleEndLibrary", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "handle_service_url": "-n", 
+                    "shock_url": "-s"
+                }
+            }, 
             "KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly": {
                 "cmd_args": {
                     "input": "-i", 

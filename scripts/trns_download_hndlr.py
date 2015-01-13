@@ -58,8 +58,9 @@ if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_download_hndlr', epilog=desc3)
     parser.add_argument('-u', '--ws_url', help='Workspace url', action='store', dest='ws_url', default='https://kbase.us/services/ws')
-    parser.add_argument('-x', '--svc_ws_name', help='Service workspace name', action='store', dest='sws_id', default=None, required=True)
-    parser.add_argument('-c', '--config_name', help='Script configuration workspace object name', action='store', dest='cfg_name', default=None, required=True)
+    #parser.add_argument('-x', '--svc_ws_name', help='Service workspace name', action='store', dest='sws_id', default=None, required=True)
+    #parser.add_argument('-c', '--config_name', help='Script configuration workspace object name', action='store', dest='cfg_name', default=None, required=True)
+    parser.add_argument('-c', '--compression', help='Compression methods [gz2,zip,none]', action='store', dest='compress', default='zip', required=False)
 
     parser.add_argument('-w', '--src_ws_name', help='Source workspace name', action='store', dest='ws_id', default=None, required=True)
     parser.add_argument('-i', '--in_id', help='Input workspace object name', action='store', dest='inobj_id', default=None, required=True)
@@ -67,12 +68,14 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
 
     parser.add_argument('-r', '--ujs_url', help='UJS url', action='store', dest='ujs_url', default='https://kbase.us/services/userandjobstate')
+    parser.add_argument('-n', '--handle_service_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
     parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=False)
 
     parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=True)
     parser.add_argument('-t', '--kbase_type', help='KBase object type', action='store', dest='kbtype', default=None, required=True)
 
     parser.add_argument('-a', '--opt_args', help='Optional argument json string', action='store', dest='opt_args', default='{"downloader":{}}')
+    parser.add_argument('-z', '--job_details', help='Info needed to run the download job.', action='store', dest='job_details', default=None)
 
     parser.add_argument('-l', '--support_dir', help='Support directory', action='store', dest='sdir', default='lib')
     parser.add_argument('-d', '--del_lib_dir', help='Delete library directory', action='store', dest='del_tmps', default='true')
@@ -93,7 +96,11 @@ if __name__ == "__main__":
 
 
     ## main loop
-    args.opt_args = json.loads(args.opt_args)
+    print >> sys.stderr, args.job_details
+    print >> sys.stderr, args.opt_args
+
+    args.job_details = json.loads(args.job_details.replace("\\", ""))
+    args.opt_args = json.loads(args.opt_args.replace("\\", ""))
     #if 'downloader' not in args.opt_args:
     #  args.opt_args['uploader'] = {}
     #  args.opt_args['uploader']['file'] = args.otmp

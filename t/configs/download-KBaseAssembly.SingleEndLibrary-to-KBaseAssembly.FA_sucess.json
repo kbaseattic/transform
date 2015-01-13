@@ -2,7 +2,7 @@
   "test_name" : "Success case test for downloading KBaseAssembly.SingleEndLibary to KBaseAssembly.FA", 
   "test_server_url" : "http://127.0.0.1:7778",
   "external_type" : "KBaseAssembly.FA",
-  "kbase_type" : "KBaseAssembly.SingleEndLibary",
+  "kbase_type" : "KBaseAssembly.SingleEndLibrary",
   "ws_name" : "loader_test",
   "obj_name" : "kbg-sel-tst",
   "compression" : "zip",

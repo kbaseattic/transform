@@ -43,13 +43,15 @@ def convert(shock_service_url, handle_service_url, input_file_name, output_file_
     
     logger.info("Starting conversion of FASTA to KBaseGenomes.ContigSet")
     token = os.environ.get('KB_AUTH_TOKEN')
+    print "Token : "
+    pprint.pprint(token)
     
     logger.info("Gathering information.")
  
     if not os.path.isfile(input_file_name):
         raise Exception("The input file name " + input_file_name + " does not exist")        
 
-    if not os.path.idir(args.working_directory):
+    if not os.path.isdir(args.working_directory):
         raise Exception("The working directory does not exist " + working_directory + " does not exist")        
     #CHECK PERMISSIONS?
 
@@ -137,9 +139,9 @@ def convert(shock_service_url, handle_service_url, input_file_name, output_file_
     contig_set_dict["source_id"]=os.path.basename(input_file_name) 
     contig_set_dict["contigs"]= [fasta_dict[x] for x in sorted(fasta_dict.keys())]
 
-    if shock_id is None:
-        shock_response = script_utils.getShockID(logger, shock_service_url, input_file_name, token)
-        pprint.pprint(shock_response)
+#    if shock_id is None:
+#        shock_response = script_utils.getShockID(logger, shock_service_url, input_file_name, token)
+#        pprint.pprint(shock_response)
 
 #CHECK TO SEE WHAT IT IS IN THERE,  GET ID OUT?
 #   contig_set_dict["fasta_ref"]=?
@@ -148,7 +150,8 @@ def convert(shock_service_url, handle_service_url, input_file_name, output_file_
 #    pprint.pprint(contig_set_dict)
 
     logger.info("Writing out JSON.")
-    with open(output_file_name, "w") as outFile:
+    output_file =  os.path.join(working_directory,output_file_name) 
+    with open(output_file, "w") as outFile:
         outFile.write(objectString)
     
     logger.info("Conversion completed.")
@@ -182,13 +185,16 @@ if __name__ == "__main__":
         object_name = os.path.splitext(base)[0]
 
     output_file_name = None
-    if (args.output_file_name and len(args.output_file_name) == 1):
+    if (args.output_file_name):
+        print "Have output_file_name"
         output_file_name = args.output_file_name
     else:
-        #default to input file name minus file extenstion adding .json to the end
+        #default to input file name minus file extenstion adding "_contig_set" to the end
+        print "No output_file_name"
         base=os.path.basename(args.input_file_name)
         output_file_name = "%s_contig_set"%(os.path.splitext(base)[0])
 
+    print "output_file_name : " + output_file_name
     logger = script_utils.getStderrLogger(__file__)
     try:
         convert(args.shock_service_url, args.handle_service_url, args.input_file_name, output_file_name, args.working_directory, args.workspace_service_url, args.workspace_name, object_name, args.shock_id, logger=logger)

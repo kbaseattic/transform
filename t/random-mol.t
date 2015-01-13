@@ -39,7 +39,7 @@ for( my $i = 0; $i < $num_random_test; $i++) {
   $config->{test_name} = "upload success test from MOL GBK to KB WS Genome - randomized test for MOL tax id = $tids[$i]";
   $config->{test_server_url} = $transform_url;
   $config->{input_data_url} = ["http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=$tids[$i];export=gbk;compress=zip"];
-  $config->{external_type} = 'KBaseGenomes.FASTA';
+  $config->{external_type} = 'KBaseGenomes.GBK';
   $config->{'kbase_type'}='KBaseGenomes.Genome';
   $config->{'ws_name'}=$ws_name;
   $config->{'obj_name'}="$ws_obj_prefix-$tids[$i]";

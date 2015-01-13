@@ -25,10 +25,10 @@ def getStderrLogger(name, level=logging.INFO):
     return logger
 
 
-def getShockID(logger,
-               shock_service_url = "https://kbase.us/services/shock-api/",
-               filePath = None,
-               token = None):
+def upload_file_to_shock(logger,
+                         shock_service_url = "https://kbase.us/services/shock-api/",
+                         filePath = None,
+                         token = None):
 
     if token is None:
         raise Exception("Authentication token required!")

@@ -64,7 +64,7 @@ if ($mode ne "client" and $mode ne "hndlr") {
 	print STDERR "WARNING: mode to be enforced to hdnlr\n";
 }
 
-if ($function ne "upload" and $function ne "validate" and $function ne "donwload") {
+if ($function ne "upload" and $function ne "validate" and $function ne "download") {
 	$function = "upload";
 	print STDERR "WARNING: function to be enforced to upload test\n";
 }
@@ -97,7 +97,7 @@ $max_iter = $conf->{max_wait_sec} / $check_interval if defined $conf->{max_wait_
 my $in_id =  "";
 $in_id = $conf->{input_data_url}[0] if defined $conf->{input_data_url};
 #$in_id = join /,/ @{$conf->{input_data_url}};
-if ($in_id eq "") {
+if ($in_id eq "" and $function ne "download") {
 	print STDERR "CRITICAL: input_data_url is not defined\n";
 	exit(1);
 }
@@ -112,7 +112,7 @@ if ($etype eq "") {
 
 my $kb_type = "";
 $kb_type = $conf->{kbase_type} if $conf->{kbase_type};
-if ($kb_type eq "" and $function eq "upload") {
+if ($kb_type eq "" and $function ne "validate") {
 	print STDERR "CRITICAL: kbase_type is not defined\n";
 	exit(3);
 }
@@ -120,20 +120,23 @@ if ($kb_type eq "" and $function eq "upload") {
 
 my $ws_name = "";
 $ws_name = $conf->{ws_name} if $conf->{ws_name};
-if ($ws_name eq "" and $function eq "upload") {
+if ($ws_name eq "" and $function ne "validate") {
 	print STDERR "CRITICAL: ws_name is not defined\n";
 	exit(4);
 }
 
 my $obj_name = "";
 $obj_name = $conf->{obj_name} if $conf->{obj_name};
-if ($obj_name eq "" and $function eq "upload") {
+if ($obj_name eq "" and $function ne "validate") {
 	print STDERR "CRITICAL: obj_name is not defined\n";
 	exit(5);
 }
 
 my $opt_args = "{}";
 $opt_args = $conf->{optional_args} if $conf->{optional_args};
+
+my $compression = "zip";
+$compression = $conf->{compression} if $conf->{compression};
 
 my $check = 0;
 ## Setup clients
@@ -148,18 +151,26 @@ if ($mode eq "client") {
 	my $job_id = [];
 	if( $function eq "upload") {
 		$job_id = $cc->upload( 
-			{etype => $etype, 
-			kb_type => $kb_type, 
-			ws_name => $ws_name, 
-			obj_name => $obj_name, 
-			in_id => $in_id, 
-			optional_args => $opt_args}
-			);
+				{etype => $etype, 
+				kb_type => $kb_type, 
+				ws_name => $ws_name, 
+				obj_name => $obj_name, 
+				in_id => $in_id, 
+				optional_args => $opt_args}
+				);
 	} elsif ($function eq "validate") {
 		$job_id = $cc->validate({etype => $etype, in_id => $in_id, "optional_args" => $opt_args});
 	} elsif ($function eq "download") {
+		$job_id = $cc->upload( 
+				{etype => $etype, 
+				kb_type => $kb_type, 
+				ws_name => $ws_name, 
+				obj_name => $obj_name, 
+				comp_method => $compression, 
+				optional_args => $opt_args}
+				);
 	} else {
-		# this should not be happen because of the above parameter settings
+# this should not be happen because of the above parameter settings
 	}
 
 	my $jid = $job_id->[1];
@@ -185,33 +196,36 @@ if ($mode eq "client") {
 
 	open JCFG, "$job_config_fn" or die "Could not open \[$job_config_fn\]\n";
 	my @lines = <JCFG>;
-        close JCFG;
-        my $lines = join ' ', @lines;
-        my $jcfg = from_json($lines);
-        my $job_details = {};
+	close JCFG;
+	my $lines = join ' ', @lines;
+	my $jcfg = from_json($lines);
+	my $job_details = {};
 	die "CRITICAL: $etype validator was not defined in job configuration $job_config_fn\n" 
-          if ! defined $jcfg->{config_map}->{validator}->{$etype};
-        my $job_details->{validator} = $jcfg->{config_map}->{validator}->{$etype};
+		if ! defined $jcfg->{config_map}->{validator}->{$etype};
+	my $job_details->{validator} = $jcfg->{config_map}->{validator}->{$etype};
 
-        my $conv_type = "$etype-to-$kb_type";
-	die "CRITICAL: $conv_type transformer was not defined in job configuration $job_config_fn\n" 
-          if ! defined $jcfg->{config_map}->{transformer}->{$conv_type};
-        $job_details->{transformer} = $jcfg->{config_map}->{transformer}->{$conv_type};
 
-        $job_details->{uploader} = $jcfg->{config_map}->{uploader}->{$kb_type} 
-          if defined $jcfg->{config_map}->{validator}->{$etype};
-	
 	my $jds = to_json($job_details);
 
 	my $rst = '';
 	if( $function eq "upload") {
+		my $conv_type = "$etype-to-$kb_type";
+		die "CRITICAL: $conv_type transformer was not defined in job configuration $job_config_fn\n" 
+			if ! defined $jcfg->{config_map}->{transformer}->{$conv_type};
+		$job_details->{transformer} = $jcfg->{config_map}->{transformer}->{$conv_type};
+
+		$job_details->{uploader} = $jcfg->{config_map}->{uploader}->{$kb_type} if defined $jcfg->{config_map}->{validator}->{$etype};
 		$rst = `trns_upload_hndlr -u $params{ws_url} -s $params{shock_url} -i '$in_id' -w $ws_name -o $obj_name -e $etype -t $kb_type -a '$opt_args' -z '$jds' 2>&1`;
 	}elsif( $function eq "download") {
-		$rst = `trns_download_hndlr -u $params{ws_url} -s $params{shock_url} -i '$in_id' -w $ws_name -o $obj_name -e $etype -t $kb_type -a '$opt_args' -z '$jds' 2>&1`;
+		my $conv_type = "$kb_type-to-$etype";
+		die "CRITICAL: $conv_type down_transformer was not defined in job configuration $job_config_fn\n" 
+			if ! defined $jcfg->{config_map}->{down_transformer}->{$conv_type};
+		$job_details->{down_transformer} = $jcfg->{config_map}->{down_transformer}->{$conv_type};
+		$rst = `trns_download_hndlr -u $params{ws_url} -s $params{shock_url}  -w $ws_name -i $obj_name -c $compression -e $etype -t $kb_type -a '$opt_args' -z '$jds' 2>&1`;
 	}elsif( $function eq "validate") {
 		$rst = `trns_validate_hndlr -u $params{ws_url} -s $params{shock_url} -i '$in_id' -r $ujs_url -e $etype -a '$opt_args' -z '$jds' 2>&1`;
 	} else {
-		# this should not be happen because of the above parameter settings
+# this should not be happen because of the above parameter settings
 	}
 
 	print "======Output Dump======\n";

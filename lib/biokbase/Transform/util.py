@@ -560,7 +560,7 @@ class Downloader(TransformBase):
             raise Exception(out_str[1])
 
         cf = self.compress;
-        cf = 'bztar' if(self.compress == 'bz2')
+        if (self.compress ==  'bz2'): cf = 'bztar' 
         if(cf != "none"):
           shutil.make_archive("{}/{}".format(self.sdir,self.otmp),cf)
           # update output tmp file name
@@ -568,5 +568,5 @@ class Downloader(TransformBase):
             self.otmp = "%s.zip" % self.otmp
           elif(cf == "bz2"):
             self.otmp = "%s.tar.gz2" % self.otmp 
-          else
+          else:
             raise Exception("Unsupported compression format : %s (should be either zip or bz2)" % cf)

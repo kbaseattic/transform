@@ -31,6 +31,22 @@
             }
         }, 
         "transformer": {
+            "KBaseAssembly.FA-to-KBaseAssembly.SingleEndLibrary": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_args_override": {
+                    "input": "shock_node_id"
+                }, 
+                "cmd_description": "FA to SingleEndLibrary", 
+                "cmd_name": "trns_transform_KBaseAssembly.FA-to-KBaseAssembly.SingleEndLibrary", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "handle_service_url": "-n", 
+                    "shock_url": "-s"
+                }
+            }, 
             "KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly": {
                 "cmd_args": {
                     "input": "-i", 

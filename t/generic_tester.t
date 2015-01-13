@@ -205,7 +205,6 @@ if ($mode eq "client") {
 	my $job_details->{validator} = $jcfg->{config_map}->{validator}->{$etype};
 
 
-	my $jds = to_json($job_details);
 
 	my $rst = '';
 	if( $function eq "upload") {
@@ -215,14 +214,17 @@ if ($mode eq "client") {
 		$job_details->{transformer} = $jcfg->{config_map}->{transformer}->{$conv_type};
 
 		$job_details->{uploader} = $jcfg->{config_map}->{uploader}->{$kb_type} if defined $jcfg->{config_map}->{validator}->{$etype};
+		my $jds = to_json($job_details);
 		$rst = `trns_upload_hndlr -u $params{ws_url} -s $params{shock_url} -i '$in_id' -w $ws_name -o $obj_name -e $etype -t $kb_type -a '$opt_args' -z '$jds' 2>&1`;
 	}elsif( $function eq "download") {
 		my $conv_type = "$kb_type-to-$etype";
 		die "CRITICAL: $conv_type down_transformer was not defined in job configuration $job_config_fn\n" 
 			if ! defined $jcfg->{config_map}->{down_transformer}->{$conv_type};
 		$job_details->{down_transformer} = $jcfg->{config_map}->{down_transformer}->{$conv_type};
+		my $jds = to_json($job_details);
 		$rst = `trns_download_hndlr -u $params{ws_url} -s $params{shock_url}  -w $ws_name -i $obj_name -c $compression -e $etype -t $kb_type -a '$opt_args' -z '$jds' 2>&1`;
 	}elsif( $function eq "validate") {
+		my $jds = to_json($job_details);
 		$rst = `trns_validate_hndlr -u $params{ws_url} -s $params{shock_url} -i '$in_id' -r $ujs_url -e $etype -a '$opt_args' -z '$jds' 2>&1`;
 	} else {
 # this should not be happen because of the above parameter settings

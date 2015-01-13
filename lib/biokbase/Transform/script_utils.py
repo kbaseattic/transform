@@ -53,10 +53,10 @@ def getShockID(logger,
 
         result = response.json()
 
-        if result['error']:
+        if result['error']:            
             raise Exception(result['error'][0])
         else:
-            return result["data"]    
+            return result["data"]["id"]    
     except:
         dataFile.close()
         raise    

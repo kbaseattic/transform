@@ -207,7 +207,7 @@ if ($mode eq "client") {
 	if( $function eq "upload") {
 		$rst = `trns_upload_hndlr -u $params{ws_url} -s $params{shock_url} -i '$in_id' -w $ws_name -o $obj_name -e $etype -t $kb_type -a '$opt_args' -z '$jds' 2>&1`;
 	}elsif( $function eq "download") {
-		$rst = `date`; # do nothing yet
+		$rst = `trns_download_hndlr -u $params{ws_url} -s $params{shock_url} -i '$in_id' -w $ws_name -o $obj_name -e $etype -t $kb_type -a '$opt_args' -z '$jds' 2>&1`;
 	}elsif( $function eq "validate") {
 		$rst = `trns_validate_hndlr -u $params{ws_url} -s $params{shock_url} -i '$in_id' -r $ujs_url -e $etype -a '$opt_args' -z '$jds' 2>&1`;
 	} else {

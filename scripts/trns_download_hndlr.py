@@ -58,8 +58,9 @@ if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_download_hndlr', epilog=desc3)
     parser.add_argument('-u', '--ws_url', help='Workspace url', action='store', dest='ws_url', default='https://kbase.us/services/ws')
-    parser.add_argument('-x', '--svc_ws_name', help='Service workspace name', action='store', dest='sws_id', default=None, required=True)
-    parser.add_argument('-c', '--config_name', help='Script configuration workspace object name', action='store', dest='cfg_name', default=None, required=True)
+    #parser.add_argument('-x', '--svc_ws_name', help='Service workspace name', action='store', dest='sws_id', default=None, required=True)
+    #parser.add_argument('-c', '--config_name', help='Script configuration workspace object name', action='store', dest='cfg_name', default=None, required=True)
+    parser.add_argument('-c', '--compression', help='Compression methods [gz2,zip,none]', action='store', dest='compress', default='zip', required=False)
 
     parser.add_argument('-w', '--src_ws_name', help='Source workspace name', action='store', dest='ws_id', default=None, required=True)
     parser.add_argument('-i', '--in_id', help='Input workspace object name', action='store', dest='inobj_id', default=None, required=True)
@@ -95,7 +96,11 @@ if __name__ == "__main__":
 
 
     ## main loop
-    args.opt_args = json.loads(args.opt_args)
+    print >> sys.stderr, args.job_details
+    print >> sys.stderr, args.opt_args
+
+    args.job_details = json.loads(args.job_details.replace("\\", ""))
+    args.opt_args = json.loads(args.opt_args.replace("\\", ""))
     #if 'downloader' not in args.opt_args:
     #  args.opt_args['uploader'] = {}
     #  args.opt_args['uploader']['file'] = args.otmp

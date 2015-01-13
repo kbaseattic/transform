@@ -11,7 +11,7 @@ import traceback
 import ctypes
 import subprocess
 from subprocess import Popen, PIPE
-import shutil
+import shutil 
 from optparse import OptionParser
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -506,6 +506,7 @@ class Downloader(TransformBase):
         self.ws_id = args.ws_id
         #self.outobj_id = args.outobj_id
         self.jid = args.jid
+        self.compress = args.compress
 
         # download ws object and find where the validation script is located
         #self.wsd = Workspace(url=self.ws_url, token=self.token)
@@ -557,3 +558,10 @@ class Downloader(TransformBase):
     
         if p1.returncode != 0: 
             raise Exception(out_str[1])
+
+        cf = self.compress;
+        cf = 'bztar' if(self.compress == 'bz2')
+        if(cf != "none"):
+          shutil.make_archive("{}/{}".format(self.sdir,self.otmp),cf)
+          self.otmp = "%s.zip" % self.otmp if cf == "zip"
+          self.otmp = "%s.tar.gz2" % self.otmp if cf == "bz2"

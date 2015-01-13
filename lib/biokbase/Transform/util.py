@@ -511,8 +511,9 @@ class Downloader(TransformBase):
         #self.wsd = Workspace(url=self.ws_url, token=self.token)
         #self.config = self.wsd.get_object({'id' : self.cfg_name, 'workspace' : self.sws_id})['data']['config_map']
      
-        if self.config is None:
-            raise Exception("Object {} not found in workspace {}".format(self.cfg_name, self.sws_id))
+        self.config = args.job_details
+        #if self.config is None:
+        #    raise Exception("Object {} not found in workspace {}".format(self.cfg_name, self.sws_id))
     
     def download_ws_data (self) :
         try:

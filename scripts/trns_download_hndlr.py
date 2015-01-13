@@ -67,12 +67,14 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
 
     parser.add_argument('-r', '--ujs_url', help='UJS url', action='store', dest='ujs_url', default='https://kbase.us/services/userandjobstate')
+    parser.add_argument('-n', '--handle_service_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
     parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=False)
 
     parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=True)
     parser.add_argument('-t', '--kbase_type', help='KBase object type', action='store', dest='kbtype', default=None, required=True)
 
     parser.add_argument('-a', '--opt_args', help='Optional argument json string', action='store', dest='opt_args', default='{"downloader":{}}')
+    parser.add_argument('-z', '--job_details', help='Info needed to run the download job.', action='store', dest='job_details', default=None)
 
     parser.add_argument('-l', '--support_dir', help='Support directory', action='store', dest='sdir', default='lib')
     parser.add_argument('-d', '--del_lib_dir', help='Delete library directory', action='store', dest='del_tmps', default='true')

@@ -63,72 +63,82 @@ def convert(shock_service_url, handle_service_url, input_file_name, output_file_
     sequence_list = []
     fasta_dict = dict()
     first_header_found = False
+    contig_set_md5_list = []
+    pattern = re.compile(r'\s+')
     for current_line in input_file_handle:
-        m = re.search(r"^>",current_line)
-        if m:
+        if (current_line[0] == ">"):
+#        m = re.search(r"^>",current_line)
+#        if m:
             #found a header line
             #Wrap up previous fasta sequence
             if len(sequence_list) == 0 and first_header_found:
-                logger.info("There is no sequence related to fasta record : " + fasta_header)        
+                logger.info("There is no sequence related to fasta record : %s"%(fasta_header))        
                 raise Exception("There is no sequence related to fasta record : " + fasta_header)    
             if not first_header_found:
                 first_header_found = True
-                fasta_header = current_line.replace('>','')
             else:
                 #build up sequence and remove all white space
                 total_sequence = ''.join(sequence_list)
-                pattern = re.compile(r'\s+')
                 total_sequence = re.sub(pattern, '', total_sequence)
-                fasta_dict[fasta_header.strip()] = total_sequence
-                
+                fasta_key = fasta_header.strip()
+                contig_dict = dict() 
+                contig_dict["id"] = fasta_key 
+                contig_dict["length"] = len(total_sequence) 
+                contig_dict["name"] = fasta_key 
+                contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+                contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest() 
+                contig_dict["md5"]= contig_md5 
+                contig_set_md5_list.append(contig_md5) 
+                if contig_set_has_sequences: 
+                    contig_dict["sequence"]= total_sequence
+                else: 
+                    contig_dict["sequence"]= "" 
+                fasta_dict[fasta_key] = contig_dict
+               
                 #get set up for next fasta sequence
-                fasta_header = current_line.replace('>','')
                 sequence_list = []
+            fasta_header = current_line.replace('>','')
         else:
             sequence_list.append(current_line)
     #wrap up last fasta sequence
     if len(sequence_list) == 0 and first_header_found: 
-        logger.info("There is no sequence related to fasta record : " + fasta_header) 
+        logger.info("There is no sequence related to fasta record : %s"%(fasta_header))        
         raise Exception("There is no sequence related to fasta record : " + fasta_header) 
     else: 
         #build up sequence and remove all white space                                                                                             
         total_sequence = ''.join(sequence_list)
-        pattern = re.compile(r'\s+')
+
         total_sequence = re.sub(pattern, '', total_sequence)
-        fasta_dict[fasta_header.strip()] = total_sequence
-
-
-    contig_list = []
-    contig_set_md5_list = []
-    #build up contig objects and build up md5 for each contig and the contig_setoverall.     
-    for fasta_key in sorted(fasta_dict.keys()):
+        fasta_key = fasta_header.strip()
         contig_dict = dict()
-        contig_dict["id"] = fasta_key
-        contig_dict["length"] = len(fasta_dict[fasta_key])
+        contig_dict["id"] = fasta_key 
+        contig_dict["length"] = len(total_sequence)
         contig_dict["name"] = fasta_key
-        contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence"
-        contig_md5 = hashlib.md5(fasta_dict[fasta_key].upper()).hexdigest()
+        contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+        contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest()
         contig_dict["md5"]= contig_md5
         contig_set_md5_list.append(contig_md5)
-        if contig_set_has_sequences:
-            contig_dict["sequence"]= fasta_dict[fasta_key]
+        if contig_set_has_sequences: 
+            contig_dict["sequence"]= total_sequence 
         else:
-            contig_dict["sequence"]= ""
-        contig_list.append(contig_dict)
+            contig_dict["sequence"]= "" 
+        fasta_dict[fasta_key] = contig_dict 
 
+    
     contig_set_dict = dict()
-
     contig_set_dict["md5"]=hashlib.md5(",".join(sorted(contig_set_md5_list))).hexdigest()
-    contig_set_dict["id"]=output_file_name + "_contig_set"
+    contig_set_dict["id"]=output_file_name
     contig_set_dict["name"]=object_name
     contig_set_dict["source"]="KBase"
     contig_set_dict["source_id"]=os.path.basename(input_file_name) 
-    contig_set_dict["contigs"]=contig_list
+    contig_set_dict["contigs"]= [fasta_dict[x] for x in sorted(fasta_dict.keys())]
+
+#    shock_response = script_utils.getShockID(logger, shock_service_url, input_file_name, token)
+#    pprint.pprint(shock_response)
 #   contig_set_dict["fasta_ref"]=?
 
     objectString = json.dumps(contig_set_dict, sort_keys=True, indent=4)
-
-    pprint.pprint(contig_set_dict)
+#    pprint.pprint(contig_set_dict)
 
     logger.info("Writing out JSON.")
     with open(output_file_name, "w") as outFile:
@@ -167,7 +177,7 @@ if __name__ == "__main__":
     else:
         #default to input file name minus file extenstion adding .json to the end
         base=os.path.basename(args.input_file_name)
-        output_file_name = os.path.splitext(base)[0] 
+        output_file_name = "%s_contig_set"%(os.path.splitext(base)[0])
 
     logger = script_utils.getStderrLogger(__file__)
     try:

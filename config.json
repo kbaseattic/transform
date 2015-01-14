@@ -47,6 +47,21 @@
                     "shock_url": "-s"
                 }
             }, 
+            "KBaseAssembly.FA-to-KBaseGenomes.ContigSet": {
+                "cmd_args": {
+                    "input": "--input_file_name", 
+                    "output": "--output_file_name"
+                }, 
+                "cmd_description": "FA to ContigSet", 
+                "cmd_name": "trns_transform_KBaseAssembly.FA-to-KBaseGenomes.ContigSet", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "handle_service_url": "--handle_service_url", 
+                    "shock_url": "--shock_service_url",
+                    "shock_id": "--shock_id",
+                    "handle_id": "--handle_id"
+                }
+            }, 
             "KBaseAssembly.FA-to-KBaseAssembly.ReferenceAssembly": {
                 "cmd_args": {
                     "input": "-i", 

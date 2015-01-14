@@ -192,7 +192,11 @@ if ($mode eq "client") {
 	}
 
 } else { # it has to be hndlr
-
+        if (not defined $ENV{KB_AUTH_TOKEN} or $ENV{KB_AUTH_TOKEN} eq "") {
+        	my $token = `cat ~/.kbase_config | grep '^token' | sed "s/^token=//"`;
+		chomp $token;
+		$ENV{KB_AUTH_TOKEN} = $token ;
+	}
 
 	open JCFG, "$job_config_fn" or die "Could not open \[$job_config_fn\]\n";
 	my @lines = <JCFG>;

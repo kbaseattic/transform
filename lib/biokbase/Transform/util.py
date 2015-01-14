@@ -22,7 +22,7 @@ import bz2
 import tarfile
 import zipfile
 import glob
-import ftplib
+import ftputil
 import re
 
 try:
@@ -58,16 +58,15 @@ class TransformBase:
             
         if hasattr(args, 'url_list'):
             self.url_list = args.url_list
-        else:
-            self.url_list = ["ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/Bacillus_subtilis/reference/GCF_000009045.1_ASM904v1/GCF_000009045.1_ASM904v1_genomic.gbff.gz"]
 
 
-    def upload_to_shock(self):
+    def upload_to_shock(self, filePath=None):
         if self.token is None:
             raise Exception("Unable to find token!")
         
-        filePath = "{}/{}".format(self.sdir,self.otmp)
-    
+        if filePath is None:
+            filePath = "{}/{}".format(self.sdir,self.otmp)
+
         #build the header
         header = dict()
         header["Authorization"] = "Oauth %s" % self.token
@@ -113,39 +112,41 @@ class TransformBase:
 
             # detect url type
             if url.startswith("ftp://"):
+                threshold=1024
+
                 # check if file or directory
                 host = url.split("ftp://")[1].split("/")[0]
                 path = url.split("ftp://")[1].split("/", 1)[1]
             
-                ftp_connection = ftplib.FTP(host)
-                ftp_connection.login()
-                file_list = ftp_connection.sendcmd("MLST {0}".format(path))
-            
-                if file_list.find("type=dir") > -1:
-                    file_list = ftp_connection.nlst(path)
-            
+                ftp_connection = ftputil.FTPHost(host, 'anonymous', 'anonymous@')
+                
+                if ftp_connection.path.isdir(path):
+                    file_list = ftp_connection.listdir(path)
+                elif ftp_connection.path.isfile(path):
+                    file_list = [path]
+
                 if len(file_list) > 1:            
                     if len(file_list) > threshold:
                         raise Exception("Too many files to process, found so far {0:d}".format(len(file_list)))
-                
-                    dirname = path.split("/")[-1]
-                
-                    if len(dirname) == 0:
-                        dirname = path.split("/")[-2]                
+                                                    
+                    if len(path.split("/")[-1]) == 0:
+                        dirname = os.path.join(self.sdir, path.split("/")[-2])
+                    else:
+                        dirname = os.path.join(self.sdir, path.split("/")[-1])
                 
                     all_files = list()
                     check = file_list[:]
                     while len(check) > 0:
                         x = check.pop()
                 
-                        new_files = ftp_connection.nlst(x)
+                        new_files = ftp_connection.listdir(x)
                     
                         for n in new_files:
-                            details = ftp_connection.sendcmd("MLST {0}".format(n))
+                            #details = ftp_connection.sendcmd("MLST {0}".format(n))
                             
-                            if "type=file" in details:
+                            if ftp_connection.path.isfile(n):
                                 all_files.append(n)
-                            elif "type=dir" in details:
+                            elif ftp_connection.path.isdir(n):
                                 check.append(n)
                             if len(all_files) > threshold:
                                 raise Exception("Too many files to process, found so far {0:d}".format(len(all_files)))
@@ -153,16 +154,18 @@ class TransformBase:
                     os.mkdir(dirname)
             
                     for x in all_files:
-                        with open(os.path.join(os.path.abspath(dirname), os.path.basename(x)), 'wb') as f:
-                            print "Downloading {0}".format(host + x)
-                            ftp_connection.retrbinary("RETR {0}".format(x), lambda s: f.write(s), 10 * 2**20)
-                        extract_data(os.path.join(os.path.abspath(dirname), os.path.basename(x)))
+                        filePath = os.path.join(os.path.abspath(dirname), os.path.basename(x))
+                        #with open(filePath, 'wb') as f:
+                        print "Downloading {0}".format(host + x)
+                        ftp_connection.download(x, filePath)
+                        self.extract_data(filePath)
                 else:
-                    with open(os.path.join(self.sdir, os.path.split(path)[-1]), 'wb') as f:
-                        print "Downloading {0}".format(url)
-                        ftp_connection.retrbinary("RETR {0}".format(path), lambda s: f.write(s), 10 * 2**20)  
-                    extract_data(os.path.join(self.sdir, os.path.split(path)[-1]))
-            
+                    filePath = os.path.join(self.sdir, os.path.split(path)[-1])
+                    #with open(filePath, 'wb') as f:
+                    print "Downloading {0}".format(url)
+                    ftp_connection.download(path, filePath)
+                    self.extract_data(filePath)
+                
                 ftp_connection.close()            
             elif url.startswith("http://") or url.startswith("https://"):
                 print "Downloading {0}".format(url)
@@ -181,13 +184,9 @@ class TransformBase:
                     shock_id = None
 
                 if shock_id is None:
-                    print >> sys.stderr, "Downloading non-shock data"
-
                     download_url = url
                     fileName = url.split('/')[-1]
                 else:
-                    print >> sys.stderr, "Downloading shock node"
-
                     metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, shock_id), headers=header, stream=True, verify=self.ssl_verify)
                     shock_metadata = metadata_response.json()['data']
                     fileName = shock_metadata['file']['name']
@@ -195,9 +194,20 @@ class TransformBase:
                     metadata_response.close()
                         
                     download_url = "{0}/node/{1}?download_raw".format(self.shock_url, shock_id)
-                    
-                data = requests.get(download_url, headers=header, stream=True, verify=self.ssl_verify)
-                size = int(data.headers['content-length'])
+
+                data = None
+                size = 0
+                try:    
+                    data = requests.get(download_url, headers=header, stream=True, verify=self.ssl_verify)
+                    print >> sys.stderr, data.headers
+                    if 'content-length' in data.headers:
+                        size = int(data.headers['content-length'])
+                    if 'content-disposition' in data.headers:
+                        fileName = data.headers['content-disposition'].split("filename=")[-1].replace("\\","").replace("\"","")
+                    print >> sys.stderr, fileName
+                except Exception, e:
+                    print >> sys.stderr, e
+                    raise
 
                 if size > 0 and fileSize == 0:
                     fileSize = size
@@ -212,7 +222,13 @@ class TransformBase:
                     data.close()
                     f.close()      
                 
-                self.extract_data(filePath)
+                resultFile = self.extract_data(filePath)
+
+                if shock_id is None and os.path.isfile(resultFile):
+                    result = self.upload_to_shock(resultFile)
+                    print >> sys.stderr, result
+                    
+                    self.shock_id = shock_id                
             else:
                 raise Exception("Unrecognized protocol or url format : " + url)
             
@@ -257,6 +273,9 @@ class TransformBase:
             if mimeType == "application/x-tar":
                 print "Extracting {0} as tar".format(outFile)
                 extract_tar(outFile)
+                return outPath
+            else:
+                return outFile
         elif mimeType == "application/x-bzip2":
             outFile = os.path.splitext(filePath)[0]
             with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(outFile, 'wb') as f:
@@ -273,6 +292,9 @@ class TransformBase:
             if mimeType == "application/x-tar":
                 print "Extracting {0} as tar".format(outFile)
                 extract_tar(outFile)
+                return outPath
+            else:
+                return outFile
         elif mimeType == "application/zip":
             if not zipfile.is_zipfile(filePath):
                 raise Exception("Invalid zip file!")                
@@ -301,6 +323,7 @@ class TransformBase:
                         f.write(zipDataFile.read(x.filename))
             
             os.remove(filePath)
+            return outPath
         elif mimeType == "application/x-gtar":
             if not tarfile.is_tarfile(filePath):
                 raise Exception("Inavalid tar file " + filePath)
@@ -325,6 +348,7 @@ class TransformBase:
                             f.write(inputFile.read(chunkSize))
 
             os.remove(filePath)
+            return outPath
 
 
 
@@ -334,14 +358,10 @@ class Validator(TransformBase):
         self.ws_url = args.ws_url
         self.etype = args.etype
         self.opt_args = args.opt_args
-
-        print >> sys.stderr, args
-
-        
         self.config = args.job_details
 
         # download ws object and find where the validation script is located
-        #self.wsd = Workspace(url=self.ws_url, token=self.token)
+        self.wsd = Workspace(url=self.ws_url, token=self.token)
         #self.config = self.wsd.get_object({'id' : self.cfg_name, 'workspace' : self.sws_id})['data']['config_map']
         
         #if self.config is None:
@@ -353,8 +373,6 @@ class Validator(TransformBase):
         # execute validation
         ## TODO: Add logging
 
-        print >> sys.stderr, self.config
-        
         if 'validator' not in self.config:
             raise Exception("No validation script was registered for {}".format(self.etype))
 
@@ -404,19 +422,19 @@ class Uploader(Validator):
         
         vcmd_lst = [self.config['transformer']['cmd_name']]
         vcmd_lst.append(self.config['transformer']['cmd_args']['input'])
-        if 'cmd_args_override' in self.config['transformer'] and 'input' in self.config['transformer']['cmd_args_override']:
-            if self.config['transformer']['cmd_args_override']['input'] == 'shock_node_id': # use shock node id
-                vcmd_lst.append(self.inobj_id)
-            else:
-                vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # not defined yet
-        else:
-            vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # default input is the input file or folder
+        #if 'cmd_args_override' in self.config['transformer'] and 'input' in self.config['transformer']['cmd_args_override']:
+        #    if self.config['transformer']['cmd_args_override']['input'] == 'shock_node_id': # use shock node id
+        #        vcmd_lst.append(self.shock_id)
+        #    else:
+        #        vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # not defined yet
+        #else:
+        vcmd_lst.append("{}/{}".format(self.sdir,self.itmp)) # default input is the input file or folder
 
         vcmd_lst.append(self.config['transformer']['cmd_args']['output'])
-        if 'cmd_args_override' in self.config['transformer'] and 'output' in self.config['transformer']['cmd_args_override']:
-            vcmd_lst.append("{}/{}".format(self.sdir,self.otmp)) # not defined yet
-        else: 
-            vcmd_lst.append("{}/{}".format(self.sdir,self.otmp))
+        #if 'cmd_args_override' in self.config['transformer'] and 'output' in self.config['transformer']['cmd_args_override']:
+        #    vcmd_lst.append("{}/{}".format(self.sdir,self.otmp)) # not defined yet
+        #else: 
+        vcmd_lst.append("{}/{}".format(self.sdir,self.otmp))
     
         #if 'transformer' in self.opt_args:
         #  opt_args = self.opt_args['transformer']
@@ -435,9 +453,6 @@ class Uploader(Validator):
             raise Exception(out_str[1])
 
     def upload_handler (self) :
-
-        print >> sys.stderr, self.config
-        
         if 'uploader' in self.config: # upload handler is registered
             vcmd_lst = [self.config['uploader']['cmd_name'], 
                       self.config['uploader']['cmd_args']['ws_url'],
@@ -480,15 +495,10 @@ class Uploader(Validator):
                      'ujs_job_id' : jid} } ]})
 
     def upload_to_ws (self) :
-        print >> sys.stderr, self.sdir
-        print >> sys.stderr, self.otmp
-
         jif = open("{}/{}".format(self.sdir,self.otmp, 'r'))
         data = json.loads(jif.read())
         jif.close()
     
-        print >> sys.stderr, self.data
-
         self.wsd.save_objects({'workspace':self.ws_id, 'objects' : [ {
           'type' : self.kbtype, 'data' : data, 'name' : self.outobj_id, 
           'meta' : { 'source_id' : self.inobj_id, 'source_type' : self.etype,
@@ -508,7 +518,7 @@ class Downloader(TransformBase):
         self.jid = args.jid
 
         # download ws object and find where the validation script is located
-        #self.wsd = Workspace(url=self.ws_url, token=self.token)
+        self.wsd = Workspace(url=self.ws_url, token=self.token)
         #self.config = self.wsd.get_object({'id' : self.cfg_name, 'workspace' : self.sws_id})['data']['config_map']
      
         if self.config is None:

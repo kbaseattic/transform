@@ -1,5 +1,21 @@
 use strict;
 
+#
+# BEGIN spec
+# "Genome-to-EMBL": {
+#   "cmd_args": {
+#     "input": "-i",
+#     "output": "-o",
+#     "genome_annotation_url": "--url",
+#     },
+#     "cmd_description": "Genome to EMBL",
+#     "cmd_name": "trns_transform_KBaseGenomes.Genome-to-EMBL.pl",
+#     "max_runtime": 3600,
+#     "opt_args": {
+# 	 }
+#   }
+# }
+# END spec
 use JSON::XS;
 use Getopt::Long::Descriptive;
 use Bio::KBase::GenomeAnnotation::Client;

@@ -1,5 +1,21 @@
 use strict;
 
+#
+# BEGIN spec
+# "Genome-to-ProteinFasta": {
+#   "cmd_args": {
+#     "input": "-i",
+#     "output": "-o",
+#     "genome_annotation_url": "--url",
+#     },
+#     "cmd_description": "Genome to ProteinFasta",
+#     "cmd_name": "trns_transform_KBaseGenomes.Genome-to-ProteinFasta.pl",
+#     "max_runtime": 3600,
+#     "opt_args": {
+# 	 }
+#   }
+# }
+# END spec
 use JSON::XS;
 use Getopt::Long::Descriptive;
 use Bio::KBase::GenomeAnnotation::Client;

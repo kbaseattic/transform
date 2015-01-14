@@ -6,7 +6,7 @@ use Getopt::Long;
 use Bio::KBase::Transform::ScriptHelpers qw( parse_input_table );
 use Bio::KBase::fbaModelServices::ScriptHelpers qw(fbaws get_fba_client runFBACommand universalFBAScriptCode );
 
-my $script = "trns_transform_KBaseFBA.SBML-to-KBaseFBA.FBAModel.pl";
+my $script = "trns_transform_KBaseFBA.CSV-to-KBaseFBA.FBAModel.pl";
 
 =head1 NAME
 
@@ -14,7 +14,7 @@ $script
 
 =head1 SYNOPSIS
 
-$script --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
+$script --input/-i <Input CSV File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
 
 =head1 DESCRIPTION
 
@@ -22,7 +22,7 @@ Transform a CSV file into an object in the workspace.
 
 =head1 COMMAND-LINE OPTIONS
 $script
-	-s --sbml		name of sbml file with model data
+	-i --input		name of reactions file with model data
 	-c --compounds  csv file with compound data
 	-o --output     id under which KBaseBiochem.Media is to be saved
 	-w --out_ws     workspace where KBaseBiochem.Media is to be saved
@@ -40,7 +40,7 @@ my $Genome    = "Empty";
 my $Biomass   = "";
 my $Help      = 0;
 
-GetOptions("sbml=s"  => \$In_RxnFile,
+GetOptions("input|i=s"  => \$In_RxnFile,
 	   "compounds|c=s"  => \$In_CpdFile,
 	   "output|o=s" => \$Out_Object,
 	   "out_ws|w=s" => \$Out_WS,
@@ -48,8 +48,8 @@ GetOptions("sbml=s"  => \$In_RxnFile,
 	   "biomass|b=s" => \$Biomass,
 	   "help|h"     => \$Help);
 
-if($Help || !$In_RxnFile || !$Out_Object || !$Out_WS){
-    print($0." --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+if($Help || !$In_RxnFile || !$In_CpdFile || !$Out_Object || !$Out_WS){
+    print($0." --input/-i <Input CSV File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
     exit();
 }
 
@@ -58,31 +58,33 @@ my $input = {
 	workspace => $Out_WS,
 	genome_workspace => $Out_WS,
 	genome => $Genome,
-	sbml => "",
+	reactions => [],
+	compounds => [],
 	biomass => $Biomass,
 };
 if ($Genome eq "Empty") {
 	$input->{genome_workspace} = "PlantSEED" ;
 }
-if (!-e $In_RxnFile) {
-	print "Could not find input file:".$In_RxnFile."!\n";
-	exit();
-}
-open(my $fh, "<", $In_RxnFile) || return;
-while (my $line = <$fh>) {
-	$input->{sbml} .= $line;
-}
-close($fh);
 
-if (defined($In_CpdFile) && length($In_CpdFile) > 0) {
-	$input->{compounds} = parse_input_table($In_CpdFile,[
-		["id",1],
-		["charge",0,undef],
-		["formula",0,undef],
-		["name",1],
-		["aliases",0,undef]
-	]);
-}
+$input->{reactions} = parse_input_table($In_RxnFile,[
+	["id",1],
+	["direction",0,"="],
+	["compartment",0,"c"],
+	["gpr",1],
+	["name",0,undef],
+	["enzyme",0,undef],
+	["pathway",0,undef],
+	["reference",0,undef],
+	["equation",0,undef],
+]);
+
+$input->{compounds} = parse_input_table($In_CpdFile,[
+	["id",1],
+	["charge",0,undef],
+	["formula",0,undef],
+	["name",1],
+	["aliases",0,undef]
+]);
 
 my $fba = get_fba_client();
 

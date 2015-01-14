@@ -1,1 +1,1 @@
-pip install requests_toolbelt filemagic
+pip install requests_toolbelt filemagic ftputil

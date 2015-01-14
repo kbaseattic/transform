@@ -3,7 +3,7 @@
   "test_server_url" : "http://127.0.0.1:7778",
   "external_type" : "KBaseGenomes.GBK",
   "kbase_type" : "KBaseGenomes.Genome",
-  "ws_name" : "loader_test",
+  "ws_name" : "load_test",
   "obj_name" : "kbg-gbk-tst",
   "compression" : "zip",
   "max_wait_sec" : "300",

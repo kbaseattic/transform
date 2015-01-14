@@ -1,4 +1,5 @@
 import sys
+import os
 import logging
 import time
 
@@ -24,10 +25,10 @@ def getStderrLogger(name, level=logging.INFO):
     return logger
 
 
-def getShockID(logger,
-               shock_service_url = "https://kbase.us/services/shock-api/",
-               filePath = None,
-               token = None):
+def upload_file_to_shock(logger,
+                         shock_service_url = "https://kbase.us/services/shock-api/",
+                         filePath = None,
+                         token = None):
 
     if token is None:
         raise Exception("Authentication token required!")
@@ -53,10 +54,10 @@ def getShockID(logger,
 
         result = response.json()
 
-        if result['error']:
+        if result['error']:            
             raise Exception(result['error'][0])
         else:
-            return result["data"]    
+            return result["data"]["id"]    
     except:
         dataFile.close()
         raise    

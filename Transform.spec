@@ -145,6 +145,7 @@ module Transform
       type_string kb_type;
       string ws_name;
       string in_id;
+      string comp_method;
       string optional_args; /* json string*/
   } DownloadParam;
   funcdef download(DownloadParam args) returns (list<string> result);

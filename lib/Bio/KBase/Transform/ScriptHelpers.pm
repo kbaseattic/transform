@@ -9,7 +9,8 @@ use Bio::KBase::Auth;
 use Exporter;
 use File::Stream;
 use parent qw(Exporter);
-our @EXPORT_OK = qw( parse_input_table );
+our @EXPORT_OK = qw( parse_input_table genome_to_gto contigs_to_gto );
+use Bio::KBase::workspace::ScriptHelpers qw( get_ws_client workspace workspaceURL parseObjectMeta parseWorkspaceMeta printObjectMeta);
 
 sub parse_input_table {
 	my $filename = shift;
@@ -77,6 +78,49 @@ sub parse_input_table {
 		push(@{$objects},$object);
 	}
 	return $objects;
+}
+
+sub contigs_to_gto {
+	my $contigs = shift;
+	my $inputgenome = shift;
+	if (!defined($inputgenome)) {
+		$inputgenome = {
+			genetic_code => 11,
+			domain => "Bacteria",
+			scientific_name => "Unknown sample"
+		};
+	}
+	for (my $i=0; $i < @{$contigs->{contigs}}; $i++) {
+		push(@{$inputgenome->{contigs}},{
+			dna => $contigs->{contigs}->[$i]->{sequence},
+			id => $contigs->{contigs}->[$i]->{id}
+		});
+	}
+	return $inputgenome;
+}
+
+sub genome_to_gto {
+	my $inputgenome = shift;	
+	if (defined($inputgenome->{contigset_ref}) && $inputgenome->{contigset_ref} =~ m/^([^\/]+)\/([^\/]+)/) {
+		my $ws = get_ws_client();
+		my $contigws = $1;
+		my $contigid = $2;
+		my $input = {};
+		if ($contigws =~ m/^\d+$/) {
+			$input->{wsid} = $contigws;
+		} else {
+			$input->{workspace} = $contigws;
+		}
+		if ($contigid =~ m/^\d+$/) {
+			$input->{objid} = $contigid;
+		} else {
+			$input->{name} = $contigid;
+		}
+		my $objdatas = $ws->get_objects([$input]);
+		$inputgenome = contigs_to_gto($objdatas->[0]->{data},$inputgenome);
+		delete $inputgenome->{contigset_ref};
+	}
+	return $inputgenome;
 }
 
 1;

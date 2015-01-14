@@ -30,6 +30,9 @@ def getHandles(logger,
                handle_ids = None,
                token = None):
     
+    if token is None:
+        raise Exception("Authentication token required!")
+    
     hs = AbstractHandle(url=handle_url, token=token)
     
     handles = list()

@@ -112,42 +112,41 @@ class TransformBase:
         
         # set chunk size to 10MB
         chunkSize = 10 * 2**20
-    
-        
+                
         for sid in src_list:
             surl = "";
             fileName = ""
             fileSize = 0
             # TODO: let's improve shock node detection using actually trying it
             if (sid.startswith('http') or sid.startswith('ftp')) and not (re.search(r'^http[s]?.*/node/[a-fA-F0-9\-]+\?.*', sid)):
-              surl = sid
-              fileName = sid.split('/')[-1].split('#')[0].split('?')[0]
-              #TODO: add file size estimation code here
-              # reset header here with user id and password
-              header = dict()
+                surl = sid
+                fileName = sid.split('/')[-1].split('#')[0].split('?')[0]
+                #TODO: add file size estimation code here
+                # reset header here with user id and password
+                header = dict()
             else:
-              m = re.search(r'^(http[s]?.*/node/[a-fA-F0-9\-]+)\?.*', sid)
-              if m is not None:
-                metadata = requests.get(m.group(1), headers=header, stream=True, verify=self.ssl_verify)
-                md = metadata.json()
-                fileName = md['data']['file']['name']
-                fileSize = md['data']['file']['size']
-                metadata.close()
-                surl = sid;
-              else:
-                metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
-                md = metadata.json()
-                fileName = md['data']['file']['name']
-                fileSize = md['data']['file']['size']
-                metadata.close()
-                surl = "{0}/node/{1}?download_raw".format(self.shock_url, sid)
+                m = re.search(r'^(http[s]?.*/node/[a-fA-F0-9\-]+)\?.*', sid)
+                if m is not None:
+                    metadata = requests.get(m.group(1), headers=header, stream=True, verify=self.ssl_verify)
+                    md = metadata.json()
+                    fileName = md['data']['file']['name']
+                    fileSize = md['data']['file']['size']
+                    metadata.close()
+                    surl = sid;
+                else:
+                    metadata = requests.get("{0}/node/{1}?verbosity=metadata".format(self.shock_url, sid), headers=header, stream=True, verify=self.ssl_verify)
+                    md = metadata.json()
+                    fileName = md['data']['file']['name']
+                    fileSize = md['data']['file']['size']
+                    metadata.close()
+                    surl = "{0}/node/{1}?download_raw".format(self.shock_url, sid)
 
             data = requests.get(surl, headers=header, stream=True, verify=self.ssl_verify)
 
             size = int(data.headers['content-length'])
 
             if(size > 0 and fileSize == 0):
-              fileSize = size
+                fileSize = size
             
             filePath = os.path.join(self.sdir, fileName)
             
@@ -176,6 +175,8 @@ class TransformBase:
 
             # detect url type
             if url.startswith("ftp://"):
+                threshold = 1024
+                
                 # check if file or directory
                 host = url.split("ftp://")[1].split("/")[0]
                 path = url.split("ftp://")[1].split("/", 1)[1]
@@ -219,15 +220,17 @@ class TransformBase:
                         with open(os.path.join(os.path.abspath(dirname), os.path.basename(x)), 'wb') as f:
                             print "Downloading {0}".format(host + x)
                             ftp_connection.retrbinary("RETR {0}".format(x), lambda s: f.write(s), 10 * 2**20)
-                        extract_data(os.path.join(os.path.abspath(dirname), os.path.basename(x)))
+                        self.extract_data(os.path.join(os.path.abspath(dirname), os.path.basename(x)))
                 else:
                     with open(os.path.join(self.sdir, os.path.split(path)[-1]), 'wb') as f:
                         print "Downloading {0}".format(url)
                         ftp_connection.retrbinary("RETR {0}".format(path), lambda s: f.write(s), 10 * 2**20)  
-                    extract_data(os.path.join(self.sdir, os.path.split(path)[-1]))
+                    self.extract_data(os.path.join(self.sdir, os.path.split(path)[-1]))
             
                 ftp_connection.close()            
             elif url.startswith("http://"):
+                
+            
                 print "Downloading {0}".format(url)
                 # check if shock
                 data = requests.get(url, stream=True)
@@ -266,6 +269,25 @@ class TransformBase:
             
         
     def extract_data(self, filePath, chunkSize=10 * 2**20):
+        def extract_tar(tarPath):
+            if not tarfile.is_tarfile(tarPath):
+                raise Exception("Inavalid tar file " + tarPath)
+        
+            with tarfile.open(tarPath, 'r') as tarDataFile:
+                memberlist = tarDataFile.getmembers()
+            
+                for member in memberlist:
+                    memberPath = os.path.join(os.path.dirname(os.path.abspath(tarPath)),os.path.basename(os.path.abspath(member.name)))
+            
+                    if member.isfile():
+                        print "\t\tExtracting {0:f} MB from {1} in {2}".format(int(member.size)/float(1024*1024),memberPath,tarPath)
+                        with open(memberPath, 'wb') as f:
+                            inputFile = tarDataFile.extractfile(member.name)
+                            f.write(inputFile.read(chunkSize))
+        
+            os.remove(tarPath)
+        
+
         mimeType = None    
         with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
             mimeType = m.id_filename(filePath)
@@ -273,23 +295,44 @@ class TransformBase:
         print "Extracting {0} as {1}".format(filePath, mimeType)
 
         if mimeType == "application/x-gzip":
-            with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+            outFile = os.path.splitext(filePath)[0]
+
+            with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(outFile, 'wb') as f:
                 for chunk in gzipDataFile:
-                    f.write(gzipDataFile.read(chunkSize))
+                    f.write(chunk)
             
             os.remove(filePath)
+            outPath = os.path.dirname(filePath)
+
+            # check for tar        
+            with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
+                mimeType = m.id_filename(outFile)
+
+            if mimeType == "application/x-tar":
+                print "Extracting {0} as tar".format(outFile)
+                extract_tar(os.path.dirname(outFile))
         elif mimeType == "application/x-bzip2":
-            with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
+            outFile = os.path.splitext(filePath)[0]
+
+            with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(outFile, 'wb') as f:
                 for chunk in bz2DataFile:
-                    f.write(bz2DataFile.read(chunkSize))
+                    f.write(chunk)
             
             os.remove(filePath)
+            outPath = os.path.dirname(filePath)
+
+            # check for tar        
+            with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
+                mimeType = m.id_filename(outFile)
+
+            if mimeType == "application/x-tar":
+                print "Extracting {0} as tar".format(outFile)
+                extract_tar(os.path.dirname(outFile))
         elif mimeType == "application/zip":
             if not zipfile.is_zipfile(filePath):
                 raise Exception("Invalid zip file!")                
-            
-            outPath = os.path.abspath("{0}/{1}".format(os.path.dirname(filePath), datetime.datetime.now().isoformat()))
-            os.mkdir(outPath)
+
+            outPath = os.path.dirname(filePath)
             
             with zipfile.ZipFile(filePath, 'r') as zipDataFile:
                 bad = zipDataFile.testzip()
@@ -301,15 +344,12 @@ class TransformBase:
             
                 # perform sanity check on file names, extract each file individually
                 for x in infolist:
-                    if os.path.abspath(x.filename).startswith(os.sep):
-                        raise Exception("Invalid path for contents of zip file : {0}".format(x.filename))
+                    infoPath = os.path.join(outPath, os.path.basename(os.path.abspath(x.filename)))
                     
-                    if os.path.exists(os.path.dirname(x.filename)):
-                        os.makedirs(os.path.dirname(x.filename))
+                    if not os.path.exists(os.path.dirname(x.filename)):
+                        os.makedirs(infoPath)                    
                     
-                    infoPath = os.path.join(outPath, os.path.abspath(x.filename))
-                    
-                    if os.path.exists(infoPath):
+                    if os.path.exists(os.path.join(infoPath,os.path.split(x.filename)[-1])):
                         raise Exception("Extracting zip contents will overwrite an existing file!")
                     
                     with open(infoPath, 'wb') as f:
@@ -320,19 +360,21 @@ class TransformBase:
             if not tarfile.is_tarfile(filePath):
                 raise Exception("Inavalid tar file " + filePath)
 
-            outPath = os.path.abspath("{0}/{1}".format(filePath, datetime.datetime.now().isoformat()))
-            os.mkdir(outPath)
+            outPath = os.path.dirname(filePath)
         
             with tarfile.open(filePath, 'r|*') as tarDataFile:
                 memberlist = tarDataFile.getmembers()
     
                 # perform sanity check on file names, extract each file individually
                 for member in memberlist:
-                    if os.path.abspath(x.filename).startswith(os.sep):
-                        raise Exception("Invalid path for contents of zip file : {0}".format(x.filename))
-                    
                     memberPath = os.path.join(outPath, os.path.basename(os.path.abspath(member.name)))
-    
+
+                    if os.path.exists(os.path.dirname(infoPath)):
+                        os.makedirs(infoPath)                    
+
+                    if os.path.exists(os.path.join(infoPath,os.path.split(member.name)[-1])):
+                        raise Exception("Extracting tar contents will overwrite an existing file!")
+                    
                     if member.isfile():
                         with open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
                             f.write(inputFile.read(chunkSize))
@@ -378,7 +420,7 @@ class Validator(TransformBase):
           if 'validator' in self.opt_args:
             opt_args = self.opt_args['validator']
             for k in opt_args:
-              if k in self.config['validator'][etype]['opt_args'] and opt_args[k] is not None:
+              if k in self.config['validator'][self.etype]['opt_args'] and opt_args[k] is not None:
                 vcmd_lst.append(self.config['validator'][self.etype]['opt_args'][k])
                 vcmd_lst.append(opt_args[k])
                

@@ -33,25 +33,25 @@ def convert(shock_url, shock_id, handle_url, handle_id, input_filename, output_f
 
     if logger is None:
         logger = script_utils.getStderrLogger(__file__)
-    
+
     logger.info("Starting conversion of FASTA to KBaseAssembly.PairedEndLibrary.")
 
     token = os.environ.get('KB_AUTH_TOKEN')
-    
+
     logger.info("Gathering information.")
-    handles = script_utils.getHandles(logger, shock_url, handle_url, shock_id, handle_id,token)   
-    
+    handles = script_utils.getHandles(logger, shock_url, handle_url, shock_id, handle_id,token)
+
     assert len(handles) != 0
-    if len(handles) == 2:    
+    if len(handles) == 2:
     	objectString = json.dumps({"handle_1" : handles[0],"handle_2": handles[1]}, sort_keys=True, indent=4)
     else:
 	objectString = json.dumps({"handle_1" : handles[0]},sort_keys=True, indent=4)
-    
+
     return objectString
 
 # called only if script is run from command line
-if __name__ == "__main__":	
-    parser = argparse.ArgumentParser(prog='trns_transform_KBaseAssembly.FA-to-KBaseAssembly.PairedEndLibrary', 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog='trns_transform_KBaseAssembly.FA-to-KBaseAssembly.PairedEndLibrary',
                                      description='Converts FASTA file to KBaseAssembly.PairedEndLibrary json string.',
                                      epilog='Authors: Matt Henderson')
     ret_json = None
@@ -67,31 +67,30 @@ if __name__ == "__main__":
     data_id = parser.add_mutually_exclusive_group(required=True)
     data_id.add_argument('-i', '--shock_ids', help='Paired End Shock node ids (comma seperated)', action='store', type=str, nargs='*')
     data_id.add_argument('-d','--handle_ids', help ='Handle id', action= 'store', type=str, nargs='?')
-    
+
     args = parser.parse_args()
 
     logger = script_utils.getStderrLogger(__file__)
     #snids = data_id.inobj_id.split(',')
     logger.info("data passed {0}\n{0}\n{0}".format(args.shock_ids,args.handle_ids,args.input_filenames))
     try:
-        	
+
         ret_json =  json.loads(convert(args.shock_url, args.shock_ids, args.handle_url, args.handle_ids, args.input_filenames, args.output_filename,logger=logger))
 	if args.ins_mean is not None:
 		ret_json["insert_size_mean"] = args.ins_mean
 	if args.std_dev is not None:
 		ret_json["insert_size_std_dev"] = args.std_dev
 	if args.inl:
-		ret_json["interleaved"] = 0
+		ret_json["interleaved"] = 1
 	if args.read_orient is not None:
 		ret_json["read_orientation_outward"] = args.read_orient
 	with open(args.output_filename, "w") as outFile:
         	outFile.write(json.dumps(ret_json,sort_keys=True, indent=4))
 
         logger.info("Conversion completed.")
-             
+
     except:
         logger.exception("".join(traceback.format_exc()))
         sys.exit(1)
-    
-    sys.exit(0)
 
+    sys.exit(0)

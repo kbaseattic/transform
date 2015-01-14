@@ -4,7 +4,7 @@
   "external_type" : "KBaseAssembly.FA",
   "kbase_type" : "KBaseAssembly.SingleEndLibrary",
   "ws_name" : "loader_test",
-  "obj_name" : "kbg-sel-tst",
+  "obj_name" : "kbg-fa-sel-tst",
   "compression" : "zip",
   "max_wait_sec" : "300",
   "check_interval" : "3",

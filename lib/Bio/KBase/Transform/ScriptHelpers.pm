@@ -5,13 +5,20 @@ use Data::Dumper;
 use Config::Simple;
 use Getopt::Long::Descriptive;
 use Text::Table;
+use JSON::XS;
 use Bio::KBase::Auth;
 use Exporter;
 use File::Stream;
 use Digest::MD5;
+use File::Slurp;
 use parent qw(Exporter);
-our @EXPORT_OK = qw( parse_input_table genome_to_gto contigs_to_gto );
-use Bio::KBase::workspace::ScriptHelpers qw( get_ws_client workspace workspaceURL parseObjectMeta parseWorkspaceMeta printObjectMeta);
+our @EXPORT_OK = qw(parse_input_table get_input_fh get_output_fh
+		    load_input write_output write_text_output
+		    genome_to_gto contigs_to_gto);
+
+use Bio::KBase::workspace::ScriptHelpers qw(get_ws_client workspace workspaceURL parseObjectMeta
+					    parseWorkspaceMeta printObjectMeta);
+
 
 sub parse_input_table {
 	my $filename = shift;
@@ -79,6 +86,88 @@ sub parse_input_table {
 		push(@{$objects},$object);
 	}
 	return $objects;
+}
+
+sub get_input_fh
+{
+    my($opts) = @_;
+
+    my $fh;
+    if ($opts->{input})
+    {
+	open($fh, "<", $opts->{input}) or die "Cannot open input file $opts->{input} :$!";
+    }
+    else
+    {
+	$fh = \*STDIN;
+     }
+    return $fh;
+}	
+
+sub get_output_fh
+{
+    my($opts) = @_;
+
+    my $fh;
+    if ($opts->{output})
+    {
+	open($fh, ">", $opts->{output}) or die "Cannot open input file $opts->{output} :$!";
+    }
+    else
+    {
+	$fh = \*STDOUT;
+    }
+    return $fh;
+}	
+
+sub load_input
+{
+    my($opts) = @_;
+
+    my $fh;
+    if ($opts->{input})
+    {
+	open($fh, "<", $opts->{input}) or die "Cannot open input file $opts->{input} :$!";
+    }
+    else
+    {
+	$fh = \*STDIN;
+    }
+
+    my $text = read_file($fh);
+    undef $fh;
+    my $obj = decode_json($text);
+    return $obj;
+}
+
+sub write_output
+{
+    my($genome, $opts) = @_;
+
+    my $coder = JSON::XS->new->pretty;
+    my $text = $coder->encode($genome);
+    if ($opts->{output})
+    {
+	write_file($opts->{output}, \$text);
+    }
+    else
+    {
+	write_file(\*STDOUT, \$text);
+    }
+}
+
+sub write_text_output
+{
+    my($text, $opts) = @_;
+
+    if ($opts->{output})
+    {
+	write_file($opts->{output}, \$text);
+    }
+    else
+    {
+	write_file(\*STDOUT, \$text);
+    }
 }
 
 sub contigs_to_gto {
@@ -214,3 +303,4 @@ sub gto_to_genome {
 }
 
 1;
+

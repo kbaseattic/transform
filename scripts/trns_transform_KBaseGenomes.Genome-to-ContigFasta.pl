@@ -2,13 +2,13 @@ use strict;
 
 #
 # BEGIN spec
-# "Genome-to-ContigFasta": {
+# "KBaseGenomes.Genome-to-ContigFasta": {
 #   "cmd_args": {
 #     "input": "-i",
 #     "output": "-o",
 #     "genome_annotation_url": "--url",
 #     },
-#     "cmd_description": "Genome to ContigFasta",
+#     "cmd_description": "KBaseGenomes.Genome to ContigFasta",
 #     "cmd_name": "trns_transform_KBaseGenomes.Genome-to-ContigFasta.pl",
 #     "max_runtime": 3600,
 #     "opt_args": {
@@ -19,13 +19,7 @@ use strict;
 use JSON::XS;
 use Getopt::Long::Descriptive;
 use Bio::KBase::GenomeAnnotation::Client;
-use Bio::KBase::Transform::ScriptHelpers qw(get_input_fh get_output_fh load_input write_output write_text_output);
-
-#
-# Use rast-export-genome to implement the transform. If -i / -o passed on command line
-# these will pass to rast-export-genome to change input / output. Otherwise defaults to
-# stdin / stdout.
-#
+use Bio::KBase::Transform::ScriptHelpers qw(get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
 
 my($opt, $usage) = describe_options("%c %o",
 				    ['input|i=s', 'file from which the input is to be read'],
@@ -34,8 +28,7 @@ my($opt, $usage) = describe_options("%c %o",
 				    );
 
 my $genome = load_input($opt);
-
-
+$genome = genome_to_gto($genome);
 
 my $client = Bio::KBase::GenomeAnnotation::Client->new($opt->url);
 

@@ -196,6 +196,10 @@ if ($mode eq "client") {
         	my $token = `cat ~/.kbase_config | grep '^token' | sed "s/^token=//"`;
 		chomp $token;
 		$ENV{KB_AUTH_TOKEN} = $token ;
+		if (!($token =~ m/^un=/)) {
+			print STDERR "CRITICAL: Need KB_AUTH_TOKEN for hndlr testing\n";
+			print STDERR "		Please do `kbase-login kb_username` first\n";
+		}
 	}
 
 	open JCFG, "$job_config_fn" or die "Could not open \[$job_config_fn\]\n";

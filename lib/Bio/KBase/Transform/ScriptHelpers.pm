@@ -84,7 +84,7 @@ sub parse_input_table {
 }
 
 sub parse_excel {
-    my $In_File = shift;
+    my $filename = shift;
     my $columns = shift;
 
     if(!$filename || !-f $filename){
@@ -121,64 +121,33 @@ sub parse_excel {
 	}
     }
 
+    $filename =~ s/\.xlsx?//;
+
     my $sheets = {};
     foreach my $sheet (@worksheets){
-	
-	#Headers
-	my $headings=[];
-	foreach my $col ($sheet->{MinCol}..$sheet->{MaxCol}) {
-	    my $cell = $sheet->{Cells}[$sheet->{MinRow}][$col];
-	    push(@{$headings},$cell->{Val});
-	}
-
-	my $headingColums;
-	for (my $i=0;$i < @{$headings}; $i++) {
-		$headingColums->{$headings->[$i]} = $i;
-	}
-	my $error = 0;
-	for (my $j=0;$j < @{$columns}; $j++) {
-		if (!defined($headingColums->{$columns->[$j]->[0]}) && defined($columns->[$j]->[1]) && $columns->[$j]->[1] == 1) {
-			$error = 1;
-			print "Model file missing required column '".$columns->[$j]->[0]."'!\n";
-		}
-	}
-	exit() if $error;
-
-	#Data
-	$sheet->{MinRow}+=1;
-	my $data = [];
+	my $File="";
+	my $Filename = $filename;
 	foreach my $row ($sheet->{MinRow}..$sheet->{MaxRow}){
-	    my $row = [];
+	    my $rowData = [];
 	    foreach my $col ($sheet->{MinCol}..$sheet->{MaxCol}) {
-		my $cell = $sheet->{Cells}[$sheet->{$row}][$col];
-		push(@{$row},$cell->{Val});
+		my $cell = $sheet->{Cells}[$row][$col];
+		if(!$cell || !defined($cell->{Val})){
+		    push(@{$rowData},"");
+		}else{
+		    push(@{$rowData},$cell->{Val});
+		}
 	    }
-	    push(@{$data},$row);
+	    $File .= join("\t",@$rowData)."\n";
 	}
 
-	my $objects = [];
-	foreach my $item (@{$data}) {
-	    my $object = [];
-	    for (my $j=0;$j < @{$columns}; $j++) {
-		$object->[$j] = undef;
-		if (defined($columns->[$j]->[2])) {
-		    $object->[$j] = $columns->[$j]->[2];
-		}
-		if (defined($headingColums->{$columns->[$j]->[0]}) && defined($item->[$headingColums->{$columns->[$j]->[0]}])) {
-		    $object->[$j] = $item->[$headingColums->{$columns->[$j]->[0]}];
-		}
-		if (defined($columns->[$j]->[3])) {
-		    if (defined($object->[$j]) && length($object->[$j]) > 0) {
-			my $d = $columns->[$j]->[3];
-			$object->[$j] = [split(/$d/,$object->[$j])];
-		    } else {
-			$object->[$j] = [];
-		    }
-		}
-	    }
-	    push(@{$objects},$object);
-	}
-	$sheets->{$sheet->{Name}}=$objects;
+	$Filename.="_".$sheet->{Name};
+	$Filename.="_".join("",localtime()).".txt";
+
+	open(OUT, "> $Filename");
+	print OUT $File;
+	close(OUT);
+
+	$sheets->{$sheet->{Name}}=$Filename;
     }
     return $sheets;
 }

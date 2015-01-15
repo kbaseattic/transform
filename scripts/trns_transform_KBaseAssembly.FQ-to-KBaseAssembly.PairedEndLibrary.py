@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# This code is part of KBase project to validate 
+# This code is part of KBase project to validate
 #the fastq and fasta files
 
 import math
@@ -22,8 +22,8 @@ desc1 = '''
 NAME
       trns_Convert_fastq -- Converts the Fasta and Fastq files to KBaseAssembly.SingleEndLibrary KBaseAssembly.PairedEndLibrary (1.0)
 
-SYNOPSIS      
-      
+SYNOPSIS
+
 '''
 
 desc2 = '''
@@ -57,7 +57,7 @@ def main(argv):
     parser.add_argument('-d','--hids', help = 'Two handle ids (comma separated)', action= 'store', dest='hid',default=None,required=False)
     parser.add_argument('-m','--ins_mean', help = 'Mean insert size', action= 'store', dest='ins_mean',type=float,default=None)
     parser.add_argument('-k','--std_dev', help = 'Standard deviation', action= 'store', dest='std_dev',type=float,default=None)
-    parser.add_argument('-l','--inl', help = 'Interleaved  -- true/false', action= 'store', dest='inl',default=None)
+    parser.add_argument('-l','--inl', help = 'Interleaved  -- true/false', action= 'store_true', dest='inl',default=None)
     parser.add_argument('-r','--r_ori', help = 'Read Orientation -- true/false', action= 'store', dest='read_orient',default=None)
     parser.add_argument('-o', '--out_file_name', help='Output file name', action='store', dest='out_fn', default=None, required=True)
     usage = parser.format_usage()
@@ -70,7 +70,7 @@ def main(argv):
       print >> sys.stderr, "Need to provide either shock node ids or handle ids"
       exit(1)
 
-    kb_token = os.environ.get('KB_AUTH_TOKEN')	
+    kb_token = os.environ.get('KB_AUTH_TOKEN')
     hs = AbstractHandle(url=args.hndl_url, token = kb_token)
 
     hids = []
@@ -89,7 +89,7 @@ def main(argv):
           e,v = sys.exc_info()[:2]
           print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered : {} -- {}".format(snids[0], str(e), str(v))
           exit(3)
-         
+
       try:
         hids.append(hs.persist_handle({ "id" : snids[1] , "type" : "shock" , "url" : args.shock_url}))
       except:
@@ -105,9 +105,9 @@ def main(argv):
       if len(hids) != 2:
         print >> sys.stderr, "Please provide two handle ids for pairend library"
         exit(5)
-    
+
     hds = hs.hids_to_handles(hids)
-    if len(hds) != 2: 
+    if len(hds) != 2:
       print >> sys.stderr, 'Could not register a new handle with shock node id {} or wrong input handle id'.format(args.inobj_id)
       exit(2)
     ret = {"handle_1" : hds[0], "handle_2" :  hds[1]}
@@ -115,10 +115,10 @@ def main(argv):
     	ret["insert_size_mean"] = args.ins_mean
     if args.std_dev is not None:
     	ret["insert_size_std_dev"] = args.std_dev
-    if args.inl == 'true':
-    	ret["interleaved"] = 0
-    if args.read_orient == 'true':
-    	 ret["read_orientation_outward"] = 0	
+    if args.inl:
+    	ret["interleaved"] = 1
+    if args.read_orient is not None:
+        ret["read_orientation_outward"] = args.read_orient
 
     of = open(args.out_fn, "w")
     of.write(to_JSON(ret))
@@ -127,4 +127,3 @@ def main(argv):
 if __name__ == "__main__" :
     main(sys.argv[1:])
 exit(0);
-

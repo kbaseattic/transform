@@ -102,6 +102,7 @@ public class ConvertGBK {
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
 
         Genome genome = (Genome) ar.get(2);
+        genome.setAdditionalProperties("SOURCE","KBASE_USER_UPLOAD");
         final String outpath = genome.getId() + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
@@ -129,7 +130,7 @@ public class ConvertGBK {
         List<Contig> contigs = contigSet.getContigs();
         ArrayList md5s = new ArrayList();
         for (int j = 0; j < contigs.size(); j++) {
-            Contig curcontig = (Contig) contigs.get(j);
+            Contig curcontig = contigs.get(j);
             final String md5 = MD5(curcontig.getSequence().toUpperCase());
             md5s.add(md5);
             curcontig.setMd5(md5);
@@ -144,6 +145,8 @@ public class ConvertGBK {
             out.append(o.toString());
             out.append(",");
         }
+        out.deleteCharAt(out.length() - 1);
+
         String globalmd5 = out.toString();
 
         genome.setMd5(globalmd5);

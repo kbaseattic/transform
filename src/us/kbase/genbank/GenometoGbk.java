@@ -133,7 +133,8 @@ public class GenometoGbk {
 
             //out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
             //out += "            NCBI review. The reference sequence was derived from AE017199.\n";
-            //out += "            COMPLETENESS: full length.\n";
+            out.append(" COMMENT            COMPLETENESS: " + (genome.getComplete() == 1 ? "full length" : "incomplete") + ".\n");
+            out.append("                    Exported from the DOE KnowledgeBase.\n");
 
 
             out.append("FEATURES             Location/Qualifiers\n");

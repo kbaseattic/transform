@@ -10,7 +10,7 @@ use Exporter;
 use File::Stream;
 use Digest::MD5;
 use Spreadsheet::ParseExcel;
-use Spreadsheet::XLSX;
+use Spreadsheet::ParseXLSX;
 use parent qw(Exporter);
 our @EXPORT_OK = qw( parse_input_table parse_excel genome_to_gto contigs_to_gto );
 use Bio::KBase::workspace::ScriptHelpers qw( get_ws_client workspace workspaceURL parseObjectMeta parseWorkspaceMeta printObjectMeta);
@@ -96,33 +96,20 @@ sub parse_excel {
     }
 
     my $excel = '';
-    my @worksheets = ();
     if($filename =~ /\.xlsx$/){
-	eval {
-	    $excel = Spreadsheet::XLSX->new($filename);
-	};
-	if ($@) {
-	    #Logging
-	    #print "Failed Validation\n";
-	    #print "ERROR_MESSAGE\n".$@."END_ERROR_MESSAGE\n";
-	    die($@);
-	}else{
-	    @worksheets = @{$excel->{Worksheet}};
-	}
+	$excel = Spreadsheet::ParseXLSX->new();
     }else{
-	$excel   = Spreadsheet::ParseExcel->new();
-	my $workbook = $excel->parse($filename);
-	if(!defined $workbook){
-	    #logging
-	    #print $parser->error(),".\n";
-	    exit(1);
-	}else{
-	    @worksheets = $workbook->worksheets();
-	}
+	$excel = Spreadsheet::ParseExcel->new();
+    }	
+
+    my $workbook = $excel->parse($filename);
+    if(!defined $workbook){
+	die("Unable to parse $filename\n");
     }
 
     $filename =~ s/\.xlsx?//;
 
+    my @worksheets = $workbook->worksheets();
     my $sheets = {};
     foreach my $sheet (@worksheets){
 	my $File="";

@@ -1,0 +1,16 @@
+{
+    "check_interval": "3", 
+    "expected_result": "1", 
+    "external_type": "KBaseGenomes.GBK", 
+    "input_data_url": [
+        "ftp://ftp.ensemblgenomes.org/pub/release-25/plants/genbank/zea_mays/Zea_mays.AGPv3.25.chromosome.7.dat.gz"
+    ], 
+    "kbase_type": "KBaseGenomes.Genome", 
+    "max_wait_sec": "300", 
+    "obj_name": "maize_genome_one_chromosome_Fei", 
+    "optional_args": "{}", 
+    "skip_server_test": "true", 
+    "test_name": "upload success test from MOL GBK to KB WS Genome - randomized test for MOL tax id = 10847", 
+    "test_server_url": "http://140.221.67.242:7778", 
+    "ws_name": "load_test"
+}

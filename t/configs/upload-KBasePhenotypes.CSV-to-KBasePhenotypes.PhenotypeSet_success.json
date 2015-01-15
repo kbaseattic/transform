@@ -1,0 +1,14 @@
+{
+  "test_name" : "Success case test for uploading KBasePhenotypes.CSV to KBasePhenotypes.PhenotypeSet", 
+  "test_server_url" : "http://127.0.0.1:7778",
+  "input_data_url" : ["https://kbase.us/services/shock-api/node/f5da41d2-cd62-4bff-a525-79fcaf39e479"],
+  "external_type" : "KBasePhenotypes.CSV",
+  "kbase_type" : "KBasePhenotypes.PhenotypeSet",
+  "ws_name" : "load_test",
+  "obj_name" : "pheno-tst",
+  "max_wait_sec" : "300",
+  "check_interval" : "3",
+  "optional_args" : "{}",
+  "expected_result" : "1",
+  "skip_server_test" : "true"
+}

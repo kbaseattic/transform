@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # standard library imports
+from __future__ import print_function
 import os
 import sys
 import traceback
@@ -13,6 +14,16 @@ import hashlib
 # KBase imports
 import biokbase.Transform.script_utils as script_utils
 from biokbase.workspace.client import Workspace
+import requests
+
+__VERSION__ = '0.0.1'
+
+# on the prod ws, this is 3.0
+CS_MD5_TYPE = 'KBaseGenomes.ContigSet-db7f518c9469d166a783d813c15d64e9'
+
+SCRIPT_NAME = 'trns_transform_KBaseFile_AssemblyFile_to_KBaseGenomes_ContigSet'
+
+TOKEN = os.environ.get('KB_AUTH_TOKEN')
 
 
 # TODO this is almost entirely duplicated in Jason's fasta->CS script. Move?
@@ -53,7 +64,6 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
         logger = script_utils.getStderrLogger(__file__)
 
     logger.info("Starting conversion of FASTA to KBaseGenomes.ContigSet")
-    token = os.environ.get('KB_AUTH_TOKEN')
 
     logger.info("Building Object.")
 
@@ -61,10 +71,10 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
         raise Exception("The input file name {0} does not exist".format(
             input_file_name))
 
-    if not os.path.isdir(args.working_directory):
-        raise Exception(
-            "The working directory does not exist {0} does not exist".format(
-                working_directory))
+#     if not os.path.isdir(working_directory):
+#         raise Exception(
+#             "The working directory does not exist {0} does not exist".format(
+#                 working_directory))
 
     # default if not too large
     contig_set_has_sequences = True
@@ -165,9 +175,6 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
     contig_set_dict["contigs"] = [fasta_dict[x] for x in sorted(
         fasta_dict.keys())]
 
-    if shock_id is None:
-        shock_id = script_utils.upload_file_to_shock(logger, shock_service_url,
-                                                     input_file_name, token)
     contig_set_dict["fasta_ref"] = shock_id
 
     # For future development if the type is updated to the handle_reference
@@ -182,43 +189,80 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
 #     with open(output_file, "w") as outFile:
 #         outFile.write(objectString)
 #
-#     logger.info("Conversion completed.")
+    logger.info("Conversion completed.")
+    return contig_set_dict
 
 
-# called only if script is run from command line
-if __name__ == "__main__":
+def download_workspace_data(ws_url, source_ws, source_obj, working_dir):
+    ws = Workspace(ws_url, token=TOKEN)
+    objdata = ws.get_objects([{'ref': source_ws + '/' + source_obj}])[0]
+    if objdata['info'][2].split('-')[0] != 'KBaseFile.AssemblyFile':
+        raise ValueError(
+            'This method only works on the KBaseFile.AssemblyFile type')
+    shock_url = objdata['data']['assembly_file']['file']['url']
+    shock_id = objdata['data']['assembly_file']['file']['id']
+    info = objdata['info']
+    ref = str(info[6]) + '/' + str(info[0]) + '/' + str(info[4])
+    outfile = os.path.join(working_dir, source_obj)
+
+    shock_node = shock_url + '/node/' + shock_id + '/?download'
+    headers = {'Authorization': 'OAuth ' + TOKEN}
+    with open(outfile, 'w') as f:
+        response = requests.get(shock_node, stream=True, headers=headers)
+        if not response.ok:
+            response.raise_for_status()
+        for block in response.iter_content(1024):
+            if not block:
+                break
+            f.write(block)
+
+    return shock_url, shock_id, ref
+
+
+def upload_workspace_data(cs, ws_url, source_ref, target_ws, obj_name):
+    ws = Workspace(ws_url, token=TOKEN)
+    type_ = ws.translate_from_MD5_types([CS_MD5_TYPE])[CS_MD5_TYPE][0]
+    ws.save_objects(
+        {'workspace': target_ws,
+         'objects': [{'name': obj_name,
+                      'type': type_,
+                      'data': cs,
+                      'provenance': [{'script': SCRIPT_NAME,
+                                      'script_ver': __VERSION__,
+                                      'input_ws_objects': [source_ref],
+                                      }]
+                      }
+                     ]
+         }
+    )
+
+
+def main():
     parser = argparse.ArgumentParser(
-        prog='trns_transform_KBaseFile_AssemblyFile_to_KBaseGenomes_ContigSet',
-        description='Converts FASTA file of assembled DNA sequences to a ' +
-        'KBaseGenomes.ContigSet json string.',
+        prog=SCRIPT_NAME,
+        description='Converts KBaseFile.AssemblyFile to  ' +
+        'KBaseGenomes.ContigSet.',
         epilog='Authors: Jason Baumohl, Matt Henderson, Gavin Price')
     # The following 7 arguments should be standard to all uploaders
-    parser.add_argument('--shock_service_url', help='Shock url',
-                        action='store', type=str, nargs='?', required=True)
-    parser.add_argument('--handle_service_url', help='Handle service url',
-                        action='store', type=str, nargs='?', required=False)
-    parser.add_argument('--input_file_name', help='Input Fasta file name',
-                        action='store', type=str, nargs='?', required=True)
     parser.add_argument(
         '--working_directory',
-        help='Directory the output file(s) should be written into',
-        action='store', type=str, nargs='?', required=True)
-    parser.add_argument(
-        '--output_file_name',
-        help='Output file name for the json representation of the ' +
-        'ContigSet.  If the output file name is not specified the name ' +
-        'will default to the name of the input file appended with' +
-        '"_contig_set"', action='store', type=str, nargs='?', required=False)
-    parser.add_argument(
-        '--shock_id',
-        help='Shock node id if the fasta file already exists in shock',
-        action='store', type=str, nargs='?', required=False)
-    parser.add_argument(
-        '--handle_id',
-        help='Handle id if the fasta file exists as a handle',
-        action='store', type=str, nargs='?', required=False)
+        help='Directory for temporary files',
+        action='store', type=str, required=True)
 
     # Example of a custom argument specific to this uploader
+    parser.add_argument('--workspace_url', help='workspace service url',
+                        action='store', type=str, required=True)
+    parser.add_argument(
+        '--source_workspace_name', help='name of the source workspace',
+        action='store', type=str, required=True)
+    parser.add_argument(
+        '--target_workspace_name', help='name of the target workspace',
+        action='store', type=str, required=True)
+    parser.add_argument(
+        '--source_workspace_object_name',
+        help='name of the workspace object to convert',
+        action='store', type=str, required=True)
+
     parser.add_argument(
         '--fasta_reference_only',
         help='Creates a reference to the fasta file in Shock, but does not ' +
@@ -228,25 +272,30 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    output_file_name = None
-    if (args.output_file_name):
-        output_file_name = args.output_file_name
-    else:
-        # default to input file name minus file extension adding "_contig_set"
-        # to the end
-        base = os.path.basename(args.input_file_name)
-        output_file_name = "{0}_contig_set".format(os.path.splitext(base)[0])
+    contig_set_id = args.source_workspace_object_name + '_contig_set'
 
     logger = script_utils.getStderrLogger(__file__)
     try:
-        convert_to_contigs(args.shock_service_url, args.handle_service_url,
-                           args.input_file_name, output_file_name,
-                           args.working_directory, args.shock_id,
-                           args.handle_id, args.fasta_reference_only,
-                           logger=logger)
+        shock_url, shock_id, ref = download_workspace_data(
+            args.workspace_url,
+            args.source_workspace_name,
+            args.source_workspace_object_name,
+            args.working_directory)
+        inputfile = os.path.join(args.working_directory,
+                                 args.source_workspace_object_name)
+        cs = convert_to_contigs(
+            None, None, inputfile,
+            contig_set_id, args.working_directory, shock_id, None,
+            args.fasta_reference_only, logger=logger)
+        upload_workspace_data(
+            cs, args.workspace_url, ref,
+            args.target_workspace_name, contig_set_id)
     except:
         logger.exception("".join(traceback.format_exc()))
-        print "".join(traceback.format_exc())
+        print("".join(traceback.format_exc()))
         sys.exit(1)
 
     sys.exit(0)
+
+if __name__ == '__main__':
+    main()

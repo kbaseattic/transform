@@ -7,7 +7,7 @@ close($temp);
 
 my @url = ("--url", "http://tutorial.theseed.org/services/genome_annotation");
 
-my @cmd = ('trns_transform_KBaseGenomes.Genome-to-FeatureDNA', '-i', 'rhodobacter.gto', '-o', "$temp", @url);
+my @cmd = ('trns_transform_KBaseGenomes.Genome-to-FeatureDNA', '-i', 'rhodobacter.gto', '--from-file', '-o', "$temp", @url);
 my $rc = system(@cmd);
 
 if ($rc != 0)

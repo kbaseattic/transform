@@ -1,13 +1,13 @@
 use strict;
 use File::Temp;
-# test trns_transform_KBaseGenomes.Genome-to-GFF.pl
+# test trns_transform_KBaseGenomes.Genome-to-GBKMerged.pl
 
 my $temp = File::Temp->new();
 close($temp);
 
 my @url = ("--url", "http://tutorial.theseed.org/services/genome_annotation");
 
-my @cmd = ('trns_transform_KBaseGenomes.Genome-to-GFF', '-i', 'rhodobacter.gto', '--from-file', '-o', "$temp", @url);
+my @cmd = ('trns_transform_KBaseGenomes.Genome-to-GBKMerged', '-i', 'Rhodobacter_sphaeroides_2.4.1', '--workspace', 'KBaseExampleData', '-o', "$temp", @url);
 my $rc = system(@cmd);
 
 if ($rc != 0)

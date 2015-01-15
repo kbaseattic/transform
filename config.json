@@ -52,7 +52,7 @@
                 "cmd_name": "trns_transform_KBasePhenotypes.CSV-to-KBasePhenotypes.PhenotypeSet", 
                 "max_runtime": 3600, 
                 "opt_args": {
-                    "ws_name": "-w"
+                    "ws_name": "-w",
                     "genome_id": "-g"
                 }
             }, 
@@ -206,7 +206,7 @@
             }
         }, 
         "uploader": {
-            "KBaseBiochem.CSV-to-KBaseBiochem.Media: {
+            "KBaseBiochem.CSV-to-KBaseBiochem.Media": {
                 "cmd_args": {
                     "dir": "-l", 
                     "outobj_id": "-o", 

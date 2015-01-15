@@ -33,8 +33,7 @@ def convert(shock_service_url, handle_service_url, input_file_name, output_file_
         shock_service_url: A url for the KBase SHOCK service.
         handle_service_url: A url for the KBase Handle Service.
         input_file_name: A file name for the input FASTA data.
-        output_file_name: A file name where the output JSON string should be stored.  If the output file name is not specified the name wil\
-l default to the name of the input file appended with "_contig_set"'
+        output_file_name: A file name where the output JSON string should be stored.  If the output file name is not specified the name will default to the name of the input file appended with "_contig_set"'
         working_directory: The direcotry the resulting json file will be written to.
         shock_id: Shock id for the fasta file if it already exists in shock
         handle_id: Handle id for the fasta file if it already exists as a handle
@@ -166,7 +165,7 @@ if __name__ == "__main__":
                                      description='Converts FASTA file of assembled DNA sequences to a KBaseGenomes.ContigSet json string.',
                                      epilog='Authors: Jason Baumohl, Matt Henderson')
     # The following 7 arguments should be standard to all uploaders
-    parser.add_argument('--shock_service_url', help='Shock url', action='store', type=str, nargs='?', required=True)
+    parser.add_argument('--shock_service_url', help='Shock service url', action='store', type=str, nargs='?', required=True)
     parser.add_argument('--handle_service_url', help='Handle service url', action='store', type=str, nargs='?', required=False)
     parser.add_argument('--input_file_name', help ='Input Fasta file name', action='store', type=str, nargs='?', required=True)
     parser.add_argument('--working_directory', help ='Directory the output file(s) should be written into', action='store', type=str, nargs='?', required=True)

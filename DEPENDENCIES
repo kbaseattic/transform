@@ -5,6 +5,7 @@ workspace_deluxe
 awe_service
 shock_service
 auth
+KBaseFBAModeling
 idserver
 kb_seed
 probabilistic_annotation

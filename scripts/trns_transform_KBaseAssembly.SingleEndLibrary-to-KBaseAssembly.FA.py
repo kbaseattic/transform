@@ -90,17 +90,18 @@ def convert(workspace_url, shock_url, handle_url, workspace_name, object_name, o
 if __name__ == "__main__":	
     parser = argparse.ArgumentParser(prog='trns_transform_KBaseAssembly.SingleEndLibrary-to-KBaseAssembly.FA', 
                                      description='Converts SingleEndLibrary file to fasta file',
-                                     epilog='Authors: Srividya Ramakrishnan')
-    parser.add_argument('-w', '--workspace_url', help='Workspace service url', action='store', type=str, default='http://kbase.us/services/ws', nargs='?')
-    parser.add_argument('-s', '--shock_url', help='Shock url', action='store', type=str, default='https://kbase.us/services/shock-api/', nargs='?')
-    parser.add_argument('-n', '--handle_url', help='Handle service url', action='store', type=str, default='https://kbase.us/services/handle_service/', nargs='?')
-    parser.add_argument('-k','--workspace_name', help ='Workspace Name', action='store', type=str, nargs='?', required=False)
-    parser.add_argument('-f','--object_name', help ='Object Name', action='store', type=str, nargs='?', required=False)
-    parser.add_argument('-o', '--output_filename', help='Output file name', action='store', type=str, nargs='?', required=True)
+                                     epilog='Authors: Srividya Ramakrishnan, Matt Henderson, Jason Baumohl')
+    parser.add_argument('--workspace_service_url', help='Workspace service url', action='store', type=str, default='http://kbase.us/services/ws', nargs='?', required=True)
+    parser.add_argument('--workspace_name', help ='Workspace Name', action='store', type=str, nargs='?', required=True)
+    parser.add_argument('--output_file_name', help='Output file name', action='store', type=str, nargs='?', required=True)
 
-    #data_id = parser.add_mutually_exclusive_group(required=True)
-    #data_id.add_argument('-i', '--shock_id', help='Shock node id', action='store', type=str, nargs='?')
-    #data_id.add_argument('-d','--handle_id', help ='Handle id', action= 'store', type=str, nargs='?')
+    object_info = parser.add_mutually_exclusive_group(required=True)
+    object_info.add_argument('--object_name', help ='Object Name', action='store', type=str, nargs='?')
+    object_info.add_argument('--object_id', help ='Object ID', action='store', type=str, nargs='?')
+
+    data_services = parser.add_mutually_exclusive_group(required=True)
+    data_services.add_argument('--shock_service_url', help='Shock url', action='store', type=str, default='https://kbase.us/services/shock-api/', nargs='?')
+    data_services.add_argument('--handle_service_url', help='Handle service url', action='store', type=str, default='https://kbase.us/services/handle_service/', nargs='?')
 
     args = parser.parse_args()
 

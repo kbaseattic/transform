@@ -8,7 +8,7 @@
   "obj_name" : "pheno-tst",
   "max_wait_sec" : "300",
   "check_interval" : "3",
-  "optional_args" : "{}",
+  "optional_args" : "{\"validator\":{},\"transformer\":{\"ws_name\":\"load_test\",\"genome_id\":\"Genome\" }}",
   "expected_result" : "1",
   "skip_server_test" : "true"
 }

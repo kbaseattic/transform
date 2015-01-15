@@ -162,15 +162,15 @@ l default to the name of the input file appended with "_contig_set"'
 
 # called only if script is run from command line
 if __name__ == "__main__":	
-    parser = argparse.ArgumentParser(prog='trns_transform_Fasta_to_ContigSet', 
-                                     description='Converts FASTA file to ContigSet json string.',
+    parser = argparse.ArgumentParser(prog='trns_transform_FASTA_DNA_Assembly_to_KBaseGenomes_ContigSet', 
+                                     description='Converts FASTA file of assembled DNA sequences to a KBaseGenomes.ContigSet json string.',
                                      epilog='Authors: Jason Baumohl, Matt Henderson')
     # The following 7 arguments should be standard to all uploaders
-    parser.add_argument('--shock_service_url', help='Shock url', action='store', type=str, default='https://kbase.us/services/shock-api/', nargs='?', required=False)
-    parser.add_argument('--handle_service_url', help='Handle service url', action='store', type=str, default='https://kbase.us/services/handle_service/', nargs='?', required=False)
+    parser.add_argument('--shock_service_url', help='Shock url', action='store', type=str, nargs='?', required=True)
+    parser.add_argument('--handle_service_url', help='Handle service url', action='store', type=str, nargs='?', required=False)
     parser.add_argument('--input_file_name', help ='Input Fasta file name', action='store', type=str, nargs='?', required=True)
-    parser.add_argument('--working_directory', help ='Directory the output file(s) should be written into', action='store', type=str, nargs='?', default=".", required=False)
-    parser.add_argument('--output_file_name', help ='Output file name for the json representation of the ContigSet.  If the output file name is not specified the name will default to the name of the input file appended with "_contig_set"', action='store', type=str, nargs='?', required=True)
+    parser.add_argument('--working_directory', help ='Directory the output file(s) should be written into', action='store', type=str, nargs='?', required=True)
+    parser.add_argument('--output_file_name', help ='Output file name for the json representation of the ContigSet.  If the output file name is not specified the name will default to the name of the input file appended with "_contig_set"', action='store', type=str, nargs='?', required=False)
     parser.add_argument('--shock_id', help='Shock node id if the fasta file already exists in shock', action='store', type=str, nargs='?', required=False)
     parser.add_argument('--handle_id', help='Handle id if the fasta file exists as a handle', action='store', type=str, nargs='?', required=False)
 

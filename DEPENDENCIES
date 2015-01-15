@@ -5,3 +5,7 @@ workspace_deluxe
 awe_service
 shock_service
 auth
+idserver
+kb_seed
+probabilistic_annotation
+genome_annotation

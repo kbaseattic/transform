@@ -23,8 +23,8 @@ if(!-f $In_File){
 
 my $sheets = parse_excel($In_File);
 
-if(!(exists($sheets->{Reactions}) && exists($sheets->{Compounds})) && !(exists($sheets->{reactions}) && exists($sheets->{compounds}))){
-    die("$In_File does not contain worksheets for compounds or reactions which should be named 'Compounds', 'Reactions' respectively");
+if(!exists($sheets->{Media}) && !exists($sheets->{media})){
+    die("$In_File does not contain a worksheet for media which should be named 'Media'");
 }
 
 foreach my $sheet (keys %$sheets){

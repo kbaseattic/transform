@@ -11,10 +11,13 @@ use Exporter;
 use File::Stream;
 use Digest::MD5;
 use File::Slurp;
+use Spreadsheet::ParseExcel;
+use Spreadsheet::ParseXLSX;
 use parent qw(Exporter);
 our @EXPORT_OK = qw(parse_input_table get_input_fh get_output_fh
 		    load_input write_output write_text_output
-		    genome_to_gto contigs_to_gto);
+		    genome_to_gto contigs_to_gto
+                    parse_excel);
 
 use Bio::KBase::workspace::ScriptHelpers qw(get_ws_client workspace workspaceURL parseObjectMeta
 					    parseWorkspaceMeta printObjectMeta);
@@ -169,6 +172,61 @@ sub write_text_output
 	write_file(\*STDOUT, \$text);
     }
 }
+sub parse_excel {
+    my $filename = shift;
+    my $columns = shift;
+
+    if(!$filename || !-f $filename){
+	die("Cannot find $filename");
+    }
+
+    if($filename !~ /\.xlsx?$/){
+	die("$filename does not have excel suffix (.xls or .xlsx)");
+    }
+
+    my $excel = '';
+    if($filename =~ /\.xlsx$/){
+	$excel = Spreadsheet::ParseXLSX->new();
+    }else{
+	$excel = Spreadsheet::ParseExcel->new();
+    }	
+
+    my $workbook = $excel->parse($filename);
+    if(!defined $workbook){
+	die("Unable to parse $filename\n");
+    }
+
+    $filename =~ s/\.xlsx?//;
+
+    my @worksheets = $workbook->worksheets();
+    my $sheets = {};
+    foreach my $sheet (@worksheets){
+	my $File="";
+	my $Filename = $filename;
+	foreach my $row ($sheet->{MinRow}..$sheet->{MaxRow}){
+	    my $rowData = [];
+	    foreach my $col ($sheet->{MinCol}..$sheet->{MaxCol}) {
+		my $cell = $sheet->{Cells}[$row][$col];
+		if(!$cell || !defined($cell->{Val})){
+		    push(@{$rowData},"");
+		}else{
+		    push(@{$rowData},$cell->{Val});
+		}
+	    }
+	    $File .= join("\t",@$rowData)."\n";
+	}
+
+	$Filename.="_".$sheet->{Name};
+	$Filename.="_".join("",localtime()).".txt";
+
+	open(OUT, "> $Filename");
+	print OUT $File;
+	close(OUT);
+
+	$sheets->{$sheet->{Name}}=$Filename;
+    }
+    return $sheets;
+}
 
 sub contigs_to_gto {
 	my $contigs = shift;
@@ -303,4 +361,3 @@ sub gto_to_genome {
 }
 
 1;
-

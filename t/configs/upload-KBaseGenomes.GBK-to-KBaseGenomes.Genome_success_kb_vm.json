@@ -1,0 +1,16 @@
+{
+    "check_interval": "3", 
+    "expected_result": "1", 
+    "external_type": "KBaseGenomes.GBK", 
+    "input_data_url": [
+        "http://140.221.67.146/NC_014378.gbk"
+    ], 
+    "kbase_type": "KBaseGenomes.Genome", 
+    "max_wait_sec": "300", 
+    "obj_name": "bacteria_genome_Fei", 
+    "optional_args": "{}", 
+    "skip_server_test": "true", 
+    "test_name": "upload", 
+    "test_server_url": "http://140.221.67.242:7778", 
+    "ws_name": "load_test"
+}

@@ -7,7 +7,7 @@
     ], 
     "kbase_type": "KBaseGenomes.Genome", 
     "max_wait_sec": "300", 
-    "obj_name": "bacteria_genome_Fei", 
+    "obj_name": "bacteria_genome", 
     "optional_args": "{}", 
     "skip_server_test": "true", 
     "test_name": "upload", 

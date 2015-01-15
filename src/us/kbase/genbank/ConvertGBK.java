@@ -11,6 +11,7 @@ import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
 import us.kbase.shock.client.BasicShockClient;
+import us.kbase.shock.client.ShockNode;
 import us.kbase.shock.client.exceptions.InvalidShockUrlException;
 import us.kbase.shock.client.exceptions.ShockHttpException;
 import us.kbase.workspace.*;
@@ -201,12 +202,16 @@ public class ConvertGBK {
 
                     InputStream os = new FileInputStream(new File(outpath2));
                     //upload ContigSet
-                    client.addNode(os, outpath2, "JSON");
+                    ShockNode contignode = client.addNode(os, outpath2, "JSON");
+
+                    genome.setContigsetRef(contignode.getId().getId());
 
                     //upload input GenBank files
+                    /*TODO enable support for fasta_ref in Genome object*/
                     for (File f : gbkFiles) {
                         os = new FileInputStream(f);
-                        client.addNode(os, f.getName(), "TXT");
+                        ShockNode sn = client.addNode(os, f.getName(), "TXT");
+                        //genome.setFastaRef(sn.getId().getId());
                     }
 
                     os.close();

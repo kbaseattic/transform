@@ -9,8 +9,10 @@ use Bio::KBase::Auth;
 use Exporter;
 use File::Stream;
 use Digest::MD5;
+use Spreadsheet::ParseExcel;
+use Spreadsheet::XLSX;
 use parent qw(Exporter);
-our @EXPORT_OK = qw( parse_input_table genome_to_gto contigs_to_gto );
+our @EXPORT_OK = qw( parse_input_table parse_excel genome_to_gto contigs_to_gto );
 use Bio::KBase::workspace::ScriptHelpers qw( get_ws_client workspace workspaceURL parseObjectMeta parseWorkspaceMeta printObjectMeta);
 
 sub parse_input_table {
@@ -79,6 +81,106 @@ sub parse_input_table {
 		push(@{$objects},$object);
 	}
 	return $objects;
+}
+
+sub parse_excel {
+    my $In_File = shift;
+    my $columns = shift;
+
+    if(!$filename || !-f $filename){
+	die("Cannot find $filename");
+    }
+
+    if($filename !~ /\.xlsx?$/){
+	die("$filename does not have excel suffix (.xls or .xlsx)");
+    }
+
+    my $excel = '';
+    my @worksheets = ();
+    if($filename =~ /\.xlsx$/){
+	eval {
+	    $excel = Spreadsheet::XLSX->new($filename);
+	};
+	if ($@) {
+	    #Logging
+	    #print "Failed Validation\n";
+	    #print "ERROR_MESSAGE\n".$@."END_ERROR_MESSAGE\n";
+	    die($@);
+	}else{
+	    @worksheets = @{$excel->{Worksheet}};
+	}
+    }else{
+	$excel   = Spreadsheet::ParseExcel->new();
+	my $workbook = $excel->parse($filename);
+	if(!defined $workbook){
+	    #logging
+	    #print $parser->error(),".\n";
+	    exit(1);
+	}else{
+	    @worksheets = $workbook->worksheets();
+	}
+    }
+
+    my $sheets = {};
+    foreach my $sheet (@worksheets){
+	
+	#Headers
+	my $headings=[];
+	foreach my $col ($sheet->{MinCol}..$sheet->{MaxCol}) {
+	    my $cell = $sheet->{Cells}[$sheet->{MinRow}][$col];
+	    push(@{$headings},$cell->{Val});
+	}
+
+	my $headingColums;
+	for (my $i=0;$i < @{$headings}; $i++) {
+		$headingColums->{$headings->[$i]} = $i;
+	}
+	my $error = 0;
+	for (my $j=0;$j < @{$columns}; $j++) {
+		if (!defined($headingColums->{$columns->[$j]->[0]}) && defined($columns->[$j]->[1]) && $columns->[$j]->[1] == 1) {
+			$error = 1;
+			print "Model file missing required column '".$columns->[$j]->[0]."'!\n";
+		}
+	}
+	exit() if $error;
+
+	#Data
+	$sheet->{MinRow}+=1;
+	my $data = [];
+	foreach my $row ($sheet->{MinRow}..$sheet->{MaxRow}){
+	    my $row = [];
+	    foreach my $col ($sheet->{MinCol}..$sheet->{MaxCol}) {
+		my $cell = $sheet->{Cells}[$sheet->{$row}][$col];
+		push(@{$row},$cell->{Val});
+	    }
+	    push(@{$data},$row);
+	}
+
+	my $objects = [];
+	foreach my $item (@{$data}) {
+	    my $object = [];
+	    for (my $j=0;$j < @{$columns}; $j++) {
+		$object->[$j] = undef;
+		if (defined($columns->[$j]->[2])) {
+		    $object->[$j] = $columns->[$j]->[2];
+		}
+		if (defined($headingColums->{$columns->[$j]->[0]}) && defined($item->[$headingColums->{$columns->[$j]->[0]}])) {
+		    $object->[$j] = $item->[$headingColums->{$columns->[$j]->[0]}];
+		}
+		if (defined($columns->[$j]->[3])) {
+		    if (defined($object->[$j]) && length($object->[$j]) > 0) {
+			my $d = $columns->[$j]->[3];
+			$object->[$j] = [split(/$d/,$object->[$j])];
+		    } else {
+			$object->[$j] = [];
+		    }
+		}
+	    }
+	    push(@{$objects},$object);
+	}
+	$sheets->{$sheet->{Name}}=$objects;
+    }
+    return $sheets;
 }
 
 sub contigs_to_gto {

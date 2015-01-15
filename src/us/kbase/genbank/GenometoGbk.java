@@ -1,15 +1,28 @@
 package us.kbase.genbank;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import us.kbase.auth.AuthException;
+import us.kbase.auth.AuthService;
+import us.kbase.auth.AuthToken;
+import us.kbase.auth.AuthUser;
+import us.kbase.common.service.JsonClientException;
 import us.kbase.common.service.Tuple4;
 import us.kbase.common.service.UObject;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Feature;
 import us.kbase.kbasegenomes.Genome;
+import us.kbase.shock.client.BasicShockClient;
+import us.kbase.shock.client.ShockNodeId;
+import us.kbase.shock.client.exceptions.InvalidShockUrlException;
+import us.kbase.shock.client.exceptions.ShockHttpException;
+import us.kbase.workspace.ObjectData;
+import us.kbase.workspace.ObjectIdentity;
+import us.kbase.workspace.WorkspaceClient;
 
-import java.io.File;
-import java.io.PrintWriter;
+import java.io.*;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,18 +45,23 @@ public class GenometoGbk {
     final static String molecule_type_short = "DNA";
     final static String molecule_type_long = "genome DNA";
 
+
+    String wsurl = "http://blah.blah/";
+    static String shockurl = "https://kbase.us/services/shock-api/";
+
     /**
      * @param args
      * @throws Exception
      */
     public GenometoGbk(String[] args) throws Exception {
 
-        /*TODO get object with references and handles from WS */
         ObjectMapper mapper = UObject.getMapper();//new ObjectMapper();
-        File loadGenome = new File(args[0]);
-        File loadContigs = new File(args[1]);
-        genome = mapper.readValue(loadGenome, Genome.class);
-        contigSet = mapper.readValue(loadContigs, ContigSet.class);
+
+        if (args.length == 2) {
+            getDatafromFiles(args, mapper);
+        } else {
+            getDatafromWorkspace(args, mapper);
+        }
 
         System.out.println(genome.getTaxonomy());
 
@@ -60,7 +78,7 @@ public class GenometoGbk {
             //out.append("VERSION     NC_005213.1  GI:38349555\n");
             //out += "DBLINK      Project: 58009\n";
             //out += "            BioProject: PRJNA58009\n";
-            out.append("KEYWORDS    .\n");
+            //out.append("KEYWORDS    .\n");
             out.append("SOURCE      " + genome.getScientificName() + "\n");
             out.append("  ORGANISM  " + genome.getScientificName() + "\n");
             final String rawTaxonomy = genome.getTaxonomy();
@@ -155,7 +173,6 @@ public class GenometoGbk {
                 StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
                 StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
 
-
                 /*TODO add operons and promoteres and terminators as gene features ? */
                 if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
 
@@ -213,6 +230,86 @@ public class GenometoGbk {
             pw.print(out);
             pw.close();
         }
+    }
+
+    private void getDatafromFiles(String[] args, ObjectMapper mapper) throws IOException {
+        File loadGenome = new File(args[0]);
+        File loadContigs = new File(args[1]);
+        genome = mapper.readValue(loadGenome, Genome.class);
+        contigSet = mapper.readValue(loadContigs, ContigSet.class);
+    }
+
+
+    /**
+     * @param args
+     * @param mapper
+     * @throws AuthException
+     * @throws IOException
+     * @throws JsonClientException
+     */
+    private void getDatafromWorkspace(String[] args, ObjectMapper mapper) throws AuthException, IOException, JsonClientException {
+        WorkspaceClient wc = null;
+
+        String user = System.getProperty("test.user");
+        String pwd = System.getProperty("test.pwd");
+
+        String kbtok = System.getenv("KB_AUTH_TOKEN");
+
+        if (isTest) {
+            AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
+            wc = new WorkspaceClient(new URL(wsurl + args[2]), at);
+        } else {
+            wc = new WorkspaceClient(new URL(wsurl + args[2]), new AuthToken(kbtok));
+        }
+
+        wc.setAuthAllowedForHttp(true);
+
+        List<ObjectIdentity> objectIds = new ArrayList<ObjectIdentity>();
+        ObjectIdentity genobj = new ObjectIdentity();
+        genobj.setName(args[0]);
+        genobj.setWorkspace(args[2]);
+
+        objectIds.add(genobj);
+
+        List<ObjectData> lod = wc.getObjects(objectIds);
+
+        final UObject data1 = lod.get(0).getData();
+        final UObject data2 = lod.get(1).getData();
+
+        genome = data1.asClassInstance(Genome.class);
+        String contigref = genome.getContigsetRef();
+        try {
+            contigSet = data2.asClassInstance(ContigSet.class);
+        } catch (Exception e) {
+            System.out.println("ContigSet not found in workspace.");
+            System.err.println("ContigSet not found in workspace.");
+
+            String outputfile = args[0] + "_ContigSet.json";
+            try {
+                BasicShockClient client = null;
+                if (isTest) {
+                    AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
+                    client = new BasicShockClient(new URL(shockurl), at);
+                } else {
+                    client = new BasicShockClient(new URL(shockurl), new AuthToken(kbtok));
+                }
+                OutputStream os = new FileOutputStream(new File(outputfile));
+
+                client.getFile(new ShockNodeId(contigref), os);
+
+                os.close();
+            } catch (InvalidShockUrlException e1) {
+                System.err.println("Invalid Shock url.");
+                e1.printStackTrace();
+            } catch (ShockHttpException e1) {
+                System.err.println("Shock HTPP error.");
+                e1.printStackTrace();
+            }
+
+            File loadContigs = new File(args[1]);
+            contigSet = mapper.readValue(loadContigs, ContigSet.class);
+        }
+
     }
 
     /**
@@ -426,14 +523,16 @@ public class GenometoGbk {
      * @param args
      */
     public final static void main(String[] args) {
-        if (args.length == 1 || args.length == 2) {
+        if (args.length == 1 || args.length == 2 || args.length == 3) {
             try {
                 GenometoGbk gtg = new GenometoGbk(args);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("usage: java us.kbase.genbank.GenometoGbk <Genome .json (XXXX.json)> <ContigSet .json (XXXX_ContigSet.json)>");// <convert y/n> <save y/n>");
+            System.out.println("usage: java us.kbase.genbank.GenometoGbk <Genome .json (XXXX.json) or Genome object name in workspace> " +
+                    "<ContigSet .json (XXXX_ContigSet.json) or ContigSet object name in workspace> " +
+                    "<OTPIONAL workspace name (and then REQUIRED Genome object name and ContigSet name>");// <convert y/n> <save y/n>");
         }
     }
 

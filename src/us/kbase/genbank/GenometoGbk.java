@@ -1,14 +1,28 @@
 package us.kbase.genbank;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import us.kbase.auth.AuthException;
+import us.kbase.auth.AuthService;
+import us.kbase.auth.AuthToken;
+import us.kbase.auth.AuthUser;
+import us.kbase.common.service.JsonClientException;
 import us.kbase.common.service.Tuple4;
+import us.kbase.common.service.UObject;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Feature;
 import us.kbase.kbasegenomes.Genome;
+import us.kbase.shock.client.BasicShockClient;
+import us.kbase.shock.client.ShockNodeId;
+import us.kbase.shock.client.exceptions.InvalidShockUrlException;
+import us.kbase.shock.client.exceptions.ShockHttpException;
+import us.kbase.workspace.ObjectData;
+import us.kbase.workspace.ObjectIdentity;
+import us.kbase.workspace.WorkspaceClient;
 
-import java.io.File;
-import java.io.PrintWriter;
+import java.io.*;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,59 +45,82 @@ public class GenometoGbk {
     final static String molecule_type_short = "DNA";
     final static String molecule_type_long = "genome DNA";
 
+
+    String wsurl = "http://blah.blah/";
+    static String shockurl = "https://kbase.us/services/shock-api/";
+
     /**
      * @param args
      * @throws Exception
      */
     public GenometoGbk(String[] args) throws Exception {
 
-        ObjectMapper mapper = new ObjectMapper();
-        genome = mapper.readValue(args[0], Genome.class);
-        //contigSet = mapper.readValue(args[1], ContigSet.class);
+        ObjectMapper mapper = UObject.getMapper();//new ObjectMapper();
 
+        if (args.length == 2) {
+            getDatafromFiles(args, mapper);
+        } else {
+            getDatafromWorkspace(args, mapper);
+        }
 
         System.out.println(genome.getTaxonomy());
-
 
         List<Contig> contigs = contigSet.getContigs();
         for (int j = 0; j < contigs.size(); j++) {
 
             Contig curcontig = contigs.get(j);
-            String out = "";
+            StringBuffer out = new StringBuffer("");
             //out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
-            out += "LOCUS       " + "" + "             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
-            out += "DEFINITION  " + genome.getScientificName() + " chromosome, complete genome.\n";
-            out += "ACCESSION   NC_005213\n";
-            out += "VERSION     NC_005213.1  GI:38349555\n";
+            out.append("LOCUS       " + "" + "             " + curcontig.getLength() + " bp    " +
+                    molecule_type_short + "\n");// + "     circular CON 10-JUN-2013\n");
+            out.append("DEFINITION  " + genome.getScientificName() + " genome.\n");
+            //out.append("ACCESSION   NC_005213\n");
+            //out.append("VERSION     NC_005213.1  GI:38349555\n");
             //out += "DBLINK      Project: 58009\n";
             //out += "            BioProject: PRJNA58009\n";
-            out += "KEYWORDS    .\n";
-            out += "SOURCE      " + genome.getScientificName() + "\n";
-            out += "  ORGANISM  " + genome.getScientificName() + "\n";
-            out += "            Archaea; Nanoarchaeota; Nanoarchaeum.\n";
+            //out.append("KEYWORDS    .\n");
+            out.append("SOURCE      " + genome.getScientificName() + "\n");
+            out.append("  ORGANISM  " + genome.getScientificName() + "\n");
+            final String rawTaxonomy = genome.getTaxonomy();
 
+            String[] alltax = rawTaxonomy.split(" ");
+
+            StringBuffer formatTax = new StringBuffer("");
+
+            int counter = 0;
+            int index = 0;
+            while (index < alltax.length) {
+                formatTax.append(alltax[index]);
+                if (index < alltax.length - 1)
+                    formatTax.append(" ");
+                counter += alltax[index].length() + 1;
+                index++;
+                if (counter >= 65 || rawTaxonomy.length() < 80) {
+                    formatTax.append("\n");
+                    formatTax.append("            ");
+                    counter = 0;
+                }
+            }
+
+            out.append("            " + formatTax + ".\n");
 
             /*TODO populate references in Genome objects */
             /*
              //typedef tuple<int id, string source_db, string article_title, string link, string pubdate, string authors, string journal_name> publication;
             List<Tuple7<Long, String, String, String, String, String, String>> pubs = genome.getPublications();
-
             for (int k = 0; k < pubs.size(); k++) {
                 Tuple7<Long, String, String, String, String, String, String> curpub = pubs.get(k);
-
                 System.out.println(genome.getTaxonomy());
                 System.out.println(curpub.getE6());
-
                 out += "REFERENCE   1  (bases " + 1 + " to " + curcontig.getLength() + ")\n";
                 out += "  AUTHORS   ";//Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,\n";
-
                 for(int m=0;m<(curpub.getE6()).length();m++) {
                 out+=
                 //out += "            Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,\n";//59
                 }
                 out += "  TITLE     "+curpub.getE3()+"\n";//64
                 out += "  JOURNAL   "+curpub.getE7()+"\n";
-                //TODO missing JOURNAL volume issue pages etc.
+                //TODO Genome object missing JOURNAL volume issue pages etc.
                 //+" 100 (22), 12984-12988 (2003)\n";
                 if (curpub.getE2().equalsIgnoreCase("PUBMED"))
                     out += "   PUBMED   " + curpub.getE1() + "\n";
@@ -92,15 +129,16 @@ public class GenometoGbk {
 
             //out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
             //out += "            NCBI review. The reference sequence was derived from AE017199.\n";
-            //out += "            COMPLETENESS: full length.\n";
+            out.append(" COMMENT            COMPLETENESS: " + (genome.getComplete() == 1 ? "full length" : "incomplete") + ".\n");
+            out.append("                    Exported from the DOE KnowledgeBase.\n");
 
 
-            out += "FEATURES             Location/Qualifiers\n";
-            out += "     source          1.." + curcontig.getLength() + "\n";
-            out += "                     /organism=\"" + genome.getScientificName() + "\"\n";
-            out += "                     /mol_type=\"" + molecule_type_long + "\"\n";
+            out.append("FEATURES             Location/Qualifiers\n");
+            out.append("     source          1.." + curcontig.getLength() + "\n");
+            out.append("                     /organism=\"" + genome.getScientificName() + "\"\n");
+            out.append("                     /mol_type=\"" + molecule_type_long + "\"\n");
             //out += "                     /strain=\"\"\n";
-            out += "                     /db_xref=\"taxon:" + genome.getSourceId() + "\"\n";
+            out.append("                     /db_xref=\"taxon:" + genome.getSourceId() + "\"\n");
 
             List<Feature> features = genome.getFeatures();
 
@@ -131,7 +169,6 @@ public class GenometoGbk {
                 }*/
                 StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
                 StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
-
 
                 /*TODO add operons and promoteres and terminators as gene features ? */
                 if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
@@ -177,8 +214,8 @@ public class GenometoGbk {
             }
 
 
-            out += "ORIGIN\n";
-            out += formatDNASequence(curcontig.getSequence(), 10, 60);
+            out.append("ORIGIN\n");
+            out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
             //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
 
             int start = Math.max(0, args[0].lastIndexOf("/"));
@@ -189,6 +226,88 @@ public class GenometoGbk {
             PrintWriter pw = new PrintWriter(outf);
             pw.print(out);
             pw.close();
+        }
+    }
+
+    private void getDatafromFiles(String[] args, ObjectMapper mapper) throws IOException {
+        File loadGenome = new File(args[0]);
+        File loadContigs = new File(args[1]);
+        genome = mapper.readValue(loadGenome, Genome.class);
+        contigSet = mapper.readValue(loadContigs, ContigSet.class);
+    }
+
+
+    /**
+     * @param args
+     * @param mapper
+     * @throws AuthException
+     * @throws IOException
+     * @throws JsonClientException
+     */
+    private void getDatafromWorkspace(String[] args, ObjectMapper mapper) throws AuthException, IOException, JsonClientException {
+        WorkspaceClient wc = null;
+
+        String user = System.getProperty("test.user");
+        String pwd = System.getProperty("test.pwd");
+
+        String kbtok = System.getenv("KB_AUTH_TOKEN");
+
+        if (isTest) {
+            AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
+            wc = new WorkspaceClient(new URL(wsurl + args[2]), at);
+        } else {
+            wc = new WorkspaceClient(new URL(wsurl + args[2]), new AuthToken(kbtok));
+        }
+
+        wc.setAuthAllowedForHttp(true);
+
+        List<ObjectIdentity> objectIds = new ArrayList<ObjectIdentity>();
+        ObjectIdentity genobj = new ObjectIdentity();
+        genobj.setName(args[0]);
+        genobj.setWorkspace(args[2]);
+
+        objectIds.add(genobj);
+
+        List<ObjectData> lod = wc.getObjects(objectIds);
+
+        final UObject data1 = lod.get(0).getData();
+        final UObject data2 = lod.get(1).getData();
+
+        genome = data1.asClassInstance(Genome.class);
+        String contigref = genome.getContigsetRef();
+        try {
+            contigSet = data2.asClassInstance(ContigSet.class);
+        } catch (Exception e) {
+            System.out.println("ContigSet not found in workspace.");
+            System.err.println("ContigSet not found in workspace.");
+
+            String outputfile = args[0] + "_ContigSet.json";
+            try {
+                BasicShockClient client = null;
+                if (isTest) {
+                    AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
+                    client = new BasicShockClient(new URL(shockurl), at);
+                } else {
+                    client = new BasicShockClient(new URL(shockurl), new AuthToken(kbtok));
+                }
+                OutputStream os = new FileOutputStream(new File(outputfile));
+
+                client.getFile(new ShockNodeId(contigref), os);
+
+                os.close();
+            } catch (InvalidShockUrlException e1) {
+                System.err.println("Invalid Shock url.");
+                e1.printStackTrace();
+            } catch (ShockHttpException e1) {
+                System.err.println("Shock HTPP error.");
+                e1.printStackTrace();
+            }
+
+            File loadContigs = new File(args[1]);
+            contigSet = mapper.readValue(loadContigs, ContigSet.class);
+        }
+
+    }
 
     /**
      * @param function
@@ -262,51 +381,92 @@ public class GenometoGbk {
         if (formatFunction.length() == 0) {
             formatFunction.append("\"\n");
         }
+        return formatFunction;
     }
 
-    private String getCDS(String out, List<Tuple4<String, Long, String, Long>> location) {
+    /**
+     * @param out
+     * @param location
+     * @return
+     */
+    private StringBuffer getCDS(StringBuffer out, List<Tuple4<String, Long, String, Long>> location) {
         int added = 0;
         boolean complement = false;
+        boolean join = false;
         for (int n = 0; n < location.size(); n++) {
             Tuple4<String, Long, String, Long> now4 = location.get(n);
             if (added == 0 && now4.getE3().equals("-")) {
-                out += "complement(join(";
+                out.append("complement(");
+
                 complement = true;
-            } else {
-                out += "join(";
+            }
+            if (location.size() > 1) {
+                if (added == 0)
+                    out.append("join(");
+                join = true;
             }
 
-            out += now4.getE2() + ".." + (now4.getE2() + (long) now4.getE4());
+            out.append(now4.getE2() + ".." + (now4.getE2() + (long) now4.getE4()));
 
-            if (added > 0)
-                out += ",";
+            if (location.size() > 0 && n < location.size() - 1)
+                out.append(",");
             added++;
         }
-        if (complement)
-            out += "))\n";
-        else {
-            out += ")\n";
-        }
+        if (complement && join)
+            out.append("))\n");
+        else if (complement || join) {
+            out.append(")\n");
+        } else
+            out.append("\n");
+
         return out;
     }
 
 
     /**
      * @param s
+     * @param one
+     * @param two
      * @return
      */
-    public String formatString(String s, int one, int two) {
-        String out = "";
+    public StringBuffer formatString(String s, int one, int two) {
+        //StringBuilder out = new StringBuilder("");
+        StringBuffer out = new StringBuffer("");
         boolean first = true;
-        int start = 0;
-        for (int a = 0; a < s.length(); a++) {
+        for (int start = 0; start < s.length(); ) {
             if (first) {
-                out += s.substring(start, start + one);
+                int last = Math.min(s.length(), start + one);
+                boolean isLast = false;
+                if (last == s.length())
+                    isLast = true;
+                out.append(s.substring(start, last));
+                if (isLast)
+                    out.append("\"\n");
+                else {
+                    out.append("\n");
+                }
                 first = false;
                 start += one;
             } else {
-                out += s.substring(start, start + two);
+                int last = Math.min(s.length(), start + two);
+                //System.out.println(s.length() + "\t" + (start + two));
+                out.append("                     ");
+                boolean isLast = false;
+                if (last == s.length())
+                    isLast = true;
+                out.append(s.substring(start, last));
                 start += two;
+                if (isLast) {
+                    //out.append(s.substring(start, s.length()-1));
+                    out.append("\"\n");
+                }
+                //} else if (start < s.length()) {
+                else
+                    out.append("\n");
+                //} //else if (start < s.length()) {
+                //    out.append("\n");
+                //} //else
+                //  out.append("\n");
             }
         }
 
@@ -315,35 +475,42 @@ public class GenometoGbk {
 
     /**
      * @param s
+     * @param charnum
+     * @param linenum
      * @return
      */
-    public String formatDNASequence(String s, int charnum, int linenum) {
-        String out = "";
+    public StringBuffer formatDNASequence(String s, int charnum, int linenum) {
+        //StringBuilder out = new StringBuilder("");
+        StringBuffer out = new StringBuffer("");
 
-        int last = 0;
         //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
 
-        out += "        1 ";
+        out.append("        1 ");
         int index = 1;
         int counter = 0;
-        for (int i = 0; i < s.length(); i++) {
-            int end = last + charnum;
-            if (end > s.length())
-                end = s.length();
-            out += s.substring(last, end);
+        for (int last = 0; last < s.length(); ) {
+            int end = Math.min(s.length(), last + charnum);
+            //if (end > s.length())
+            //   end = s.length();
+            //System.out.println("DNA " + last + "\t" + end);
+            out.append(s.substring(last, end));
             last += charnum;
             counter++;
             if (counter == 6 && s.length() > end) {
+                out.append("\n");
                 index += 60;
                 String indexStr = "" + index;
                 int len = indexStr.length();
                 char[] ch = new char[9 - len];
                 Arrays.fill(ch, ' ');
                 String padStr = new String(ch);
-                out += padStr + indexStr + " ";
+                out.append(padStr + indexStr + " ");
                 counter = 0;
-            }
+            } else
+                out.append(" ");
         }
+        if (out.charAt(out.length() - 1) == (' '))
+            out.deleteCharAt(out.length() - 1);
 
         return out;
     }
@@ -353,14 +520,16 @@ public class GenometoGbk {
      * @param args
      */
     public final static void main(String[] args) {
-        if (args.length == 1 || args.length == 2) {
+        if (args.length == 1 || args.length == 2 || args.length == 3) {
             try {
-                GenometoGbk clt = new GenometoGbk(args);
+                GenometoGbk gtg = new GenometoGbk(args);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("usage: java us.kbase.genbank.GenometoGbk <Genome .json (XXXX.json)> <ContigSet .json (XXXX_ContigSet.json)>");// <convert y/n> <save y/n>");
+            System.out.println("usage: java us.kbase.genbank.GenometoGbk <Genome .json (XXXX.json) or Genome object name in workspace> " +
+                    "<ContigSet .json (XXXX_ContigSet.json) or ContigSet object name in workspace> " +
+                    "<OTPIONAL workspace name (and then REQUIRED Genome object name and ContigSet name>");// <convert y/n> <save y/n>");
         }
     }
 
@@ -423,7 +592,7 @@ LOCUS       NC_005213             490885 bp    DNA     circular CON 10-JUN-2013
                  GIIYIQDATIIPNGIKITVNGLAELKNIKINPNDPSITVQKVVGEQNTYIIKTSKDSV
                  KITISADFVVKAEKWLFIQ"
  promoter        486983..486988
-                 /note="archaeal RNA pol III promoter consensus box A
+                 /note="archaeal RNA pol III promoter consensus box Aaaaaaa
                  motif"
  misc_feature    487009..487022
                  /locus_tag="NEQ_t33"

@@ -16,7 +16,13 @@ class Transform:
     Transform
 
     Module Description:
-    Transform APIs
+    Transform Service
+
+This KBase service supports translations and transformations of data types,
+including converting external file formats to KBase objects, 
+converting KBase objects to external file formats, and converting KBase objects
+to other KBase objects, either objects of different types or objects of the same
+type but different versions.
     '''
 
     ######## WARNING FOR GEVENT USERS #######
@@ -125,68 +131,6 @@ class Transform:
         #END_CONSTRUCTOR
         pass
 
-    
-    def import_data(self, ctx, args):
-        # ctx is the context object
-        # return variables are: result
-        #BEGIN import_data
-        result = self._run_job("import", ctx, args)        
-        #END import_data
-
-        # At some point might do deeper type checking...
-        if not isinstance(result, basestring):
-            raise ValueError('Method import_data return value ' +
-                             'result is not type basestring as required.')
-        # return the results
-        return [result]
-
-
-    def validate(self, ctx, args):
-        # ctx is the context object
-        # return variables are: result
-        #BEGIN validate
-        result = self._run_job("validate", ctx, args)
-        #END validate
-
-        # At some point might do deeper type checking...
-        if not isinstance(result, list):
-            raise ValueError('Method validate return value ' +
-                             'result is not type list as required.')
-        # return the results
-        return [result]
-
-
-    def upload(self, ctx, args):
-        # ctx is the context object
-        # return variables are: result
-        #BEGIN upload
-        self.kbaseLogger.log_message("DEBUG", "Calling upload")
-        result = self._run_job("upload", ctx, args)
-        #END upload
-
-        # At some point might do deeper type checking...
-        if not isinstance(result, list):
-            raise ValueError('Method upload return value ' +
-                             'result is not type list as required.')
-        # return the results
-        return [result]
-
-
-    def download(self, ctx, args):
-        # ctx is the context object
-        # return variables are: result
-        #BEGIN download
-        result = self._run_job("download", ctx, args)
-        #END download
-
-        # At some point might do deeper type checking...
-        if not isinstance(result, list):
-            raise ValueError('Method download return value ' +
-                             'result is not type list as required.')
-        # return the results
-        return [result]
-
-
     def version(self, ctx):
         # ctx is the context object
         # return variables are: result
@@ -203,8 +147,7 @@ class Transform:
         # return the results
         return [result]
 
-
-    def methods(self, ctx):
+    def methods(self, ctx, query):
         # ctx is the context object
         # return variables are: results
         #BEGIN methods
@@ -220,36 +163,44 @@ class Transform:
         # return the results
         return [results]
 
-
-    def method_types(self, ctx, func):
-        # ctx is the context object
-        # return variables are: results
-        #BEGIN method_types
-
-        # pull method types
-
-        #END method_types
-
-        # At some point might do deeper type checking...
-        if not isinstance(results, list):
-            raise ValueError('Method method_types return value ' +
-                             'results is not type list as required.')
-        # return the results
-        return [results]
-
-
-    def method_config(self, ctx, func, type):
+    def upload(self, ctx, args):
         # ctx is the context object
         # return variables are: result
-        #BEGIN method_config
-
-        # pull method configs
-
-        #END method_config
+        #BEGIN upload
+        self.kbaseLogger.log_message("DEBUG", "Calling upload")
+        result = self._run_job("upload", ctx, args)
+        #END upload
 
         # At some point might do deeper type checking...
-        if not isinstance(result, dict):
-            raise ValueError('Method method_config return value ' +
-                             'result is not type dict as required.')
+        if not isinstance(result, list):
+            raise ValueError('Method upload return value ' +
+                             'result is not type list as required.')
+        # return the results
+        return [result]
+
+    def download(self, ctx, args):
+        # ctx is the context object
+        # return variables are: result
+        #BEGIN download
+        result = self._run_job("download", ctx, args)
+        #END download
+
+        # At some point might do deeper type checking...
+        if not isinstance(result, list):
+            raise ValueError('Method download return value ' +
+                             'result is not type list as required.')
+        # return the results
+        return [result]
+
+    def convert(self, ctx, args):
+        # ctx is the context object
+        # return variables are: result
+        #BEGIN convert
+        #END convert
+
+        # At some point might do deeper type checking...
+        if not isinstance(result, list):
+            raise ValueError('Method convert return value ' +
+                             'result is not type list as required.')
         # return the results
         return [result]

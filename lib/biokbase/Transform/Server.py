@@ -38,7 +38,7 @@ def get_config():
 
 config = get_config()
 
-from biokbase.Transform.Impl import Transform
+from biokbase.transform.Impl import Transform
 impl_Transform = Transform(config)
 
 
@@ -264,14 +264,14 @@ class Application(object):
         self.serverlog.set_log_level(6)
         self.rpc_service = JSONRPCServiceCustom()
         self.method_authentication = dict()
-        self.rpc_service.add(impl_Transform.import_data,
-                             name='Transform.import_data',
-                             types=[dict])
-        self.method_authentication['Transform.import_data'] = 'required'
-        self.rpc_service.add(impl_Transform.validate,
-                             name='Transform.validate',
-                             types=[dict])
-        self.method_authentication['Transform.validate'] = 'required'
+        self.rpc_service.add(impl_Transform.version,
+                             name='Transform.version',
+                             types=[])
+        self.method_authentication['Transform.version'] = 'none'
+        self.rpc_service.add(impl_Transform.methods,
+                             name='Transform.methods',
+                             types=[basestring])
+        self.method_authentication['Transform.methods'] = 'none'
         self.rpc_service.add(impl_Transform.upload,
                              name='Transform.upload',
                              types=[dict])
@@ -280,22 +280,10 @@ class Application(object):
                              name='Transform.download',
                              types=[dict])
         self.method_authentication['Transform.download'] = 'required'
-        self.rpc_service.add(impl_Transform.version,
-                             name='Transform.version',
-                             types=[])
-        self.method_authentication['Transform.version'] = 'required'
-        self.rpc_service.add(impl_Transform.methods,
-                             name='Transform.methods',
-                             types=[])
-        self.method_authentication['Transform.methods'] = 'required'
-        self.rpc_service.add(impl_Transform.method_types,
-                             name='Transform.method_types',
-                             types=[basestring])
-        self.method_authentication['Transform.method_types'] = 'required'
-        self.rpc_service.add(impl_Transform.method_config,
-                             name='Transform.method_config',
-                             types=[basestring, basestring])
-        self.method_authentication['Transform.method_config'] = 'required'
+        self.rpc_service.add(impl_Transform.convert,
+                             name='Transform.convert',
+                             types=[dict])
+        self.method_authentication['Transform.convert'] = 'required'
         self.auth_client = biokbase.nexus.Client(
             config={'server': 'nexus.api.globusonline.org',
                     'verify_ssl': True,

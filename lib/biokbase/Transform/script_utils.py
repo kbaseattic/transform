@@ -33,7 +33,7 @@ def getStderrLogger(name, level=logging.INFO):
 
 
 
-def extract_data(filePath, chunkSize=10 * 2**20):
+def extract_data(logger, filePath, chunkSize=10 * 2**20):
     def extract_tar(tarPath):
         if not tarfile.is_tarfile(tarPath):
             raise Exception("Inavalid tar file " + tarPath)
@@ -55,7 +55,7 @@ def extract_data(filePath, chunkSize=10 * 2**20):
     with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
         mimeType = m.id_filename(filePath)
 
-    print "Extracting {0} as {1}".format(filePath, mimeType)
+    logger.info("Extracting {0} as {1}".format(filePath, mimeType))
 
     if mimeType == "application/x-gzip":
         outFile = os.path.splitext(filePath)[0]
@@ -71,7 +71,7 @@ def extract_data(filePath, chunkSize=10 * 2**20):
             mimeType = m.id_filename(outFile)
 
         if mimeType == "application/x-tar":
-            print "Extracting {0} as tar".format(outFile)
+            logger.info("Extracting {0} as tar".format(outFile))
             extract_tar(outFile)
     elif mimeType == "application/x-bzip2":
         outFile = os.path.splitext(filePath)[0]
@@ -87,7 +87,7 @@ def extract_data(filePath, chunkSize=10 * 2**20):
             mimeType = m.id_filename(outFile)
 
         if mimeType == "application/x-tar":
-            print "Extracting {0} as tar".format(outFile)
+            logger.info("Extracting {0} as tar".format(outFile))
             extract_tar(outFile)
     elif mimeType == "application/zip":
         if not zipfile.is_zipfile(filePath):

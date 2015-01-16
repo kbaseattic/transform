@@ -1,15 +1,15 @@
 {
-  "test_name" : "Success case test for uploading KBaseAssembly.PairedEndLibrary from KBaseAssembly.FA", 
+  "test_name" : "Success case test for uploading KBaseAssembly.PairedEndLibrary from FASTA.DNA.Reads", 
   "test_server_url" : "http://127.0.0.1:7778",
-  "external_type" : "KBaseAssembly.FA",
+  "external_type" : "FASTA.DNA.Reads",
   "kbase_type" : "KBaseAssembly.PairedEndLibrary",
   "input_data_url" : ["https://kbase.us/services/shock-api/node/9aa8bc46-1cc2-4ca1-a55c-b2de7df6e8a8"],
-  "ws_name" : "load_test",
-  "obj_name" : "kbg-fa-pel-tst",
+  "workspace_name" : "load_test",
+  "object_name" : "kbg-fa-pel-tst",
   "compression" : "zip",
   "max_wait_sec" : "300",
   "check_interval" : "3",
-  "optional_args" : "{}",
+  "user_options" : "{}",
   "expected_result" : "1",
   "skip_server_test" : "true"
 }

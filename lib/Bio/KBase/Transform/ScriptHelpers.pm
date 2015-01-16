@@ -13,11 +13,12 @@ use Digest::MD5;
 use File::Slurp;
 use Spreadsheet::ParseExcel;
 use Spreadsheet::ParseXLSX;
+use Log::Log4perl;
 use parent qw(Exporter);
 our @EXPORT_OK = qw(parse_input_table get_input_fh get_output_fh
 		    load_input write_output write_text_output
 		    genome_to_gto contigs_to_gto
-                    parse_excel);
+                    parse_excel getStderrLogger);
 
 use Bio::KBase::workspace::ScriptHelpers qw(get_ws_client workspace workspaceURL parseObjectMeta
 					    parseWorkspaceMeta printObjectMeta);
@@ -358,6 +359,19 @@ sub gto_to_genome {
 	delete $genome->{feature_creation_event};
 	delete $genome->{analysis_events};
 	return $genome;
+}
+
+sub getStderrLogger{
+    my $conf = q(
+        log4perl.category.Current = ALL, Screen
+        log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+        log4perl.appender.Screen.stderr  = 1
+        log4perl.appender.Screen.layout = Log::Log4perl::Layout::PatternLayout
+        log4perl.appender.Screen.layout.ConversionPattern = %d - %F - %L - %p: %m%n
+    );
+    
+    Log::Log4perl::init( \$conf );
+    return Log::Log4perl::get_logger("Current");
 }
 
 1;

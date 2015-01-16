@@ -3,7 +3,7 @@ use warnings;
 use strict;
 use Data::Dumper;
 use Getopt::Long;
-use Bio::KBase::Transform::ScriptHelpers qw( parse_input_table getStderrLogger);
+use Bio::KBase::Transform::ScriptHelpers qw( parse_input_table getStderrLogger );
 use Bio::KBase::fbaModelServices::ScriptHelpers qw(fbaws get_fba_client runFBACommand universalFBAScriptCode );
 
 my $script = "trns_transform_KBaseFBA.SBML-to-KBaseFBA.FBAModel.pl";

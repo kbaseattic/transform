@@ -108,16 +108,12 @@ public class GenometoGbk {
             /*
              //typedef tuple<int id, string source_db, string article_title, string link, string pubdate, string authors, string journal_name> publication;
             List<Tuple7<Long, String, String, String, String, String, String>> pubs = genome.getPublications();
-
             for (int k = 0; k < pubs.size(); k++) {
                 Tuple7<Long, String, String, String, String, String, String> curpub = pubs.get(k);
-
                 System.out.println(genome.getTaxonomy());
                 System.out.println(curpub.getE6());
-
                 out += "REFERENCE   1  (bases " + 1 + " to " + curcontig.getLength() + ")\n";
                 out += "  AUTHORS   ";//Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,\n";
-
                 for(int m=0;m<(curpub.getE6()).length();m++) {
                 out+=
                 //out += "            Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,\n";//59

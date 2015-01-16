@@ -3,11 +3,10 @@ DEPLOY_RUNTIME=/kb/runtime
 TARGET ?= /kb/deployment
 include $(TOP_DIR)/tools/Makefile.common
 SERVICE_SPEC = Transform.spec
-SERVICE_NAME = Transform
+SERVICE_NAME = transform
 SERVICE_PSGI_FILE = $(SERVICE_NAME).psgi
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
 SERVER_MODULE = lib/Bio/KBase/$(SERVICE_NAME)/Service.pm
-#SERVICE = TransformService
 SERVICE_PORT = 7778
 
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
@@ -172,7 +171,6 @@ deploy-service: deploy-cfg
 	chmod +x $(SERVICE_DIR)/process.$(SERVICE_NAME); 
 	mkdir -p $(SERVICE_DIR)/awf
 	cat deploy.cfg service.cfg > $(SERVICE_DIR)/service.cfg;
-	cp config.json $(SERVICE_DIR)/config.json;
 	cp -R plugins $(SERVICE_DIR)/;
 
 # the above service.cfg is not correct at the moment
@@ -191,9 +189,6 @@ deploy-service: deploy-cfg
 # docs depends on the compiled libs.
 build-libs:
 	mkdir -p scripts; compile_typespec \
-		--psgi $(SERVICE_PSGI_FILE) \
-		--impl Bio::KBase::$(SERVICE_NAME)::$(SERVICE_NAME)Impl \
-		--service Bio::KBase::$(SERVICE_NAME)::Service \
 		--pyimpl biokbase.$(SERVICE_NAME).Impl \
 		--pyserver biokbase.$(SERVICE_NAME).Server \
 		--client Bio::KBase::$(SERVICE_NAME)::Client \

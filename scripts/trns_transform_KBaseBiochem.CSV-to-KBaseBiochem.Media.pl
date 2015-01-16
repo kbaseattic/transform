@@ -27,6 +27,8 @@ trns_transform_KBaseBiochem.CSV-to-KBaseBiochem.Media.pl --input --output --out_
 
 =cut
 
+my $logger = getStderrLogger();
+
 my $In_File   = "";
 my $Out_Object = "";
 my $Out_WS    = "";
@@ -39,8 +41,11 @@ GetOptions("input|i=s"  => \$In_File,
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
     print($0." --input/-i <Input CSV File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in>\n");
+    $logger->warn($0." --input/-i <Input CSV File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in>\n");
     exit();
 }
+
+$logger->info("Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
 
 my $mediadata = parse_input_table($In_File,[
 	["compounds",1],
@@ -48,6 +53,7 @@ my $mediadata = parse_input_table($In_File,[
 	["minflux",0,"-100"],
 	["maxflux",0,"100"],
 ]);
+
 my $input = {media => $Out_Object,workspace => $Out_WS};
 for (my $i=0; $i < @{$mediadata}; $i++) {
 	push(@{$input->{compounds}},$mediadata->[$i]->[0]);
@@ -56,12 +62,14 @@ for (my $i=0; $i < @{$mediadata}; $i++) {
 	push(@{$input->{concentrations}},$mediadata->[$i]->[1]);
 }
 
+$logger->info("Loading Media WS Object");
+
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
     my $fba = get_fba_client();
     $fba->addmedia($input);
 };
 
-my $logger = getStderrLogger();
-$logger->info($stdout) if $stdout;
-$logger->warn($stderr) if $stderr;
+$logger->info("fbaModelServices addmedia() informational messages\n".$stdout) if $stdout;
+$logger->warn("fbaModelServices addmedia() warning messages\n".$stderr) if $stderr;
+$logger->info("Loading Media WS Object Complete");

@@ -102,10 +102,8 @@ if __name__ == "__main__":
     object_info.add_argument('--object_id', help ='Object ID', action='store', type=int, nargs='?') 
  
     data_services = parser.add_mutually_exclusive_group(required=True) 
-    data_services.add_argument('--shock_service_url', help='Shock url', action='store', type=str, default='https://kbase.us/services/shock-api/\
-', nargs='?')
-    data_services.add_argument('--handle_service_url', help='Handle service url', action='store', type=str, default='https://kbase.us/services/\
-handle_service/', nargs='?')
+    data_services.add_argument('--shock_service_url', help='Shock url', action='store', type=str, default='https://kbase.us/services/shock-api/', nargs='?')
+    data_services.add_argument('--handle_service_url', help='Handle service url', action='store', type=str, default='https://kbase.us/services/handle_service/', nargs='?')
 
     args = parser.parse_args()
 

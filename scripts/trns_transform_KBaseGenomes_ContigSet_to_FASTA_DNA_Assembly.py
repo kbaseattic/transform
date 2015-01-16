@@ -49,15 +49,21 @@ def convert(workspace_service_url, shock_service_url, handle_service_url, worksp
 
     logger.info("Grabbing Data.")
  
-    ws_client = biokbase.workspace.client.Workspace('https://kbase.us/services/ws') 
-    if object_version_number and object_name :
-        contig_set = ws_client.get_objects([{'workspace':workspace_name,'name':object_name, 'ver':object_version_number}])[0]['data'] 
-    elif object_name:
-        contig_set = ws_client.get_objects([{'workspace':workspace_name,'name':object_name}])[0]['data'] 
-    elif object_version_number and object_id :
-        contig_set = ws_client.get_objects([{'workspace':workspace_name,'objid':object_id, 'ver':object_version_number}])[0]['data'] 
-    else:
-        contig_set = ws_client.get_objects([{'workspace':workspace_name,'objid':object_id}])[0]['data'] 
+    try:
+        ws_client = biokbase.workspace.client.Workspace('https://kbase.us/services/ws') 
+        if object_version_number and object_name :
+            contig_set = ws_client.get_objects([{'workspace':workspace_name,'name':object_name, 'ver':object_version_number}])[0]['data'] 
+        elif object_name:
+            contig_set = ws_client.get_objects([{'workspace':workspace_name,'name':object_name}])[0]['data'] 
+        elif object_version_number and object_id :
+            contig_set = ws_client.get_objects([{'workspace':workspace_name,'objid':object_id, 'ver':object_version_number}])[0]['data'] 
+        else:
+            contig_set = ws_client.get_objects([{'workspace':workspace_name,'objid':object_id}])[0]['data'] 
+    except: 
+        logger.exception("Unable to rerieve ws object.")
+        logger.exception("".join(traceback.format_exc()))
+        print "".join(traceback.format_exc()) 
+        sys.exit(1) 
 
     if not os.path.isfile(input_file_name):
         raise Exception("The input file name {0} does not exist".format(input_file_name))        

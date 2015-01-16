@@ -1,9 +1,7 @@
-import argparse
 import os
 import os.path
 import sys
 import shutil
-import errno
 
 running_dir = os.getcwd()
 

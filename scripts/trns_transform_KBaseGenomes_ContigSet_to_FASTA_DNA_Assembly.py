@@ -23,7 +23,7 @@ import biokbase.workspace.client
 # conversion method that can be called if this module is imported
 # Note the logger has different levels it could be run.  See: https://docs.python.org/2/library/logging.html#logging-levels
 # The default level is set to INFO which includes everything except DEBUG
-def convert(workspace_service_url, shock_service_url, handle_service_url, workspace_name, object_name, object_version_number, working_directory, level=logging.INFO, logger=None): 
+def convert(workspace_service_url, shock_service_url, handle_service_url, workspace_name, object_name, object_id, object_version_number, working_directory, level=logging.INFO, logger=None): 
  
     """
     Converts KBaseAssembly.SingleEndLibrary to a Fasta file of assembledDNA.
@@ -50,10 +50,14 @@ def convert(workspace_service_url, shock_service_url, handle_service_url, worksp
     logger.info("Grabbing Data.")
  
     ws_client = biokbase.workspace.client.Workspace('https://kbase.us/services/ws') 
-    if object_version_number :
-        contig_set = ws_client.get_objects([{'workspace':workspace_name,'name':object_name}, 'ver':object_version_number])[0]['data'] 
-    else:
+    if object_version_number and object_name :
+        contig_set = ws_client.get_objects([{'workspace':workspace_name,'name':object_name, 'ver':object_version_number}])[0]['data'] 
+    elif object_name:
         contig_set = ws_client.get_objects([{'workspace':workspace_name,'name':object_name}])[0]['data'] 
+    elif object_version_number and object_id :
+        contig_set = ws_client.get_objects([{'workspace':workspace_name,'objid':object_id, 'ver':object_version_number}])[0]['data'] 
+    else:
+        contig_set = ws_client.get_objects([{'workspace':workspace_name,'objid':object_id}])[0]['data'] 
 
     if not os.path.isfile(input_file_name):
         raise Exception("The input file name {0} does not exist".format(input_file_name))        
@@ -68,7 +72,7 @@ def convert(workspace_service_url, shock_service_url, handle_service_url, worksp
         script_utils.download_file_from_shock(logger, shock_service_url, shock_id, working_directory, token) 
         
     else: 
-        logger.warning("The ContigSet does not have a fasta_ref to shock.  The fasta file will be attempted to be built from the object.")
+        logger.warning("The ContigSet does not have a fasta_ref to shock.  The fasta file will be attempted to be built from contig sequences in the object.")
         contig_list = contig_set['contigs']
 #KNOW DIRECTORY, DONT KNOW NAME TO WRITE FILE OUT TO
         for contig in contig_list:
@@ -95,7 +99,7 @@ if __name__ == "__main__":
  
     object_info = parser.add_mutually_exclusive_group(required=True)
     object_info.add_argument('--object_name', help ='Object Name', action='store', type=str, nargs='?')
-    object_info.add_argument('--object_id', help ='Object ID', action='store', type=str, nargs='?') 
+    object_info.add_argument('--object_id', help ='Object ID', action='store', type=int, nargs='?') 
  
     data_services = parser.add_mutually_exclusive_group(required=True) 
     data_services.add_argument('--shock_service_url', help='Shock url', action='store', type=str, default='https://kbase.us/services/shock-api/\
@@ -107,7 +111,7 @@ handle_service/', nargs='?')
 
     logger = script_utils.getStderrLogger(__file__)
     try:
-        convert(args.workspace_service_url, args.shock_service_url, args.handle_service_url, args.workspace_name, args.object_name, args.object_version_number, args.working_directory, logger=logger) 
+        convert(args.workspace_service_url, args.shock_service_url, args.handle_service_url, args.workspace_name, args.object_name, args.object_id, args.object_version_number, args.working_directory, logger=logger) 
     except:
         logger.exception("".join(traceback.format_exc()))
         print "".join(traceback.format_exc())

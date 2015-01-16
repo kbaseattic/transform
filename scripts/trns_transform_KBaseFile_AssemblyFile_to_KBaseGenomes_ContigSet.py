@@ -262,6 +262,10 @@ def main():
         '--source_workspace_object_name',
         help='name of the workspace object to convert',
         action='store', type=str, required=True)
+    parser.add_argument(
+        '--target_workspace_object_name',
+        help='name for the produced ContigSet.',
+        action='store', type=str, required=True)
 
     parser.add_argument(
         '--fasta_reference_only',
@@ -289,7 +293,7 @@ def main():
             args.fasta_reference_only, logger=logger)
         upload_workspace_data(
             cs, args.workspace_url, ref,
-            args.target_workspace_name, contig_set_id)
+            args.target_workspace_name, args.target_workspace_object_name)
     except:
         logger.exception("".join(traceback.format_exc()))
         print("".join(traceback.format_exc()))

@@ -50,7 +50,7 @@ def convert(workspace_service_url, shock_service_url, handle_service_url, worksp
     logger.info("Grabbing Data.")
  
     try:
-        ws_client = biokbase.workspace.client.Workspace('https://kbase.us/services/ws') 
+        ws_client = biokbase.workspace.client.Workspace(workspace_service_url) 
         if object_version_number and object_name :
             contig_set = ws_client.get_objects([{'workspace':workspace_name,'name':object_name, 'ver':object_version_number}])[0]['data'] 
         elif object_name:
@@ -64,12 +64,6 @@ def convert(workspace_service_url, shock_service_url, handle_service_url, worksp
         logger.exception("".join(traceback.format_exc()))
         print "".join(traceback.format_exc()) 
         sys.exit(1) 
-
-    if not os.path.isfile(input_file_name):
-        raise Exception("The input file name {0} does not exist".format(input_file_name))        
-
-    if not os.path.isdir(args.working_directory):
-        raise Exception("The working directory does not exist {0} does not exist".format(working_directory))        
 
     shock_id = None 
     if "fasta_ref" in contig_set : 

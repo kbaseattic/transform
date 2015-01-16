@@ -56,8 +56,8 @@ type but different versions.
         #self.kbaseLogger.log_message("INFO", ctx)        
         #self.kbaseLogger.log_message("INFO", args)        
 
-        if 'optional_args' not in args:
-            args['optional_args'] = '{}'
+        if 'optional_arguments' not in args:
+            args['optional_arguments'] = '{}'
 
         # read local configuration
         #memcacheClient = self._get_memcache_client()
@@ -67,25 +67,25 @@ type but different versions.
 
         job_details = dict()
 
-        if self.scripts_config["config_map"]["validator"].has_key(args["etype"]):
-            job_details["validator"] = self.scripts_config["config_map"]["validator"][args["etype"]]
+        if self.scripts_config["validate"].has_key(args["external_type"]):
+            job_details["validator"] = self.scripts_config["validate"][args["external_type"]]
         else:
-            self.kbaseLogger.log_message("WARNING", "No validation available for {0} => {1}".format(args["etype"],args["kb_type"]))
+            self.kbaseLogger.log_message("WARNING", "No validation available for {0}".format(args["external_type"]))
 
-        if self.scripts_config["config_map"]["transformer"].has_key(args["etype"] + "-to-" + args["kb_type"]):
-            job_details["transformer"] = self.scripts_config["config_map"]["transformer"][args["etype"] + "-to-" + args["kb_type"]]
+        if self.scripts_config["transform." + method].has_key("{0}=>{1}".format(args["external_type"],args["kbase_type"])):
+            job_details["transformer"] = self.scripts_config["transform." + method]["{0}=>{1}".format(args["external_type"],args["kbase_type"])]
         else:
-            raise Exception("No conversion available for {0} => {1}".format(args["etype"],args["kb_type"]))
+            raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
 
-        if self.scripts_config["config_map"]["uploader"].has_key(args["kb_type"]):
-            job_details["uploader"] = self.scripts_config["config_map"]["uploader"][args["kb_type"]]
+        if self.scripts_config["uploader"].has_key(args["kbase_type"]):
+            job_details["uploader"] = self.scripts_config["upload"][args["kbase_type"]]
         else:
             pass
             #raise Exception("No upload available for {0} => {1}".format(args["etype"],args["kb_type"]))
 
         args["job_details"] = json.dumps(job_details)
 
-        self.kbaseLogger.log_message("INFO", "Invoking {0} => {1}".format(args["etype"],args["kb_type"]))
+        self.kbaseLogger.log_message("INFO", "Invoking {0} with ({1},{2})".format(method,str(ctx),str(args)))
         
         return run_async(self.config, ctx, args)
 
@@ -99,34 +99,54 @@ type but different versions.
         self.kbaseLogger = biokbase.log.log('transform')
         self.kbaseLogger.set_log_file('transform_service.log')
 
-        #self.scripts_config = {"external_types": [],
-        #                       "kbase_types": [],
-        #                       "validate": {},
-        #                       "upload": {},
-        #                       "transform": {}}
-        #pluginsDir = '/kb/deployment/services/Transform/plugins/'
-        #plugins = os.listdir(pluginsDir)
+        self.scripts_config = {"external_types": set(),
+                               "kbase_types": set(),
+                               "validate": dict(),
+                               "transform.upload": dict(),
+                               "transform.download": dict(),
+                               "convert": dict()}
+        pluginsDir = 'plugins/configs'
+        plugins = os.listdir(pluginsDir)
         
-        #for p in plugins:
-        #    try:
-        #        f = open(os.path.join(pluginsDir, p), 'r')
-        #        pconfig = json.loads(f.read())
-        #        f.close()
-        #
-        #        if "external_type" in pconfig:
-        #            self.scripts_config["external_types"].append(pconfig["external_type"])
-        #            self.scripts_config["transform"][pconfig["external_type"]] = pconfig["transform"]
-        #        elif "kbase_type" in pconfig:
-        #            self.scripts_config["kbase_types"].append(pconfig["kbase_type"])
-        #            self.scripts_config["transform"][pconfig["kbase_type"]] = pconfig["transform"]
-        #    except:
-        #        self.kbaseLogger.log_message("WARNING", "Unable to read plugin {0}".format(p))
+        for p in plugins:
+            try:
+                f = open(os.path.join(pluginsDir, p), 'r')
+                pconfig = json.loads(f.read())
+                f.close()
 
-        f = open(self.config["scripts_config"], 'r')
-        self.scripts_config = json.loads(f.read())
-        f.close()
+                self.kbaseLogger.log_message("INFO", json.dumps(pconfig, indent=4, sort_keys=True))        
 
-        #self.kbaseLogger.log_message("INFO", json.dumps(self.scripts_config, indent=4, sort_keys=True))        
+                if pconfig["script_type"].startswith("transform"):
+                    self.scripts_config["external_types"].add(pconfig["external_type"])
+                    self.scripts_config["kbase_types"].add(pconfig["kbase_type"])
+
+                id = None
+
+                if pconfig["script_type"] == "validate":
+                    self.scripts_config["external_types"].add(pconfig["external_type"])
+                    id = pconfig["external_type"]
+                elif pconfig["script_type"] == "transform.upload":
+                    self.scripts_config["external_types"].add(pconfig["external_type"])
+                    self.scripts_config["kbase_types"].add(pconfig["kbase_type"])
+                    id = "{0}=>{1}".format(pconfig["external_type"],pconfig["kbase_type"])
+                elif pconfig["script_type"] == "transform.download":
+                    self.scripts_config["external_types"].add(pconfig["external_type"])
+                    self.scripts_config["kbase_types"].add(pconfig["kbase_type"])
+                    id = "{0}=>{1}".format(pconfig["kbase_type"],pconfig["external_type"])
+                elif pconfig["script_type"] == "convert":
+                    self.scripts_config["kbase_types"].add(pconfig["source_kbase_type"])
+                    self.scripts_config["kbase_types"].add(pconfig["destination_kbase_type"])
+                    id = "{0}=>{1}".format(pconfig["source_kbase_type"],pconfig["destination_kbase_type"])
+
+                self.scripts_config[pconfig["script_type"]][k] = json.dumps(pconfig)
+                del self.scripts_config[pconfig["script_type"]][k]["script_type"]
+            except Exception, e:
+                self.kbaseLogger.log_message("WARNING", "Unable to read plugin {0}: {1}".format(n,e.message))
+
+        self.kbaseLogger.log_message("INFO", json.dumps(self.scripts_config["validate"], indent=4, sort_keys=True))        
+        self.kbaseLogger.log_message("INFO", json.dumps(self.scripts_config["transform.upload"], indent=4, sort_keys=True))        
+        self.kbaseLogger.log_message("INFO", json.dumps(self.scripts_config["transform.download"], indent=4, sort_keys=True))        
+        self.kbaseLogger.log_message("INFO", json.dumps(self.scripts_config["convert"], indent=4, sort_keys=True))        
 
         #END_CONSTRUCTOR
         pass

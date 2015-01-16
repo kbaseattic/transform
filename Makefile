@@ -4,9 +4,9 @@ TARGET ?= /kb/deployment
 include $(TOP_DIR)/tools/Makefile.common
 SERVICE_SPEC = Transform.spec
 SERVICE_NAME = transform
-SERVICE_PSGI_FILE = $(SERVICE_NAME).psgi
+#SERVICE_PSGI_FILE = $(SERVICE_NAME).psgi
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
-SERVER_MODULE = lib/Bio/KBase/$(SERVICE_NAME)/Service.pm
+#SERVER_MODULE = lib/Bio/KBase/$(SERVICE_NAME)/Service.pm
 SERVICE_PORT = 7778
 
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
@@ -14,23 +14,21 @@ TPAGE_ARGS = --define kb_top=$(TARGET) --define kb_runtime=$(DEPLOY_RUNTIME) --d
         --define kb_service_port=$(SERVICE_PORT)
 ANT = ant
 
-#include $(TOP_DIR)/tools/Makefile.common
-
 # to wrap scripts and deploy them to $(TARGET)/bin using tools in
 # the dev_container. right now, these vars are defined in
 # Makefile.common, so it's redundant here.
 TOOLS_DIR = $(TOP_DIR)/tools
-WRAP_PERL_TOOL = wrap_perl
-WRAP_PERL_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_PERL_TOOL).sh
-SRC_PERL = $(wildcard scripts/*.pl)
+#WRAP_PERL_TOOL = wrap_perl
+#WRAP_PERL_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_PERL_TOOL).sh
+SRC_PERL = $(wildcard plugins/scripts/*/*.pl)
 
-WRAP_RSCRIPT_TOOL = wrap_rscript
-WRAP_RSCRIPT_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_RSCRIPT_TOOL).sh
-SRC_R = $(wildcard scripts/*.R)
+#WRAP_RSCRIPT_TOOL = wrap_rscript
+#WRAP_RSCRIPT_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_RSCRIPT_TOOL).sh
+#SRC_R = $(wildcard scripts/*.R)
 
-WRAP_PYTHON_TOOL = wrap_python
-WRAP_PYTHON_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_PYTHON_TOOL).sh
-SRC_PYTHON = $(wildcard scripts/*.py)
+#WRAP_PYTHON_TOOL = wrap_python
+#WRAP_PYTHON_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_PYTHON_TOOL).sh
+SRC_PYTHON = $(wildcard plugins/scripts/*/*.py)
 
 # You can change these if you are putting your tests somewhere
 # else or if you are not using the standard .t suffix
@@ -139,6 +137,8 @@ deploy: deploy-libs deploy-scripts deploy-service deploy-r-scripts deploy-bins
 
 deploy-bins:
 	rsync --exclude '*.bak*' -arv bin/. $(TARGET)/bin/.
+	bash deps/pylib.sh
+	bash deps/pllib.sh
 
 # Deploy client artifacts, including the application programming interface
 # libraries, command line scripts, and associated reference documentation.
@@ -147,6 +147,9 @@ deploy-client: deploy-libs deploy-scripts deploy-docs
 
 # Deploy command line scripts.  The scripts are "wrapped" so users do not
 # need to modify their environment to run KBase scripts.
+deploy-scripts:
+	find plugins/scripts -name '*.py' -exec cp {} $(TARGET)/pybin/ \;
+	find plugins/scripts -name '*.pl' -exec cp {} $(TARGET)/plbin/ \;
 
 # Deploy documentation of the application programming interface.
 # (Waiting for resolution on documentation of command line scripts).
@@ -171,7 +174,8 @@ deploy-service: deploy-cfg
 	chmod +x $(SERVICE_DIR)/process.$(SERVICE_NAME); 
 	mkdir -p $(SERVICE_DIR)/awf
 	cat deploy.cfg service.cfg > $(SERVICE_DIR)/service.cfg;
-	cp -R plugins $(SERVICE_DIR)/;
+	mkdir -p $(SERVICE_DIR)/plugins/configs;
+	cp plugins/configs/*.json $(SERVICE_DIR)/plugins/configs/;
 
 # the above service.cfg is not correct at the moment
 # Use this if you want to unlink the generation of the docs from

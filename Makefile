@@ -136,8 +136,10 @@ include $(TOP_DIR)/tools/Makefile.common.rules
 
 # here are the standard KBase deployment targets (deploy,deploy-client, deploy-scripts, & deploy-service)
 
-deploy: deploy-libs deploy-scripts deploy-service deploy-r-scripts
+deploy: deploy-libs deploy-scripts deploy-service deploy-r-scripts deploy-bins
 
+deploy-bins:
+	rsync --exclude '*.bak*' -arv bin/. $(TARGET)/bin/.
 
 # Deploy client artifacts, including the application programming interface
 # libraries, command line scripts, and associated reference documentation.

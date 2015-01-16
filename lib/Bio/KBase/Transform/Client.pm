@@ -1,10 +1,17 @@
 package Bio::KBase::Transform::Client;
 
 use JSON::RPC::Client;
+use POSIX;
 use strict;
 use Data::Dumper;
 use URI;
 use Bio::KBase::Exceptions;
+my $get_time = sub { time, 0 };
+eval {
+    require Time::HiRes;
+    $get_time = sub { Time::HiRes::gettimeofday() };
+};
+
 use Bio::KBase::AuthToken;
 
 # Client version should match Impl version
@@ -32,7 +39,41 @@ sub new
     my $self = {
 	client => Bio::KBase::Transform::Client::RpcClient->new,
 	url => $url,
+	headers => [],
     };
+
+    chomp($self->{hostname} = `hostname`);
+    $self->{hostname} ||= 'unknown-host';
+
+    #
+    # Set up for propagating KBRPC_TAG and KBRPC_METADATA environment variables through
+    # to invoked services. If these values are not set, we create a new tag
+    # and a metadata field with basic information about the invoking script.
+    #
+    if ($ENV{KBRPC_TAG})
+    {
+	$self->{kbrpc_tag} = $ENV{KBRPC_TAG};
+    }
+    else
+    {
+	my ($t, $us) = &$get_time();
+	$us = sprintf("%06d", $us);
+	my $ts = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
+	$self->{kbrpc_tag} = "C:$0:$self->{hostname}:$$:$ts";
+    }
+    push(@{$self->{headers}}, 'Kbrpc-Tag', $self->{kbrpc_tag});
+
+    if ($ENV{KBRPC_METADATA})
+    {
+	$self->{kbrpc_metadata} = $ENV{KBRPC_METADATA};
+	push(@{$self->{headers}}, 'Kbrpc-Metadata', $self->{kbrpc_metadata});
+    }
+
+    if ($ENV{KBRPC_ERROR_DEST})
+    {
+	$self->{kbrpc_error_dest} = $ENV{KBRPC_ERROR_DEST};
+	push(@{$self->{headers}}, 'Kbrpc-Errordest', $self->{kbrpc_error_dest});
+    }
 
     #
     # This module requires authentication.
@@ -79,10 +120,10 @@ sub new
 =begin html
 
 <pre>
-$args is a Transform.ImportParam
+$args is an ImportParam
 $result is a string
 ImportParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
+	etype has a value which is a type_string
 	url has a value which is a string
 	ws_name has a value which is a string
 	obj_name has a value which is a string
@@ -95,10 +136,10 @@ type_string is a string
 
 =begin text
 
-$args is a Transform.ImportParam
+$args is an ImportParam
 $result is a string
 ImportParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
+	etype has a value which is a type_string
 	url has a value which is a string
 	ws_name has a value which is a string
 	obj_name has a value which is a string
@@ -139,7 +180,7 @@ sub import_data
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
 	method => "Transform.import_data",
 	params => \@args,
     });
@@ -174,11 +215,11 @@ sub import_data
 =begin html
 
 <pre>
-$args is a Transform.ValidateParam
+$args is a ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	in_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	in_id has a value which is a shock_id
 	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
@@ -189,11 +230,11 @@ shock_id is a string
 
 =begin text
 
-$args is a Transform.ValidateParam
+$args is a ValidateParam
 $result is a reference to a list where each element is a string
 ValidateParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	in_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	in_id has a value which is a shock_id
 	optional_args has a value which is a string
 type_string is a string
 shock_id is a string
@@ -232,7 +273,7 @@ sub validate
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
 	method => "Transform.validate",
 	params => \@args,
     });
@@ -267,12 +308,12 @@ sub validate
 =begin html
 
 <pre>
-$args is a Transform.UploadParam
+$args is an UploadParam
 $result is a reference to a list where each element is a string
 UploadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	kb_type has a value which is a Transform.type_string
-	in_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	kb_type has a value which is a type_string
+	in_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 	optional_args has a value which is a string
@@ -285,12 +326,12 @@ shock_id is a string
 
 =begin text
 
-$args is a Transform.UploadParam
+$args is an UploadParam
 $result is a reference to a list where each element is a string
 UploadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	kb_type has a value which is a Transform.type_string
-	in_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	kb_type has a value which is a type_string
+	in_id has a value which is a shock_id
 	ws_name has a value which is a string
 	obj_name has a value which is a string
 	optional_args has a value which is a string
@@ -331,7 +372,7 @@ sub upload
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
 	method => "Transform.upload",
 	params => \@args,
     });
@@ -366,16 +407,15 @@ sub upload
 =begin html
 
 <pre>
-$args is a Transform.DownloadParam
+$args is a DownloadParam
 $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	kb_type has a value which is a Transform.type_string
-	out_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	kb_type has a value which is a type_string
 	ws_name has a value which is a string
-	obj_name has a value which is a string
+	in_id has a value which is a string
+	optional_args has a value which is a string
 type_string is a string
-shock_id is a string
 
 </pre>
 
@@ -383,16 +423,15 @@ shock_id is a string
 
 =begin text
 
-$args is a Transform.DownloadParam
+$args is a DownloadParam
 $result is a reference to a list where each element is a string
 DownloadParam is a reference to a hash where the following keys are defined:
-	etype has a value which is a Transform.type_string
-	kb_type has a value which is a Transform.type_string
-	out_id has a value which is a Transform.shock_id
+	etype has a value which is a type_string
+	kb_type has a value which is a type_string
 	ws_name has a value which is a string
-	obj_name has a value which is a string
+	in_id has a value which is a string
+	optional_args has a value which is a string
 type_string is a string
-shock_id is a string
 
 
 =end text
@@ -428,7 +467,7 @@ sub download
 	}
     }
 
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
 	method => "Transform.download",
 	params => \@args,
     });
@@ -452,9 +491,331 @@ sub download
 
 
 
+=head2 version
+
+  $result = $obj->version()
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$result is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$result is a string
+
+
+=end text
+
+=item Description
+
+Returns the system version number
+TODO: support specific function version
+
+=back
+
+=cut
+
+sub version
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 0)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function version (received $n, expecting 0)");
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "Transform.version",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'version',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method version",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'version',
+				       );
+    }
+}
+
+
+
+=head2 methods
+
+  $results = $obj->methods()
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$results is a reference to a list where each element is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$results is a reference to a list where each element is a string
+
+
+=end text
+
+=item Description
+
+Returns all available functions
+
+=back
+
+=cut
+
+sub methods
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 0)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function methods (received $n, expecting 0)");
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "Transform.methods",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'methods',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method methods",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'methods',
+				       );
+    }
+}
+
+
+
+=head2 method_types
+
+  $results = $obj->method_types($func)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$func is a string
+$results is a reference to a list where each element is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$func is a string
+$results is a reference to a list where each element is a string
+
+
+=end text
+
+=item Description
+
+Returns supported types of the function.
+
+=back
+
+=cut
+
+sub method_types
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function method_types (received $n, expecting 1)");
+    }
+    {
+	my($func) = @args;
+
+	my @_bad_arguments;
+        (!ref($func)) or push(@_bad_arguments, "Invalid type for argument 1 \"func\" (value was \"$func\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to method_types:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'method_types');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "Transform.method_types",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'method_types',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method method_types",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'method_types',
+				       );
+    }
+}
+
+
+
+=head2 method_config
+
+  $result = $obj->method_config($func, $type)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$func is a string
+$type is a string
+$result is a CommandConfig
+CommandConfig is a reference to a hash where the following keys are defined:
+	cmd_name has a value which is a string
+	cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_description has a value which is a string
+	max_runtime has a value which is an int
+	opt_args has a value which is a reference to a hash where the key is a string and the value is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$func is a string
+$type is a string
+$result is a CommandConfig
+CommandConfig is a reference to a hash where the following keys are defined:
+	cmd_name has a value which is a string
+	cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
+	cmd_description has a value which is a string
+	max_runtime has a value which is an int
+	opt_args has a value which is a reference to a hash where the key is a string and the value is a string
+
+
+=end text
+
+=item Description
+
+Returns CommandConfig for the function and type.
+For validator, type has to be the form of <Associated KBase Module>.<external type>.
+For instance, GenBank format (GBK) is associated to KBaseGenomes' typed object.
+So, the external type should be KBaseGenomes.GBK, which can be find by method_types function call.
+In case of transformer, it requires source type and KBase typed object.
+<Associated KBase Module>.<external type>-to-<KBase Module>.<KBase type>. 
+``KBaseGenomes.GBK-to-KBaseGenomes.Genome'' will be the input type for method_config
+
+=back
+
+=cut
+
+sub method_config
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 2)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function method_config (received $n, expecting 2)");
+    }
+    {
+	my($func, $type) = @args;
+
+	my @_bad_arguments;
+        (!ref($func)) or push(@_bad_arguments, "Invalid type for argument 1 \"func\" (value was \"$func\")");
+        (!ref($type)) or push(@_bad_arguments, "Invalid type for argument 2 \"type\" (value was \"$type\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to method_config:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'method_config');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "Transform.method_config",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'method_config',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method method_config",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'method_config',
+				       );
+    }
+}
+
+
+
 sub version {
     my ($self) = @_;
-    my $result = $self->{client}->call($self->{url}, {
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
         method => "Transform.version",
         params => [],
     });
@@ -463,16 +824,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'download',
+                method_name => 'method_config',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method download",
+            error => "Error invoking method method_config",
             status_line => $self->{client}->status_line,
-            method_name => 'download',
+            method_name => 'method_config',
         );
     }
 }
@@ -600,7 +961,7 @@ optional shock_url
 
 <pre>
 a reference to a hash where the following keys are defined:
-id has a value which is a Transform.shock_id
+id has a value which is a shock_id
 shock_url has a value which is a string
 
 </pre>
@@ -610,7 +971,7 @@ shock_url has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-id has a value which is a Transform.shock_id
+id has a value which is a shock_id
 shock_url has a value which is a string
 
 
@@ -637,9 +998,9 @@ mapping<string,string> optional_args; // optarg paramters
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
+etype has a value which is a type_string
 default_source_url has a value which is a string
-script has a value which is a Transform.shock_ref
+script has a value which is a shock_ref
 
 </pre>
 
@@ -648,9 +1009,9 @@ script has a value which is a Transform.shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
+etype has a value which is a type_string
 default_source_url has a value which is a string
-script has a value which is a Transform.shock_ref
+script has a value which is a shock_ref
 
 
 =end text
@@ -676,7 +1037,7 @@ mapping<string, string> optional_args; // optarg key and values
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
+etype has a value which is a type_string
 url has a value which is a string
 ws_name has a value which is a string
 obj_name has a value which is a string
@@ -689,7 +1050,7 @@ ext_source_name has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
+etype has a value which is a type_string
 url has a value which is a string
 ws_name has a value which is a string
 obj_name has a value which is a string
@@ -714,8 +1075,8 @@ ext_source_name has a value which is a string
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-validation_script has a value which is a Transform.shock_ref
+etype has a value which is a type_string
+validation_script has a value which is a shock_ref
 
 </pre>
 
@@ -724,8 +1085,8 @@ validation_script has a value which is a Transform.shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-validation_script has a value which is a Transform.shock_ref
+etype has a value which is a type_string
+validation_script has a value which is a shock_ref
 
 
 =end text
@@ -751,8 +1112,8 @@ json string
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-in_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+in_id has a value which is a shock_id
 optional_args has a value which is a string
 
 </pre>
@@ -762,8 +1123,8 @@ optional_args has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-in_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+in_id has a value which is a shock_id
 optional_args has a value which is a string
 
 
@@ -785,9 +1146,9 @@ optional_args has a value which is a string
 
 <pre>
 a reference to a hash where the following keys are defined:
-validator has a value which is a Transform.Validator
-kb_type has a value which is a Transform.type_string
-translation_script has a value which is a Transform.shock_ref
+validator has a value which is a Validator
+kb_type has a value which is a type_string
+translation_script has a value which is a shock_ref
 
 </pre>
 
@@ -796,9 +1157,9 @@ translation_script has a value which is a Transform.shock_ref
 =begin text
 
 a reference to a hash where the following keys are defined:
-validator has a value which is a Transform.Validator
-kb_type has a value which is a Transform.type_string
-translation_script has a value which is a Transform.shock_ref
+validator has a value which is a Validator
+kb_type has a value which is a type_string
+translation_script has a value which is a shock_ref
 
 
 =end text
@@ -824,9 +1185,9 @@ json string
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-kb_type has a value which is a Transform.type_string
-in_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+kb_type has a value which is a type_string
+in_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 optional_args has a value which is a string
@@ -838,46 +1199,12 @@ optional_args has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-kb_type has a value which is a Transform.type_string
-in_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+kb_type has a value which is a type_string
+in_id has a value which is a shock_id
 ws_name has a value which is a string
 obj_name has a value which is a string
 optional_args has a value which is a string
-
-
-=end text
-
-=back
-
-
-
-=head2 Downloader
-
-=over 4
-
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-kb_type has a value which is a Transform.type_string
-ext_type has a value which is a Transform.type_string
-translation_script has a value which is a Transform.shock_ref
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-kb_type has a value which is a Transform.type_string
-ext_type has a value which is a Transform.type_string
-translation_script has a value which is a Transform.shock_ref
 
 
 =end text
@@ -894,7 +1221,7 @@ translation_script has a value which is a Transform.shock_ref
 
 =item Description
 
-mapping<string, string> optional_args; // optarg key and values
+json string
 
 
 =item Definition
@@ -903,11 +1230,11 @@ mapping<string, string> optional_args; // optarg key and values
 
 <pre>
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-kb_type has a value which is a Transform.type_string
-out_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+kb_type has a value which is a type_string
 ws_name has a value which is a string
-obj_name has a value which is a string
+in_id has a value which is a string
+optional_args has a value which is a string
 
 </pre>
 
@@ -916,11 +1243,11 @@ obj_name has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-etype has a value which is a Transform.type_string
-kb_type has a value which is a Transform.type_string
-out_id has a value which is a Transform.shock_id
+etype has a value which is a type_string
+kb_type has a value which is a type_string
 ws_name has a value which is a string
-obj_name has a value which is a string
+in_id has a value which is a string
+optional_args has a value which is a string
 
 
 =end text
@@ -985,6 +1312,7 @@ optional argument that is provided by json string. key is argument name and the 
 a reference to a hash where the following keys are defined:
 cmd_name has a value which is a string
 cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
 cmd_description has a value which is a string
 max_runtime has a value which is an int
 opt_args has a value which is a reference to a hash where the key is a string and the value is a string
@@ -998,6 +1326,7 @@ opt_args has a value which is a reference to a hash where the key is a string an
 a reference to a hash where the following keys are defined:
 cmd_name has a value which is a string
 cmd_args has a value which is a reference to a hash where the key is a string and the value is a string
+cmd_args_override has a value which is a reference to a hash where the key is a string and the value is a string
 cmd_description has a value which is a string
 max_runtime has a value which is an int
 opt_args has a value which is a reference to a hash where the key is a string and the value is a string
@@ -1017,7 +1346,12 @@ opt_args has a value which is a reference to a hash where the key is a string an
 
 =item Description
 
-each external type validator or external type to internal type pair transformer script configuration
+each external type validator or external type to internal type pair transformer script configuration 
+"validator" => "KBaseGenome.GBK" => { "cmd_name" => "trns_validate_KBaseGenomes.GBK", ... } 
+ where "validator" is the type of command and "transformer", "downloader", and "uploader" are supported;
+ "KBaseGenomes.GBK" is the source type and KBaseGenomes is the module to use external GBK file type
+ and for "transform" it requires the source type and the kb type togeter. 
+ "transform" =>"KBaseGenomes.GBK-to-KBaseGenomes.Genome" => {"cmd_name" => "trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome", ... }
 
 
 =item Definition
@@ -1026,7 +1360,7 @@ each external type validator or external type to internal type pair transformer 
 
 <pre>
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a Transform.CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a CommandConfig
 
 </pre>
 
@@ -1035,7 +1369,7 @@ config_map has a value which is a reference to a hash where the key is a string 
 =begin text
 
 a reference to a hash where the following keys are defined:
-config_map has a value which is a reference to a hash where the key is a string and the value is a Transform.CommandConfig
+config_map has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a CommandConfig
 
 
 =end text
@@ -1048,21 +1382,27 @@ config_map has a value which is a reference to a hash where the key is a string 
 
 package Bio::KBase::Transform::Client::RpcClient;
 use base 'JSON::RPC::Client';
+use POSIX;
+use strict;
 
 #
 # Override JSON::RPC::Client::call because it doesn't handle error returns properly.
 #
 
 sub call {
-    my ($self, $uri, $obj) = @_;
+    my ($self, $uri, $headers, $obj) = @_;
     my $result;
 
-    if ($uri =~ /\?/) {
-       $result = $self->_get($uri);
-    }
-    else {
-        Carp::croak "not hashref." unless (ref $obj eq 'HASH');
-        $result = $self->_post($uri, $obj);
+
+    {
+	if ($uri =~ /\?/) {
+	    $result = $self->_get($uri);
+	}
+	else {
+	    Carp::croak "not hashref." unless (ref $obj eq 'HASH');
+	    $result = $self->_post($uri, $headers, $obj);
+	}
+
     }
 
     my $service = $obj->{method} =~ /^system\./ if ( $obj );
@@ -1090,7 +1430,7 @@ sub call {
 
 
 sub _post {
-    my ($self, $uri, $obj) = @_;
+    my ($self, $uri, $headers, $obj) = @_;
     my $json = $self->json;
 
     $obj->{version} ||= $self->{version} || '1.1';
@@ -1117,6 +1457,7 @@ sub _post {
         Content_Type   => $self->{content_type},
         Content        => $content,
         Accept         => 'application/json',
+	@$headers,
 	($self->{token} ? (Authorization => $self->{token}) : ()),
     );
 }

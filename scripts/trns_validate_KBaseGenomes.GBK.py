@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
 import argparse
 import sys
 import os
@@ -52,11 +53,13 @@ def transform (args) :
 #    try:
       kb_top = os.environ.get('KB_TOP', '/kb/deployment')
       cp = impt.replace('$KB_TOP', kb_top);
+      kb_runtime = os.environ.get('KB_RUNTIME', '/kb/runtime')
+      java = "%s/java/bin/java" % kb_runtime
 
 
       in_dir = re.sub(r'/[^/]*$','', args.in_file)
 
-      tcmd_lst = ['java', '-cp', cp, mc, in_dir]
+      tcmd_lst = [java, '-cp', cp, mc, in_dir]
 
       p1 = Popen(tcmd_lst, stdout=PIPE)
       out_str = p1.communicate()
@@ -75,16 +78,16 @@ def transform (args) :
 if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_validate_KBaseGenomes.GBK', epilog=desc3)
-    parser.add_argument('-i', '--in_file', help='Input file', action='store', dest='in_file', default=None, required=True)
+    parser.add_argument('-i', '--in_file', help='Input file or directory', action='store', dest='in_file', default=None, required=True)
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
 
     # main loop
-    if not args.in_file.endswith(".gbk"):
-      in_file = "{}.gbk".format(args.in_file)
-      shutil.copy(args.in_file, in_file)
-      args.in_file = in_file
+    if os.path.isfile(args.in_file) and not args.in_file.endswith(".gbk"):
+        in_file = "{}.gbk".format(args.in_file)
+        shutil.copy(args.in_file, in_file)
+        args.in_file = in_file
     transform(args)
     exit(0);

@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
 import argparse
 import sys
 import os
@@ -16,7 +17,8 @@ import urllib2
 import json
 from biokbase import log
 from biokbase.userandjobstate.client import UserAndJobState
-from biokbase.Transform.util import download_shock_data, validation_handler, transformation_handler,upload_to_ws
+from biokbase.Transform.util import Uploader
+import datetime
 
 desc1 = '''
 NAME
@@ -61,7 +63,9 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--in_id', help='Input Shock node id', action='store', dest='inobj_id', default=None, required=True)
 
     parser.add_argument('-r', '--ujs_url', help='UJS url', action='store', dest='ujs_url', default='https://kbase.us/services/userandjobstate')
-    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=True)
+    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=False)
+
+    parser.add_argument('-n', '--handle_service_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
 
     parser.add_argument('-w', '--dst_ws_name', help='Destination workspace name', action='store', dest='ws_id', default=None, required=True)
     parser.add_argument('-o', '--out_id', help='Output workspace object name', action='store', dest='outobj_id', default=None, required=True)
@@ -82,17 +86,74 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     
-    ujs = UserAndJobState(url=args.ujs_url)
+    kb_token = os.environ.get('KB_AUTH_TOKEN')
+    ujs = UserAndJobState(url=args.ujs_url, token=kb_token)
 
+    est = datetime.datetime.utcnow() + datetime.timedelta(minutes=3)
+    if args.jid is not None:
+      ujs.update_job_progress(args.jid, kb_token, 'Dispatched', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
 
     ## main loop
-    # optional argument parsing
     args.opt_args = json.loads(args.opt_args)
-    download_shock_data(args.shock_url, args.inobj_id, args.sdir, args.itmp)
-    validation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.sdir, args.itmp, args.opt_args, "", args.jid)
-    transformation_handler(args.ws_url, args.cfg_name, args.sws_id, args.etype, args.kbtype, args.sdir, args.itmp, args.otmp, args.opt_args, "", args.jid)
-    upload_to_ws(args.ws_url,args.sdir, args.otmp, args.ws_id, args.kbtype, args.outobj_id, args.inobj_id, args.etype, args.jid)
+    if 'uploader' not in args.opt_args:
+      args.opt_args['uploader'] = {}
+      args.opt_args['uploader']['file'] = args.otmp
+      args.opt_args['uploader']['input'] = args.inobj_id
+      args.opt_args['uploader']['jid'] = args.jid
+      args.opt_args['uploader']['etype'] = args.etype
+    uploader = Uploader(args)
+
+    try:
+      uploader.download_shock_data()
+    except:
+      if args.jid is not None:
+        e,v,t = sys.exc_info()[:3]
+        ujs.complete_job(args.jid, kb_token, 'Failed : data download from Shock\n', str(v), {}) 
+      else:
+        traceback.print_exc(file=sys.stderr)
+      exit(3);
+
+    if args.jid is not None:
+      ujs.update_job_progress(args.jid, kb_token, 'Data downloaded', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+
+    try:
+      uploader.validation_handler()
+    except:
+      if args.jid is not None:
+        e,v = sys.exc_info()[:2]
+        ujs.complete_job(args.jid, kb_token, 'Failed : data validation\n', str(v), {}) 
+      else:
+        traceback.print_exc(file=sys.stderr)
+      exit(4);
+
+    if args.jid is not None:
+      ujs.update_job_progress(args.jid, kb_token, 'Data validated', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+
+    try:
+      uploader.transformation_handler()
+    except:
+      e,v = sys.exc_info()[:2]
+      if args.jid is not None:
+        ujs.complete_job(args.jid, kb_token, 'Failed : data format conversion\n', str(v), {})
+      else:
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, 'Failed : data format conversion\n{}:{}'.format(str(e),str(v))
+      exit(5);
+
+    if args.jid is not None:
+      ujs.update_job_progress(args.jid, kb_token, 'Data format conversion', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+
+    try:
+      uploader.upload_handler()
+    except:
+      e,v = sys.exc_info()[:2]
+      if args.jid is not None:
+        ujs.complete_job(args.jid, kb_token, 'Failed : upload to WS ({}/{})\n'.format(args.ws_id, args.outobj_id), str(v), {})
+      else:
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, 'Failed : upload to WS ({}/{})\n{}:{}'.format(args.ws_id, args.outobj_id, str(e),str(v))
+      exit(6);
 
     # clean-up
     if(args.del_tmps is "true") :
@@ -101,4 +162,6 @@ if __name__ == "__main__":
         except:
           pass
 
+    if args.jid is not None:
+      ujs.complete_job(args.jid, kb_token, 'Succeed', None, {"shocknodes" : [], "shockurl" : args.shock_url, "workspaceids" : [], "workspaceurl" : args.ws_url ,"results" : [{"server_type" : "Workspace", "url" : args.ws_url, "id" : "{}/{}".format(args.ws_id, args.outobj_id), "description" : "description"}]})
     exit(0);

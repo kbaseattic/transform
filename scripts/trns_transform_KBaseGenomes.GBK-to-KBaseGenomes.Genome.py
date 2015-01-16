@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
 import argparse
 import sys
 import os
@@ -44,20 +45,22 @@ AUTHORS
 First Last.
 '''
 
-impt = "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar:$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar:$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar:$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar"
+impt = "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar:$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar:$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar:$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar:$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar:$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"
 
-mc = 'us.kbase.genbank.test.CommandLineTest'
+mc = 'us.kbase.genbank.ConvertGBK'
 
 def transform (args) :
 #    try:
       kb_top = os.environ.get('KB_TOP', '/kb/deployment')
-      cp = impt.replace('$KB_TOP', kb_top);
+      cp = impt.replace('$KB_TOP', kb_top)
+      kb_runtime = os.environ.get('KB_RUNTIME', '/kb/runtime')
+      java = "%s/java/bin/java" % kb_runtime
 
       in_dir = re.sub(r'/[^/]*$','', args.in_file)
       out_fn = re.sub(r'^.*/','',in_dir)
       out_fn = "{}.jsonp".format(out_fn)
 
-      tcmd_lst = ['java', '-cp', cp, mc, in_dir]
+      tcmd_lst = [java, '-cp', cp, mc, in_dir]
 
 
       print in_dir
@@ -75,19 +78,21 @@ def transform (args) :
           exit(p1.returncode) 
 
       # success
-      if(args.cs is not None) :
-        with open(out_fn, 'r') as gif:
-          f = json.loads(gif.read())
-          f['contigset_ref'] = args.cs
-          with open(args.out_file, 'w') as outfile:
-            json.dump(f, outfile)
-      else:
-        with open(out_fn, 'r') as gif:
-          f = json.loads(gif.read())
-          del f['contigset_ref'] 
-          with open(args.out_file, 'w') as outfile:
-            json.dump(f, outfile)
-        #shutil.move(out_fn, args.out_file)
+      # Do not need the following anymore due to custom upload
+      #if(args.cs is not None) :
+      #  with open(out_fn, 'r') as gif:
+      #    f = json.loads(gif.read())
+      #    f['contigset_ref'] = args.cs
+      #    with open(args.out_file, 'w') as outfile:
+      #      json.dump(f, outfile)
+      #else:
+      #  with open(out_fn, 'r') as gif:
+      #    f = json.loads(gif.read())
+      #    if 'contigset_ref' in f:
+      #      del f['contigset_ref'] 
+      #    with open(args.out_file, 'w') as outfile:
+      #      json.dump(f, outfile)
+      #  #shutil.move(out_fn, args.out_file)
 
 #    except:
 #      raise Exception("Error writing to {}".format(args.out_file))
@@ -104,7 +109,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # main loop
-    if not args.in_file.endswith(".gbk"):
+    if os.path.isfile(args.in_file) and not args.in_file.endswith(".gbk"):
       in_file = "{}.gbk".format(args.in_file)
       shutil.copy(args.in_file, in_file)
       args.in_file = in_file

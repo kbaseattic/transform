@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import argparse
 import sys
 import os
@@ -44,20 +44,22 @@ AUTHORS
 First Last.
 '''
 
-impt = "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar:$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar:$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar:$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar"
+impt = "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar:$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar:$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar:$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar:$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar:$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"
 
-mc = 'us.kbase.genbank.test.CommandLineTest'
+mc = 'us.kbase.genbank.ConvertGBK'
 
 def transform (args) :
 #    try:
       kb_top = os.environ.get('KB_TOP', '/kb/deployment')
       cp = impt.replace('$KB_TOP', kb_top);
+      kb_runtime = os.environ.get('KB_RUNTIME', '/kb/runtime')
+      java = "%s/java/bin/java" % kb_runtime
 
       in_dir = re.sub(r'/[^/]*$','', args.in_file)
       out_fn = re.sub(r'^.*/','',in_dir)
       out_fn = "{}_ContigSet.jsonp".format(out_fn)
 
-      tcmd_lst = ['java', '-cp', cp, mc, in_dir]
+      tcmd_lst = [java, '-cp', cp, mc, in_dir]
 
 
       print in_dir

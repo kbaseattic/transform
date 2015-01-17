@@ -27,6 +27,8 @@ trns_transform_KBaseBiochem.Excel-to-KBaseBiochem.Media.pl --input --output --ou
 
 =cut
 
+my $logger = getStderrLogger();
+
 my $In_File   = "";
 my $Out_Object = "";
 my $Out_WS    = "";
@@ -39,8 +41,11 @@ GetOptions("input|i=s"  => \$In_File,
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
     print($0." --input/-i <Input Excel File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in>\n");
+    $logger->warn($0." --input/-i <Input Excel File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in>\n");
     exit();
 }
+
+$logger->info("Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
 
 my $sheets = parse_excel($In_File);
 my $Media = (grep { $_ =~ /[Mm]edia/ } keys %$sheets)[0];
@@ -63,12 +68,14 @@ for (my $i=0; $i < @{$mediadata}; $i++) {
 	push(@{$input->{concentrations}},$mediadata->[$i]->[1]);
 }
 
+$logger->info("Loading Media WS Object");
+
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
     my $fba = get_fba_client();
     $fba->addmedia($input);
 };
 
-my $logger = getStderrLogger();
-$logger->info($stdout) if $stdout;
-$logger->warn($stderr) if $stderr;
+$logger->info("fbaModelServices addmedia() informational messages\n".$stdout) if $stdout;
+$logger->warn("fbaModelServices addmedia() warning messages\n".$stderr) if $stderr;
+$logger->info("Loading Media WS Object Complete");

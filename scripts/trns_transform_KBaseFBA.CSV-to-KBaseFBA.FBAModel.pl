@@ -32,6 +32,8 @@ $script
 
 =cut
 
+my $logger = getStderrLogger();
+
 my $In_RxnFile   = "";
 my $In_CpdFile = "";
 my $Out_Object = "";
@@ -50,8 +52,12 @@ GetOptions("input|i=s"  => \$In_RxnFile,
 
 if($Help || !$In_RxnFile || !$In_CpdFile || !$Out_Object || !$Out_WS){
     print($0." --input/-i <Input Reaction CSV File> --compounds/-c <Input Compound CSV File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+    $logger->warn($0." --input/-i <Input Reaction CSV File> --compounds/-c <Input Compound CSV File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
     exit();
 }
+
+$logger->info("Mandatory Data passed = ".join(" | ", ($In_RxnFile,$In_CpdFile,$Out_Object,$Out_WS)));
+$logger->info("Optional Data passed = ".join(" | ", ("Genome:".$Genome,"Biomass:".$Biomass)));
 
 my $input = {
 	model => $Out_Object,
@@ -86,12 +92,14 @@ $input->{compounds} = parse_input_table($In_CpdFile,[
 	["aliases",0,undef]
 ]);
 
+$logger->info("Loading FBAModel WS Object");
+
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
     my $fba = get_fba_client();
     $fba->import_fbamodel($input);
 };
 
-my $logger = getStderrLogger();
-$logger->info($stdout) if $stdout;
-$logger->warn($stderr) if $stderr;
+$logger->info("fbaModelServices import_fbamodel() informational messages\n".$stdout) if $stdout;
+$logger->warn("fbaModelServices import_fbamodel() warning messages\n".$stderr) if $stderr;
+$logger->info("Loading FBAModel WS Object Complete");

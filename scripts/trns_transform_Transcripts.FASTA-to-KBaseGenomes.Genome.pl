@@ -112,7 +112,8 @@ my $GenomeHash = {id => ($Genome_ID ? $Genome_ID : $In_File),
 		  taxonomy => "viridiplantae",
 		  gc_content => 0.5,
 		  dna_size => 0,
-		  features => []};
+		  features => [],
+                  contigs => []};
 
 #Test first sequence for NAs
 if(!$IsDNA){

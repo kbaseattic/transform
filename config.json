@@ -31,6 +31,42 @@
             }
         }, 
         "transformer": {
+            "KBaseBiochem.CSV-to-KBaseBiochem.Media": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_description": "CSV to Media", 
+                "cmd_name": "trns_transform_KBaseBiochem.CSV-to-KBaseBiochem.Media", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "ws_name": "-w"
+                }
+            }, 
+            "KBasePhenotypes.CSV-to-KBasePhenotypes.PhenotypeSet": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_description": "CSV to PhenotypeSet", 
+                "cmd_name": "trns_transform_KBasePhenotypes.CSV-to-KBasePhenotypes.PhenotypeSet", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "ws_name": "-w",
+                    "genome_id": "-g"
+                }
+            }, 
+            "KBaseBiochem.CSV-to-KBaseBiochem.Media": {
+                "cmd_args": {
+                    "input": "-i", 
+                    "output": "-o"
+                }, 
+                "cmd_description": "CSV to Media", 
+                "cmd_name": "trns_transform_KBaseBiochem.CSV-to-KBaseBiochem.Media", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                }
+            }, 
             "KBaseAssembly.FA-to-KBaseAssembly.SingleEndLibrary": {
                 "cmd_args": {
                     "input": "-i", 
@@ -170,6 +206,23 @@
             }
         }, 
         "uploader": {
+            "KBaseBiochem.CSV-to-KBaseBiochem.Media": {
+                "cmd_args": {
+                    "dir": "-l", 
+                    "outobj_id": "-o", 
+                    "ws_id": "-w", 
+                    "ws_url": "-u"
+                }, 
+                "cmd_description": "Dummy uploader", 
+                "cmd_name": "trns_upload_Transform.Dummy", 
+                "max_runtime": 3600, 
+                "opt_args": {
+                    "etype": "-e", 
+                    "file": "-g", 
+                    "input": "-i", 
+                    "jid": "-j"
+                }
+            }, 
             "KBaseFBA.FBAModel": {
                 "cmd_args": {
                     "dir": "-l", 

@@ -1,0 +1,16 @@
+{
+    "check_interval": "3", 
+    "expected_result": "1", 
+    "external_type": "KBaseGenomes.GBK", 
+    "input_data_url": [
+        "ftp://ftp.ncbi.nlm.nih.gov/genomes/Zea_mays/CHR_MT/zm_ref_B73_RefGen_v3_chrMT.gbk.gz"
+    ], 
+    "kbase_type": "KBaseGenomes.Genome", 
+    "max_wait_sec": "300", 
+    "obj_name": "maize_genome_mt", 
+    "optional_args": "{}", 
+    "skip_server_test": "true", 
+    "test_name": "test", 
+    "test_server_url": "http://140.221.67.242:7778", 
+    "ws_name": "load_test"
+}

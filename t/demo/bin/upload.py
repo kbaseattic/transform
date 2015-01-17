@@ -29,8 +29,11 @@ import dateutil.parser
 import dateutil.tz
 
 import biokbase.Transform.Client
+import biokbase.Transform.script_utils
 import biokbase.userandjobstate.client
 import biokbase.workspace.client
+
+logger = biokbase.Transform.script_utils.getStderrLogger(__file__)
 
 
 def show_workspace_object_list(workspace_url, workspace_name, object_name, token):
@@ -182,100 +185,7 @@ def download_from_shock(shockURL, shock_id, filePath, token):
         
     print "\tFile size : {0:f} MB".format(int(os.path.getsize(filePath))/float(1024*1024))
 
-    mimeType = None    
-    with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
-        mimeType = m.id_filename(filePath)
-
-    print "Detected as mimetype {0}".format(mimeType)
-
-    if mimeType == "application/x-gzip":
-        print "\tExtracting {0} as gzip".format(filePath)
-    
-        with gzip.GzipFile(filePath, 'rb') as gzipDataFile, open(os.path.splitext(filePath)[0], 'wb') as f:
-            for chunk in gzipDataFile:
-                f.write(chunk)
-        
-        os.remove(filePath)
-        print "\tExtracted File size : {0:f} MB".format(int(os.path.getsize(os.path.splitext(filePath)[0]))/float(1024*1024))        
-    elif mimeType == "application/x-bzip2":
-        print "\tExtracting {0} as bz2".format(filePath)
-        
-        outPath = os.path.splitext(filePath)[0]
-        
-        with bz2.BZ2File(filePath, 'r') as bz2DataFile, open(outPath, 'wb') as f:
-            for chunk in bz2DataFile:
-                f.write(chunk)
-        
-        os.remove(filePath)
-        print "\tExtracted File size : {0:f} MB".format(int(os.path.getsize(outPath))/float(1024*1024))
-        
-        # check for tar        
-        with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
-            mimeType = m.id_filename(outPath)
-
-        if mimeType == "application/x-tar":
-            print "Extracting {0} as tar".format(outPath)
-        
-            if not tarfile.is_tarfile(outPath):
-                raise Exception("Inavalid tar file " + outPath)
-        
-            with tarfile.open(outPath, 'r') as tarDataFile:
-                memberlist = tarDataFile.getmembers()
-            
-                for member in memberlist:
-                    memberPath = os.path.join(os.path.dirname(os.path.abspath(outPath)),os.path.basename(os.path.abspath(member.name)))
-            
-                    if member.isfile():
-                        print "\t\tExtracting {0:f} MB from {1} in {2}".format(int(member.size)/float(1024*1024),memberPath,outPath)
-                        with open(memberPath, 'wb') as f:
-                            inputFile = tarDataFile.extractfile(member.name)
-                            f.write(inputFile.read(chunkSize))
-        
-            os.remove(outPath)
-    elif mimeType == "application/zip":
-        print "\tExtracting {0} as zip".format(filePath)
-        
-        if not zipfile.is_zipfile(filePath):
-            raise Exception("Invalid zip file!")                
-        
-        with zipfile.ZipFile(filePath, 'r') as zipDataFile:
-            bad = zipDataFile.testzip()
-        
-            if bad is not None:
-                raise Exception("Encountered a bad file in the zip : " + str(bad))
-        
-            infolist = zipDataFile.infolist()
-        
-            for x in infolist:
-                infoPath = os.path.join(os.path.dirname(filePath), os.path.basename(os.path.abspath(x.filename)))
-
-                #if os.path.exists(infoPath):
-                #    raise Exception("Extracting zip contents will overwrite an existing file!")
-            
-                print "\t\tExtracting {0:f} MB from {1} in {2}".format(int(x.file_size)/float(1024*1024),infoPath,filePath)
-                with open(infoPath, 'wb') as f:
-                    f.write(zipDataFile.read(x.filename))
-        
-        os.remove(filePath)        
-    elif mimeType == "application/x-gtar":
-        print "Extracting {0} as tar".format(filePath)
-        
-        if not tarfile.is_tarfile(filePath):
-            raise Exception("Inavalid tar file " + filePath)
-        
-        with tarfile.open(filePath, 'r|*') as tarDataFile:
-            memberlist = tarDataFile.getmembers()
-            
-            for member in memberlist:
-                memberPath = os.path.join(os.path.dirname(filePath),os.path.basename(os.path.abspath(member.name)))
-            
-                if member.isfile():
-                    print "\t\tExtracting {0:f} MB from {1} in {2}".format(int(member.size)/float(1024*1024),memberPath,filePath)
-                    with open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
-                        f.write(inputFile.read(chunkSize))
-        
-        os.remove(filePath)
-
+    biokbase.Transform.script_utils.extract_data(logger, filePath)
 
 
 
@@ -302,7 +212,7 @@ if __name__ == "__main__":
     token = os.environ.get("KB_AUTH_TOKEN")
     if token is None:
         if os.path.exists(os.path.expanduser("~/.kbase_config")):
-            f = open(os.path.expanduser("~/.kbase_config", 'r'))
+            f = open(os.path.expanduser("~/.kbase_config"), 'r')
             config = f.read()
             if "token=" in config:
                 token = config.split("token=")[1].split("\n",1)[0]            
@@ -328,152 +238,152 @@ if __name__ == "__main__":
             if args.workspace is not None:
                 workspace = args.workspace
 
-        genbank_to_genome = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome = {"external_type": "Genbank.Genome",
                          "kbase_type": "KBaseGenomes.Genome",
                          "object_name": "NC_005213",
                          "filePath": "data/genbank/NC_005213/NC_005213.gbk",
                          "downloadPath": "NC_005213.gbk"}
 
-        genbank_to_genome_ftp_ncbi_gz = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_ftp_ncbi_gz = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
                             "object_name": "ecoli_reference.NCBI",
                             "filePath": None,
                             "downloadPath": None,
                             "url": "ftp://ftp.ncbi.nih.gov/genomes/genbank/bacteria/Escherichia_coli/reference/GCA_000005845.2_ASM584v2/GCA_000005845.2_ASM584v2_genomic.gbff.gz"}
 
-        genbank_to_genome_http_mol_zip = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_http_mol_zip = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
                             "object_name": "Abelson_murine_leukemia_virus.MOL",
                             "filePath": None,
                             "downloadPath": None,
                             "url": "http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=11788;export=gbk;compress=zip"}
 
-        genbank_to_genome_ftp_patric = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_ftp_patric = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
                             "object_name": "Acetobacter_tropicalis_NBRC_101654.PATRIC",
                             "filePath": None,
                             "downloadPath": None,
                             "url": "ftp://ftp.patricbrc.org/patric2/genomes/Acetobacter_tropicalis_NBRC_101654/Acetobacter_tropicalis_NBRC_101654.PATRIC.gbf"}
 
-        genbank_to_genome_ftp_refseq = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_ftp_refseq = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
                             "object_name": "Acetobacter_tropicalis_NBRC_101654.Refseq",
                             "filePath": None,
                             "downloadPath": None,
                             "url": "ftp://ftp.patricbrc.org/patric2/genomes/Acetobacter_tropicalis_NBRC_101654/Acetobacter_tropicalis_NBRC_101654.RefSeq.gbf"}
 
-        genbank_to_genome_ftp_ensembl = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_ftp_ensembl = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
                             "object_name": "Tursiops_truncatus.turTru1.78.nonchromosomal.ENSEMBL",
                             "filePath": None,
                             "downloadPath": None,
                             "url": "ftp://ftp.ensembl.org/pub/release-78/genbank/tursiops_truncatus/Tursiops_truncatus.turTru1.78.nonchromosomal.dat.gz"}
                             
-        genbank_to_genome_http_img = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_http_img = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
                             "object_name": "Fibrobacter_succinogenes_HM2_Project_1034376",
                             "filePath": None,
                             "downloadPath": None,
                             "url": "http://genome.jgi-psf.org/pages/dynamicOrganismDownload.jsf?organism=fibrobacteres#"}
         
-        genbank_to_genome_gz = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_gz = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
                             "object_name": "NC_005213_gz",
                             "filePath": "data/NC_005213.gbk.gz",
                             "downloadPath": "NC_005213.gbk.gz"}
 
-        genbank_to_genome_bz2 = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_bz2 = {"external_type": "Genbank.Genome",
                              "kbase_type": "KBaseGenomes.Genome",
                              "object_name": "NC_005213_bz2",
                              "filePath": "data/NC_005213.gbk.bz2",
                              "downloadPath": "NC_005213.gbk.bz2"}
 
-        genbank_to_genome_tar_bz2 = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_tar_bz2 = {"external_type": "Genbank.Genome",
                                  "kbase_type": "KBaseGenomes.Genome",
                                  "object_name": "NC_005213_tar_bz2",
                                  "filePath": "data/NC_005213.gbk.tar.bz2",
                                  "downloadPath": "NC_005213.gbk.tar.bz2"}
 
-        genbank_to_genome_tar_gz = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_tar_gz = {"external_type": "Genbank.Genome",
                                 "kbase_type": "KBaseGenomes.Genome",
                                 "object_name": "NC_005213_tar_gz",
                                 "filePath": "data/NC_005213.gbk.tar.gz",
                                 "downloadPath": "NC_005213.gbk.tar.gz"}
 
-        genbank_to_genome_zip = {"external_type": "KBaseGenomes.GBK",
+        genbank_to_genome_zip = {"external_type": "Genbank.Genome",
                              "kbase_type": "KBaseGenomes.Genome",
                              "object_name": "NC_005213_zip",
                              "filePath": "data/NC_005213.gbk.zip",
                              "downloadPath": "NC_005213.gbk.zip"}
 
-        fasta_to_reference = {"external_type": "KBaseAssembly.FA",
+        fasta_to_reference = {"external_type": "FASTA.DNA.Assembly",
                           "kbase_type": "KBaseAssembly.ReferenceAssembly",
                           "object_name": "fasciculatum_supercontig",
                           "filePath": "data/fasciculatum_supercontig.fasta.zip",
                           "downloadPath": "fasciculatum_supercontig.fasta.zip"}
 
-        fasta_to_contigset = {"external_type": "Assembly.FASTA",
+        fasta_to_contigset = {"external_type": "FASTA.DNA.Assembly",
                           "kbase_type": "KBaseGenomes.ContigSet",
                           "object_name": "fasciculatum_supercontig",
                           "filePath": "data/fasciculatum_supercontig.fasta.zip",
                           "downloadPath": "fasciculatum_supercontig.fasta.zip"}
 
-        fasta_single_to_reads = {"external_type": "KBaseAssembly.FA",
+        fasta_single_to_reads = {"external_type": "FASTA.DNA.Reads",
                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
                              "object_name": "ERR670568",
                              "filePath": "data/ERR670568.fasta.gz",
                              "downloadPath": "ERR670568.fasta.gz"}
 
-        fastq_single_to_reads = {"external_type": "KBaseAssembly.FQ",
+        fastq_single_to_reads = {"external_type": "FASTQ.DNA.Reads",
                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
                              "object_name": "ERR670568",
                              "filePath": "data/ERR670568.fastq.gz",
                              "downloadPath": "ERR670568.fastq.gz"}
 
-        fasta_paired_to_reads = {"external_type": "KBaseAssembly.FA",
+        fasta_paired_to_reads = {"external_type": "FASTA.DNA.Reads",
                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
                              "object_name": "SRR1569976",
                              "filePath": "data/SRR1569976.fasta.bz2",
                              "downloadPath": "SRR1569976.fasta.bz2"}
 
-        fastq_paired1_to_reads = {"external_type": "KBaseAssembly.FQ",
+        fastq_paired1_to_reads = {"external_type": "FASTQ.DNA.Reads",
                               "kbase_type": "KBaseAssembly.PairedEndLibrary",
                               "object_name": "SRR1569976",
                               "filePath": "data/SRR1569976.fastq.bz2",
                               "downloadPath": "SRR1569976.fastq.bz2"}
 
-        fastq_paired2_to_reads = {"external_type": "KBaseAssembly.FQ",
+        fastq_paired2_to_reads = {"external_type": "FASTQ.DNA.Reads",
                               "kbase_type": "KBaseAssembly.PairedEndLibrary",
                               "object_name": "SRR1569976_split",
                               "filePath": "data/SRR1569976_split.tar.bz2",
                               "downloadPath": "SRR1569976_split.tar.bz2"}
 
-        sbml_to_fbamodel = {"external_type": "KBaseFBA.SBML",
+        sbml_to_fbamodel = {"external_type": "SBML.FBAModel",
                         "kbase_type": "KBaseFBA.FBAModel",
                         "object_name": "",
                         "filePath": "",
                         "downloadPath": ""}
 
         demos = [genbank_to_genome,
-             genbank_to_genome_ftp_ncbi_gz,
-             genbank_to_genome_gz, 
-             genbank_to_genome_bz2, 
-             genbank_to_genome_tar_bz2, 
-             genbank_to_genome_tar_gz, 
-             genbank_to_genome_zip,
-             genbank_to_genome_http_mol_zip,
-             genbank_to_genome_ftp_patric,
-             genbank_to_genome_ftp_refseq,
-             genbank_to_genome_ftp_ensembl,
-             genbank_to_genome_http_img,
-             fasta_to_reference,
-             fasta_to_contigset,
-             fastq_single_to_reads, 
-             fasta_single_to_reads, 
-             fastq_single_to_reads, 
-             fastq_paired1_to_reads, 
-             fastq_paired2_to_reads, 
-             fasta_paired_to_reads]
+                 genbank_to_genome_ftp_ncbi_gz,
+                 genbank_to_genome_gz, 
+                 genbank_to_genome_bz2, 
+                 genbank_to_genome_tar_bz2, 
+                 genbank_to_genome_tar_gz, 
+                 genbank_to_genome_zip,
+                 genbank_to_genome_http_mol_zip,
+                 genbank_to_genome_ftp_patric,
+                 genbank_to_genome_ftp_refseq,
+                 genbank_to_genome_ftp_ensembl,
+                 genbank_to_genome_http_img,
+                 fasta_to_reference,
+                 fasta_to_contigset,
+                 fastq_single_to_reads, 
+                 fasta_single_to_reads, 
+                 fastq_single_to_reads, 
+                 fastq_paired1_to_reads, 
+                 fastq_paired2_to_reads, 
+                 fasta_paired_to_reads]
     
 
     services = {"shock": args.shock_service_url,

@@ -1,0 +1,14 @@
+{
+  "test_name" : "Success case test for uploading KBaseBiochem.CSV to KBaseBiochem.Media", 
+  "test_server_url" : "http://127.0.0.1:7778",
+  "input_data_url" : ["https://kbase.us/services/shock-api/node/9e89c7e7-cb90-4519-aa8a-100424854aaa"],
+  "external_type" : "KBaseBiochem.CSV",
+  "kbase_type" : "KBaseBiochem.Media",
+  "ws_name" : "load_test",
+  "obj_name" : "media-tst",
+  "max_wait_sec" : "300",
+  "check_interval" : "3",
+  "optional_args" : "{\"validator\":{},\"transformer\":{\"ws_name\":\"load_test\"}}",
+  "expected_result" : "1",
+  "skip_server_test" : "true"
+}

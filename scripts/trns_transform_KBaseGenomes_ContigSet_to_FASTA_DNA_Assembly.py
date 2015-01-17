@@ -78,7 +78,7 @@ def convert(workspace_service_url, shock_service_url, handle_service_url, worksp
         
     else: 
         ws_object_name = contig_set['info'][1]
-        valid_chars = "-_.(){0}{1}"format(string.ascii_letters, string.digits)
+        valid_chars = "-_.(){0}{1}".format(string.ascii_letters, string.digits)
         output_file_name = ''
         output_file_chars = list()
         for character in ws_object_name:
@@ -94,13 +94,13 @@ def convert(workspace_service_url, shock_service_url, handle_service_url, worksp
         logger.warning("The ContigSet does not have a fasta_ref to shock.  The fasta file will be attempted to be built from contig sequences in the object.")
         
         output_file =  os.path.join(working_directory,output_file_name)
- 
+
         outFile = open(output_file, 'w') 
         for contig in contig_set['data']['contigs']:
-            outFile.write(">{}\n".format(contig['name']))
+            outFile.write(">{}\n".format(contig['id']))
             #do 80 nucleotides per line
             if contig['sequence'] != '':
-                outFile.write(insert_new_lines(contig['sequence'],80))
+                outFile.write(insert_newlines(contig['sequence'],80))
             else:
                 logger.warning("The ContigSet does not have a fasta_ref to shock or sequences in the contigs. A fasta file can not be created.")
                 outFile.close()    

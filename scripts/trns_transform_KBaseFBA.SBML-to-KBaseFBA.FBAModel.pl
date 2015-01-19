@@ -14,7 +14,7 @@ $script
 
 =head1 SYNOPSIS
 
-$script --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
+$script --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --compounds-c <Input Compounds CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
 
 =head1 DESCRIPTION
 
@@ -31,6 +31,8 @@ $script
 	--help          print usage message and exit
 
 =cut
+
+my $logger = getStderrLogger();
 
 my $In_RxnFile   = "";
 my $In_CpdFile = "";
@@ -49,9 +51,13 @@ GetOptions("sbml=s"  => \$In_RxnFile,
 	   "help|h"     => \$Help);
 
 if($Help || !$In_RxnFile || !$Out_Object || !$Out_WS){
-    print($0." --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+    print($0." --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --compounds/-c <Input Compound CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+    $logger->warn($0." --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --compounds/-c <Input Compound CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
     exit();
 }
+
+$logger->info("Mandatory Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
+$logger->info("Optional Data passed = ".join(" | ", ("Compounds:".$In_CpdFile,"Genome:".$Genome,"Biomass:".$Biomass)));
 
 my $input = {
 	model => $Out_Object,
@@ -84,12 +90,14 @@ if (defined($In_CpdFile) && length($In_CpdFile) > 0) {
 	]);
 }
 
+$logger->info("Loading FBAModel WS Object");
+
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
     my $fba = get_fba_client();
     $fba->import_fbamodel($input);
 };
 
-my $logger = getStderrLogger();
-$logger->info($stdout) if $stdout;
-$logger->warn($stderr) if $stderr;
+$logger->info("fbaModelServices import_fbamodel() informational messages\n".$stdout) if $stdout;
+$logger->warn("fbaModelServices import_fbamodel() warning messages\n".$stderr) if $stderr;
+$logger->info("Loading FBAModel WS Object Complete");

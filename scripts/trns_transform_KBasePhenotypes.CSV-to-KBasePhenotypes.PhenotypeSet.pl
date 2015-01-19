@@ -30,6 +30,8 @@ trns_transform_KBasePhenotypes.CSV-to-KBasePhenotypes.PhenotypeSet.pl --input --
 
 =cut
 
+my $logger = getStderrLogger();
+
 my $In_File   = "";
 my $Out_Object = "";
 my $Out_WS    = "";
@@ -44,8 +46,12 @@ GetOptions("input|i=s"  => \$In_File,
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
     print($0." --input/-i <Input CSV File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID>");
+    $logger->warn($0." --input/-i <Input CSV File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID>");
     exit();
 }
+
+$logger->info("Mandatory Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
+$logger->info("Optional Data passed = ".join(" | ", ("Genome:".$Genome)));
 
 my $phenodata = parse_input_table($In_File,[
 	["geneko",0,[],";"],
@@ -67,20 +73,23 @@ for (my $i=0; $i < @{$phenodata}; $i++) {
 my $Genome_WS = $Out_WS;
 $Genome_WS = "PlantSEED" if $Genome eq "Empty";
 
-use Capture::Tiny qw( capture );
-my ($stdout, $stderr, @result) = capture {
-
-    my $fba = get_fba_client();
-
-    $fba->import_phenotypes({
+my $input = {
 	workspace=>$Out_WS,
 	genome=>$Genome,
 	genome_workspace=>$Genome_WS,
 	phenotypes=>$phenodata,
 	phenotypeSet=>$Out_Object,
-	ignore_errors=>1});
+	ignore_errors=>1
 };
 
-my $logger = getStderrLogger();
-$logger->info($stdout) if $stdout;
-$logger->warn($stderr) if $stderr;
+$logger->info("Loading PhenotypeSet WS Object");
+
+use Capture::Tiny qw( capture );
+my ($stdout, $stderr, @result) = capture {
+    my $fba = get_fba_client();
+    $fba->import_phenotypes($input);
+};
+
+$logger->info("fbaModelServices import_phenotypes() informational messages\n".$stdout) if $stdout;
+$logger->warn("fbaModelServices import_phenotypes() warning messages\n".$stderr) if $stderr;
+$logger->info("Loading PhenotypeSet WS Object Complete");

@@ -6,6 +6,10 @@ import sys, getopt
 import os.path
 import subprocess
 import json
+import logging
+
+# KBase imports
+import biokbase.Transform.script_utils as script_utils
 
 desc1 = '''
 NAME
@@ -63,6 +67,9 @@ def usage():
 def main(argv):
    inputfile = ''
    ret = None
+   logger = script_utils.getStderrLogger(__file__)
+
+   logger.info("Validation of SBML")
 
    try:
       opts, args = getopt.getopt(argv,"hi:")
@@ -78,10 +85,12 @@ def main(argv):
          if os.path.isfile(arg):
              ret = Validate(arg)
          else:
+             logger.warn("File " + arg + " does not exist ")
              print("File " + arg + " does not exist ")
              sys.exit(1)
       else:
-        print('Invalid Option' + usage())
+        logger.warn("Invalid Option "+usage())
+        print('Invalid Option ' + usage())
 
    return ret
 

@@ -4,9 +4,7 @@ TARGET ?= /kb/deployment
 include $(TOP_DIR)/tools/Makefile.common
 SERVICE_SPEC = Transform.spec
 SERVICE_NAME = Transform
-#SERVICE_PSGI_FILE = $(SERVICE_NAME).psgi
-SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
-#SERVER_MODULE = lib/Bio/KBase/$(SERVICE_NAME)/Service.pm
+SERVICE_DIR = $(TARGET)/services/transform
 SERVICE_PORT = 7778
 
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
@@ -18,16 +16,12 @@ ANT = ant
 # the dev_container. right now, these vars are defined in
 # Makefile.common, so it's redundant here.
 TOOLS_DIR = $(TOP_DIR)/tools
-#WRAP_PERL_TOOL = wrap_perl
-#WRAP_PERL_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_PERL_TOOL).sh
 SRC_PERL = $(wildcard plugins/scripts/*/*.pl)
 
 #WRAP_RSCRIPT_TOOL = wrap_rscript
 #WRAP_RSCRIPT_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_RSCRIPT_TOOL).sh
 #SRC_R = $(wildcard scripts/*.R)
 
-#WRAP_PYTHON_TOOL = wrap_python
-#WRAP_PYTHON_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_PYTHON_TOOL).sh
 SRC_PYTHON = $(wildcard plugins/scripts/*/*.py)
 
 # You can change these if you are putting your tests somewhere
@@ -126,7 +120,6 @@ test-server:
 			fi \
 		fi \
 	done
-
 
 
 include $(TOP_DIR)/tools/Makefile.common.rules

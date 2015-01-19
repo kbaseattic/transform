@@ -1,6 +1,6 @@
 {
     "script_name": "trns_transform_KBaseGenomes.ContigSet_to_FASTA.DNA.Assembly.py", 
-    "script_type": "transform",
+    "script_type": "transform.upload",
     "external_type": "FASTA.DNA.Assembly",
     "kbase_type": "KBaseGenomes.ContigSet",
     "user_description": "",
@@ -10,6 +10,8 @@
         "max_runtime": 360,
         "custom_options": []
     },
-    "user_options": [],
+    "user_options": [
+        "url_mapping": ["fasta_assembly"]
+    ],
     "user_option_groups": []
 }

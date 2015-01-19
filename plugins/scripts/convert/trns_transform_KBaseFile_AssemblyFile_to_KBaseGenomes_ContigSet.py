@@ -253,20 +253,21 @@ def main():
         action='store', type=str, required=True)
 
     # Example of a custom argument specific to this uploader
-    parser.add_argument('--workspace_url', help='workspace service url',
+    parser.add_argument('--workspace_service_url',
+                        help='workspace service url',
                         action='store', type=str, required=True)
     parser.add_argument(
         '--source_workspace_name', help='name of the source workspace',
         action='store', type=str, required=True)
     parser.add_argument(
-        '--target_workspace_name', help='name of the target workspace',
+        '--destination_workspace_name', help='name of the target workspace',
         action='store', type=str, required=True)
     parser.add_argument(
-        '--source_workspace_object_name',
+        '--source_object_name',
         help='name of the workspace object to convert',
         action='store', type=str, required=True)
     parser.add_argument(
-        '--target_workspace_object_name',
+        '--destination_object_name',
         help='name for the produced ContigSet.',
         action='store', type=str, required=True)
 
@@ -279,24 +280,24 @@ def main():
 
     args = parser.parse_args()
 
-    contig_set_id = args.source_workspace_object_name + '_contig_set'
+    contig_set_id = args.source_object_name + '_contig_set'
 
     logger = script_utils.stderrlogger(__file__)
     try:
         shock_url, shock_id, ref = download_workspace_data(
-            args.workspace_url,
+            args.workspace_service_url,
             args.source_workspace_name,
-            args.source_workspace_object_name,
+            args.source_object_name,
             args.working_directory)
         inputfile = os.path.join(args.working_directory,
-                                 args.source_workspace_object_name)
+                                 args.source_object_name)
         cs = convert_to_contigs(
             None, None, inputfile,
             contig_set_id, args.working_directory, shock_id, None,
             args.fasta_reference_only, logger=logger)
         upload_workspace_data(
-            cs, args.workspace_url, ref,
-            args.target_workspace_name, args.target_workspace_object_name)
+            cs, args.workspace_service_url, ref,
+            args.destination_workspace_name, args.destination_object_name)
     except Exception, e:
         logger.exception(e)
         print("".join(traceback.format_exc()))

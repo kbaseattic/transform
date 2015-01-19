@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # standard library imports
 from __future__ import print_function
 import os
@@ -9,6 +8,9 @@ import argparse
 import logging
 import re
 import hashlib
+
+print("DEPRECATED - use script in plugins dir")
+sys.exit(1)
 
 # KBase imports
 import biokbase.Transform.script_utils as script_utils

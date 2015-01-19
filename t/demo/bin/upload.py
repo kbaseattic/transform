@@ -10,7 +10,6 @@ import bz2
 import gzip
 import zipfile
 import tarfile
-import json
 import pprint
 
 # patch for handling unverified certificates
@@ -27,6 +26,7 @@ import magic
 import blessings
 import dateutil.parser
 import dateutil.tz
+import simplejson
 
 import biokbase.Transform.Client
 import biokbase.Transform.script_utils
@@ -34,6 +34,19 @@ import biokbase.userandjobstate.client
 import biokbase.workspace.client
 
 logger = biokbase.Transform.script_utils.stdoutlogger(__file__)
+
+configs = dict()
+
+def read_configs(configs_directory):
+    for x in os.listdir(configs_directory):
+        with open(os.path.join(configs_directory,x), 'r') as f:
+            c = simplejson.loads(f.read())
+            configs[c["script_type"]] = c
+    
+
+def validate_files(input_directory, external_type):
+    if external_type in configs["validate"]:
+        print "validate"
 
 
 def show_workspace_object_list(workspace_url, workspace_name, object_name, token):
@@ -59,7 +72,7 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
     c = biokbase.userandjobstate.client.UserAndJobState(url=ujs_url, token=token)
 
     completed = ["complete", "success"]
-    error = ["error", "fail"]
+    error = ["error", "fail", "ERROR"]
     
     term = blessings.Terminal()
 
@@ -76,42 +89,44 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             status = c.get_job_status(ujs_id)
         except Exception, e:
             print term.red("\t\tIssue connecting to UJS!")
-            status[1] = "error"
+            status[1] = "ERROR"
             status[2] = "Caught Exception"
         
         if (datetime.datetime.utcnow() - start).seconds > time_limit:
             print "\t\tJob is taking longer than it should, check debugging messages for more information."
-            status[1] = "error"
+            status[1] = "ERROR"
             status[2] = "Timeout"            
         
         if last_status != status[2]:
             print "\t\t{0} status update: {1}".format(status[0], status[2])
             last_status = status[2]
         
-        if status[1] in completed:
+        if status[1] in completed or status[1] in error:
             print term.green("\t\tKBase upload completed!\n")
             break
         elif status[1] in error:
             print term.red("\t\tOur job failed!\n")
             
+            print term.red("{0}".format(c.get_detailed_error(ujs_id)))
+            print term.red("{0}".format(c.get_results(ujs_id)))
+            
             print term.bold("Additional AWE job details for debugging")
             # check awe job output
             awe_details = requests.get("{0}/job/{1}".format(awe_url,awe_id), headers=header, verify=True)
             job_info = awe_details.json()["data"]
-            print term.red(json.dumps(job_info, sort_keys=True, indent=4))
+            print term.red(simplejson.dumps(job_info, sort_keys=True, indent=4))
             
             awe_stdout = requests.get("{0}/work/{1}?report=stdout".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
-            print term.red("STDOUT : " + json.dumps(awe_stdout.json()["data"], sort_keys=True, indent=4))
+            print term.red("STDOUT : " + simplejson.dumps(awe_stdout.json()["data"], sort_keys=True, indent=4))
             
             awe_stderr = requests.get("{0}/work/{1}?report=stderr".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
-            print term.red("STDERR : " + json.dumps(awe_stderr.json()["data"], sort_keys=True, indent=4))
+            print term.red("STDERR : " + simplejson.dumps(awe_stderr.json()["data"], sort_keys=True, indent=4))
             
             break
     
 
 def upload(transform_url, options, token):
     c = biokbase.Transform.Client.Transform(url=transform_url, token=token)
-
     response = c.upload(options)        
     return response
 
@@ -204,7 +219,7 @@ if __name__ == "__main__":
     parser.add_argument('--workspace', nargs='?', help='name of the workspace where your objects should be created', const="", default="upload_testing")
     parser.add_argument('--object_name', nargs='?', help='name of the workspace object to create', const="", default="")
     parser.add_argument('--file_path', nargs='?', help='path to file for upload', const="", default="")
-    parser.add_argument('--url_mapping', nargs='?', help='path to file for upload', const="", default="")
+    parser.add_argument('--url_mapping', nargs='?', help='dictionary of urls to process', const="", default="")
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
 
     args = parser.parse_args()
@@ -221,6 +236,9 @@ if __name__ == "__main__":
         else:
             raise Exception("Unable to find KBase token!")
 
+    #read_configs(os.path.abspath("../../plugins/configs"))
+
+    inputs = list()
     if not args.demo:
         user_inputs = {"external_type": args.external_type,
                        "kbase_type": args.kbase_type,
@@ -229,7 +247,7 @@ if __name__ == "__main__":
                        "downloadPath": args.download_path}
 
         workspace = args.workspace    
-        demos = [user_inputs]
+        inputs = [user_inputs]
     else:
         if "kbasetest" not in token and len(args.workspace.strip()) == 0:
             print "If you are running the demo as a different user than kbasetest, you need to provide the name of your workspace with --workspace."
@@ -242,7 +260,8 @@ if __name__ == "__main__":
                               "kbase_type": "KBaseGenomes.ContigSet",
                               "object_name": "fasciculatum_supercontig",
                               "filePath": "data/fasciculatum_supercontig.fasta.zip",
-                              "downloadPath": "fasciculatum_supercontig.fasta.zip"}
+                              "downloadPath": "fasciculatum_supercontig.fasta.zip",
+                              "url_mapping": "fasta_assembly"}
 
         genbank_to_contigset = {"external_type": "Genbank.ContigSet",
                          "kbase_type": "KBaseGenomes.ContigSet",
@@ -261,7 +280,8 @@ if __name__ == "__main__":
                             "object_name": "ecoli_reference.NCBI",
                             "filePath": None,
                             "downloadPath": None,
-                            "url": "ftp://ftp.ncbi.nih.gov/genomes/genbank/bacteria/Escherichia_coli/reference/GCA_000005845.2_ASM584v2/GCA_000005845.2_ASM584v2_genomic.gbff.gz"}
+                            "url": "ftp://ftp.ncbi.nih.gov/genomes/genbank/bacteria/Escherichia_coli/reference/GCA_000005845.2_ASM584v2/GCA_000005845.2_ASM584v2_genomic.gbff.gz",
+                            "url_mapping": "genbank_genome"}
 
         genbank_to_genome_http_mol_zip = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
@@ -334,12 +354,6 @@ if __name__ == "__main__":
                           "filePath": "data/fasciculatum_supercontig.fasta.zip",
                           "downloadPath": "fasciculatum_supercontig.fasta.zip"}
 
-        fasta_to_contigset = {"external_type": "FASTA.DNA.Assembly",
-                          "kbase_type": "KBaseGenomes.ContigSet",
-                          "object_name": "fasciculatum_supercontig",
-                          "filePath": "data/fasciculatum_supercontig.fasta.zip",
-                          "downloadPath": "fasciculatum_supercontig.fasta.zip"}
-
         fasta_single_to_reads = {"external_type": "FASTA.DNA.Reads",
                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
                              "object_name": "ERR670568",
@@ -376,27 +390,28 @@ if __name__ == "__main__":
                         "filePath": "",
                         "downloadPath": ""}
 
-        demos = [fasta_to_contigset,
-                 genbank_to_genome,
-                 genbank_to_genome_ftp_ncbi_gz,
-                 genbank_to_genome_gz, 
-                 genbank_to_genome_bz2, 
-                 genbank_to_genome_tar_bz2, 
-                 genbank_to_genome_tar_gz, 
-                 genbank_to_genome_zip,
-                 genbank_to_genome_http_mol_zip,
-                 genbank_to_genome_ftp_patric,
-                 genbank_to_genome_ftp_refseq,
-                 genbank_to_genome_ftp_ensembl,
-                 genbank_to_genome_http_img,
-                 fasta_to_reference,
-                 fasta_to_contigset,
-                 fastq_single_to_reads, 
-                 fasta_single_to_reads, 
-                 fastq_single_to_reads, 
-                 fastq_paired1_to_reads, 
-                 fastq_paired2_to_reads, 
-                 fasta_paired_to_reads]
+        inputs = [fasta_to_contigset]
+        
+        #         genbank_to_genome,
+        #         genbank_to_genome_ftp_ncbi_gz,
+        #         genbank_to_genome_gz, 
+        #         genbank_to_genome_bz2, 
+        #         genbank_to_genome_tar_bz2, 
+        #         genbank_to_genome_tar_gz, 
+        #         genbank_to_genome_zip,
+        #         genbank_to_genome_http_mol_zip,
+        #         genbank_to_genome_ftp_patric,
+        #         genbank_to_genome_ftp_refseq,
+        #         genbank_to_genome_ftp_ensembl,
+        #         genbank_to_genome_http_img,
+        #         fasta_to_reference,
+        #         fasta_to_contigset,
+        #         fastq_single_to_reads, 
+        #         fasta_single_to_reads, 
+        #         fastq_single_to_reads, 
+        #         fastq_paired1_to_reads, 
+        #         fastq_paired2_to_reads, 
+        #         fasta_paired_to_reads]
     
 
     services = {"shock": args.shock_service_url,
@@ -404,26 +419,25 @@ if __name__ == "__main__":
                 "workspace": args.workspace_service_url,
                 "awe": args.awe_service_url,
                 "transform": args.transform_service_url}
-
     
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)
     
     term = blessings.Terminal()
-    for demo_inputs in demos:
-        external_type = demo_inputs["external_type"]
-        kbase_type = demo_inputs["kbase_type"]
-        object_name = demo_inputs["object_name"]
-        filePath = demo_inputs["filePath"]
+    for x in inputs:
+        external_type = x["external_type"]
+        kbase_type = x["kbase_type"]
+        object_name = x["object_name"]
+        filePath = x["filePath"]
+        url_mapping = x["url_mapping"]
 
         print "\n\n"
         print term.bold("#"*80)
         print term.white_on_black("Converting {0} => {1}".format(external_type,kbase_type))
         print term.bold("#"*80)
 
-        url = None
-        if demo_inputs.has_key("url"):
-            url = demo_inputs["url"]
+        if x.has_key("url"):
+            url = x["url"]
 
             try:
                 print term.bright_blue("Uploading from remote http or ftp url")
@@ -431,8 +445,16 @@ if __name__ == "__main__":
                 print term.bold("Using data from : {0}".format(url))
 
                 biokbase.Transform.script_utils.download_from_urls(logger, urls=url, shock_service_url=services["shock"], token=token)
+                
+                input_object = dict()
+                input_object["external_type"] = external_type
+                input_object["kbase_type"] = kbase_type
+                input_object["url_mapping"] = dict()
+                input_object["url_mapping"][url_mapping] =  url
+                input_object["workspace_name"] = workspace
+                input_object["object_name"] = object_name
 
-                upload_response = upload(services["transform"], {"external_type": external_type, "kbase_type": kbase_type, "urls": url, "workspace_name": workspace, "object_name": object_name}, token)
+                upload_response = upload(services["transform"], input_object, token)
                 print term.blue("\tTransform service upload requested:")
                 print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
                 print term.blue("\tTransform service responded with job ids:")
@@ -449,11 +471,13 @@ if __name__ == "__main__":
                 print e
         else:
             conversionDownloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
+            
             try:
                 os.mkdir(conversionDownloadPath)
             except:
                 pass
-            downloadPath = os.path.join(conversionDownloadPath, demo_inputs["downloadPath"])
+            
+            downloadPath = os.path.join(conversionDownloadPath, x["downloadPath"])
 
             print term.bright_blue("Uploading local files")
             print term.bold("Step 1: Place local files in SHOCK")
@@ -470,7 +494,16 @@ if __name__ == "__main__":
 
             try:
                 print term.bold("Step 2: Make KBase upload request")
-                upload_response = upload(services["transform"], {"external_type": external_type, "kbase_type": kbase_type, "urls": "{0}/node/{1}".format(services["shock"],shock_response["id"]), "workspace_name": workspace, "object_name": object_name}, token)
+
+                input_object = dict()
+                input_object["external_type"] = external_type
+                input_object["kbase_type"] = kbase_type
+                input_object["url_mapping"] = dict()
+                input_object["url_mapping"][url_mapping] = "{0}/node/{1}".format(services["shock"],shock_response["id"])
+                input_object["workspace_name"] = workspace
+                input_object["object_name"] = object_name
+
+                upload_response = upload(services["transform"], input_object, token)
                 print term.blue("\tTransform service upload requested:")
                 print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
                 print term.blue("\tTransform service responded with job ids:")
@@ -484,4 +517,4 @@ if __name__ == "__main__":
                 #show_workspace_object_contents(services["workspace"], workspace, object_name, token)
             except Exception, e:
                 print e.message
-                print e
+                raise

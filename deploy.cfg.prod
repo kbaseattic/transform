@@ -17,9 +17,21 @@
 
 # Note: do not document after each field defined
 #       give comment before or after
-[Loader]
-awe_url=https://kbase.us/services/awe-api
-ujs_url=https://kbase.us/services/userandjobstate/
-shock_url=https://kbase.us/services/shock-api
-ws_url=http://kbase.us/services/ws
+[Transform]
+awe_service_url=https://kbase.us/services/awe-api/
+ujs_service_url=https://kbase.us/services/userandjobstate/
+shock_service_url=https://kbase.us/services/shock-api/
+handle_service_url=https://kbase.us/services/handle_service/
+workspace_service_url=https://kbase.us/services/ws/
+
+# top level directory to store files for tasks
+working_directory=/mnt/transform_working
+
+# where to find the plugin config files
+plugins_directory=plugins/configs
+
+#need this for kbwf
+ujs_url = https://kbase.us/services/userandjobstate/
 clientgroups=prod
+
+###################################################

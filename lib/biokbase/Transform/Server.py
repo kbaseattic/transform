@@ -38,7 +38,7 @@ def get_config():
 
 config = get_config()
 
-from biokbase.transform.Impl import Transform
+from biokbase.Transform.Impl import Transform
 impl_Transform = Transform(config)
 
 

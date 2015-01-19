@@ -4,11 +4,11 @@ TARGET ?= /kb/deployment
 include $(TOP_DIR)/tools/Makefile.common
 SERVICE_SPEC = Transform.spec
 SERVICE_NAME = Transform
-SERVICE_DIR = $(TARGET)/services/transform
+SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
 SERVICE_PORT = 7778
 
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
-TPAGE_ARGS = --define kb_top=$(TARGET) --define kb_runtime=$(DEPLOY_RUNTIME) --define kb_service_name=$(SERVICE_NAME) \
+TPAGE_ARGS = --define kb_top=$(TARGET) --define kb_runtime=$(DEPLOY_RUNTIME) --define kb_service_name=transform \
         --define kb_service_port=$(SERVICE_PORT)
 ANT = ant
 

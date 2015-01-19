@@ -14,7 +14,7 @@ subprocess.call([os.path.join(virtualenv_dir, "bin/pip"), "install","pip","ftput
 
 sys.path.append("./venv/lib/python2.7/site-packages/")
 
-print "Checking out user_and_job_state and workspace_deluxe client code"
+print "Checking out user_and_job_state,workspace_deluxe,handle_service client code"
 
 import git
 git.Git().clone("https://github.com/kbase/user_and_job_state")

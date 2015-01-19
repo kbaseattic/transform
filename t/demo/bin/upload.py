@@ -33,7 +33,7 @@ import biokbase.Transform.script_utils
 import biokbase.userandjobstate.client
 import biokbase.workspace.client
 
-logger = biokbase.Transform.script_utils.getStderrLogger(__file__)
+logger = biokbase.Transform.script_utils.stdoutlogger(__file__)
 
 
 def show_workspace_object_list(workspace_url, workspace_name, object_name, token):
@@ -127,8 +127,7 @@ def post_to_shock(shockURL, filePath, token):
             pass            
         else:
             progress = int(monitor.bytes_read)/float(size) * 100.0
-            print term.move_up + term.move_left + "\t\tPercentage of bytes uploaded to shock {0:.2f}%".format(progress)                        
-                    
+            print term.move_up + term.move_left + "\t\tPercentage of bytes uploaded to shock {0:.2f}%".format(progress)                    
             
     #build the header
     header = dict()
@@ -205,6 +204,7 @@ if __name__ == "__main__":
     parser.add_argument('--workspace', nargs='?', help='name of the workspace where your objects should be created', const="", default="upload_testing")
     parser.add_argument('--object_name', nargs='?', help='name of the workspace object to create', const="", default="")
     parser.add_argument('--file_path', nargs='?', help='path to file for upload', const="", default="")
+    parser.add_argument('--url_mapping', nargs='?', help='path to file for upload', const="", default="")
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
 
     args = parser.parse_args()
@@ -237,6 +237,18 @@ if __name__ == "__main__":
         else:
             if args.workspace is not None:
                 workspace = args.workspace
+
+        fasta_to_contigset = {"external_type": "FASTA.DNA.Assembly",
+                              "kbase_type": "KBaseGenomes.ContigSet",
+                              "object_name": "fasciculatum_supercontig",
+                              "filePath": "data/fasciculatum_supercontig.fasta.zip",
+                              "downloadPath": "fasciculatum_supercontig.fasta.zip"}
+
+        genbank_to_contigset = {"external_type": "Genbank.ContigSet",
+                         "kbase_type": "KBaseGenomes.ContigSet",
+                         "object_name": "NC_005213",
+                         "filePath": "data/genbank/NC_005213/NC_005213.gbk",
+                         "downloadPath": "NC_005213.gbk"}
 
         genbank_to_genome = {"external_type": "Genbank.Genome",
                          "kbase_type": "KBaseGenomes.Genome",
@@ -364,7 +376,8 @@ if __name__ == "__main__":
                         "filePath": "",
                         "downloadPath": ""}
 
-        demos = [genbank_to_genome,
+        demos = [fasta_to_contigset,
+                 genbank_to_genome,
                  genbank_to_genome_ftp_ncbi_gz,
                  genbank_to_genome_gz, 
                  genbank_to_genome_bz2, 
@@ -416,7 +429,10 @@ if __name__ == "__main__":
                 print term.bright_blue("Uploading from remote http or ftp url")
                 print term.bold("Step 1: Make KBase upload request with a url")
                 print term.bold("Using data from : {0}".format(url))
-                upload_response = upload(services["transform"], {"etype": external_type, "kb_type": kbase_type, "in_id": url, "ws_name": workspace, "obj_name": object_name}, token)
+
+                biokbase.Transform.script_utils.download_from_urls(logger, urls=url, shock_service_url=services["shock"], token=token)
+
+                upload_response = upload(services["transform"], {"external_type": external_type, "kbase_type": kbase_type, "urls": url, "workspace_name": workspace, "object_name": object_name}, token)
                 print term.blue("\tTransform service upload requested:")
                 print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
                 print term.blue("\tTransform service responded with job ids:")
@@ -430,6 +446,7 @@ if __name__ == "__main__":
                 #show_workspace_object_contents(services["workspace"], workspace, object_name, token)
             except Exception, e:
                 print e.message
+                print e
         else:
             conversionDownloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
             try:
@@ -453,7 +470,7 @@ if __name__ == "__main__":
 
             try:
                 print term.bold("Step 2: Make KBase upload request")
-                upload_response = upload(services["transform"], {"etype": external_type, "kb_type": kbase_type, "in_id": "{0}/node/{1}".format(services["shock"],shock_response["id"]), "ws_name": workspace, "obj_name": object_name}, token)
+                upload_response = upload(services["transform"], {"external_type": external_type, "kbase_type": kbase_type, "urls": "{0}/node/{1}".format(services["shock"],shock_response["id"]), "workspace_name": workspace, "object_name": object_name}, token)
                 print term.blue("\tTransform service upload requested:")
                 print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
                 print term.blue("\tTransform service responded with job ids:")
@@ -467,3 +484,4 @@ if __name__ == "__main__":
                 #show_workspace_object_contents(services["workspace"], workspace, object_name, token)
             except Exception, e:
                 print e.message
+                print e

@@ -20,4 +20,17 @@
 awe_service_url=http://10.1.16.87:7080
 ujs_service_url=http://10.1.16.87:7083
 shock_service_url=http://10.1.16.87:7078
+handle_service_url=http://10.1.16.87:7109
 workspace_service_url=http://10.1.16.87:7058
+
+# top level directory to store files for tasks
+working_directory=/mnt/transform_working
+
+# where to find the plugin config files
+plugins_directory=plugins/configs
+
+#need this for kbwf
+ujs_url = https://kbase.us/services/userandjobstate/
+clientgroups=prod
+
+###################################################

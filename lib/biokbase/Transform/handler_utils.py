@@ -13,18 +13,16 @@ def report_exception(logger=None, report_details=None, cleanup_details=None):
         report_details["ujs"].complete_job(report_details["ujs_job_id"], 
                                            report_details["token"], 
                                            report_details["message"], 
-                                           {}, 
-                                           {}) 
+                                           None, 
+                                           None) 
     
     if not cleanup_details["keep_working_directory"]:
         cleanup(cleanup_details["working_directory"])
-    
-    sys.exit(1);
-
+        
 
 def cleanup(logger=None, directory=None):
     try:
-        shutil.rmtree(d)
+        shutil.rmtree(directory)
     except IOError, e:
         report_exception("".format(directory), e, ujs)
 

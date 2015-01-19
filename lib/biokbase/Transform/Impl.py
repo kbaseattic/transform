@@ -1,6 +1,8 @@
 #BEGIN_HEADER
 import sys
 import os
+import base64
+
 import simplejson
 
 #import pymemcache.client
@@ -63,34 +65,42 @@ type but different versions.
         #memcacheClient = self._get_memcache_client()
         #args['mjob_details'] = memcacheClient.get(args['etype'] + ":" + args['kb_type'])
 
-        #self.kbaseLogger.log_message("INFO", json.dumps(self.scripts_config, indent=4, sort_keys=True))
+        #self.kbaseLogger.log_message("INFO", simplejson.dumps(self.scripts_config, indent=4, sort_keys=True))
 
         job_details = dict()
 
-        self.kbaseLogger.log_message("INFO", "CONFIG : " + json.dumps(self.scripts_config, sort_keys=True, indent=4))
-        self.kbaseLogger.log_message("INFO", "ARGS : " + json.dumps(args, sort_keys=True, indent=4))
-        
-        if self.scripts_config["validate"].has_key(args["external_type"]):
-            job_details["validator"] = self.scripts_config["validate"][args["external_type"]]
-        else:
-            self.kbaseLogger.log_message("WARNING", "No validation available for {0}".format(args["external_type"]))
+        self.kbaseLogger.log_message("INFO", "CONFIG : " + simplejson.dumps(self.scripts_config, sort_keys=True, indent=4))
+        self.kbaseLogger.log_message("INFO", "ARGS : " + simplejson.dumps(args, sort_keys=True, indent=4))
 
         self.kbaseLogger.log_message("INFO", "method : " + method)
-
-        if self.scripts_config["upload"].has_key("{0}=>{1}".format(args["external_type"],args["kbase_type"])):
-            job_details["transformer"] = self.scripts_config["upload"]["{0}=>{1}".format(args["external_type"],args["kbase_type"])]
-        else:
-            raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
-
-        if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
-            job_details["transformer"] = self.scripts_config["download"]["{0}=>{1}".format(args["kbase_type"],args["external_type"])]
-        else:
-            raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
-
-        if "url_mapping" in args:
-            args["url_mapping"] = simplejson.dumps(args["url_mapping"])
         
-        args["job_details"] = simplejson.dumps(job_details)
+        if method == "upload":
+            args["url_mapping"] = base64.urlsafe_b64encode(simplejson.dumps(args["url_mapping"]))
+
+            if self.scripts_config["validate"].has_key(args["external_type"]):
+                job_details["validate"] = self.scripts_config["validate"][args["external_type"]]
+            else:
+                self.kbaseLogger.log_message("WARNING", "No validation available for {0}".format(args["external_type"]))
+
+            if self.scripts_config["upload"].has_key("{0}=>{1}".format(args["external_type"],args["kbase_type"])):
+                job_details["transform"] = self.scripts_config["upload"]["{0}=>{1}".format(args["external_type"],args["kbase_type"])]
+            else:
+                raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
+                
+            self.kbaseLogger.log_message("INFO", job_details)
+        elif method == "download":
+            if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
+                job_details["transform"] = self.scripts_config["download"]["{0}=>{1}".format(args["kbase_type"],args["external_type"])]
+            else:
+                raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
+        elif method == "convert":
+            if self.scripts_config["convert"].has_key("{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])):
+                job_details["transform"] = self.scripts_config["download"]["{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])]
+            else:
+                raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))
+        
+        args["job_details"] = base64.urlsafe_b64encode(simplejson.dumps(job_details))
+        args["optional_arguments"] = base64.urlsafe_b64encode(simplejson.dumps(args["optional_arguments"]))
 
         self.kbaseLogger.log_message("INFO", "Invoking {0} with ({1},{2})".format(method,str(ctx),str(args)))
         
@@ -112,7 +122,10 @@ type but different versions.
                                "upload": dict(),
                                "download": dict(),
                                "convert": dict()}
-        pluginsDir = 'plugins/configs'
+
+        self.kbaseLogger.log_message("INFO", self.config)
+
+        pluginsDir = self.config["plugins_directory"]
         plugins = os.listdir(pluginsDir)
         
         self.kbaseLogger.log_message("INFO", "PLUGINS : " + str(plugins))
@@ -132,7 +145,7 @@ type but different versions.
                         self.scripts_config["external_types"].append(pconfig["external_type"])
                     
                     id = pconfig["external_type"]
-                elif pconfig["script_type"] == "transform.upload":
+                elif pconfig["script_type"] == "upload":
                     if pconfig["external_type"] not in self.scripts_config["external_types"]:
                         self.scripts_config["external_types"].append(pconfig["external_type"])
                     
@@ -140,7 +153,7 @@ type but different versions.
                         self.scripts_config["kbase_types"].append(pconfig["kbase_type"])
                     
                     id = "{0}=>{1}".format(pconfig["external_type"],pconfig["kbase_type"])
-                elif pconfig["script_type"] == "transform.download":
+                elif pconfig["script_type"] == "download":
                     if pconfig["external_type"] not in self.scripts_config["external_types"]:
                         self.scripts_config["external_types"].append(pconfig["external_type"])
                     
@@ -162,8 +175,8 @@ type but different versions.
                 self.kbaseLogger.log_message("WARNING", "Unable to read plugin {0}: {1}".format(p,e.message))
 
         self.kbaseLogger.log_message("INFO", simplejson.dumps(self.scripts_config["validate"], indent=4, sort_keys=True))        
-        self.kbaseLogger.log_message("INFO", simplejson.dumps(self.scripts_config["transform.upload"], indent=4, sort_keys=True))        
-        self.kbaseLogger.log_message("INFO", simplejson.dumps(self.scripts_config["transform.download"], indent=4, sort_keys=True))        
+        self.kbaseLogger.log_message("INFO", simplejson.dumps(self.scripts_config["upload"], indent=4, sort_keys=True))        
+        self.kbaseLogger.log_message("INFO", simplejson.dumps(self.scripts_config["download"], indent=4, sort_keys=True))        
         self.kbaseLogger.log_message("INFO", simplejson.dumps(self.scripts_config["convert"], indent=4, sort_keys=True))        
 
         #END_CONSTRUCTOR

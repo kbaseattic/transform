@@ -5,6 +5,7 @@ import os
 import datetime
 import logging
 import argparse
+import base64
 
 import simplejson
 
@@ -175,9 +176,13 @@ def main():
 
     # parse all the json strings from the argument list into dicts
     # TODO had issues with json.loads and unicode strings, workaround was using simplejson
-    args.job_details = simplejson.loads(args.job_details)
-    args.url_mapping = simplejson.loads(args.url_mapping)
-    args.optional_arguments = simplejson.loads(args.optional_arguments)
+    
+    args.url_mapping = simplejson.loads(base64.urlsafe_b64decode(args.url_mapping))
+    args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
+    args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
+    
+    if not os.path.exists(args.working_directory):
+        os.mkdir(args.working_directory)
 
     # setup subdirectories to pass to subtasks for working directories
     download_directory = os.path.join(args.working_directory, "user_external")
@@ -205,6 +210,13 @@ def main():
                          {"keep_working_directory": args.keep_working_directory,
                           "working_directory": args.working_directory})
 
+        ujs.complete_job(args.ujs_job_id, 
+                         kb_token, 
+                         "Upload to {0} failed.".format(args.workspace_name), 
+                         e, 
+                         None)                                  
+
+    
     # Report progress on success of the download step
     if args.ujs_job_id is not None:
         ujs.update_job_progress(args.ujs_job_id, kb_token, "Input data download completed", 
@@ -216,7 +228,7 @@ def main():
     try:
         os.mkdir(validation_directory)
     
-        validation_args = args.job_details["validator"]
+        validation_args = args.job_details["validate"]
         validation_args["optional_arguments"] = args.optional_arguments
         
         # gather a list of all files downloaded
@@ -246,6 +258,12 @@ def main():
                          {"keep_working_directory": args.keep_working_directory,
                           "working_directory": args.working_directory})
 
+        ujs.complete_job(args.ujs_job_id, 
+                         kb_token, 
+                         "Upload to {0} failed.".format(args.workspace_name), 
+                         e, 
+                         None)                                  
+
 
     # Report progress on success of validation step
     if args.ujs_job_id is not None:
@@ -256,7 +274,7 @@ def main():
     try:
         os.mkdir(transform_directory)
 
-        transformation_args = args.job_details["transformer"]
+        transformation_args = args.job_details["transform"]
         transformation_args["optional_arguments"] = args.optional_arguments
         transformation_args["input_directory"] = download_directory
         transformation_args["working_directory"] = transform_directory
@@ -287,6 +305,12 @@ def main():
                          },
                          {"keep_working_directory": args.keep_working_directory,
                           "working_directory": args.working_directory})
+
+        ujs.complete_job(args.ujs_job_id, 
+                         kb_token, 
+                         "Upload to {0} failed.".format(args.workspace_name), 
+                         e, 
+                         None)                                  
 
 
     # Report progress on success of transform step
@@ -346,6 +370,12 @@ def main():
                          },
                          {"keep_working_directory": args.keep_working_directory,
                           "working_directory": args.working_directory})
+
+        ujs.complete_job(args.ujs_job_id, 
+                         kb_token, 
+                         "Upload to {0} failed.".format(args.workspace_name), 
+                         e, 
+                         None)                                  
 
     
     # Report progress on the overall task being completed

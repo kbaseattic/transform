@@ -29,7 +29,6 @@ die "Usage: generic_tester.t <input_test_server_config_filename> <input_test_con
 my $cwd = dirname(__FILE__);
 my $job_config_fn = "$cwd/../config.json";
 
-
 my %params;
 if ($ARGV[0] ne "") {  
 	my %Config = ();

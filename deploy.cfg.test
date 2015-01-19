@@ -17,12 +17,7 @@
 
 # Note: do not document after each field defined
 [Transform]
-awe_url=http://10.1.16.87:7080
-ujs_url=https://kbase.us/services/userandjobstate
-shock_url=https://kbase.us/services/shock-api
-ws_url=http://kbase.us/services/ws
-clientgroups=prod
-svc_ws_name=loader_test
-svc_ws_cfg_name=script_configs
-svc_ws_un=kbasetest
-svc_ws_pw=@Suite525
+awe_service_url=http://10.1.16.87:7080
+ujs_service_url=http://10.1.16.87:7083
+shock_service_url=http://10.1.16.87:7078
+workspace_service_url=http://10.1.16.87:7058

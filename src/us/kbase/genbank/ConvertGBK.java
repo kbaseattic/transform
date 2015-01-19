@@ -7,19 +7,21 @@ import us.kbase.auth.TokenFormatException;
 import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
+import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
+import us.kbase.shock.client.BasicShockClient;
+import us.kbase.shock.client.ShockNode;
+import us.kbase.shock.client.exceptions.InvalidShockUrlException;
+import us.kbase.shock.client.exceptions.ShockHttpException;
 import us.kbase.workspace.*;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.math.BigInteger;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 /**
  * Created by Marcin Joachimiak
@@ -29,7 +31,8 @@ import java.util.Map;
  */
 public class ConvertGBK {
 
-    String wshttp = null;
+    static String wsurl = null;
+    static String shockurl = null;
 
     String ws = null;
 
@@ -45,7 +48,7 @@ public class ConvertGBK {
 
         if (args.length == 3) {
             ws = args[1];
-            wshttp = args[2];
+            wsurl = args[2];
         }
 
         parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
@@ -62,7 +65,7 @@ public class ConvertGBK {
                                                List<ObjectIdentity> objectIds) throws Exception {
                 throw new IllegalStateException("Unsupported method");
             }
-        }, ws, wshttp, isTest);
+        }, ws, wsurl, isTest);
     }
 
 
@@ -99,6 +102,7 @@ public class ConvertGBK {
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
 
         Genome genome = (Genome) ar.get(2);
+        genome.setAdditionalProperties("SOURCE","KBASE_USER_UPLOAD");
         final String outpath = genome.getId() + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
@@ -123,6 +127,29 @@ public class ConvertGBK {
             System.err.println("IOException: " + e.getMessage());
         }
 
+        List<Contig> contigs = contigSet.getContigs();
+        ArrayList md5s = new ArrayList();
+        for (int j = 0; j < contigs.size(); j++) {
+            Contig curcontig = contigs.get(j);
+            final String md5 = MD5(curcontig.getSequence().toUpperCase());
+            md5s.add(md5);
+            curcontig.setMd5(md5);
+            contigs.set(j, curcontig);
+        }
+        contigSet.setContigs(contigs);
+
+
+        Collections.sort(md5s);
+        StringBuilder out = new StringBuilder();
+        for (Object o : md5s) {
+            out.append(o.toString());
+            out.append(",");
+        }
+        out.deleteCharAt(out.length() - 1);
+
+        String globalmd5 = out.toString();
+
+        genome.setMd5(globalmd5);
 
         if (wsname != null) {
 
@@ -149,7 +176,6 @@ public class ConvertGBK {
             System.out.println(http);
 
             try {
-
                 WorkspaceClient wc = null;
 
                 if (isTestThis) {
@@ -167,6 +193,39 @@ public class ConvertGBK {
                 wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                         .withObjects(Arrays.asList(new ObjectSaveData().withName(genomeid).withMeta(meta)
                                 .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+
+                try {
+                    BasicShockClient client = null;
+                    if (isTestThis) {
+                        AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
+                        client = new BasicShockClient(new URL(shockurl), at);
+                    } else {
+                        client = new BasicShockClient(new URL(shockurl), new AuthToken(kbtok));
+                    }
+
+                    InputStream os = new FileInputStream(new File(outpath2));
+                    //upload ContigSet
+                    ShockNode contignode = client.addNode(os, outpath2, "JSON");
+
+                    genome.setContigsetRef(contignode.getId().getId());
+
+                    //upload input GenBank files
+                    /*TODO enable support for fasta_ref in Genome object*/
+                    for (File f : gbkFiles) {
+                        os = new FileInputStream(f);
+                        ShockNode sn = client.addNode(os, f.getName(), "TXT");
+                        //genome.setFastaRef(sn.getId().getId());
+                    }
+
+                    os.close();
+                } catch (InvalidShockUrlException e) {
+                    System.err.println("Invalid Shock url.");
+                    e.printStackTrace();
+                } catch (ShockHttpException e) {
+                    System.err.println("Shock HTPP error.");
+                    e.printStackTrace();
+                }
+
             } catch (UnauthorizedException e) {
                 System.err.println("WS UnauthorizedException");
                 System.err.print(e.getMessage());
@@ -185,10 +244,23 @@ public class ConvertGBK {
             }
         }
 
-        /*TODO add SHOCK upload? */
-
         System.out.println("    time: " + (System.currentTimeMillis() - time) + " ms");
     }
+
+
+    /**
+     * @param s
+     * @return
+     */
+
+    public static String MD5(String s) throws NoSuchAlgorithmException {
+        MessageDigest m = MessageDigest.getInstance("MD5");
+        m.update(s.getBytes(), 0, s.length());
+        final String s1 = new BigInteger(1, m.digest()).toString(16);
+        System.out.println("MD5: " + s1);
+        return s1;
+    }
+
 
     /**
      * @param args

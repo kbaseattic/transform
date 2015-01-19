@@ -1,0 +1,21 @@
+#Here are some data url for testing
+#Fei He
+#Updated Jan. 16, 2015
+
+
+#GenBank file:
+ftp://ftp.ncbi.nlm.nih.gov/genomes/Zea_mays/CHR_07/zm_ref_B73_RefGen_v3_chr7.gbk.gz
+ftp://ftp.ensemblgenomes.org/pub/release-25/plants/genbank/zea_mays/Zea_mays.AGPv3.25.chromosome.10.dat.gz
+ftp://ftp.ensemblgenomes.org/pub/release-25/plants/genbank/zea_mays/Zea_mays.AGPv3.25.dat.gz
+
+#Reads file:
+http://140.221.67.146/reads_fastq_data/SRR1752619.fastq.first_1e5
+http://140.221.67.146/reads_fastq_data/SRR1752619.fastq
+http://140.221.67.146/reads_fastq_data/SRR1752619.fastq.first_1e6
+http://140.221.67.146/reads_fastq_data/SRR1752619.fastq.first_2e6
+http://140.221.67.146/reads_fastq_data/SRR1752619.fastq.first_1e7
+http://140.221.67.146/reads_fastq_data/SRR1752619.fastq.first_5e6
+
+
+
+

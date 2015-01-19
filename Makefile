@@ -3,7 +3,7 @@ DEPLOY_RUNTIME=/kb/runtime
 TARGET ?= /kb/deployment
 include $(TOP_DIR)/tools/Makefile.common
 SERVICE_SPEC = Transform.spec
-SERVICE_NAME = transform
+SERVICE_NAME = Transform
 #SERVICE_PSGI_FILE = $(SERVICE_NAME).psgi
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
 #SERVER_MODULE = lib/Bio/KBase/$(SERVICE_NAME)/Service.pm

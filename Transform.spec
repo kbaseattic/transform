@@ -53,7 +53,7 @@ module Transform
     typedef structure {
         string external_type;
         type_string kbase_type;
-        string urls; /* json string */
+        mapping<string,string> url_mapping;
         string workspace_name;
         string object_name;
         string object_id;

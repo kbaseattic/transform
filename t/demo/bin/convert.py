@@ -29,7 +29,7 @@ import biokbase.Transform.script_utils
 import biokbase.userandjobstate.client
 import biokbase.workspace.client
 
-logger = biokbase.Transform.script_utils.getStderrLogger(__file__)
+logger = biokbase.Transform.script_utils.stderrlogger(__file__)
 
 
 def show_workspace_object_list(workspace_url, workspace_name, object_name, token):
@@ -124,13 +124,13 @@ if __name__ == "__main__":
     parser.add_argument('--awe_service_url', nargs='?', help='AWE service for additional job monitoring', const="", default="http://140.221.67.242:7080")
     parser.add_argument('--transform_service_url', nargs='?', help='Transform service that handles the data conversion to KBase', const="", default="http://140.221.67.242:7778/")
 
-    parser.add_argument('--source_kbase_type', nargs='?', help='the source type of the data', const="", default="")
+    parser.add_argument('--source_kbase_type', nargs='?', help='the source type of the data')
     parser.add_argument('--source_workspace_name', nargs='?', help='name of the source workspace', const="", default="gavinws")
-    parser.add_argument('--source_object_name', nargs='?', help='name of the workspace object, const="", default="")
+    parser.add_argument('--source_object_name', nargs='?', help='name of the workspace object', const="", default="")
 
-    parser.add_argument('--destination_kbase_type', nargs='?', help='the kbase object type to create', const="", default="")
+    parser.add_argument('--destination_kbase_type', nargs='?', help='the kbase object type to create')
     parser.add_argument('--destination_workspace_name', nargs='?', help='name of the workspace where your objects should be created', const="", default="upload_testing")
-    parser.add_argument('--destination_object_name', nargs='?', help='name of the workspace object to create', const="", default="")
+    parser.add_argument('--destination_object_name', nargs='?', help='name of the workspace object to create')
 
     args = parser.parse_args()
 
@@ -181,15 +181,15 @@ if __name__ == "__main__":
         source_workspace_name = demo_inputs["source_workspace_name"]
         source_object_name = demo_inputs["source_object_name"]
         destination_kbase_type = demo_inputs["destination_kbase_type"]
-        destination_kbase_type = demo_inputs["destination_kbase_type"]
-        destination_kbase_type = demo_inputs["destination_kbase_type"]
+        destination_workspace_name = demo_inputs["destination_workspace_name"]
+        destination_object_name = demo_inputs["destination_object_name"]
 
         print "\n\n"
         print term.bold("#"*80)
-        print term.white_on_black("Converting {0} => {1}".format(kbase_type,external_type))
+        print term.white_on_black("Converting {0} => {1}".format(source_kbase_type,destination_kbase_type))
         print term.bold("#"*80)
 
-        conversionDownloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
+        conversionDownloadPath = os.path.join(stamp, source_kbase_type + "_to_" + destination_kbase_type)
         
         try:
             os.mkdir(conversionDownloadPath)
@@ -221,4 +221,5 @@ if __name__ == "__main__":
             print term.green("\tConversion successful.  Yaks win.\n\n")
         except Exception, e:
             print e.message
+            raise
 

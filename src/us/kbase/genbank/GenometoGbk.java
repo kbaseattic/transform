@@ -12,10 +12,12 @@ import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Feature;
 import us.kbase.kbasegenomes.Genome;
+/*
 import us.kbase.shock.client.BasicShockClient;
 import us.kbase.shock.client.ShockNodeId;
 import us.kbase.shock.client.exceptions.InvalidShockUrlException;
 import us.kbase.shock.client.exceptions.ShockHttpException;
+*/
 import us.kbase.workspace.ObjectData;
 import us.kbase.workspace.ObjectIdentity;
 import us.kbase.workspace.WorkspaceClient;
@@ -282,6 +284,8 @@ public class GenometoGbk {
             System.err.println("ContigSet not found in workspace.");
 
             String outputfile = args[0] + "_ContigSet.json";
+
+/*            
             try {
                 BasicShockClient client = null;
                 if (isTest) {
@@ -302,6 +306,7 @@ public class GenometoGbk {
                 System.err.println("Shock HTPP error.");
                 e1.printStackTrace();
             }
+*/
 
             File loadContigs = new File(args[1]);
             contigSet = mapper.readValue(loadContigs, ContigSet.class);

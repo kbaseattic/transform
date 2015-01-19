@@ -6,7 +6,6 @@ import os
 import sys
 import traceback
 import argparse
-# import json
 import logging
 import re
 import hashlib
@@ -61,14 +60,14 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
     """
 
     if logger is None:
-        logger = script_utils.getStderrLogger(__file__)
+        logger = script_utils.stderrlogger(__file__)
 
     logger.info("Starting conversion of FASTA to KBaseGenomes.ContigSet")
 
     logger.info("Building Object.")
 
     if not os.path.isfile(input_file_name):
-        raise Exception("The input file name {0} does not exist".format(
+        raise Exception("The input file name {0} is not a file!".format(
             input_file_name))
 
 #     if not os.path.isdir(working_directory):
@@ -84,8 +83,10 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
     fasta_filesize = os.stat(input_file_name).st_size
     if fasta_filesize > 1000000000:
         # Fasta file too large to save sequences into the ContigSet object.
-        logger.warning('Fasta input file {0} is be too large, the contigset' +
-                       'will not contain sequences'.format(input_file_name))
+        contigset_warn = 'The FASTA input file seems to be too large. A ' +\
+            'ContigSet object will be created without sequences, but will ' +\
+            'contain a reference to the file.'
+        logger.warning(contigset_warn)
         contig_set_has_sequences = False
 
     input_file_handle = open(input_file_name, 'r')
@@ -137,13 +138,15 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
             sequence_list.append(current_line)
             sequence_exists = True
 
+    input_file_handle.close()
+
     # wrap up last fasta sequence
     if (not sequence_exists) and first_header_found:
         logger.error(
-            "There is no sequence related to fasta record : {0}".format(
+            "There is no sequence related to FASTA record : {0}".format(
                 fasta_header))
         raise Exception(
-            "There is no sequence related to fasta record : {0}".format(
+            "There is no sequence related to FASTA record : {0}".format(
                 fasta_header))
     else:
         # build up sequence and remove all white space
@@ -262,6 +265,10 @@ def main():
         '--source_workspace_object_name',
         help='name of the workspace object to convert',
         action='store', type=str, required=True)
+    parser.add_argument(
+        '--target_workspace_object_name',
+        help='name for the produced ContigSet.',
+        action='store', type=str, required=True)
 
     parser.add_argument(
         '--fasta_reference_only',
@@ -274,7 +281,7 @@ def main():
 
     contig_set_id = args.source_workspace_object_name + '_contig_set'
 
-    logger = script_utils.getStderrLogger(__file__)
+    logger = script_utils.stderrlogger(__file__)
     try:
         shock_url, shock_id, ref = download_workspace_data(
             args.workspace_url,
@@ -289,9 +296,9 @@ def main():
             args.fasta_reference_only, logger=logger)
         upload_workspace_data(
             cs, args.workspace_url, ref,
-            args.target_workspace_name, contig_set_id)
-    except:
-        logger.exception("".join(traceback.format_exc()))
+            args.target_workspace_name, args.target_workspace_object_name)
+    except Exception, e:
+        logger.exception(e)
         print("".join(traceback.format_exc()))
         sys.exit(1)
 

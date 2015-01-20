@@ -15,7 +15,7 @@ use Spreadsheet::ParseExcel;
 use Spreadsheet::ParseXLSX;
 use Log::Log4perl;
 use parent qw(Exporter);
-our @EXPORT_OK = qw(parse_input_table get_input_fh get_output_fh
+our @EXPORT_OK = qw(write_csv_tables parse_input_table get_input_fh get_output_fh
 		    load_input write_output write_text_output
 		    genome_to_gto contigs_to_gto
                     parse_excel getStderrLogger);
@@ -142,6 +142,23 @@ sub load_input
     undef $fh;
     my $obj = decode_json($text);
     return $obj;
+}
+
+sub write_csv_tables {
+	my($tables) = @_;
+	foreach my $tbl (keys(%{$tables})) {
+		open(OUT, "> $tbl.csv");
+		for (my $j=0; $j < @{$tables->{$tbl}}; $j++) {
+			for (my $k=0; $k < @{$tables->{$tbl}->[0]}; $k++) {
+				if ($k > 0) {
+					print OUT "\t";
+				}
+				print OUT $tables->{$tbl}->[$j]->[$k];
+			}
+			print OUT "\n";
+		}
+		close(OUT);
+	}	
 }
 
 sub write_output

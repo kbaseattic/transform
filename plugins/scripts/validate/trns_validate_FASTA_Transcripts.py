@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # This code is part of KBase project to validate 
-#the fastq and fasta files
+#the sbml files
 
 from __future__ import print_function
 
@@ -15,7 +15,7 @@ import cStringIO
 
 desc1 = '''
 NAME
-      trns_validate_KBaseAssembly.FA -- Validate the fasta files (1.0)
+      trns_validate_Transcripts.FASTA.py -- Validate the fasta files (1.0)
 
 SYNOPSIS      
       
@@ -23,7 +23,7 @@ SYNOPSIS
 
 desc2 = '''
 DESCRIPTION
-  trns_validate_KBaseAssembly.FA validate the fasta file and returns
+  trns_validate_Transcripts.FASTA.py validate the fasta file and returns
   a json string
 
   TODO: It will support KBase log format.
@@ -31,10 +31,10 @@ DESCRIPTION
 
 desc3 = '''
 EXAMPLES
-   > trns_trns_validate_KBaseAssembly.FA -i <Input fasta file>
+   > trns_validate_Transcripts.FASTA.py -i <Input fasta file>
 
 AUTHORS
-Srividya Ramakrishnan.
+Srividya Ramakrishnan; Sam Seaver
 '''
 
 impt = os.environ.get("KB_TOP")+"/lib/jars/FastaValidator/FastaValidator-1.0.jar"
@@ -90,8 +90,6 @@ def to_JSON(self):
 
 def validate_fasta(filename):
         ret = ''
-        kb_runtime = os.environ.get('KB_RUNTIME', '/kb/runtime')
-        java = "%s/java/bin/java" % kb_runtime
         if os.path.isfile(filename):
                 ext = os.path.splitext(filename)[-1]
                 if ext == '.gz':
@@ -103,9 +101,9 @@ def validate_fasta(filename):
                         text_file.write(fh.getvalue())
                         text_file.close()
                 if ext == '.gz':
-                        cmd2 = [java,"-classpath",impt,mc,os.path.splitext(filename)[-2]]
+                        cmd2 = ["java","-classpath",impt,mc,os.path.splitext(filename)[-2]]
 		else:
-			cmd2 = [java,"-classpath",impt,mc,filename]
+			cmd2 = ["java","-classpath",impt,mc,filename]
 		#print(cmd2)
                 ret = check_output(cmd2,stderr=sys.stderr)
 	else:
@@ -133,7 +131,7 @@ class Validate(object):
                         self.error = ret["error"]
 
 def usage():
-        print("Usage : trns_validate_KBaseAssembly.FA -i <filename> ")
+        print("Usage : trns_validate_Transcripts.FASTA.py -i <filename> ")
 
 def main(argv):
    inputfile = ''
@@ -141,11 +139,11 @@ def main(argv):
    try:
       opts, args = getopt.getopt(argv,"hi:")
    except getopt.GetoptError:
-      print('trns_validate_KBaseAssembly.FA -i <inputfile>')
+      print('trns_validate_Transcripts.FASTA.py -i <inputfile>')
       sys.exit(2)
    for opt, arg in opts:
       if opt == '-h':
-         print('trns_validate_KBaseAssembly.FA -i <inputfile>')
+         print('trns_validate_Transcripts.FASTA.py -i <inputfile>')
          sys.exit()
       elif opt == "-i":
          inputfile = arg
@@ -162,4 +160,3 @@ if __name__ == "__main__" :
    else:
         usage()
 exit(0);
-

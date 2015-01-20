@@ -1,0 +1,15 @@
+{
+    "script_name": "trns_transform_WSBiomType-to-Biom.pl", 
+    "script_type": "download",
+    "external_type": "BIOM_TaxonomicMatrix",
+    "kbase_type": "Communities.TaxonomicMatrix",
+    "user_description": "",
+    "developer_description": "",    
+
+    "handler_options": {
+        "max_runtime": 360,
+        "custom_options": []
+    },
+    "user_options": [],
+    "user_option_groups": []
+}

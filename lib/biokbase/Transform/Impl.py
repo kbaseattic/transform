@@ -95,7 +95,7 @@ type but different versions.
                 raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
         elif method == "convert":
             if self.scripts_config["convert"].has_key("{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])):
-                job_details["transform"] = self.scripts_config["download"]["{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])]
+                job_details["transform"] = self.scripts_config["convert"]["{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])]
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))
         

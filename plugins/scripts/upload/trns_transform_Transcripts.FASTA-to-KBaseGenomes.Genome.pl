@@ -4,6 +4,7 @@ use strict;
 use Data::Dumper;
 use Getopt::Long;
 use Digest::MD5;
+use Bio::KBase::Transform::ScriptHelpers qw( getStderrLogger );
 
 =head1 NAME
 
@@ -66,10 +67,12 @@ my %reverse_genetic_code = (A  => "GCN",
 			    Y  => "TAY",
                            '*' => "TRR");
 
+my $logger = getStderrLogger();
+
 my $In_File   = "";
 my $Out_File  = "";
 my $Genome_ID = "";
-my $IsDNA     = "";
+my $IsDNA     = 0;
 my $Help      = 0;
 GetOptions("in_file|i=s"   => \$In_File,
 	   "out_file|o=s"  => \$Out_File,
@@ -79,12 +82,17 @@ GetOptions("in_file|i=s"   => \$In_File,
 
 if($Help || !$In_File || !$Out_File){
     print($0." --in_file|-i <Input Fasta File> --out_file|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (in_file used by default)> --dna|d");
+    $logger->warn($0." --in_file|-i <Input Fasta File> --out_file|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (in_file used by default)> --dna|d");
     exit();
 }
 
 if(!-f $In_File){
+    $logger->warn("Cannot find file ".$In_File);
     die("Cannot find $In_File");
 }
+
+$logger->info("Mandatory Data passed = ".join(" | ", ($In_File,$Out_File)));
+$logger->info("Optional Data passed = ".join(" | ", ("Genome:".$Genome_ID,"DNA:".$IsDNA)));
 
 #use in reading in linebreaks '\r' & '\n'
 use File::Stream;
@@ -104,7 +112,8 @@ my $GenomeHash = {id => ($Genome_ID ? $Genome_ID : $In_File),
 		  taxonomy => "viridiplantae",
 		  gc_content => 0.5,
 		  dna_size => 0,
-		  features => []};
+		  features => [],
+                  contigs => []};
 
 #Test first sequence for NAs
 if(!$IsDNA){
@@ -148,11 +157,15 @@ $GCs = sprintf("%.2f",($GCs/$DNA_Size)) + 0.0;
 $GenomeHash->{gc_content} = $GCs;
 $GenomeHash->{dna_size} = $DNA_Size;
 
+$logger->info("Writing Genome WS Object");
+
 use JSON;
 my $json_text = encode_json($GenomeHash);
 open(OUT, "> $Out_File");
 print OUT $json_text;
 close(OUT);
+
+$logger->info("Writing Genome WS Object Complete");
 
 sub getFileHandle{
     my $file=shift;

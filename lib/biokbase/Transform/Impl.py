@@ -247,6 +247,7 @@ type but different versions.
         # ctx is the context object
         # return variables are: result
         #BEGIN convert
+        result = self._run_job("convert", ctx, args)
         #END convert
 
         # At some point might do deeper type checking...

@@ -1,163 +1,352 @@
 #!/usr/bin/env python
 
-import argparse
 import sys
 import os
-import time
-import traceback
-import sys
-import ctypes
-import subprocess
-from subprocess import Popen, PIPE
-import shutil
-from optparse import OptionParser
-from biokbase.workspace.client import Workspace
-import urllib
-import urllib2
-import json
-from biokbase import log
-from biokbase.userandjobstate.client import UserAndJobState
-from biokbase.Transform.util import Downloader
-import mmap
 import datetime
+import logging
+import argparse
+import base64
 
-desc1 = '''
-NAME
-      trns_download_hndlr -- upload the input data into WS
+import simplejson
 
-SYNOPSIS      
-      
-'''
-
-desc2 = '''
-DESCRIPTION
-  trns_download_hndlr call actual trnf_validation_handler script to test 
-  wheather the input data is valid external data format or not. If there is no
-  error found, transform the input format to external format and save to WS.
-  
-'''
-
-desc3 = '''
-EXAMPLES
-      CSV test case
-      > trns_download_hndlr --ws_url 'https://kbase.us/services/ws' --ws_id kbasetest:home  --in_id '' --out_id 'my_tst_out'
-      
-      Filter genes with LOR
-      > trns_download_hndlr --ws_url 'https://kbase.us/services/ws' --ws_id KBasePublicExpression  --in_id '' -out_id 'my_tst_out'
+from biokbase.workspace.client import Workspace
+from biokbase.userandjobstate.client import UserAndJobState
+from biokbase.Transform import handler_utils
+from biokbase.Transform import script_utils
 
 
-SEE ALSO
-      trns_validate_hndlr, trns_import_hndlr
+def main():
+    """
+    KBase Download task manager for converting from KBase objects to external data formats.
+    
+    Step 1 - Convert the objects to local files
+    Step 2 - Extract provenance and metadata
+    Step 3 - Package all files into a tarball or zip
+    Step 4 - Upload the compressed file to shock and return the download url
 
-AUTHORS
-First Last.
-'''
-
+    Args:
+        workspace_service_url: URL for a KBase Workspace service where KBase objects 
+                               are stored.
+        ujs_service_url: URL for a User and Job State service to report task progress
+                         back to the user.
+        shock_service_url: URL for a KBase SHOCK data store service for storing files 
+                           and large reference data.
+        handle_service_url: URL for a KBase Handle service that maps permissions from 
+                            the Workspace to SHOCK for KBase types that specify a Handle 
+                            reference instead of a SHOCK reference.
+        workspace_name: The name of the source workspace.
+        object_name: The source object name.
+        object_id: A source object id, which can be used instead of object_name.
+        external_type: The external data format being transformed to from a KBase type.
+                       E.g., FASTA.DNA.Assembly
+                       This is simply a string, but denotes the format of the data and
+                       some context about what it actually is, which is used to 
+                       differentiate between files of the same general format with
+                       different fundamental values.                       
+        kbase_type: The KBase Workspace type string that indicates the module and type
+                    of the object being created.
+        optional_arguments: This is a JSON string containing optional parameters that can
+                            be passed in to customize behavior based on available 
+                            exposed options.
+        ujs_job_id: The job id from the User and Job State service that can be used to
+                    report status on task progress back to the user.
+        job_details: This is a JSON string that passes in the script specific command
+                     line options for a given transformation type.  The service pulls
+                     these config settings from a script config created by the developer
+                     of the transformation script and passes that into the AWE job that
+                     calls this script.
+        working_directory: The working directory on disk where files can be created and
+                           will be cleaned when the job ends with success or failure.
+        keep_working_directory: A flag to tell the script not to delete the working
+                                directory, which is mainly for debugging purposes.
+    
+    Returns:
+        Literal return value is 0 for success and 1 for failure.
         
-if __name__ == "__main__":
-    # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_download_hndlr', epilog=desc3)
-    parser.add_argument('-u', '--ws_url', help='Workspace url', action='store', dest='ws_url', default='https://kbase.us/services/ws')
-    #parser.add_argument('-x', '--svc_ws_name', help='Service workspace name', action='store', dest='sws_id', default=None, required=True)
-    #parser.add_argument('-c', '--config_name', help='Script configuration workspace object name', action='store', dest='cfg_name', default=None, required=True)
-    parser.add_argument('-c', '--compression', help='Compression methods [gz2,zip,none]', action='store', dest='compress', default='zip', required=False)
+        Actual data output is a shock url that contains data files that were created
+        based on KBase objects.
+        
+    Authors:
+        Shinjae Yoo, Matt Henderson            
+    """
 
-    parser.add_argument('-w', '--src_ws_name', help='Source workspace name', action='store', dest='ws_id', default=None, required=True)
-    parser.add_argument('-i', '--in_id', help='Input workspace object name', action='store', dest='inobj_id', default=None, required=True)
+    logger = script_utils.stderrlogger(__file__)
+    logger.info("Executing KBase Download tasks")
+    
+    script_details = script_utils.parse_docs(main.__doc__)
+        
+    parser = argparse.ArgumentParser(description=script_details["Description"],
+                                     epilog=script_details["Authors"])
+    # provided by service config
+    parser.add_argument('--workspace_service_url', 
+                        help=script_details["Args"]["workspace_service_url"], 
+                        action='store', 
+                        required=True)
+    parser.add_argument('--ujs_service_url', 
+                        help=script_details["Args"]["ujs_service_url"], 
+                        action='store', 
+                        required=True)
+    
+    # optional because not all KBase Workspace types contain a SHOCK or Handle reference
+    parser.add_argument('--shock_service_url', 
+                        help=script_details["Args"]["shock_service_url"], 
+                        action='store', 
+                        default=None)
+    parser.add_argument('--handle_service_url', 
+                        help=script_details["Args"]["handle_service_url"], 
+                        action='store', 
+                        default=None)
 
-    parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
+    # workspace info for pulling the data
+    parser.add_argument('--workspace_name', 
+                        help=script_details["Args"]["workspace_name"], 
+                        action='store', 
+                        required=True)
+    parser.add_argument('--object_name', 
+                        help=script_details["Args"]["object_name"], 
+                        action='store', 
+                        required=True)
+    parser.add_argument('--object_id', 
+                        help=script_details["Args"]["object_id"], 
+                        action='store')
 
-    parser.add_argument('-r', '--ujs_url', help='UJS url', action='store', dest='ujs_url', default='https://kbase.us/services/userandjobstate')
-    parser.add_argument('-n', '--handle_service_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
-    parser.add_argument('-j', '--job_id', help='UJS job id', action='store', dest='jid', default=None, required=False)
+    # the types that we are transforming between, currently assumed one to one 
+    parser.add_argument('--external_type', 
+                        help=script_details["Args"]["external_type"], 
+                        action='store', 
+                        required=True)
+    parser.add_argument('--kbase_type', 
+                        help=script_details["Args"]["kbase_type"], 
+                        action='store', 
+                        required=True)
 
-    parser.add_argument('-e', '--ext_type', help='External object type', action='store', dest='etype', default=None, required=True)
-    parser.add_argument('-t', '--kbase_type', help='KBase object type', action='store', dest='kbtype', default=None, required=True)
+    # any user options provided, encoded as a jason string                           
+    parser.add_argument('--optional_arguments', 
+                        help=script_details["Args"]["optional_arguments"], 
+                        action='store', 
+                        default='{}')
 
-    parser.add_argument('-a', '--opt_args', help='Optional argument json string', action='store', dest='opt_args', default='{"downloader":{}}')
-    parser.add_argument('-z', '--job_details', help='Info needed to run the download job.', action='store', dest='job_details', default=None)
+    # Used if you are restarting a previously executed job?
+    parser.add_argument('--ujs_job_id', 
+                        help=script_details["Args"]["ujs_job_id"], 
+                        action='store', 
+                        default=None, 
+                        required=False)
 
-    parser.add_argument('-l', '--support_dir', help='Support directory', action='store', dest='sdir', default='lib')
-    parser.add_argument('-d', '--del_lib_dir', help='Delete library directory', action='store', dest='del_tmps', default='true')
-    parser.add_argument('-f', '--in_tmp_file', help='Input temporary file name', action='store', dest='itmp', default='infile')
-    parser.add_argument('-g', '--out_tmp_file', help='Output temporary file name', action='store', dest='otmp', default='outfile')
+    # config information for running subtasks such as transform scripts
+    parser.add_argument('--job_details', 
+                        help=script_details["Args"]["job_details"], 
+                        action='store', 
+                        default=None)
 
-    usage = parser.format_usage()
-    parser.description = desc1 + '      ' + usage + desc2
-    parser.usage = argparse.SUPPRESS
-    args = parser.parse_args()
+    # the working directory is where all the files for this job will be written, 
+    # and normal operation cleans it after the job ends (success or fail)
+    parser.add_argument('--working_directory', 
+                        help=script_details["Args"]["working_directory"], 
+                        action='store', 
+                        default=None, 
+                        required=True)
+    parser.add_argument('--keep_working_directory', 
+                        help=script_details["Args"]["keep_working_directory"], 
+                        action='store_true')
 
+    # ignore any extra arguments
+    args, unknown = parser.parse_known_args()
+            
     kb_token = os.environ.get('KB_AUTH_TOKEN')
-    ujs = UserAndJobState(url=args.ujs_url, token=kb_token)
+    ujs = UserAndJobState(url=args.ujs_service_url, token=kb_token)
 
     est = datetime.datetime.utcnow() + datetime.timedelta(minutes=3)
-    if args.jid is not None:
-      ujs.update_job_progress(args.jid, kb_token, 'Dispatched', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+    if args.ujs_job_id is not None:
+        ujs.update_job_progress(args.ujs_job_id, kb_token, "KBase Data Download to external formats started", 
+                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
+    # parse all the json strings from the argument list into dicts
+    # TODO had issues with json.loads and unicode strings, workaround was using simplejson and base64
+    
+    args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
+    args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
+    
+    if not os.path.exists(args.working_directory):
+        os.mkdir(args.working_directory)
 
-    ## main loop
-    print >> sys.stderr, args.job_details
-    print >> sys.stderr, args.opt_args
+    # setup subdirectories to pass to subtasks for working directories
+    transform_directory = os.path.join(args.working_directory, "user_external")
 
-    args.job_details = json.loads(args.job_details.replace("\\", ""))
-    args.opt_args = json.loads(args.opt_args.replace("\\", ""))
-    #if 'downloader' not in args.opt_args:
-    #  args.opt_args['uploader'] = {}
-    #  args.opt_args['uploader']['file'] = args.otmp
-    #  args.opt_args['uploader']['input'] = args.inobj_id
-    #  args.opt_args['uploader']['jid'] = args.jid
-    #  args.opt_args['uploader']['etype'] = args.etype
-    downloader = Downloader(args)
+    if args.ujs_job_id is not None:
+        ujs.update_job_progress(args.ujs_job_id, kb_token, 
+                                "Gathering workspace data from {0}".format(args.workspace_name), 
+                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
-    #try:
-    #  downloader.download_ws_data()
-    #except:
-    #  if args.jid is not None:
-    #    e,v,t = sys.exc_info()[:3]
-    #    ujs.complete_job(args.jid, kb_token, 'Failed : data download from Workspace\n', str(v), {}) 
-    #  else:
-    #    traceback.print_exc(file=sys.stderr)
-    #  exit(3);
-
-    #if args.jid is not None:
-    #  ujs.update_job_progress(args.jid, kb_token, 'Data downloaded', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
-
+    # Step 1 : Call the transform task to convert the objects to local files
     try:
-      downloader.download_handler()
-    except:
-      if args.jid is not None:
-        e,v = sys.exc_info()[:2]
-        ujs.complete_job(args.jid, kb_token, 'Failed : data conversion\n', str(v), {}) 
-      else:
-        traceback.print_exc(file=sys.stderr)
-      exit(4);
+        os.mkdir(transform_directory)
+        
+        transformation_args = args.job_details["transform"]
+        transformation_args["optional_arguments"] = args.optional_arguments
+        transformation_args["working_directory"] = transform_directory
 
-    if args.jid is not None:
-      ujs.update_job_progress(args.jid, kb_token, 'Data converted', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+        transformation_args["shock_service_url"] = args.shock_service_url
+        transformation_args["handle_service_url"] = args.handle_service_url
+        
+        handler_utils.run_task(logger, transformation_args)
+    except Exception, e:
+        handler_utils.report_exception(logger, 
+                         {"message": 'ERROR : Transforming workspace data from {0}'.format(args.workspace_name),
+                          "exc": e,
+                          "ujs": ujs,
+                          "ujs_job_id": args.ujs_job_id,
+                          "token": kb_token,
+                         },
+                         {"keep_working_directory": args.keep_working_directory,
+                          "working_directory": args.working_directory})
 
-    result = {}
+        ujs.complete_job(args.ujs_job_id, 
+                         kb_token, 
+                         "Transform from {0} failed.".format(args.workspace_name), 
+                         e, 
+                         None)                                  
+
+    
+    # Report progress on success of the download step
+    if args.ujs_job_id is not None:
+        ujs.update_job_progress(args.ujs_job_id, kb_token, "Workspace objects transformed to {0}".format(args.external_type), 
+                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+
+
+    # TODO check to see if a validator is configured, if not skip to transform
+    # Step 2 : Validate the data files
+#    try:
+#        os.mkdir(validation_directory)
+#    
+#        validation_args = args.job_details["validate"]
+#        validation_args["optional_arguments"] = args.optional_arguments
+#        
+#        # gather a list of all files downloaded
+#        files = list(handler_utils.gen_recursive_filelist(download_directory))
+#        
+#        # get the directories common to those files
+#        directories = list()
+#        for x in files:
+#            path = os.path.dirname(x)
+#            
+#            if path not in directories:
+#                directories.append(path)
+#        
+#        # validate everything in each directory
+#        for d in directories:
+#            validation_args["input_directory"] = d
+#            validation_args["working_directory"] = validation_directory
+#            handler_utils.run_task(logger, validation_args)
+#    except Exception, e:
+#        handler_utils.report_exception(logger, 
+#                         {"message": "ERROR : Validation of {0}".format(args.url_mapping),
+#                          "exc": e,
+#                          "ujs": ujs,
+#                          "ujs_job_id": args.ujs_job_id,
+#                          "token": kb_token,
+#                         },
+#                         {"keep_working_directory": args.keep_working_directory,
+#                          "working_directory": args.working_directory})
+#
+#        ujs.complete_job(args.ujs_job_id, 
+#                         kb_token, 
+#                         "Upload to {0} failed.".format(args.workspace_name), 
+#                         e, 
+#                         None)                                  
+#
+#
+#    # Report progress on success of validation step
+#    if args.ujs_job_id is not None:
+#        ujs.update_job_progress(args.ujs_job_id, kb_token, 'Input data has passed validation', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+
+
+
+    # Step 2: Extract provenance and metadata
+    try:    
+        workspaceClient = Workspace(args.workspace_service_url, kb_token)
+        
+        object_info = {"workspace": args.workspace_name, "name": args.object_name}
+
+        object_details = dict()
+        object_details["provenance"] = workspaceClient.get_object_provenance([object_info])
+        object_details["history"] = workspaceClient.get_object_history([object_info])
+        object_details["metadata"] = workspaceClient.get_object_info_new([object_info])
+        object_details["references"] = workspaceClient.list_referencing_objects([object_info])
+        
+        with open("KBase_object_details_{0}_{1}.json".format(args.object_name, datetime.datetime.utcnow().isoformat()) as f:
+            f.write(simplejson.dumps(object_details, sort_keys=True, indent=4))
+    except Exception, e:
+        handler_utils.report_exception(logger, 
+                         {"message": "ERROR : Extracting metadata and provenance failed",
+                          "exc": e,
+                          "ujs": ujs,
+                          "ujs_job_id": args.ujs_job_id,
+                          "token": kb_token,
+                         },
+                         {"keep_working_directory": args.keep_working_directory,
+                          "working_directory": args.working_directory})
+
+        ujs.complete_job(args.ujs_job_id, 
+                         kb_token, 
+                         "Download from {0} failed.".format(args.workspace_name), 
+                         e, 
+                         None)                                  
+    
+    
+    shock_id = None
+    # Step 3: Package data files into a single compressed file and send to shock
     try:
-      result = downloader.upload_to_shock()
-    except:
-      e,v = sys.exc_info()[:2]
-      if args.jid is not None:
-        ujs.complete_job(args.jid, kb_token, 'Failed : data upload to shock\n', str(v), {})
-      else:
-        traceback.print_exc(file=sys.stderr)
-        print >> sys.stderr, 'Failed : data upload to shock\n{}:{}'.format(str(e),str(v))
-      exit(5);
-    print result
+        name = "KBase_{0}_{1}_to_{2}_{3}.zip".format(args.object_name, args.kbase_type, args.external_type, datetime.datetime.utcnow().isoformat())
 
-    # clean-up
-    if(args.del_tmps is "true") :
-        try :
-          shutil.rmtree("{}".format(args.sdir))
-        except:
-          pass
+        # gather a list of all files downloaded
+        files = list(handler_utils.gen_recursive_filelist(transform_directory))        
+    
+        with zipfile.ZipFile(name, 'w',  zipfile.ZIP_DEFLATED, zipfile.allowZip64) as z:
+            for f in files:
+                z.write(f)
+            z.close()
+    
+        shock_info = script_utils.upload_file_to_shock(logger = logger,
+                                                       shock_service_url = args.shock_service_url,
+                                                       filePath = os.path.join(transform_directory, name),
+                                                       token= kb_token)
+        shock_id = shock_info["id"]
+    except Exception, e:
+        handler_utils.report_exception(logger, 
+                         {"message": "ERROR : Compressing files and saving to SHOCK failed",
+                          "exc": e,
+                          "ujs": ujs,
+                          "ujs_job_id": args.ujs_job_id,
+                          "token": kb_token,
+                         },
+                         {"keep_working_directory": args.keep_working_directory,
+                          "working_directory": args.working_directory})
 
-    # TODO: Fix outobj_id to shock node id or we don't need shock node id...
-    if args.jid is not None:
-      ujs.complete_job(args.jid, kb_token, 'Succeed', None, {"shocknodes" : [result['id']], "shockurl" : args.shock_url, "workspaceids" : [], "workspaceurl" : args.ws_url ,"results" : [{"server_type" : "shock", "url" : args.shock_url, "id" : result['id'], "description" : "description"}]})
-    else:
-      print "{}/node/{}?download_raw".format(args.shock_url, result['id'])
-    exit(0);
+        ujs.complete_job(args.ujs_job_id, 
+                         kb_token, 
+                         "Download from {0} failed.".format(args.workspace_name), 
+                         e, 
+                         None)                                  
+
+    
+    # Report progress on the overall task being completed
+    if args.ujs_job_id is not None:
+        ujs.complete_job(args.ujs_job_id, 
+                         kb_token, 
+                         "Download from {0} completed".format(args.workspace_name), 
+                         None, 
+                         {"shocknodes" : ["{0}/node/{1}?download_raw".format(args.shock_service_url,shock_id)], 
+                          "shockurl" : args.shock_service_url, 
+                          "results" : [{"server_type" : "Shock", 
+                                        "url" : "{0}/node/{1}?download_raw".format(args.shock_service_url,shock_id), 
+                                        "id" : shock_id }]})
+    
+    # Almost done, remove the working directory if possible
+    if not args.keep_working_directory:
+        handler_utils.cleanup(logger, args.working_directory)
+
+    sys.exit(0);
+
+if __name__ == "__main__":
+    main()    

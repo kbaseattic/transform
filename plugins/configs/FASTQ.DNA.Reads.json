@@ -1,0 +1,14 @@
+{
+    "script_name": "trns_validate_FASTQ_DNA.py",
+    "script_type": "validate",
+    "external_type": "FASTQ.DNA.Reads",
+    "user_description": "",
+    "developer_description": "",
+    
+    "handler_options": {        
+        "max_runtime": 360,
+        "custom_options": []
+    },
+    "user_options": [],
+    "user_option_groups": []
+}

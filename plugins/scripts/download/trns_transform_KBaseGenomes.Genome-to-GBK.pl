@@ -39,12 +39,12 @@ $genome = genome_to_gto($genome);
 
 my $client = Bio::KBase::GenomeAnnotation::Client->new($opt->genome_annotation_service_url);
 
-my $formatted = $client->export_genome($genome, 'feature_data', []);
+my $formatted = $client->export_genome($genome, 'genbank', []);
 
 my $out_file = $opt->output_file_name;
 if (!$out_file)
 {
-    $out_file = join(".", $opt->object_name, 'txt');
+    $out_file = join(".", $opt->object_name, 'gbk');
 }
 
 if (open(my $fh, ">", $out_file))

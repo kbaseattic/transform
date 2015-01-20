@@ -1,5 +1,5 @@
 {
-    "script_name": "trns_validate_FASTA.DNA.py",
+    "script_name": "trns_validate_FASTA_DNA.py",
     "script_type": "validate",
     "external_type": "FASTA.DNA.Assembly",
     "user_description": "",

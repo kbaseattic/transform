@@ -272,8 +272,8 @@ def upload_file_to_shock(logger = None,
 
 
 def getHandles(logger = None,
-               shock_url = "https://kbase.us/services/shock-api/",
-               handle_url = "https://kbase.us/services/handle_service/",
+               shock_service_url = "https://kbase.us/services/shock-api/",
+               handle_service_url = "https://kbase.us/services/handle_service/",
                shock_ids = None,
                handle_ids = None,
                token = None):

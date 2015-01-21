@@ -36,6 +36,8 @@ def main():
         source_object_name: The source object name.
         destination_object_name: The destination object name.
         source_object_id: A source object id, which can be used instead of object_name.
+        destination_object_id: A destination object id, which can be used instead of 
+                               object_name.
         source_kbase_type: The KBase Workspace type string that indicates the module
                            and type of the object being created.                       
         destination_kbase_type: The KBase Workspace type string that indicates the module

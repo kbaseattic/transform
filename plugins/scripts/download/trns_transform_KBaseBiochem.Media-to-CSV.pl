@@ -55,10 +55,10 @@ else
 	die "Invalid return from get_object for ws=" . $opt->workspace . " input=" . $opt->input;
     }
 }
-my $tables = {MediaCompounds => [["compounds","concentrations","minflux","maxflux"]]};
+my $tables = {$opt->workspace."_".$opt->input."_MediaCompounds" => [["compounds","concentrations","minflux","maxflux"]]};
 for (my $i=0; $i < @{$obj->{mediacompounds}}; $i++) {
 	if ($obj->{mediacompounds}->[$i]->{compound_ref} =~ m/(cpd\d+)/) {
-		push(@{$tables->{MediaCompounds}},[$1,$obj->{mediacompounds}->[$i]->{concentration},$obj->{mediacompounds}->[$i]->{minFlux},$obj->{mediacompounds}->[$i]->{maxFlux}]);
+		push(@{$tables->{$opt->workspace."_".$opt->input."_MediaCompounds"}},[$1,$obj->{mediacompounds}->[$i]->{concentration},$obj->{mediacompounds}->[$i]->{minFlux},$obj->{mediacompounds}->[$i]->{maxFlux}]);
 	}
 }
 write_csv_tables($tables);

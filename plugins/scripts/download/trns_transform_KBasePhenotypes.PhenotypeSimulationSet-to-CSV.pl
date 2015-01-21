@@ -2,13 +2,14 @@ use strict;
 
 #
 # BEGIN spec
-# "KBaseBiochem.Media-to-CSV": {
+# "KBasePhenotype.PhenotypeSimulationSet-to-CSV": {
 #   "cmd_args": {
 #     "input": "-i",
+#	  "workspace": "-w",
 #     "output": "-o",
 #     },
-#     "cmd_description": "KBaseBiochem.Media to CSV",
-#     "cmd_name": "trns_transform_KBaseBiochem.Media-to-CSV.pl",
+#     "cmd_description": "KBasePhenotype.PhenotypeSimulationSet to CSV",
+#     "cmd_name": "trns_transform_KBasePhenotype.PhenotypeSimulationSet-to-CSV.pl",
 #     "max_runtime": 3600,
 #     "opt_args": {
 # 	 }
@@ -54,21 +55,30 @@ else
 	die "Invalid return from get_object for ws=" . $opt->workspace . " input=" . $opt->input;
     }
 }
-my $tables = {$opt->workspace."_".$opt->input."_Phenotypes" => [["geneko","mediaws","media","addtlCpd","growth"]]};
-for (my $i=0; $i < @{$obj->{phenotypes}}; $i++) {
-	my $genekolist = $obj->{phenotypes}->[$i]->{geneko_refs};
+my $ret = $wsclient->get_objects([{ "ref" => $obj->{phenotypeset_ref} }]);
+my $phenohash = {};
+for (my $i=0; $i < @{$ret->[0]->{data}->{phenotypes}}; $i++) {
+	$phenohash->{$ret->[0]->{data}->{phenotypes}->[$i]->{id}} = $ret->[0]->{data}->{phenotypes}->[$i];
+}
+my $tables = {$opt->workspace."_".$opt->input."_PhenotypeSimulations" => [["geneko","mediaws","media","addtlCpd","observed_growth","simulated_growth","simulated_growth_fraction","phenotype_class"]]};
+for (my $i=0; $i < @{$obj->{phenotypeSimulations}}; $i++) {
+	my $simpheno = $obj->{phenotypeSimulations}->[$i];
+	my $array = [split(/\//,$simpheno->{phenotype_ref})];
+	my $phenoid = pop(@{$array});
+	my $pheno = $phenohash->{$phenoid};
+	my $genekolist = $pheno->{geneko_refs};
 	for (my $j=0; $j < @{$genekolist}; $j++) {
 		my $array = [split(/\//,$genekolist->[$j])];
 		$genekolist->[$j] = pop(@{$array}); 
 	}
-	my $cpdlist = $obj->{phenotypes}->[$i]->{additionalcompound_refs};
+	my $cpdlist = $pheno->{additionalcompound_refs};
 	for (my $j=0; $j < @{$cpdlist}; $j++) {
 		my $array = [split(/\//,$cpdlist->[$j])];
 		$cpdlist->[$j] = pop(@{$array}); 
 	}
-	my $output = $wsclient->get_object_info([{"ref" => $obj->{phenotypes}->[$i]->{media_ref}}],0);
+	my $output = $wsclient->get_object_info([{"ref" => $pheno->{media_ref}}],0);
 	my $mediaws = $output->[0]->[7];
 	my $media = $output->[0]->[1];
-	push(@{$tables->{$opt->workspace."_".$opt->input."_Phenotypes"}},[join(";",@{$genekolist}),$mediaws,$media,join(";",@{$cpdlist}),$obj->{phenotypes}->[$i]->{normalizedGrowth}]);
+	push(@{$tables->{$opt->workspace."_".$opt->input."_PhenotypeSimulations"}},[join(";",@{$genekolist}),$mediaws,$media,join(";",@{$cpdlist}),$pheno->{normalizedGrowth},$simpheno->{simulatedGrowth},$simpheno->{simulatedGrowthFraction},$simpheno->{phenoclass}]);
 }
 write_csv_tables($tables);

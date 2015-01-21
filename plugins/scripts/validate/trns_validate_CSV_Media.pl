@@ -45,19 +45,7 @@ if(scalar(keys %Headers) < 2){
 }
 
 #Check Obligatory Headers
-#For now, id, direction, gpr, equation for reactions and id, name, charge, formula for compounds
-my ($reactions,$compounds) = (1,1);
-if(!exists($Headers{ID}) || !exists($Headers{DIRECTION}) || !exists($Headers{GPR}) || !exists($Headers{EQUATION})){
-    $reactions=0;
-}
-
-if(!exists($Headers{ID}) || !exists($Headers{NAME}) || !exists($Headers{CHARGE}) || !exists($Headers{FORMULA})){
-    $compounds=0;
-}
-
-if(!$reactions && !$compounds){
+if(!exists($Headers{ID}) || !exists($Headers{NAME})){
     $logger->warn("$In_File does not contain the obligatory headers for either reactions (ID,DIRECTION,GPR,EQUATION) or compounds (ID,NAME,CHARGE,FORMULA) or media (ID, NAME)\n");
     die("$In_File does not contain the obligatory headers for either reactions (ID,DIRECTION,GPR,EQUATION) or compounds (ID,NAME,CHARGE,FORMULA) or media (ID, NAME)\n");
-}elsif($reactions && $compounds){
-    #Possible problem with mixing column headers, but wouldn't affect ModelSEED code if proper arguments used
 }

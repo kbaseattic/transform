@@ -9,7 +9,7 @@
         "max_runtime": 600, 
         "required_fields": [ 
             "input",
-            "workspace", 
+            "workspace" 
         ], 
         "optional_fields": ["version","url","output"], 
         "custom_options": [], 

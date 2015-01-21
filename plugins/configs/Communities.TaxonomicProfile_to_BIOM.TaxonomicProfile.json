@@ -16,7 +16,7 @@
 			"working_directory"
         ],
         "optional_fields": ["object_version"],
-        "custom_options": [],
+        "custom_options": []
     },
     "user_options": [
         {

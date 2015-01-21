@@ -5,7 +5,24 @@
     "destination_kbase_type": "KBaseGenomes.ContigSet",
     "user_description": "",
     "developer_description": "",
-    "handler_options": {},
-    "user_options": [],
+    "handler_options": {
+        "required_fields": [ 
+            "workspace_service_url",
+            "source_workspace_name", 
+            "source_object_name", 
+            "destination_workspace_name", 
+            "destination_object_name", 
+            "working_directory"
+        ], 
+        "optional_fields": []
+    },
+    "user_options": [
+        { 
+            "name": "destination_object_name", 
+            "type": "string", 
+            "required": true, 
+            "help": "Name of the workspace object to create." 
+        }    
+    ],
     "user_option_groups": []
 }

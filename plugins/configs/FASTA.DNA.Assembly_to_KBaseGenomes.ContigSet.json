@@ -26,7 +26,8 @@
             "input_mapping",
             "fasta_reference_only"
         ],
-        "custom_options": []
+        "custom_options": [],
+	"input_mapping": [{"input_directory": "FASTA.DNA.Assembly"}]
     }, 
     "user_options": 
     [ 

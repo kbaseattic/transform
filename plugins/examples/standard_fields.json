@@ -1,0 +1,32 @@
+{
+ "validate": [
+     "input_directory",
+     "working_directory"
+ ],
+ "upload": [
+     "workspace_service_url",
+     "shock_service_url",
+     "handle_service_url",
+     "workspace_name",
+     "object_name"
+ ],
+ "download": [
+     "workspace_service_url",
+     "shock_service_url",
+     "handle_service_url",
+     "workspace_name",
+     "object_name"
+     "object_version"
+ ],
+ "convert": [
+     "workspace_service_url",
+     "shock_service_url",
+     "handle_service_url",
+     "source_kbase_type",
+     "source_workspace_name",
+     "source_object_name",
+     "destination_kbase_type",
+     "destination_workspace_name",
+     "destination_object_name",
+ ]
+}

@@ -34,7 +34,7 @@
         { 
             "name": "output_file_name",
             "type": "string",
-            "required": false,
+            "required": true,
             "help": "If not supplied, will default the base input_file_name with '_contig_set.json' appended to the end."
         },
         { 

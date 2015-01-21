@@ -1,0 +1,47 @@
+{
+    "script_name": "trns_transform_Excel_FBAModel_to_KBaseFBA_FBAModel.pl",
+    "script_type": "upload",
+    "external_type": "Excel",
+    "kbase_type": "KBaseFBA.FBAModel",
+    "user_description": "Converts Excel file to FBAModel object in workspace."
+    
+    "handler_options": {        
+        "must_own_validation": false,
+        "must_own_saving_to_workspace": true,
+        "max_runtime": 360,
+        "custom_options": []
+    },
+    "user_options": [
+        {
+            "name": "input",
+            "type": "string",
+            "required": true,
+            "help": "Input Excel File"
+        },
+        {
+            "name": "genome",
+            "type": "string",
+            "required": false,
+            "help": "Identifier for Genome which contains features referenced to in FBAModel (Defaults to empty Genome)."
+        },
+        {
+            "name": "output",
+            "type": "string",
+            "required": true,
+            "help": "ID for output FBAModel in workspace."
+        },
+        {
+            "name": "out_ws",
+            "type": "string",
+            "required": true,
+            "help": "Workspace ID for saving output FBAModel."
+        },
+        {
+            "name": "biomass",
+            "type": "string",
+            "required": false,
+            "help": "ID of biomass reaction in Excel File."
+        }
+    ],
+    "user_option_groups": []
+}

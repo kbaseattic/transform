@@ -10,10 +10,12 @@ import us.kbase.common.service.UnauthorizedException;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
+/*
 import us.kbase.shock.client.BasicShockClient;
 import us.kbase.shock.client.ShockNode;
 import us.kbase.shock.client.exceptions.InvalidShockUrlException;
 import us.kbase.shock.client.exceptions.ShockHttpException;
+*/
 import us.kbase.workspace.*;
 
 import java.io.*;
@@ -80,7 +82,7 @@ public class ConvertGBK {
         for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
                 parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-            } else if (f.getName().endsWith(".gbk")) {
+            } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbff)$")) {
                 files.add(f);
                 System.out.println("Added " + f);
             }
@@ -194,6 +196,7 @@ public class ConvertGBK {
                         .withObjects(Arrays.asList(new ObjectSaveData().withName(genomeid).withMeta(meta)
                                 .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
 
+/*
                 try {
                     BasicShockClient client = null;
                     if (isTestThis) {
@@ -210,7 +213,7 @@ public class ConvertGBK {
                     genome.setContigsetRef(contignode.getId().getId());
 
                     //upload input GenBank files
-                    /*TODO enable support for fasta_ref in Genome object*/
+                    //TODO enable support for fasta_ref in Genome object
                     for (File f : gbkFiles) {
                         os = new FileInputStream(f);
                         ShockNode sn = client.addNode(os, f.getName(), "TXT");
@@ -225,7 +228,7 @@ public class ConvertGBK {
                     System.err.println("Shock HTPP error.");
                     e.printStackTrace();
                 }
-
+*/
             } catch (UnauthorizedException e) {
                 System.err.println("WS UnauthorizedException");
                 System.err.print(e.getMessage());

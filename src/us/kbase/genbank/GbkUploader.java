@@ -80,6 +80,9 @@ public class GbkUploader {
      * @throws Exception
      */
     public static ArrayList uploadGbk(List<File> files, String ws, String id, boolean doStderr) throws Exception {
+
+        boolean tmptooBig = false;
+
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
@@ -96,8 +99,14 @@ public class GbkUploader {
             double megabytes = (kilobytes / 1024);
 
             if (megabytes > 1000) {
-                System.out.println("WARNING GenBank file size may be above KBase upload limit");
+                System.err.println("WARNING GenBank file size may be above KBase upload limit");
+                tmptooBig = true;
             }
+
+            final boolean tooBig = tmptooBig;
+
+
+            //genome.setContigsetRef();
 
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
             try {
@@ -127,7 +136,10 @@ public class GbkUploader {
                                         .withSequence("");
                                 contigMap.put(contigName, contig);
                             }
-                            contig.withSequence(contig.getSequence() + seqPart);
+                            //only add sequence if input file was not too big
+                            if (!tooBig) {
+                                contig.withSequence(contig.getSequence() + seqPart);
+                            }
                         } catch (Exception e) {
                             System.err.println("addSeqPart");
                             System.err.print(e.getMessage());

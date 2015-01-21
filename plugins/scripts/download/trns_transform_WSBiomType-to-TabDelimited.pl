@@ -9,7 +9,8 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['workspace_service_url=s', 'workspace service url to retrieve workspace object from', { required => 1 } ],
 				    ['workspace_name=s', 'workspace name from which the workspace object is to be retrieved', { required => 1 } ],
 				    ['object_name=s', 'workspace object name to retrieve', { required => 1 } ],
-				    ['output_file_name=s', 'path to where output should be saved', { required => 1 } ],
+				    ['working_directory=s', 'directory where output should be saved', { required => 1 } ],
+				    ['output_file_name=s', 'file name where output should be saved', { required => 1 } ],
 				    ['object_version=i', 'version of workspace object to retrieve (default => most recent)' ],
 				    ['help|h', 'show this help message'],
 				    );
@@ -45,7 +46,7 @@ if ($ret->{data}) {
 # Use mg-biom-view to implement the transform.
 # mg-biom-view accepts -i/--input -o/--output on command line to specify input / output.
 
-my $rc = system("mg-biom-view -i $tmp_local_filename -o ".$opt->output_file_name);
+my $rc = system("mg-biom-view -i $tmp_local_filename -o ".$opt->working_directory."/".$opt->output_file_name);
 
 if ($rc != 0)
 {

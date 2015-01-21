@@ -9,7 +9,8 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['workspace_service_url=s', 'workspace service url to retrieve workspace object from', { required => 1 } ],
 				    ['workspace_name=s', 'workspace name from which the workspace object is to be retrieved', { required => 1 } ],
 				    ['object_name=s', 'workspace object name to retrieve', { required => 1 } ],
-				    ['output_file_name=s', 'path to where output should be saved', { required => 1 } ],
+				    ['working_directory=s', 'directory where output should be saved', { required => 1 } ],
+				    ['output_file_name=s', 'file name where output should be saved', { required => 1 } ],
 				    ['object_version=i', 'version of workspace object to retrieve (default => most recent)' ],
 				    ['help|h', 'show this help message'],
 				    );
@@ -30,7 +31,7 @@ if ($opt->object_version) {
 if ($ret->{data}) {
     my $biom = $ret->{data};
     my $coder = JSON::XS->new->ascii->pretty->allow_nonref;
-    open OUT, ">".$opt->output_file_name || die "Cannot print WS biom object to file: ".$opt->output_file_name."\n";
+    open OUT, ">".$opt->working_directory."/".$opt->output_file_name || die "Cannot print WS biom object to file: ".$opt->working_directory."/".$opt->output_file_name."\n";
     print OUT $coder->encode ($biom);
     close OUT;
 } else {

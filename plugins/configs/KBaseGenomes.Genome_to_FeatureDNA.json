@@ -11,6 +11,7 @@
         "required_fields": [
             "workspace_service_url",
             "workspace_name",
+	    "working_directory",
             "object_name",
             "output_file_name"        
         ],

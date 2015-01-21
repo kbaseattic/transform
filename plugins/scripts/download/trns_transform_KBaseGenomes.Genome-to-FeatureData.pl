@@ -11,6 +11,7 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['workspace_name=s', 'Workspace name', { required => 1 }],
 				    ['object_name=s', 'Object name', { required => 1 }],
 				    ['output_file_name=s', 'Output file name'],
+				    ['working_directory=s', 'Output directory for generated files', { required => 1 }],
 				    ['object_version', 'Workspace object version'],
 				    ['genome_annotation_service_url=s', 'URL for the genome annotation service'],
 				    ['help|h', 'show this help message'],
@@ -18,6 +19,11 @@ my($opt, $usage) = describe_options("%c %o",
 
 print($usage->text), exit  if $opt->help;
 print($usage->text), exit 1 unless @ARGV == 0;
+
+if (! -d $opt->working_directory)
+{
+    die "Specified working directory " . $opt->working_directory . " does not exist\n";
+}
 
 my $genome;
 
@@ -45,6 +51,15 @@ my $out_file = $opt->output_file_name;
 if (!$out_file)
 {
     $out_file = join(".", $opt->object_name, 'txt');
+}
+
+if ($out_file =~ m,^/,)
+{
+    warn "Output file was specified using an absolute path; not prepending working directory";
+}
+else
+{
+    $out_file = $opt->working_directory . "/$out_file";
 }
 
 if (open(my $fh, ">", $out_file))

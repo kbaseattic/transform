@@ -4,26 +4,31 @@ import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
 import us.kbase.auth.TokenFormatException;
+import us.kbase.common.service.JsonClientException;
 import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
+import us.kbase.workspace.*;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.math.BigInteger;
+import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+
 /*
 import us.kbase.shock.client.BasicShockClient;
 import us.kbase.shock.client.ShockNode;
 import us.kbase.shock.client.exceptions.InvalidShockUrlException;
 import us.kbase.shock.client.exceptions.ShockHttpException;
 */
-import us.kbase.workspace.*;
-
-import java.io.*;
-import java.math.BigInteger;
-import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
 
 /**
  * Created by Marcin Joachimiak
@@ -33,10 +38,20 @@ import java.util.*;
  */
 public class ConvertGBK {
 
+    //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
+    String[] argsPossible = {"-i", "--input_file_name", "-o", "--object_name", "-oc", "--contigset_object_name",
+            "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url"};
+    String[] argsPossibleMap = {"input", "input", "outputg", "outputg", "outputc", "outputc",
+            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku"};
+
     static String wsurl = null;
     static String shockurl = null;
 
-    String ws = null;
+    String wsname = null;
+
+    String outfileg = null;
+    String outfilec = null;
+
 
     boolean isTest = false;
 
@@ -46,11 +61,26 @@ public class ConvertGBK {
      */
     public ConvertGBK(String[] args) throws Exception {
 
-        File indir = new File(args[0]);
+        File indir = null;//new File(args[0]);
 
-        if (args.length == 3) {
-            ws = args[1];
-            wsurl = args[2];
+
+        for (int i = 0; i < args.length; i++) {
+            int index = Arrays.asList(argsPossible).indexOf(args[i]);
+            if (index > -1) {
+                if (argsPossibleMap[index].equals("input")) {
+                    indir = new File(args[i + 1]);
+                } else if (argsPossibleMap[index].equals("outputg")) {
+                    outfileg = args[i + 1];
+                } else if (argsPossibleMap[index].equals("outputc")) {
+                    outfilec = args[i + 1];
+                } else if (argsPossibleMap[index].equals("wsn")) {
+                    wsname = args[i + 1];
+                } else if (argsPossibleMap[index].equals("wsu")) {
+                    wsurl = args[i + 1];
+                } else if (argsPossibleMap[index].equals("shocku")) {
+                    shockurl = args[i + 1];
+                }
+            }
         }
 
         parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
@@ -67,7 +97,7 @@ public class ConvertGBK {
                                                List<ObjectIdentity> objectIds) throws Exception {
                 throw new IllegalStateException("Unsupported method");
             }
-        }, ws, wsurl, isTest);
+        }, wsname, wsurl, isTest);
     }
 
 
@@ -77,15 +107,20 @@ public class ConvertGBK {
      * @param wc
      * @throws Exception
      */
-    public static void parseAllInDir(int[] pos, File dir, ObjectStorage wc, String wsname, String http, boolean isTestThis) throws Exception {
+    public void parseAllInDir(int[] pos, File dir, ObjectStorage wc, String wsname, String http, boolean isTestThis) throws Exception {
         List<File> files = new ArrayList<File>();
-        for (File f : dir.listFiles()) {
-            if (f.isDirectory()) {
-                parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-            } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbff)$")) {
-                files.add(f);
-                System.out.println("Added " + f);
+
+        if (dir.isDirectory()) {
+            for (File f : dir.listFiles()) {
+                if (f.isDirectory()) {
+                    parseAllInDir(pos, f, wc, wsname, http, isTestThis);
+                } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbff)$")) {
+                    files.add(f);
+                    System.out.println("Added " + f);
+                }
             }
+        } else {
+            files.add(dir);
         }
         if (files.size() > 0)
             parseGenome(pos, dir, files, wsname, http, isTestThis);
@@ -98,14 +133,16 @@ public class ConvertGBK {
      * @param gbkFiles
      * @throws Exception
      */
-    public static void parseGenome(int[] pos, File dir, List<File> gbkFiles, String wsname, String http, boolean isTestThis) throws Exception {
+    public void parseGenome(int[] pos, File dir, List<File> gbkFiles, String wsname, String http, boolean isTestThis) throws Exception {
         System.out.println("[" + (pos[0]++) + "] " + dir.getName());
         long time = System.currentTimeMillis();
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
 
         Genome genome = (Genome) ar.get(2);
-        genome.setAdditionalProperties("SOURCE","KBASE_USER_UPLOAD");
-        final String outpath = genome.getId() + ".jsonp";
+        genome.setAdditionalProperties("SOURCE", "KBASE_USER_UPLOAD");
+         String outpath = outfileg;
+        if (outfileg == null)
+            outpath = outfileg + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
             out.print(UObject.transformObjectToString(genome));
@@ -117,8 +154,12 @@ public class ConvertGBK {
         }
 
         ContigSet contigSet = (ContigSet) ar.get(4);
-        final String contigId = genome.getId() + "_ContigSet";
-        final String outpath2 = contigId + ".jsonp";
+        //final String contigId = genome.getId() + "_ContigSet";
+
+        String outpath2 = outfilec;//contigId + ".jsonp";
+
+        if (outfilec == null)
+            outpath2 = genome.getId() + "_ContigSet" + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));
             out.print(UObject.transformObjectToString(contigSet));
@@ -188,9 +229,22 @@ public class ConvertGBK {
                 }
 
                 wc.setAuthAllowedForHttp(true);
-                wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                        .withObjects(Arrays.asList(new ObjectSaveData().withName(contigSetId)
-                                .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
+
+                /*TODO create provenance string --- uploaded by transform service, user*/
+                try {
+                    wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                            .withObjects(Arrays.asList(new ObjectSaveData().withName(contigSetId)
+                                    .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
+
+                /*TODO add workspace reference*/
+                    //genome.setContigsetRef(contignode.getId().getId());
+                } catch (IOException e) {
+                    System.err.println("Error saving ContigSet to workspace, data may be too large (IOException)).");
+                    e.printStackTrace();
+                } catch (JsonClientException e) {
+                    System.err.println("Error saving ContigSet to workspace, data may be too large (JsonClientException).");
+                    e.printStackTrace();
+                }
 
                 wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                         .withObjects(Arrays.asList(new ObjectSaveData().withName(genomeid).withMeta(meta)
@@ -213,7 +267,6 @@ public class ConvertGBK {
                     genome.setContigsetRef(contignode.getId().getId());
 
                     //upload input GenBank files
-                    //TODO enable support for fasta_ref in Genome object
                     for (File f : gbkFiles) {
                         os = new FileInputStream(f);
                         ShockNode sn = client.addNode(os, f.getName(), "TXT");
@@ -269,14 +322,23 @@ public class ConvertGBK {
      * @param args
      */
     public final static void main(String[] args) {
-        if (args.length == 1 || args.length == 3) {
+        if (args.length == 2 || args.length == 4 || args.length == 6|| args.length == 8|| args.length == 10|| args.length == 12) {
             try {
                 ConvertGBK clt = new ConvertGBK(args);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("usage: java us.kbase.genbank.ConvertGBK <dir or dir of dirs with GenBank .gbk files> <ws name> <ws url>");// <convert y/n> <save y/n>");
+            /*TODO add ws url, output Genome object name, output ContigSet object name to arguments*/
+            System.out.println("usage: java us.kbase.genbank.ConvertGBK " +
+                    "<-i or --input_file_name file or dir or files of GenBank .gbk files> " +
+                    "<-o or --object_name> " +
+                    "<-oc or --contigset_object_name> " +
+                    "<-w or --ws_name ws name> "+// <convert y/n> <save y/n>");
+                    "<-wu or --ws_url ws url>" +// <convert y/n> <save y/n>");
+                    "<-su or --shock_url shock url>");// <convert y/n> <save y/n>");
+
+            //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
         }
     }
 

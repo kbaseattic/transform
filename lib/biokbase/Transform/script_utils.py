@@ -19,7 +19,7 @@ from requests_toolbelt import MultipartEncoder
 try:
     from biokbase.HandleService.Client import HandleService 
 except:
-    import biokbase.AbstractHandle.Client.AbstractHandle as HandleService 
+    from biokbase.AbstractHandle.Client import AbstractHandle as HandleService 
 
 import biokbase.workspace.client
 

@@ -1,7 +1,7 @@
 {
-    "script_name": "trns_transform_KBaseFile_Assembly_to_KBaseGenomes_ContigSet.py", 
+    "script_name": "trns_transform_KBaseFile_AssemblyFile_to_KBaseGenomes_ContigSet.py", 
     "script_type": "convert",
-    "source_kbase_type": "KBaseFile.Assembly",
+    "source_kbase_type": "KBaseFile.AssemblyFile",
     "destination_kbase_type": "KBaseGenomes.ContigSet",
     "user_description": "",
     "developer_description": "",

@@ -28,10 +28,11 @@ if ($opt->object_version) {
     $ret = $wsclient->get_object({ id => $opt->object_name, workspace => $opt->workspace_name });
 }
 
+my $tmp_local_filename = "tmp.json";
 if ($ret->{data}) {
     my $biom = $ret->{data};
     my $coder = JSON::XS->new->ascii->pretty->allow_nonref;
-    open OUT, ">".$opt->working_directory."/".$opt->output_file_name || die "Cannot print WS biom object to file: ".$opt->working_directory."/".$opt->output_file_name."\n";
+    open OUT, ">$tmp_local_filename" || die "Cannot print WS biom object to temporary file: $tmp_local_filename\n";
     print OUT $coder->encode ($biom);
     close OUT;
 } else {
@@ -40,4 +41,14 @@ if ($ret->{data}) {
     } else {
         die "Invalid return from get_object for id=".$opt->object_name." workspace=".$opt->workspace_name."\n";
     }
+}
+
+# Use mg-biom-view to implement the transform.
+# mg-biom-view accepts -i/--input -o/--output on command line to specify input / output.
+
+my $rc = system("mg-biom-view -i $tmp_local_filename -o ".$opt->working_directory."/".$opt->output_file_name);
+
+if ($rc != 0)
+{
+    die "Transform command failed with rc=$rc\n";
 }

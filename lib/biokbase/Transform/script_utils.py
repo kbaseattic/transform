@@ -17,7 +17,7 @@ import requests
 from requests_toolbelt import MultipartEncoder
 
 #import biokbase.AbstractHandle.Client
-from biokbase.HandleService import HandleService 
+from biokbase.HandleService.Client import HandleService 
 import biokbase.workspace.client
 
 

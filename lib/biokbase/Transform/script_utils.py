@@ -16,8 +16,11 @@ import ftputil
 import requests
 from requests_toolbelt import MultipartEncoder
 
-#import biokbase.AbstractHandle.Client
-from biokbase.HandleService.Client import HandleService 
+try:
+    from biokbase.HandleService.Client import HandleService 
+except:
+    import biokbase.AbstractHandle.Client.AbstractHandle as HandleService 
+
 import biokbase.workspace.client
 
 

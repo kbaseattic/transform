@@ -24,7 +24,7 @@ def cleanup(logger=None, directory=None):
     try:
         shutil.rmtree(directory)
     except IOError, e:
-        report_exception("".format(directory), e, ujs)
+        report_exception("{0}".format(directory), e, ujs)
 
 
 def gen_recursive_filelist(d):

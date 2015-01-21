@@ -78,27 +78,84 @@ type but different versions.
             args["url_mapping"] = base64.urlsafe_b64encode(simplejson.dumps(args["url_mapping"]))
 
             if self.scripts_config["validate"].has_key(args["external_type"]):
-                job_details["validate"] = self.scripts_config["validate"][args["external_type"]]
+                plugin_key = args["external_type"]
+            
+                job_details["validate"] = self.scripts_config["validate"][plugin_key]
+
+                for field in self.scripts_config["validate"][plugin_key]["handler_options"]["required_fields"]:
+                    if field in args:
+                        job_details["validate"][field] =  args[field]
+                    else:
+                        self.kbaseLogger.log_message("ALERT", "Required field not present : {0}".format(field))
+                
+                for field in self.scripts_config["validate"]["handler_options"]["optional_fields"]:
+                    if field in args:
+                        job_details["validate"][field] =  args[field]
+                    else:
+                        self.kbaseLogger.log_message("INFO", "Optional field not present : {0}".format(field))
             else:
                 self.kbaseLogger.log_message("WARNING", "No validation available for {0}".format(args["external_type"]))
 
             if self.scripts_config["upload"].has_key("{0}=>{1}".format(args["external_type"],args["kbase_type"])):
-                job_details["transform"] = self.scripts_config["upload"]["{0}=>{1}".format(args["external_type"],args["kbase_type"])]
+                plugin_key = "{0}=>{1}".format(args["external_type"],args["kbase_type"])
+            
+                job_details["transform"] = self.scripts_config["upload"][plugin_key]
+
+                for field in self.scripts_config["upload"][plugin_key]["handler_options"]["required_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.kbaseLogger.log_message("ALERT", "Required field not present : {0}".format(field))
+                
+                for field in self.scripts_config["upload"][plugin_key]["handler_options"]["optional_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.kbaseLogger.log_message("INFO", "Optional field not present : {0}".format(field))
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
                 
             self.kbaseLogger.log_message("INFO", job_details)
         elif method == "download":
             if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
-                job_details["transform"] = self.scripts_config["download"]["{0}=>{1}".format(args["kbase_type"],args["external_type"])]
+                plugin_key = "{0}=>{1}".format(args["kbase_type"],args["external_type"])
+            
+                job_details["transform"] = self.scripts_config["download"][plugin_key]
+
+                for field in self.scripts_config["download"][plugin_key]["handler_options"]["required_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.kbaseLogger.log_message("ALERT", "Required field not present : {0}".format(field))
+                
+                for field in self.scripts_config["download"][plugin_key]["handler_options"]["optional_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.kbaseLogger.log_message("INFO", "Optional field not present : {0}".format(field))
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
         elif method == "convert":
             if self.scripts_config["convert"].has_key("{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])):
-                job_details["transform"] = self.scripts_config["convert"]["{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])]
+                plugin_key = "{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])
+            
+                job_details["transform"] = self.scripts_config["convert"][plugin_key]
+
+                for field in self.scripts_config["convert"][plugin_key]["handler_options"]["required_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.kbaseLogger.log_message("ALERT", "Required field not present : {0}".format(field))
+                
+                for field in self.scripts_config["convert"][plugin_key]["handler_options"]["optional_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.kbaseLogger.log_message("INFO", "Optional field not present : {0}".format(field))
+
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))
-        
+                
         args["job_details"] = base64.urlsafe_b64encode(simplejson.dumps(job_details))
         args["optional_arguments"] = base64.urlsafe_b64encode(simplejson.dumps(args["optional_arguments"]))
 

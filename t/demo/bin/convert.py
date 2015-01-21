@@ -45,22 +45,32 @@ def show_workspace_object_list(workspace_url, workspace_name, object_name, token
         print "\t\thow_recent: {0}\n\t\tname: {1}\n\t\ttype: {2}\n\t\tsize: {3:d}\n".format(elapsed_time, x[1], x[2], x[-2])
 
 
-def show_workspace_object_contents(workspace_url, workspace_name, object_name, token):
-    c = biokbase.workspace.client.Workspace(workspace_url, token=token)
-    object_contents = c.get_objects([{"workspace": workspace_name, "objid": 2}])
-    print object_contents
+def show_workspace_object_contents(workspace_url, workspace_name, object_name, field_list, token):
+    print term.blue("\tYour KBase data object {0}:".format(object_name))
 
+    c = biokbase.workspace.client.Workspace(workspace_url, token=token)
+    object_contents = c.get_objects([{"workspace": workspace_name, "name": object_name}])[0]
+
+    if field_list is None or len(field_list) == 0:
+        field_list = object_contents.keys()
+        
+    for k in field_list:
+        print "\t\t{0}: \n".format(k)
+        lines = json.dumps(object_contents[k], sort_keys=True, indent=4).split("\n")
+        
+        for n in lines:
+            print "\t\t\t{0}".format(n)
 
 def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
     c = biokbase.userandjobstate.client.UserAndJobState(url=ujs_url, token=token)
 
-    completed = ["complete", "success"]
+    completed = ["complete", "completed", "success"]
     error = ["error", "fail"]
     
     term = blessings.Terminal()
 
     header = dict()
-    header["Authorization"] = "Oauth %s" % token
+    header["Authorization"] = "Oauth {0}".format(token)
 
     print term.blue("\tUJS Job Status:")
     # wait for UJS to complete    
@@ -77,6 +87,7 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
         
         if (datetime.datetime.utcnow() - start).seconds > time_limit:
             print "\t\tJob is taking longer than it should, check debugging messages for more information."
+            print c.get_job_status(ujs_id)
             status[1] = "error"
             status[2] = "Timeout"            
         
@@ -84,7 +95,7 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             print "\t\t{0} status update: {1}".format(status[0], status[2])
             last_status = status[2]
         
-        if status[1].startswith("http://"):
+        if status[1] in completed:
             print term.green("\t\tKBase conversion completed!\n")
             return status
             break
@@ -137,7 +148,7 @@ if __name__ == "__main__":
     token = os.environ.get("KB_AUTH_TOKEN")
     if token is None:
         if os.path.exists(os.path.expanduser("~/.kbase_config")):
-            f = open(os.path.expanduser("~/.kbase_config", 'r'))
+            f = open(os.path.expanduser("~/.kbase_config"), 'r')
             config = f.read()
             if "token=" in config:
                 token = config.split("token=")[1].split("\n",1)[0]            
@@ -219,6 +230,10 @@ if __name__ == "__main__":
             show_job_progress(services["ujs"], services["awe"], convert_response[0], convert_response[1], token)
 
             print term.green("\tConversion successful.  Yaks win.\n\n")
+            
+            show_workspace_object_list(services["workspace"], destination_workspace_name, destination_object_name, token)
+            
+            show_workspace_object_contents(services["workspace"], destination_workspace_name, destination_object_name, ["creator","info"], token)
         except Exception, e:
             print e.message
             raise

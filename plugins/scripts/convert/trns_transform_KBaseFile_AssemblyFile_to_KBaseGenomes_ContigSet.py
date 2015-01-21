@@ -278,23 +278,31 @@ def main():
         'unless the fasta file is larger than 1GB. This is the default ' +
         'behavior for files that large.', action='store_true', required=False)
 
-    args = parser.parse_args()
+    # ignore unknown arguments for now
+    args, unknown = parser.parse_known_args()
 
     contig_set_id = args.source_object_name + '_contig_set'
 
     logger = script_utils.stderrlogger(__file__)
     try:
+        # make sure the token is at least not None
+        if TOKEN is None:
+            raise Exception("Unable to retrieve KBase Authentication token!")
+    
         shock_url, shock_id, ref = download_workspace_data(
             args.workspace_service_url,
             args.source_workspace_name,
             args.source_object_name,
             args.working_directory)
+        
         inputfile = os.path.join(args.working_directory,
                                  args.source_object_name)
+        
         cs = convert_to_contigs(
             None, None, inputfile,
             contig_set_id, args.working_directory, shock_id, None,
             args.fasta_reference_only, logger=logger)
+        
         upload_workspace_data(
             cs, args.workspace_service_url, ref,
             args.destination_workspace_name, args.destination_object_name)

@@ -1,58 +1,53 @@
-use strict;
+#!/usr/bin/env perl
 
-# BEGIN spec
-# "WSMatrixType-to-TabDelimited": {
-#   "cmd_args": {
-#     "input": "-i",
-#     "output": "-o"
-#     },
-#     "cmd_description": "WS Matrix Object to Tab-delimited file",
-#     "cmd_name": "trns_transform_WSMatrixType-to-TabDelimited.pl",
-#     "max_runtime": 3600,
-#     "opt_args": {
-# 	 }
-#   }
-# }
-# END spec
+use strict;
 
 use Getopt::Long::Descriptive;
 use Bio::KBase::workspace::Client;
 
 my($opt, $usage) = describe_options("%c %o",
-				    ['input|i=s', 'workspace object id from which the input is to be read'],
-				    ['workspace|w=s', 'workspace id from which the input is to be read'],
-				    ['from-file', 'specifies to use the local filesystem instead of workspace'],
-				    ['output|o=s', 'file to which the output is to be written'],
-				    ['url=s', 'URL for the genome annotation service'],
+				    ['workspace_service_url=s', 'workspace service url to retrieve workspace object from', { required => 1 } ],
+				    ['workspace_name=s', 'workspace name from which the workspace object is to be retrieved', { required => 1 } ],
+				    ['object_name=s', 'workspace object name to retrieve', { required => 1 } ],
+				    ['output_file_name=s', 'path to where output should be saved', { required => 1 } ],
+				    ['object_version=i', 'version of workspace object to retrieve (default => most recent)' ],
 				    ['help|h', 'show this help message'],
 				    );
 
-print($usage->text), exit  if $opt->help;
-print($usage->text), exit 1 unless @ARGV == 0;
+if ($opt->help) {
+    print $usage->text;
+    exit;
+}
 
-if (!($opt->from_file)) {
-    if (!$opt->workspace) {
-	die "A workspace name must be provided";
-    }
-    my $wsclient = Bio::KBase::workspace::Client->new();
-    my $ret = $wsclient->get_object({ id => $opt->input, workspace => $opt->workspace });
-    if ($ret->{data}) {
-	my $biom = $ret->{data};
-        my $coder = JSON::XS->new->ascii->pretty->allow_nonref;
-        open OUT, ">$opt->input" || die "Cannot print WS biom object to file: $opt->input\n";
-	print OUT $coder->encode ($biom);
-	close OUT;
+my $wsclient = Bio::KBase::workspace::Client->new($opt->workspace_service_url);
+my $ret;
+if ($opt->object_version) {
+    $ret = $wsclient->get_object({ id => $opt->object_name, workspace => $opt->workspace_name, instance => $opt->object_version });
+} else {
+    $ret = $wsclient->get_object({ id => $opt->object_name, workspace => $opt->workspace_name });
+}
+
+my $tmp_local_filename = "tmp.json";
+if ($ret->{data}) {
+    my $biom = $ret->{data};
+    my $coder = JSON::XS->new->ascii->pretty->allow_nonref;
+    open OUT, ">$tmp_local_filename" || die "Cannot print WS biom object to temporary file: $tmp_local_filename\n";
+    print OUT $coder->encode ($biom);
+    close OUT;
+} else {
+    if ($opt->object_version) {
+        die "Invalid return from get_object for id=".$opt->object_name." workspace=".$opt->workspace_name." instance=".$opt->object_version."\n";
     } else {
-	die "Invalid return from get_object for ws=" . $opt->workspace . " input=" . $opt->input;
+        die "Invalid return from get_object for id=".$opt->object_name." workspace=".$opt->workspace_name."\n";
     }
 }
 
 # Use mg-biom-view to implement the transform.
 # mg-biom-view accepts -i/--input -o/--output on command line to specify input / output.
 
-my $rc = system("mg-biom-view -i $opt->input -o $opt->output");
+my $rc = system("mg-biom-view -i $tmp_local_filename -o ".$opt->output_file_name);
 
 if ($rc != 0)
 {
-    die "Transform command failed with rc=$rc: @cmd\n";
+    die "Transform command failed with rc=$rc\n";
 }

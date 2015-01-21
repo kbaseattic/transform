@@ -16,7 +16,8 @@ import ftputil
 import requests
 from requests_toolbelt import MultipartEncoder
 
-import biokbase.AbstractHandle.Client
+#import biokbase.AbstractHandle.Client
+from biokbase.HandleService import HandleService 
 import biokbase.workspace.client
 
 
@@ -281,7 +282,7 @@ def getHandles(logger = None,
     if token is None:
         raise Exception("Authentication token required!")
 
-    hs = biokbase.AbstractHandle.Client.AbstractHandle(url=handle_url, token=token)
+    hs = HandleService(url=handle_service_url, token=token)
     
     handles = list()
     if shock_ids is not None:
@@ -294,16 +295,16 @@ def getHandles(logger = None,
             try:
                 logger.info("Found shock id {0}, retrieving information about the data.".format(sid))
 
-                response = requests.get("{0}/node/{1}".format(shock_url, sid), headers=header, verify=True)
+                response = requests.get("{0}/node/{1}".format(shock_service_url, sid), headers=header, verify=True)
                 info = response.json()["data"]
             except:
-                logger.error("There was an error retrieving information about the shock node id {0} from url {1}".format(sid, shock_url))
+                logger.error("There was an error retrieving information about the shock node id {0} from url {1}".format(sid, shock_service_url))
             
             try:
                 logger.info("Retrieving a handle id for the data.")
                 handle = hs.persist_handle({"id" : sid, 
                                            "type" : "shock",
-                                           "url" : shock_url,
+                                           "url" : shock_service_url,
                                            "file_name": info["file"]["name"],
                                            "remote_md5": info["file"]["checksum"]["md5"]})
                 handles.append(handle)
@@ -323,7 +324,7 @@ def getHandles(logger = None,
                 except:
                     logger.error("The input shock node id {} is already registered or could not be registered".format(sid))
 
-                    hs = AbstractHandle(url=handle_url, token=token)
+                    hs = HandleService(url=handle_service_url, token=token)
                     all_handles = hs.list_handles()
 
                     for x in all_handles:
@@ -337,7 +338,7 @@ def getHandles(logger = None,
                         logger.info("Trying again to get a handle id for the data.")
                         handle_id = hs.persist_handle({"id" : sid, 
                                            "type" : "shock",
-                                           "url" : shock_url,
+                                           "url" : shock_service_url,
                                            "file_name": info["file"]["name"],
                                            "remote_md5": info["file"]["checksum"]["md5"]})
                         handles.append(handle_id)

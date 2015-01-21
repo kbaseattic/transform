@@ -40,14 +40,16 @@ public class ConvertGBK {
 
     //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
     String[] argsPossible = {"-i", "--input_file_name", "-o", "--object_name", "-oc", "--contigset_object_name",
-            "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url"};
+            "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url", "-wd", "--working_directory"};
     String[] argsPossibleMap = {"input", "input", "outputg", "outputg", "outputc", "outputc",
-            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku"};
+            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd"};
 
     static String wsurl = null;
     static String shockurl = null;
 
     String wsname = null;
+
+    String workdir;
 
     String outfileg = null;
     String outfilec = null;
@@ -79,8 +81,15 @@ public class ConvertGBK {
                     wsurl = args[i + 1];
                 } else if (argsPossibleMap[index].equals("shocku")) {
                     shockurl = args[i + 1];
+                } else if (argsPossibleMap[index].equals("wd")) {
+                    workdir = args[i + 1];
                 }
             }
+        }
+
+        if (workdir == null) {
+            File tmpf = new File("./");
+            workdir = tmpf.getAbsolutePath();
         }
 
         parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
@@ -140,9 +149,9 @@ public class ConvertGBK {
 
         Genome genome = (Genome) ar.get(2);
         genome.setAdditionalProperties("SOURCE", "KBASE_USER_UPLOAD");
-         String outpath = outfileg;
+        String outpath = workdir + "/" + outfileg;
         if (outfileg == null)
-            outpath = outfileg + ".jsonp";
+            outpath = workdir + "/" + outfileg + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
             out.print(UObject.transformObjectToString(genome));
@@ -156,10 +165,10 @@ public class ConvertGBK {
         ContigSet contigSet = (ContigSet) ar.get(4);
         //final String contigId = genome.getId() + "_ContigSet";
 
-        String outpath2 = outfilec;//contigId + ".jsonp";
+        String outpath2 = workdir + "/" + outfilec;//contigId + ".jsonp";
 
         if (outfilec == null)
-            outpath2 = genome.getId() + "_ContigSet" + ".jsonp";
+            outpath2 = workdir + "/" + genome.getId() + "_ContigSet" + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));
             out.print(UObject.transformObjectToString(contigSet));
@@ -216,7 +225,7 @@ public class ConvertGBK {
 
             String kbtok = System.getenv("KB_AUTH_TOKEN");
 
-            System.out.println(http);
+            //System.out.println(http);
 
             try {
                 WorkspaceClient wc = null;
@@ -322,7 +331,7 @@ public class ConvertGBK {
      * @param args
      */
     public final static void main(String[] args) {
-        if (args.length == 2 || args.length == 4 || args.length == 6|| args.length == 8|| args.length == 10|| args.length == 12) {
+        if (args.length == 2 || args.length == 4 || args.length == 6 || args.length == 8 || args.length == 10 || args.length == 12) {
             try {
                 ConvertGBK clt = new ConvertGBK(args);
             } catch (Exception e) {
@@ -334,7 +343,7 @@ public class ConvertGBK {
                     "<-i or --input_file_name file or dir or files of GenBank .gbk files> " +
                     "<-o or --object_name> " +
                     "<-oc or --contigset_object_name> " +
-                    "<-w or --ws_name ws name> "+// <convert y/n> <save y/n>");
+                    "<-w or --ws_name ws name> " +// <convert y/n> <save y/n>");
                     "<-wu or --ws_url ws url>" +// <convert y/n> <save y/n>");
                     "<-su or --shock_url shock url>");// <convert y/n> <save y/n>");
 

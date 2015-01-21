@@ -88,7 +88,7 @@ type but different versions.
                     else:
                         self.kbaseLogger.log_message("ALERT", "Required field not present : {0}".format(field))
                 
-                for field in self.scripts_config["validate"]["handler_options"]["optional_fields"]:
+                for field in self.scripts_config["validate"][plugin_key]["handler_options"]["optional_fields"]:
                     if field in args:
                         job_details["validate"][field] =  args[field]
                     else:

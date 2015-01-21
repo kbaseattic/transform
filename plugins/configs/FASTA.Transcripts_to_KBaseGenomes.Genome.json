@@ -1,0 +1,41 @@
+{
+    "script_name": "trns_transform_FASTA_Transcripts_to_KBaseGenomes_Genome.pl",
+    "script_type": "upload",
+    "external_type": "FASTA.Transcripts",
+    "kbase_type": "KBaseGenomes.Genome",
+    "user_description": "Converts FASTA file containing either NA or AA sequences of transcripts to KBaseGenomes.Genome json string.",
+    
+    "handler_options": {        
+        "must_own_validation": false,
+        "must_own_saving_to_workspace": false,
+        "max_runtime": 360,
+        "custom_options": []
+    },
+    "user_options": [
+        {
+            "name": "in_file",
+            "type": "string",
+            "required": true,
+            "help": "Input Fasta File"
+        },
+        {
+            "name": "out_file",
+            "type": "string",
+            "required": true,
+            "help": "Output Genome File"
+        },
+        {
+            "name": "genome_id",
+            "type": "string",
+            "required": false,
+            "help": "Genome Identifier"
+        },
+        {
+            "name": "dna",
+            "type": "boolean",
+            "required": false,
+            "help": "Indicates that transcripts are nucleic acid sequences (default: protein)."
+        }
+    ],
+    "user_option_groups": []
+}

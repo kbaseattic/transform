@@ -5,6 +5,7 @@ import sys
 import os
 import argparse
 import logging
+import subprocess
 
 # 3rd party imports
 # None
@@ -20,15 +21,18 @@ def transform(shock_service_url=None, handle_service_url=None,
     
     Args:
         shock_service_url: If you have shock references you need to make.
-        handle_service_url: In case your type has at least one handle reference.
-        working_directory: A directory where you can do work.
+        workspace_service_url: KBase Workspace URL
+        workspace_name: Name of the workspace to save the data to
+        object_name: Name of the genome object to save
+        contigset_object_name: Name of the ContigSet object that is created with this Genome
+        input_directory: A directory of either a genbank file or a directory of partial genome files to merge
+        working_directory: A directory where you can do work
     
     Returns:
-        JSON representing a KBase object.
+        Workspace objects saved to the user's workspace.
     
     Authors:
         Shinjae Yoo, Matt Henderson
-    
     """
 
     if logger is None:
@@ -42,20 +46,24 @@ def transform(shock_service_url=None, handle_service_url=None,
     mc = 'us.kbase.genbank.ConvertGBK'
 
     java_classpath = os.path.join(os.environ.get("KB_TOP"), classpath.replace('$KB_TOP', kb_top))
-    arguments = ["java", "-classpath", java_classpath, "us.kbase.genbank.ConvertGBK", working_directory]
+    arguments = ["java", "-classpath", java_classpath, "us.kbase.genbank.ConvertGBK",    
+                 "{0} {1} {2} {3} {4} {5} {6}".format("--shock_service_url {0}".format(shock_service_url),
+                                                      "--workspace_service_url {0}".format(workspace_service_url),
+                                                      "--workspace_name {0}".format(workspace_name),
+                                                      "--object_name {0}".format(object_name),
+                                                      "--contigset_object_name {0}".format(contigset_object_name),
+                                                      "--working_directory {0}".format(working_directory),
+                                                      "--input_directory {0}".format(input_directory))]
         
     tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)
     stdout, stderr = tool_process.communicate()
 
     if len(stderr) > 0:
-        logger.error("Validation failed on {0}".format(input_file_name))
+        logger.error("Transformation from Genbank.Genome to KBaseGenomes.Genome failed on {0}".format(input_directory))
+        sys.exit(1)
     else:
-        logger.info("Validation passed on {0}".format(input_file_name))
-        validated = True
-
-    input_directory = os.path.dirname(os.path.abspath(args.input_file_directory))
-    
-    logger.info("Transform completed.")
+        logger.info("Transformation from Genbank.Genome to KBaseGenomes.Genome completed.")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -69,15 +77,33 @@ if __name__ == "__main__":
                         action="store", 
                         type=str, 
                         nargs='?', 
-                        required=False)
-    parser.add_argument("--handle_service_url", 
-                        help=script_details["Args"]["handle_service_url"], 
+                        required=True)
+    parser.add_argument("--workspace_service_url", 
+                        help=script_details["Args"]["workspace_service_url"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=True)
+    parser.add_argument("--workspace_name", 
+                        help=script_details["Args"]["workspace_name"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=True)
+    parser.add_argument("--object_name", 
+                        help=script_details["Args"]["object_name"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=True)
+    parser.add_argument("--contigset_object_name", 
+                        help=script_details["Args"]["contigset_object_name"], 
                         action="store", 
                         type=str, 
                         nargs="?", 
                         required=False)
-    parser.add_argument("--input_file_name", 
-                        help=script_details["Args"]["input_file_name"], 
+    parser.add_argument("--input_directory", 
+                        help=script_details["Args"]["input_directory"], 
                         action="store", 
                         type=str, 
                         nargs='?', 

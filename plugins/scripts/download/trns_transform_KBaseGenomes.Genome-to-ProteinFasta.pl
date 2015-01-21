@@ -45,12 +45,12 @@ $genome = genome_to_gto($genome);
 
 my $client = Bio::KBase::GenomeAnnotation::Client->new($opt->genome_annotation_service_url);
 
-my $formatted = $client->export_genome($genome, 'genbank_merged', []);
+my $formatted = $client->export_genome($genome, 'protein_fasta', []);
 
 my $out_file = $opt->output_file_name;
 if (!$out_file)
 {
-    $out_file = join(".", $opt->object_name, 'gbk');
+    $out_file = join(".", $opt->object_name, 'fa');
 }
 
 if ($out_file =~ m,^/,)

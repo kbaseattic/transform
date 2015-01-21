@@ -45,7 +45,7 @@ $genome = genome_to_gto($genome);
 
 my $client = Bio::KBase::GenomeAnnotation::Client->new($opt->genome_annotation_service_url);
 
-my $formatted = $client->export_genome($genome, 'genbank_merged', []);
+my $formatted = $client->export_genome($genome, 'genbank', []);
 
 my $out_file = $opt->output_file_name;
 if (!$out_file)

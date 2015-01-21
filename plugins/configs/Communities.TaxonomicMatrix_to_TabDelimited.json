@@ -1,9 +1,9 @@
 {
-    "script_name": "trns_transform_WSBiomType-to-Biom.pl", 
+    "script_name": "trns_transform_WSBiomType-to-TabDelimited.pl", 
     "script_type": "download",
     "external_type": "BIOM.TaxonomicMatrix",
     "kbase_type": "Communities.TaxonomicMatrix",
-    "user_description": "Download transformation from Communities.TaxonomicMatrix to BIOM file.",
+    "user_description": "Download transformation from Communities.TaxonomicMatrix to Tab-Delimited text file.",
     "developer_description": "",    
 
     "handler_options": {

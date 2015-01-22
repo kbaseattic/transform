@@ -197,7 +197,8 @@ if __name__ == "__main__":
         user_inputs = {"external_type": args.external_type,
                        "kbase_type": args.kbase_type,
                        "object_name": args.object_name,
-                       "downloadPath": args.download_path}
+                       "downloadPath": args.download_path,
+                       "workspace_name": args.workspace}
 
         workspace = args.workspace    
         demos = [user_inputs]
@@ -253,14 +254,13 @@ if __name__ == "__main__":
 
             if args.handler_mode:
                 print term.blue("\tTransform handler download started:")
+                demo_inputs["working_directory"] = conversionDownloadPath
                 for attr, value in args.__dict__.iteritems():
                    if attr.endswith("_service_url"):
                      print "arg : " + attr
                      demo_inputs[attr] = value
-                     #command_list.append("--{0}".format(attr))
-                     #command_list.append("{0}".format(value))
                 input_args = plugin.get_handler_args("download",demo_inputs, token)
-                command_list = ["trns_download_taskrunner.py", "--working_directory", stamp ]
+                command_list = ["trns_download_taskrunner"]
                 
                 for k in input_args:
                    command_list.append("--{0}".format(k))

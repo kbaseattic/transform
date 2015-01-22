@@ -20,7 +20,6 @@
 	    "dna"
 	],
 	"input_mapping": [{"input_file_name": "FASTA.Transcripts"}]
-	]
     },
     "user_options": [
         {

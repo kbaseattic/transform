@@ -39,10 +39,10 @@ import us.kbase.shock.client.exceptions.ShockHttpException;
 public class ConvertGBK {
 
     //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
-    String[] argsPossible = {"-i", "--input_file_name", "-o", "--object_name", "-oc", "--contigset_object_name",
-            "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url", "-wd", "--working_directory"};
+    String[] argsPossible = {"-i", "--input_directory", "-o", "--object_name", "-oc", "--contigset_object_name",
+            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory","--test"};
     String[] argsPossibleMap = {"input", "input", "outputg", "outputg", "outputc", "outputc",
-            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd"};
+            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd","t"};
 
     static String wsurl = null;
     static String shockurl = null;
@@ -83,9 +83,16 @@ public class ConvertGBK {
                     shockurl = args[i + 1];
                 } else if (argsPossibleMap[index].equals("wd")) {
                     workdir = args[i + 1];
+                } else if (argsPossibleMap[index].equals("t")) {
+		if(args[i+1].equalsIgnoreCase("Y") || args[i+1].equalsIgnoreCase("yes") || args[i+1].equalsIgnoreCase("T") || args[i+1].equalsIgnoreCase("TRUE")) 
+		isTest = true;
                 }
             }
         }
+
+System.out.println(indir);
+System.out.println(wsurl);
+System.out.println(isTest);
 
         if (workdir == null) {
             File tmpf = new File("./");
@@ -231,6 +238,7 @@ public class ConvertGBK {
                 WorkspaceClient wc = null;
 
                 if (isTestThis) {
+System.out.println("using test mode");
                     AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
                     wc = new WorkspaceClient(new URL(http), at);
                 } else {
@@ -331,7 +339,7 @@ public class ConvertGBK {
      * @param args
      */
     public final static void main(String[] args) {
-        if (args.length == 2 || args.length == 4 || args.length == 6 || args.length == 8 || args.length == 10 || args.length == 12) {
+        if (args.length == 2 || args.length == 4 || args.length == 6 || args.length == 8 || args.length == 10 || args.length == 12 || args.length == 14) {
             try {
                 ConvertGBK clt = new ConvertGBK(args);
             } catch (Exception e) {
@@ -340,12 +348,14 @@ public class ConvertGBK {
         } else {
             /*TODO add ws url, output Genome object name, output ContigSet object name to arguments*/
             System.out.println("usage: java us.kbase.genbank.ConvertGBK " +
-                    "<-i or --input_file_name file or dir or files of GenBank .gbk files> " +
+                    "<-i or --input_directory file or dir or files of GenBank .gbk files> " +
                     "<-o or --object_name> " +
                     "<-oc or --contigset_object_name> " +
-                    "<-w or --ws_name ws name> " +// <convert y/n> <save y/n>");
-                    "<-wu or --ws_url ws url>" +// <convert y/n> <save y/n>");
-                    "<-su or --shock_url shock url>");// <convert y/n> <save y/n>");
+                    "<-w or --workspace_name ws name> " +// <convert y/n> <save y/n>");
+                    "<-wu or --workspace_service_url ws url> " +// <convert y/n> <save y/n>");
+                    "<-su or --shock_url shock url> " +
+                    "<-wd or --working_directory> "+
+		    "<--test>");// <convert y/n> <save y/n>");
 
             //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
         }

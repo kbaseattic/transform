@@ -2,6 +2,8 @@ import sys
 import os
 import shutil
 import subprocess
+import base64
+import simplejson
 
 from biokbase.Transform import script_utils
 
@@ -73,8 +75,10 @@ class TaskRunner(object):
         if task.returncode != 0:
             raise Exception(sub_stderr)
 
-class PlugIns:
-    def __init__(self, pluginsDir, logger):
+
+class PlugIns(object):
+
+    def __init__(self, pluginsDir, logger=script_utils.stderrlogger(__file__)):
         self.scripts_config = {"external_types": list(),
                                "kbase_types": list(),
                                "validate": dict(),
@@ -94,7 +98,7 @@ class PlugIns:
                 f.close()
 
                 id = None
-
+                
                 if pconfig["script_type"] == "validate":
                     if pconfig["external_type"] not in self.scripts_config["external_types"]:
                         self.scripts_config["external_types"].append(pconfig["external_type"])
@@ -130,7 +134,7 @@ class PlugIns:
                 self.logger.warning("Unable to read plugin {0}: {1}".format(p,e.message))
 
 
-    def get_handler_args(method, args, token):
+    def get_handler_args(self, method, args):
 
         if "optional_arguments" not in args:
             args["optional_arguments"] = '{}'
@@ -155,9 +159,9 @@ class PlugIns:
                     if field in args:
                         job_details["validate"][field] =  args[field]
                     else:
-                        self.logger.info( "Optional field not present : {0}".format(field))
+                        self.logger.info("Optional field not present : {0}".format(field))
             else:
-                self.logger.warning( "No validation available for {0}".format(args["external_type"]))
+                self.logger.warning("No validation available for {0}".format(args["external_type"]))
 
             if self.scripts_config["upload"].has_key("{0}=>{1}".format(args["external_type"],args["kbase_type"])):
                 plugin_key = "{0}=>{1}".format(args["external_type"],args["kbase_type"])
@@ -168,17 +172,17 @@ class PlugIns:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.log_message("ALERT", "Required field not present : {0}".format(field))
+                        self.logger.error("Required field not present : {0}".format(field))
                 
                 for field in self.scripts_config["upload"][plugin_key]["handler_options"]["optional_fields"]:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.info( "Optional field not present : {0}".format(field))
+                        self.logger.info("Optional field not present : {0}".format(field))
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
                 
-            self.logger.info( job_details)
+            self.logger.info(job_details)
         elif method == "download":
             if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
                 plugin_key = "{0}=>{1}".format(args["kbase_type"],args["external_type"])
@@ -189,13 +193,13 @@ class PlugIns:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.log_message("ALERT", "Required field not present : {0}".format(field))
+                        self.logger.error("Required field not present : {0}".format(field))
                 
                 for field in self.scripts_config["download"][plugin_key]["handler_options"]["optional_fields"]:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.info( "Optional field not present : {0}".format(field))
+                        self.logger.info("Optional field not present : {0}".format(field))
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
         elif method == "convert":
@@ -208,13 +212,13 @@ class PlugIns:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.log_message("ALERT", "Required field not present : {0}".format(field))
+                        self.logger.error("Required field not present : {0}".format(field))
                 
                 for field in self.scripts_config["convert"][plugin_key]["handler_options"]["optional_fields"]:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.info( "Optional field not present : {0}".format(field))
+                        self.logger.info("Optional field not present : {0}".format(field))
 
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))

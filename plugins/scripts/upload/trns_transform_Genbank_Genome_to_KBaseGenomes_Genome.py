@@ -14,8 +14,10 @@ import subprocess
 import biokbase.Transform.script_utils as script_utils
 
 
-def transform(shock_service_url=None, handle_service_url=None,               
-              working_directory=None, level=logging.INFO, logger=None)
+def transform(shock_service_url=None, workspace_service_url=None,
+              workspace_name=None, object_name=None, contigset_object_name=None,
+              input_directory=None, working_directory=None, 
+              level=logging.INFO, logger=None):
     """
     Transforms Genbank file to KBaseGenomes.Genome and KBaseGenomes.ContigSet objects.
     
@@ -45,7 +47,7 @@ def transform(shock_service_url=None, handle_service_url=None,
     classpath = "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar:$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar:$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar:$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar:$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar:$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"
     mc = 'us.kbase.genbank.ConvertGBK'
 
-    java_classpath = os.path.join(os.environ.get("KB_TOP"), classpath.replace('$KB_TOP', kb_top))
+    java_classpath = os.path.join(os.environ.get("KB_TOP"), classpath.replace('$KB_TOP', os.environ.get("KB_TOP")))
     arguments = ["java", "-classpath", java_classpath, "us.kbase.genbank.ConvertGBK",    
                  "{0} {1} {2} {3} {4} {5} {6}".format("--shock_service_url {0}".format(shock_service_url),
                                                       "--workspace_service_url {0}".format(workspace_service_url),
@@ -67,7 +69,7 @@ def transform(shock_service_url=None, handle_service_url=None,
 
 
 if __name__ == "__main__":
-    script_details.parse_docs(transform.__doc__)
+    script_details = script_utils.parse_docs(transform.__doc__)
 
     parser = argparse.ArgumentParser(prog=__file__, 
                                      description=script_details["Description"],
@@ -115,13 +117,17 @@ if __name__ == "__main__":
                         nargs='?', 
                         required=True)
     
-    args, unknown = args.parse_known_args()
+    args, unknown = parser.parse_known_args()
     
     logger = script_utils.stderrlogger(__file__)
     
     try:
         transform(shock_service_url=args.shock_service_url,
-                  handle_service_url=args.handle_service_url,
+                  workspace_service_url=args.workspace_service_url,
+                  workspace_name=args.workspace_name,
+                  object_name=args.object_name,
+                  contigset_object_name=args.contigset_object_name,
+                  input_directory=args.input_directory,
                   working_directory=args.working_directory,
                   logger = logger)
     except Exception, e:

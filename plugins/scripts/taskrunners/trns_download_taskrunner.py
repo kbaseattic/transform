@@ -274,7 +274,7 @@ def main():
         object_details["metadata"] = workspaceClient.get_object_info_new([object_info])
         object_details["references"] = workspaceClient.list_referencing_objects([object_info])
         
-        with open("KBase_object_details_{0}_{1}.json".format(args.object_name, datetime.datetime.utcnow().isoformat()) as f:
+        with open("KBase_object_details_{0}_{1}.json".format(args.object_name, datetime.datetime.utcnow().isoformat())) as f:
             f.write(simplejson.dumps(object_details, sort_keys=True, indent=4))
     except Exception, e:
         handler_utils.report_exception(logger, 

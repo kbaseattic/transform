@@ -3,7 +3,7 @@
     "script_type": "upload",
     "external_type": "SBML",
     "kbase_type": "KBaseFBA.FBAModel",
-    "user_description": "Converts SBML file to FBAModel object in workspace."
+    "user_description": "Converts SBML file to FBAModel object in workspace.",
     
     "handler_options": {        
         "must_own_validation": false,
@@ -11,18 +11,18 @@
         "max_runtime": 360,
         "custom_options": [],
 	"required_fields":
-	{
+	[
 	    "input_file_name",
 	    "object_name",
 	    "workspace_name"
-	},
+	],
 	"optional_fields":
 	[
 	    "genome",
 	    "biomass",
 	    "compounds"
 	],
-	"input_mapping": [{'input_file_name": "SBML.FBAModel"}]
+	"input_mapping": [{"input_file_name": "SBML.FBAModel"}]
     },
     "user_options": [
         {

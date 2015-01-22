@@ -79,6 +79,11 @@ class TaskRunner(object):
             raise Exception(sub_stderr)
 
 
+def PluginManager(directory=None, logger=script_utils.stderrlogger(__file__)):
+    manager = PlugIns(directory, logger)
+    return manager
+
+
 class PlugIns(object):
 
     def __init__(self, pluginsDir, logger=script_utils.stderrlogger(__file__)):
@@ -235,5 +240,4 @@ class PlugIns(object):
         args["job_details"] = base64.urlsafe_b64encode(simplejson.dumps(job_details))
         args["optional_arguments"] = base64.urlsafe_b64encode(simplejson.dumps(args["optional_arguments"]))
         return args
-
 

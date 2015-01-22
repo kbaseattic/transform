@@ -209,7 +209,8 @@ def download_from_shock(shockURL, shock_id, filePath, token):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='KBase Upload demo and client')
+    parser = argparse.ArgumentParser(description='KBase Upload handler test driver')
+
     parser.add_argument('--demo', action="store_true")
     parser.add_argument('--shock_service_url', nargs='?', help='SHOCK service to upload local files', const="", default="https://kbase.us/services/shock-api/")
     parser.add_argument('--ujs_service_url', nargs='?', help='UserandJobState service for monitoring progress', const="", default="https://kbase.us/services/userandjobstate/")
@@ -225,10 +226,7 @@ if __name__ == "__main__":
     parser.add_argument('--file_path', nargs='?', help='path to file for upload', const="", default="")
     parser.add_argument('--url_mapping', nargs='?', help='dictionary of urls to process', const="", default="")
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
-    parser.add_argument('--handler', help='Client bypass test', dest="handler_mode", action='store_true')
-    parser.add_argument('--client', help='Client mode test', dest="handler_mode", action='store_false')
-    parser.set_defaults(handler_mode=False)
-    ## TODO: change the default path to be relative to __FILE__
+
     parser.add_argument('--plugin_directory', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
 
     args = parser.parse_args()
@@ -244,9 +242,6 @@ if __name__ == "__main__":
                 raise Exception("Unable to find KBase token!")
         else:
             raise Exception("Unable to find KBase token!")
-
-    #read_configs(os.path.abspath("../../plugins/configs"))
-    
 
     plugin = None
     if args.handler_mode: 
@@ -278,160 +273,9 @@ if __name__ == "__main__":
                               "downloadPath": "fasciculatum_supercontig.fasta.zip",
                               "url_mapping": "FASTA.DNA.Assembly"}
 
-        genbank_to_genome = {"external_type": "Genbank.Genome",
-                             "kbase_type": "KBaseGenomes.Genome",
-                             "object_name": "NC_005213",
-                             "filePath": "data/genbank/NC_005213/NC_005213.gbk",
-                             "downloadPath": "NC_005213.gbk",
-                             "url_mapping": "Genbank.Genome"}
-
-        fasta_transcripts_to_genome = {"external_type": "FASTA.Transcripts",
-                                       "kbase_type": "KBaseGenomes.Genome",
-                                       "object_name": "",
-                                       "filePath": None,
-                                       "downloadPath": None,
-                                       "url": "http://bioseed.mcs.anl.gov/~seaver/Files/Athaliana.TAIR10.fa",
-                                       "url_mapping": "FASTA.Transcripts"}
-                         
-
-        genbank_to_genome_ftp_ncbi_gz = {"external_type": "Genbank.Genome",
-                            "kbase_type": "KBaseGenomes.Genome",
-                            "object_name": "ecoli_reference.NCBI",
-                            "filePath": None,
-                            "downloadPath": None,
-                            "url": "ftp://ftp.ncbi.nih.gov/genomes/genbank/bacteria/Escherichia_coli/reference/GCA_000005845.2_ASM584v2/GCA_000005845.2_ASM584v2_genomic.gbff.gz",
-                            "url_mapping": "genbank_genome"}
-
-        genbank_to_genome_http_mol_zip = {"external_type": "Genbank.Genome",
-                            "kbase_type": "KBaseGenomes.Genome",
-                            "object_name": "Abelson_murine_leukemia_virus.MOL",
-                            "filePath": None,
-                            "downloadPath": None,
-                            "url": "http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=11788;export=gbk;compress=zip"}
-
-        genbank_to_genome_ftp_patric = {"external_type": "Genbank.Genome",
-                            "kbase_type": "KBaseGenomes.Genome",
-                            "object_name": "Acetobacter_tropicalis_NBRC_101654.PATRIC",
-                            "filePath": None,
-                            "downloadPath": None,
-                            "url": "ftp://ftp.patricbrc.org/patric2/genomes/Acetobacter_tropicalis_NBRC_101654/Acetobacter_tropicalis_NBRC_101654.PATRIC.gbf"}
-
-        genbank_to_genome_ftp_refseq = {"external_type": "Genbank.Genome",
-                            "kbase_type": "KBaseGenomes.Genome",
-                            "object_name": "Acetobacter_tropicalis_NBRC_101654.Refseq",
-                            "filePath": None,
-                            "downloadPath": None,
-                            "url": "ftp://ftp.patricbrc.org/patric2/genomes/Acetobacter_tropicalis_NBRC_101654/Acetobacter_tropicalis_NBRC_101654.RefSeq.gbf"}
-
-        genbank_to_genome_ftp_ensembl = {"external_type": "Genbank.Genome",
-                            "kbase_type": "KBaseGenomes.Genome",
-                            "object_name": "Tursiops_truncatus.turTru1.78.nonchromosomal.ENSEMBL",
-                            "filePath": None,
-                            "downloadPath": None,
-                            "url": "ftp://ftp.ensembl.org/pub/release-78/genbank/tursiops_truncatus/Tursiops_truncatus.turTru1.78.nonchromosomal.dat.gz"}
-                            
-        genbank_to_genome_http_img = {"external_type": "Genbank.Genome",
-                            "kbase_type": "KBaseGenomes.Genome",
-                            "object_name": "Fibrobacter_succinogenes_HM2_Project_1034376",
-                            "filePath": None,
-                            "downloadPath": None,
-                            "url": "http://genome.jgi-psf.org/pages/dynamicOrganismDownload.jsf?organism=fibrobacteres#"}
-        
-        genbank_to_genome_gz = {"external_type": "Genbank.Genome",
-                            "kbase_type": "KBaseGenomes.Genome",
-                            "object_name": "NC_005213_gz",
-                            "filePath": "data/NC_005213.gbk.gz",
-                            "downloadPath": "NC_005213.gbk.gz"}
-
-        genbank_to_genome_bz2 = {"external_type": "Genbank.Genome",
-                             "kbase_type": "KBaseGenomes.Genome",
-                             "object_name": "NC_005213_bz2",
-                             "filePath": "data/NC_005213.gbk.bz2",
-                             "downloadPath": "NC_005213.gbk.bz2"}
-
-        genbank_to_genome_tar_bz2 = {"external_type": "Genbank.Genome",
-                                 "kbase_type": "KBaseGenomes.Genome",
-                                 "object_name": "NC_005213_tar_bz2",
-                                 "filePath": "data/NC_005213.gbk.tar.bz2",
-                                 "downloadPath": "NC_005213.gbk.tar.bz2"}
-
-        genbank_to_genome_tar_gz = {"external_type": "Genbank.Genome",
-                                "kbase_type": "KBaseGenomes.Genome",
-                                "object_name": "NC_005213_tar_gz",
-                                "filePath": "data/NC_005213.gbk.tar.gz",
-                                "downloadPath": "NC_005213.gbk.tar.gz"}
-
-        genbank_to_genome_zip = {"external_type": "Genbank.Genome",
-                             "kbase_type": "KBaseGenomes.Genome",
-                             "object_name": "NC_005213_zip",
-                             "filePath": "data/NC_005213.gbk.zip",
-                             "downloadPath": "NC_005213.gbk.zip"}
-
-        fasta_to_reference = {"external_type": "FASTA.DNA.Assembly",
-                          "kbase_type": "KBaseAssembly.ReferenceAssembly",
-                          "object_name": "fasciculatum_supercontig",
-                          "filePath": "data/fasciculatum_supercontig.fasta.zip",
-                          "downloadPath": "fasciculatum_supercontig.fasta.zip"}
-
-        fasta_single_to_reads = {"external_type": "FASTA.DNA.Reads",
-                             "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                             "object_name": "ERR670568",
-                             "filePath": "data/ERR670568.fasta.gz",
-                             "downloadPath": "ERR670568.fasta.gz"}
-
-        fastq_single_to_reads = {"external_type": "FASTQ.DNA.Reads",
-                             "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                             "object_name": "ERR670568",
-                             "filePath": "data/ERR670568.fastq.gz",
-                             "downloadPath": "ERR670568.fastq.gz"}
-
-        fasta_paired_to_reads = {"external_type": "FASTA.DNA.Reads",
-                             "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                             "object_name": "SRR1569976",
-                             "filePath": "data/SRR1569976.fasta.bz2",
-                             "downloadPath": "SRR1569976.fasta.bz2"}
-
-        fastq_paired1_to_reads = {"external_type": "FASTQ.DNA.Reads",
-                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                              "object_name": "SRR1569976",
-                              "filePath": "data/SRR1569976.fastq.bz2",
-                              "downloadPath": "SRR1569976.fastq.bz2"}
-
-        fastq_paired2_to_reads = {"external_type": "FASTQ.DNA.Reads",
-                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                              "object_name": "SRR1569976_split",
-                              "filePath": "data/SRR1569976_split.tar.bz2",
-                              "downloadPath": "SRR1569976_split.tar.bz2"}
-
-        sbml_to_fbamodel = {"external_type": "SBML.FBAModel",
-                        "kbase_type": "KBaseFBA.FBAModel",
-                        "object_name": "",
-                        "filePath": "",
-                        "downloadPath": ""}
-
-        inputs = [fasta_to_contigset,
-                  genbank_to_genome,
-                  fasta_transcripts_to_genome]
-        #         genbank_to_genome_ftp_ncbi_gz,
-        #         genbank_to_genome_gz, 
-        #         genbank_to_genome_bz2, 
-        #         genbank_to_genome_tar_bz2, 
-        #         genbank_to_genome_tar_gz, 
-        #         genbank_to_genome_zip,
-        #         genbank_to_genome_http_mol_zip,
-        #         genbank_to_genome_ftp_patric,
-        #         genbank_to_genome_ftp_refseq,
-        #         genbank_to_genome_ftp_ensembl,
-        #         genbank_to_genome_http_img,
-        #         fasta_to_reference,
-        #         fasta_to_contigset,
-        #         fastq_single_to_reads, 
-        #         fasta_single_to_reads, 
-        #         fastq_single_to_reads, 
-        #         fastq_paired1_to_reads, 
-        #         fastq_paired2_to_reads, 
-        #         fasta_paired_to_reads]
+        inputs = [fasta_to_contigset]
     
+
 
     services = {"shock": args.shock_service_url,
                 "ujs": args.ujs_service_url,
@@ -475,40 +319,30 @@ if __name__ == "__main__":
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
 
-                if args.handler_mode: 
-                    print term.blue("\tTransform handler upload started:")
-                    for attr, value in args.__dict__.iteritems():
-                       if attr.endswith("_service_url"):
-                         input_object[attr] = value
-                    input_object["working_directory"] = conversionDownloadPath
-                    input_args = plugin.get_handler_args("upload",input_object)
-                    command_list = ["trns_upload_taskrunner"]
+                print term.blue("\tTransform handler upload started:")
+                for attr, value in args.__dict__.iteritems():
+                   if attr.endswith("_service_url"):
+                     input_object[attr] = value
+                input_object["working_directory"] = conversionDownloadPath
+                input_args = plugin.get_handler_args("upload",input_object)
+                command_list = ["trns_upload_taskrunner"]
 
-                    if "user_options" in input_args: del input_args["user_options"]
-                    
-                    for k in input_args:
-                       command_list.append("--{0}".format(k))
-                       command_list.append("{0}".format(input_args[k]))
+                if "user_options" in input_args: del input_args["user_options"]
+                
+                for k in input_args:
+                   command_list.append("--{0}".format(k))
+                   command_list.append("{0}".format(input_args[k]))
 
-                    task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
-                    sub_stdout, sub_stderr = task.communicate()
-                
-                    if sub_stdout is not None:
-                        print sub_stdout
-                    if sub_stderr is not None:
-                        print >> sys.stderr, sub_stderr
-                
-                    if task.returncode != 0:
-                        raise Exception(sub_stderr)
-                else:
-                    upload_response = upload(services["transform"], input_object, token)
-                 
-                    print term.blue("\tTransform service upload requested:")
-                    print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
-                    print term.blue("\tTransform service responded with job ids:")
-                    print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(upload_response[0], upload_response[1])
-                 
-                    show_job_progress(services["ujs"], services["awe"], upload_response[0], upload_response[1], token)
+                task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+                sub_stdout, sub_stderr = task.communicate()
+            
+                if sub_stdout is not None:
+                    print sub_stdout
+                if sub_stderr is not None:
+                    print >> sys.stderr, sub_stderr
+            
+                if task.returncode != 0:
+                    raise Exception(sub_stderr)
 
                 print term.bold("Step 2: View or use workspace objects")
                 show_workspace_object_list(services["workspace"], workspace, object_name, token)

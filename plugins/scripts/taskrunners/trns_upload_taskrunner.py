@@ -220,54 +220,54 @@ def main():
     # Report progress on success of the download step
     if args.ujs_job_id is not None:
         ujs.update_job_progress(args.ujs_job_id, kb_token, "Input data download completed", 
-                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
-
-    # TODO check to see if a validator is configured, if not skip to transform
-    # Step 2 : Validate the data files
-    try:
-        os.mkdir(validation_directory)
+    if args.handler_options.has_key("must_own_validation") and not args.handler_options["must_own_validation"]:        
+        # TODO check to see if a validator is configured, if not skip to transform
+        # Step 2 : Validate the data files
+        try:
+            os.mkdir(validation_directory)
     
-        validation_args = args.job_details["validate"]
-        validation_args["optional_arguments"] = args.optional_arguments
+            validation_args = args.job_details["validate"]
+            validation_args["optional_arguments"] = args.optional_arguments
         
-        # gather a list of all files downloaded
-        files = list(handler_utils.gen_recursive_filelist(download_directory))
+            # gather a list of all files downloaded
+            files = list(handler_utils.gen_recursive_filelist(download_directory))
         
-        # get the directories common to those files
-        directories = list()
-        for x in files:
-            path = os.path.dirname(x)
+            # get the directories common to those files
+            directories = list()
+            for x in files:
+                path = os.path.dirname(x)
             
-            if path not in directories:
-                directories.append(path)
+                if path not in directories:
+                    directories.append(path)
         
-        # validate everything in each directory
-        for d in directories:
-            validation_args["input_directory"] = d
-            validation_args["working_directory"] = validation_directory
-            handler_utils.run_task(logger, validation_args)
-    except Exception, e:
-        handler_utils.report_exception(logger, 
-                         {"message": "ERROR : Validation of {0}".format(args.url_mapping),
-                          "exc": e,
-                          "ujs": ujs,
-                          "ujs_job_id": args.ujs_job_id,
-                          "token": kb_token,
-                         },
-                         {"keep_working_directory": args.keep_working_directory,
-                          "working_directory": args.working_directory})
+            # validate everything in each directory
+            for d in directories:
+                validation_args["input_directory"] = d
+                validation_args["working_directory"] = validation_directory
+                handler_utils.run_task(logger, validation_args)
+        except Exception, e:
+            handler_utils.report_exception(logger, 
+                             {"message": "ERROR : Validation of {0}".format(args.url_mapping),
+                              "exc": e,
+                              "ujs": ujs,
+                              "ujs_job_id": args.ujs_job_id,
+                              "token": kb_token,
+                             },
+                             {"keep_working_directory": args.keep_working_directory,
+                              "working_directory": args.working_directory})
 
-        ujs.complete_job(args.ujs_job_id, 
-                         kb_token, 
-                         "Upload to {0} failed.".format(args.workspace_name), 
-                         e, 
-                         None)                                  
+            ujs.complete_job(args.ujs_job_id, 
+                             kb_token, 
+                             "Upload to {0} failed.".format(args.workspace_name), 
+                             e, 
+                             None)                                  
 
 
-    # Report progress on success of validation step
-    if args.ujs_job_id is not None:
-        ujs.update_job_progress(args.ujs_job_id, kb_token, 'Input data has passed validation', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+        # Report progress on success of validation step
+        if args.ujs_job_id is not None:
+            ujs.update_job_progress(args.ujs_job_id, kb_token, 'Input data has passed validation', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
 
 
     # Step 3: Transform the data

@@ -20,6 +20,7 @@ import git
 git.Git().clone("https://github.com/kbase/user_and_job_state")
 git.Git().clone("https://github.com/kbase/workspace_deluxe")
 git.Git().clone("https://github.com/mlhenderson/handle_service")
+git.Git().clone("https://github.com/mlhenderson/kbapi_common")
 
 print "Copying client code to virtualenv"
 
@@ -29,12 +30,14 @@ shutil.copytree(os.path.join(running_dir,"workspace_deluxe/lib/biokbase/workspac
 shutil.copytree(os.path.join(running_dir,"handle_service/lib/biokbase/AbstractHandle"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase/AbstractHandle"))
 shutil.copytree(os.path.join(running_dir,"../../lib/biokbase/Transform"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase/Transform"))
 
+shutil.copy(os.path.join(running_dir,"kbapi_common/lib/biokbase/log.py"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase/"))
+
 
 scripts = list()
 
 for root, directories, files in os.walk(os.path.join(running_dir, "../../plugins/scripts/")):
     for file in files:
-        print "copy from {0} {1}".format(os.path.join(root, file), os.path.join(virtualenv_dir,"/bin/"))
+        print "copy from {0} {1}".format(os.path.join(root, file), os.path.join(virtualenv_dir,"bin/"))
         shutil.copy(os.path.join(root, file), os.path.join(virtualenv_dir,"bin/"))
 
 print "Cleaning up checked out repos"
@@ -59,5 +62,6 @@ if not os.path.isdir(os.path.join(running_dir, "data")):
     os.remove(os.path.join(running_dir, "data.tar.bz2"))
 
 print "Make sure to use kbase-login or export KB_AUTH_TOKEN"
-print "Run with venv/bin/python bin/upload.py --demo"
-    
+print "Run the upload client driver with venv/bin/python bin/upload_client.py --demo"
+print "Run the upload developer script driver with venv/bin/python bin/upload_script_test.py --demo"
+

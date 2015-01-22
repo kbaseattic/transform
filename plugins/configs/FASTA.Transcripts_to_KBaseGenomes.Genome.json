@@ -19,7 +19,7 @@
             "genome_id",
 	    "dna"
 	]
-	"input_mapping": [{"input_directory": "FASTA.Transcripts"}]
+	"input_mapping": [{"input_file_name": "FASTA.Transcripts"}]
     },
     "user_options": [
         {

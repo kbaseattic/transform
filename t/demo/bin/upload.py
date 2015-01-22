@@ -230,7 +230,6 @@ if __name__ == "__main__":
     parser.set_defaults(handler_mode=False)
     ## TODO: change the default path to be relative to __FILE__
     parser.add_argument('--plugin_directory', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
-    parser.add_argument('--working_directory', nargs='?', help='path to the working dir', const="", default="./working_dir")
 
     args = parser.parse_args()
 
@@ -250,10 +249,8 @@ if __name__ == "__main__":
     
 
     plugin = None
-    task_runner = None
     if args.handler_mode: 
         plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory, logger)
-        task_runner = biokbase.Transform.handler_utils.TaskRunner(logger)
 
     inputs = list()
     if not args.demo:
@@ -477,7 +474,7 @@ if __name__ == "__main__":
                 if args.handler_mode: 
                     print term.blue("\tTransform handler upload started:")
                     input_args = plugin.get_handler_args("upload",input_object, token)
-                    command_list = ["trns_upload_taskrunner", "--working_directory", args.working_directory ]
+                    command_list = ["trns_upload_taskrunner", "--working_directory", stamp ]
                     
                     for k in input_args:
                        command_list.append("--{0}".format(k))
@@ -551,7 +548,7 @@ if __name__ == "__main__":
                 if args.handler_mode: 
                     print term.blue("\tTransform handler upload started:")
                     input_args = plugin.get_handler_args("upload",input_object, token)
-                    command_list = ["trns_upload_taskrunner", "--working_directory", args.working_directory ]
+                    command_list = ["trns_upload_taskrunner", "--working_directory", stamp ]
                     
                     for k in input_args:
                        command_list.append("--{0}".format(k))

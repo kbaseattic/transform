@@ -253,16 +253,19 @@ if __name__ == "__main__":
 
             if args.handler_mode:
                 print term.blue("\tTransform handler download started:")
+                for attr, value in args.__dict__.iteritems():
+                   if attr.endswith("_service_url"):
+                     print "arg : " + attr
+                     demo_inputs[attr] = value
+                     #command_list.append("--{0}".format(attr))
+                     #command_list.append("{0}".format(value))
                 input_args = plugin.get_handler_args("download",demo_inputs, token)
                 command_list = ["trns_download_taskrunner.py", "--working_directory", stamp ]
                 
                 for k in input_args:
                    command_list.append("--{0}".format(k))
                    command_list.append("{0}".format(input_args[k]))
-                for attr, value in args.__dict__.iteritems():
-                   if attr.endswith("_service_url"):
-                     command_list.append("--{0}".format(attr))
-                     command_list.append("{0}".format(value))
+                print command_list
 
                 task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
                 sub_stdout, sub_stderr = task.communicate()

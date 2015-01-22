@@ -473,16 +473,16 @@ if __name__ == "__main__":
 
                 if args.handler_mode: 
                     print term.blue("\tTransform handler upload started:")
+                    for attr, value in args.__dict__.iteritems():
+                       if attr.endswith("_service_url"):
+                         input_object[attr] = value
+                    input_object["working_directory"] = conversionDownloadPath
                     input_args = plugin.get_handler_args("upload",input_object, token)
-                    command_list = ["trns_upload_taskrunner", "--working_directory", stamp ]
+                    command_list = ["trns_upload_taskrunner"]
                     
                     for k in input_args:
                        command_list.append("--{0}".format(k))
                        command_list.append("{0}".format(input_args[k]))
-                    for attr, value in args.__dict__.iteritems():
-                       if attr.endswith("_service_url"):
-                         command_list.append("--{0}".format(attr))
-                         command_list.append("{0}".format(value))
 
                     task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
                     sub_stdout, sub_stderr = task.communicate()
@@ -547,16 +547,16 @@ if __name__ == "__main__":
 
                 if args.handler_mode: 
                     print term.blue("\tTransform handler upload started:")
+                    for attr, value in args.__dict__.iteritems():
+                       if attr.endswith("_service_url"):
+                         input_object[attr] = value
+                    input_object["working_directory"] = conversionDownloadPath
                     input_args = plugin.get_handler_args("upload",input_object, token)
-                    command_list = ["trns_upload_taskrunner", "--working_directory", stamp ]
+                    command_list = ["trns_upload_taskrunner"]
                     
                     for k in input_args:
                        command_list.append("--{0}".format(k))
                        command_list.append("{0}".format(input_args[k]))
-                    for attr, value in args.__dict__.iteritems():
-                       if attr.endswith("_service_url"):
-                         command_list.append("--{0}".format(attr))
-                         command_list.append("{0}".format(value))
 
                     task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
                     sub_stdout, sub_stderr = task.communicate()

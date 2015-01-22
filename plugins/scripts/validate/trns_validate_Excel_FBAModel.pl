@@ -1,20 +1,23 @@
 #!/usr/bin/env perl
+#PERL USE
 use warnings;
 use strict;
 use Data::Dumper;
 use Getopt::Long;
 use Spreadsheet::ParseExcel;
 use Spreadsheet::XLSX;
+
+#KBASE USE
 use Bio::KBase::Transform::ScriptHelpers qw( parse_excel getStderrLogger );
 
 my $In_File = "";
 my $Help = 0;
-GetOptions("input|i=s"  => \$In_File,
+GetOptions("input_file_name|i=s"  => \$In_File,
 	   "help|h"     => \$Help);
 
 if($Help || !$In_File){
-    print($0." --input/-i <Input Excel File>");
-    $logger->warn($0." --in_file|-i <Input Excel File>");
+    print($0." --input_file_name/-i <Input Excel File>");
+    $logger->warn($0." --input_file_name|-i <Input Excel File>");
     exit(0);
 }
 

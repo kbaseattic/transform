@@ -1,18 +1,21 @@
 #!/usr/bin/env perl
+#PERL USE
 use warnings;
 use strict;
 use Data::Dumper;
 use Getopt::Long;
 use Digest::MD5;
+
+#KBASE USE
 use Bio::KBase::Transform::ScriptHelpers qw( getStderrLogger );
 
 =head1 NAME
 
-trns_transform_Transcripts.FASTA-to-KBaseGenomes.Genome.pl
+trns_transform_FASTA_Transcripts_to_KBaseGenomes.Genome.pl
 
 =head1 SYNOPSIS
 
-trns_transform_Transcripts.FASTA-to-KBaseGenomes.Genome.pl --input fasta-file --output genome-id
+trns_transform_FASTA_Transcripts_to_KBaseGenomes.Genome.pl --input_file_name fasta-file --output_file_name genome-id
 
 =head1 DESCRIPTION
 
@@ -20,9 +23,9 @@ Transform a FASTA file into a KBaseGenomes.Genome object in the workspace.
 
 =head1 COMMAND-LINE OPTIONS
 trns_transform_KBaseFBA.SBML-to-KBaseFBA.FBAModel.pl --input --output
-	-i --input      sbml file
-	-o --output     id under which KBaseGenomes.Genome is to be saved
-	--help          print usage message and exit
+	-i --input_file_name      sbml file
+	-o --output_file_name     id under which KBaseGenomes.Genome is to be saved
+        --help                    print usage message and exit
 
 =cut
 
@@ -74,15 +77,15 @@ my $Out_File  = "";
 my $Genome_ID = "";
 my $IsDNA     = 0;
 my $Help      = 0;
-GetOptions("in_file|i=s"   => \$In_File,
-	   "out_file|o=s"  => \$Out_File,
+GetOptions("input_file_name|i=s"   => \$In_File,
+	   "output_file_name|o=s"  => \$Out_File,
 	   "genome_id|g=s" => \$Genome_ID,
 	   "dna|d"         => \$IsDNA,
            "help|h"        => \$Help);
 
 if($Help || !$In_File || !$Out_File){
-    print($0." --in_file|-i <Input Fasta File> --out_file|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (in_file used by default)> --dna|d");
-    $logger->warn($0." --in_file|-i <Input Fasta File> --out_file|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (in_file used by default)> --dna|d");
+    print($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (input_file_name used by default)> --dna|d");
+    $logger->warn($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (input_file_name used by default)> --dna|d");
     exit();
 }
 

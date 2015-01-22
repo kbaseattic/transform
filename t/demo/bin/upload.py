@@ -553,7 +553,7 @@ if __name__ == "__main__":
                     input_object["working_directory"] = conversionDownloadPath
                     input_args = plugin.get_handler_args("upload",input_object)
                     command_list = ["trns_upload_taskrunner"]
-                    
+                    if "user_options" in input_args: del input_args["user_options"]
                     for k in input_args:
                        command_list.append("--{0}".format(k))
                        command_list.append("{0}".format(input_args[k]))

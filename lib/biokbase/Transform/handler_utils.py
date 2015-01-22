@@ -2,6 +2,8 @@ import sys
 import os
 import shutil
 import subprocess
+import base64
+import simplejson
 
 from biokbase.Transform import script_utils
 

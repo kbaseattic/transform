@@ -9,11 +9,24 @@
         "must_own_validation": false,
         "must_own_saving_to_workspace": true,
         "max_runtime": 360,
-        "custom_options": []
+        "custom_options": [],
+	"required_fields":
+	{
+	    "input_file_name",
+	    "object_name",
+	    "workspace_name"
+	},
+	"optional_fields":
+	[
+	    "genome",
+	    "biomass",
+	    "compounds"
+	],
+	"input_mapping": [{'input_file_name": "SBML.FBAModel"}]
     },
     "user_options": [
         {
-            "name": "sbml",
+            "name": "input_file_name",
             "type": "string",
             "required": true,
             "help": "Input SBML File"
@@ -31,13 +44,13 @@
             "help": "Identifier for Genome which contains features referenced to in FBAModel (Defaults to empty Genome)."
         },
         {
-            "name": "output",
+            "name": "object_name",
             "type": "string",
             "required": true,
             "help": "ID for output FBAModel in workspace."
         },
         {
-            "name": "out_ws",
+            "name": "workspace_name",
             "type": "string",
             "required": true,
             "help": "Workspace ID for saving output FBAModel."

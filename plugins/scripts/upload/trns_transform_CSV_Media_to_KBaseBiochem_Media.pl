@@ -37,10 +37,10 @@ my $Out_Object = "";
 my $Out_WS    = "";
 my $Help      = 0;
 
-GetOptions("input_file_name|i=s"  => \$In_File,
-	   "object_name|o=s" => \$Out_Object,
-	   "workspace_name|w=s"   => \$Out_WS,
-	   "help|h"               => \$Help);
+GetOptions("input_file_name|i=s" => \$In_File,
+	   "object_name|o=s"     => \$Out_Object,
+	   "workspace_name|w=s"  => \$Out_WS,
+	   "help|h"              => \$Help);
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
     print($0." --input_file_name/-i <Input CSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in>\n");

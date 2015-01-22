@@ -17,7 +17,7 @@
 	    "workspace_name"
 	},
 	"optional_fields":[],
-	"input_mapping": [{'input_directory": "FASTA.Transcripts"}]		
+	"input_mapping": [{'input_file_name": "CSV.Media"}]		
     },
     "user_options": [
         {

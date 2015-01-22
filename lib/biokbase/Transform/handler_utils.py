@@ -2,6 +2,8 @@ import sys
 import os
 import shutil
 import subprocess
+import base64
+import simplejson
 
 from biokbase.Transform import script_utils
 
@@ -130,7 +132,7 @@ class PlugIns:
                 self.logger.warning("Unable to read plugin {0}: {1}".format(p,e.message))
 
 
-    def get_handler_args(method, args, token):
+    def get_handler_args(self, method, args, token):
 
         if "optional_arguments" not in args:
             args["optional_arguments"] = '{}'

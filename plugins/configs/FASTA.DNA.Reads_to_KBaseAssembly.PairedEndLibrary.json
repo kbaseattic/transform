@@ -2,7 +2,7 @@
     "script_name": "trns_transform_seqs_to_KBaseAssembly_type.pl",
     "script_type": "upload",
     "external_type": "FASTA.DNA.Reads",
-    "kbase_type": "KBaseGenomes.PairedEndLibrary",
+    "kbase_type": "KBaseAssembly.PairedEndLibrary",
     "user_description": "Converts one or two paired FASTA read files into a KBaseAssembly.PairedEndLibrary typed object.",
     "developer_description": "Converts one or two paired FASTA read files into a KBaseAssembly.PairedEndLibrary typed object.",
     "url_mapping": ["FASTA.DNA.Reads"],

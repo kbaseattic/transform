@@ -1,6 +1,5 @@
 use strict;
 
-#
 # BEGIN spec
 # "KBaseFBA.FBA-to-CSV": {
 #   "cmd_args": {
@@ -16,16 +15,19 @@ use strict;
 #   }
 # }
 # END spec
+
+#PERL USE
 use JSON::XS;
 use Getopt::Long::Descriptive;
+
+#KBASE USE
 use Bio::KBase::workspace::Client;
 use Bio::KBase::Transform::ScriptHelpers qw(write_csv_tables get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
 
 my($opt, $usage) = describe_options("%c %o",
-				    ['input|i=s', 'workspace object id from which the input is to be read'],
-				    ['workspace|w=s', 'workspace id from which the input is to be read'],
-				    ['from-file', 'specifies to use the local filesystem instead of workspace'],
-				    ['output|o=s', 'file to which the output is to be written'],
+				    ['input_file_name|i=s', 'workspace object id from which the input is to be read'],
+				    ['workspace_name|w=s', 'workspace id from which the input is to be read'],
+				    ['from_file', 'specifies to use the local filesystem instead of workspace'],
 				    ['url=s', 'URL for the genome annotation service'],
 				    ['help|h', 'show this help message'],
 				    );
@@ -41,18 +43,18 @@ if ($opt->from_file)
 }
 else
 {
-    if (!$opt->workspace)
+    if (!$opt->workspace_name)
     {
 	die "A workspace name must be provided";
     }
-    my $ret = $wsclient->get_object({ id => $opt->input, workspace => $opt->workspace });
+    my $ret = $wsclient->get_object({ id => $opt->input_file_name, workspace => $opt->workspace_name });
     if ($ret->{data})
     {
 	$obj = $ret->{data};
     }
     else
     {
-	die "Invalid return from get_object for ws=" . $opt->workspace . " input=" . $opt->input;
+	die "Invalid return from get_object for ws=" . $opt->workspace_name . " input=" . $opt->input_file_name;
     }
 }
 my $ret = $wsclient->get_objects([{ "ref" => $obj->{fbamodel_ref} }]);
@@ -136,15 +138,15 @@ for (my $i=0; $i < @{$ret->[0]->{data}->{modelreactions}}; $i++) {
 	$rxn->{equation} = $reactants." ".$dirtrans->{$rxn->{direction}}." ".$products;
 }
 my $tables = {
-	$opt->workspace."_".$opt->input."_FBACompounds" => [["id","name","formula","charge","comopartment","uptake","min_uptake","lowerbound","max_uptake","upperbound"]],
-	$opt->workspace."_".$opt->input."_FBAReactions" => [["id","direction","compartment","gpr","name","pathway","equation","flux","min_flux","lowerbound","max_flux","upperbound"]]
+	$opt->workspace_name."_".$opt->input_file_name."_FBACompounds" => [["id","name","formula","charge","comopartment","uptake","min_uptake","lowerbound","max_uptake","upperbound"]],
+	$opt->workspace_name."_".$opt->input_file_name."_FBAReactions" => [["id","direction","compartment","gpr","name","pathway","equation","flux","min_flux","lowerbound","max_flux","upperbound"]]
 };
 for (my $i=0; $i < @{$obj->{FBACompoundVariables}}; $i++) {
 	my $var = $obj->{FBACompoundVariables}->[$i];
 	my $array = [split(/\//,$var->{modelcompound_ref})];
 	my $cpdid = pop(@{$array});
 	my $cpd = $cpdhash->{$cpdid};
-	push(@{$tables->{$opt->workspace."_".$opt->input."_FBACompounds"}},[
+	push(@{$tables->{$opt->workspace_name."_".$opt->input_file_name."_FBACompounds"}},[
 		$cpdid,
 		$cpd->{name},
 		$cpd->{formula},
@@ -162,7 +164,7 @@ for (my $i=0; $i < @{$obj->{FBAReactionVariables}}; $i++) {
 	my $array = [split(/\//,$var->{modelreaction_ref})];
 	my $rxnid = pop(@{$array});
 	my $rxn = $rxnhash->{$rxnid};
-	push(@{$tables->{$opt->workspace."_".$opt->input."_FBAReactions"}},[
+	push(@{$tables->{$opt->workspace_name."_".$opt->input_file_name."_FBAReactions"}},[
 		$rxnid,
 		$dirtrans->{$rxn->{direction}},
 		$rxn->{compartment},

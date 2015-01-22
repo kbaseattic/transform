@@ -477,7 +477,7 @@ if __name__ == "__main__":
                        if attr.endswith("_service_url"):
                          input_object[attr] = value
                     input_object["working_directory"] = conversionDownloadPath
-                    input_args = plugin.get_handler_args("upload",input_object, token)
+                    input_args = plugin.get_handler_args("upload",input_object)
                     command_list = ["trns_upload_taskrunner"]
                     
                     for k in input_args:
@@ -551,7 +551,7 @@ if __name__ == "__main__":
                        if attr.endswith("_service_url"):
                          input_object[attr] = value
                     input_object["working_directory"] = conversionDownloadPath
-                    input_args = plugin.get_handler_args("upload",input_object, token)
+                    input_args = plugin.get_handler_args("upload",input_object)
                     command_list = ["trns_upload_taskrunner"]
                     
                     for k in input_args:

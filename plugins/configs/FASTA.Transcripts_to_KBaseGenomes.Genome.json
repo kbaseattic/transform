@@ -10,17 +10,16 @@
         "max_runtime": 360,
         "custom_options": [],
 	"required_fields":
-	{
+	[
             "input_file_name",
 	    "output_file_name",
 	    "genome_id"
-	},
+	],
 	"optional_fields":
 	[
 	    "dna"
 	],
 	"input_mapping": [{"input_file_name": "FASTA.Transcripts"}]
-	]
     },
     "user_options": [
         {

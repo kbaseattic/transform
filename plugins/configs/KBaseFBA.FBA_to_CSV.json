@@ -12,7 +12,7 @@
             "workspace_name" 
         ], 
         "optional_fields": ["version","url"], 
-        "custom_options": [], 
+        "custom_options": []
     },  
     "user_options": [ 
         { 

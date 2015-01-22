@@ -1,17 +1,62 @@
 {
-    "script_name": "trns_transform_FASTQ_DNA_Reads_to_KBaseAssembly_PairedEndLibrary.py", 
+    "script_name": "trns_transform_seqs_to_KBaseAssembly_type.pl",
     "script_type": "upload",
     "external_type": "FASTQ.DNA.Reads",
-    "kbase_type": "KBaseAssembly.PairedEndLibrary",
-    "user_description": "",
-    "developer_description": "",
-    
-    "handler_options": {        
+    "kbase_type": "KBaseGenomes.PairedEndLibrary",
+    "user_description": "Converts one or two paired FASTQ read files into a KBaseAssembly.PairedEndLibrary typed object.",
+    "developer_description": "Converts one or two paired FASTQ read files into a KBaseAssembly.PairedEndLibrary typed object.",
+    "url_mapping": ["FASTQ.DNA.Reads"],
+    "handler_options":
+    {
+        "max_runtime": 3600,
         "must_own_validation": false,
         "must_own_saving_to_workspace": false,
-        "max_runtime": 360,
-        "custom_options": []
+        "required_fields":
+        [
+            "shock_service_url",
+            "handle_service_url",
+	    "input_directory",
+	    "type",
+	    "file"
+        ],
+        "optional_fields":
+        [
+            "output_file_name",
+            "input_mapping",
+	    "insert",
+	    "stdev",
+	    "outward"
+        ],
+        "custom_options": [
+            {
+                "name": "type",
+		"value": "PairedEndLibrary",
+                "type": "string",
+                "required": true
+            }
+	],
+	"input_mapping": [{"input_directory": "FASTQ.DNA.Reads"}]
     },
-    "user_options": [],
+    "user_options":
+    [
+        {
+            "name": "insert",
+            "type": "float",
+            "required": false,
+            "help": "Insert size mean"
+        },
+        {
+            "name": "stdev",
+            "type": "float",
+            "required": false,
+            "help": "Insert size standard deviation"
+        },
+        {
+            "name": "outward",
+            "type": "boolean",
+            "required": false,
+            "help": "Whether reads in the pair point outward"
+        }
+    ],
     "user_option_groups": []
 }

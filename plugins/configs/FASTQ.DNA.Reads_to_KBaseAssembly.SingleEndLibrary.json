@@ -1,11 +1,11 @@
 {
     "script_name": "trns_transform_seqs_to_KBaseAssembly_type.pl",
     "script_type": "upload",
-    "external_type": "FASTA.DNA.Reads",
-    "kbase_type": "KBaseGenomes.SingleEndLibrary",
-    "user_description": "Converts a single end FASTA read file into a KBaseAssembly.SingleEndLibrary typed object.",
-    "developer_description": "Converts a single end FASTA read file into a KBaseAssembly.SingleEndLibrary typed object.",
-    "url_mapping": ["FASTA.DNA.Reads"],
+    "external_type": "FASTQ.DNA.Reads",
+    "kbase_type": "KBaseAssembly.SingleEndLibrary",
+    "user_description": "Converts a single end FASTQ read file into a KBaseAssembly.SingleEndLibrary typed object.",
+    "developer_description": "Converts a single end FASTQ read file into a KBaseAssembly.SingleEndLibrary typed object.",
+    "url_mapping": ["FASTQ.DNA.Reads"],
     "handler_options":
     {
         "max_runtime": 3600,
@@ -32,7 +32,7 @@
                 "required": true
             }
 	],
-	"input_mapping": [{"input_directory": "FASTA.DNA.Reads"}]
+	"input_mapping": [{"input_directory": "FASTQ.DNA.Reads"}]
     },
     "user_options": [],
     "user_option_groups": []

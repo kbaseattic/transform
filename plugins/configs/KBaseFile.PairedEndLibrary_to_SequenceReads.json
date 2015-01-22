@@ -1,0 +1,34 @@
+{
+    "script_name": "trns_transform_KBaseAssembly_type_to_seqs.pl",
+    "script_type": "download",
+    "external_type": "SequenceReads",
+    "kbase_type": "KBaseFile.PairedEndLibrary",
+    "user_description": "Converts KBaseFile.PairedEndLibrary to one or two sequence reads files in the original format user uploaded in.",
+    "developer_description": "",
+    "handler_options": {
+        "max_runtime": 3600,
+        "required_fields": [
+            "workspace_service_url",
+            "workspace_name",
+            "object_name",
+            "working_directory"
+        ],
+        "optional_fields": ["object_version"],
+        "custom_options": []
+    },
+    "user_options": [
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "Name of the workspace object."
+        },
+        {
+            "name": "object_version",
+            "type": "int",
+            "required": false,
+            "help": "Version of the workspace object, if not given we assume the latest."
+        }
+    ],
+    "user_option_groups": []
+}

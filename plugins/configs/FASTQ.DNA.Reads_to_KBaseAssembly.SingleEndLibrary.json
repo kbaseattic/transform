@@ -1,16 +1,38 @@
 {
-    "script_name": "trns_transform_FASTQ_DNA_Reads_to_KBaseAssembly_SingleEndLibrary.py", 
+    "script_name": "trns_transform_seqs_to_KBaseAssembly_type.pl",
     "script_type": "upload",
-    "external_type": "FASTQ.DNA.Reads",
-    "kbase_type": "KBaseAssembly.SingleEndLibrary",
-    "user_description": "",
-    "developer_description": "",
-    
-    "handler_options": {        
+    "external_type": "FASTA.DNA.Reads",
+    "kbase_type": "KBaseGenomes.SingleEndLibrary",
+    "user_description": "Converts a single end FASTA read file into a KBaseAssembly.SingleEndLibrary typed object.",
+    "developer_description": "Converts a single end FASTA read file into a KBaseAssembly.SingleEndLibrary typed object.",
+    "url_mapping": ["FASTA.DNA.Reads"],
+    "handler_options":
+    {
+        "max_runtime": 3600,
         "must_own_validation": false,
         "must_own_saving_to_workspace": false,
-        "max_runtime": 360,
-        "custom_options": []
+        "required_fields":
+        [
+            "shock_service_url",
+            "handle_service_url",
+	    "input_directory",
+	    "type",
+	    "file"
+        ],
+        "optional_fields":
+        [
+            "output_file_name",
+            "input_mapping"
+        ],
+        "custom_options": [
+            {
+                "name": "type",
+		"value": "SingleEndLibrary",
+                "type": "string",
+                "required": true
+            }
+	],
+	"input_mapping": [{"input_directory": "FASTA.DNA.Reads"}]
     },
     "user_options": [],
     "user_option_groups": []

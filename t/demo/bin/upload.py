@@ -278,17 +278,21 @@ if __name__ == "__main__":
                               "downloadPath": "fasciculatum_supercontig.fasta.zip",
                               "url_mapping": "FASTA.DNA.Assembly"}
 
-        genbank_to_contigset = {"external_type": "Genbank.ContigSet",
-                         "kbase_type": "KBaseGenomes.ContigSet",
-                         "object_name": "NC_005213",
-                         "filePath": "data/genbank/NC_005213/NC_005213.gbk",
-                         "downloadPath": "NC_005213.gbk"}
-
         genbank_to_genome = {"external_type": "Genbank.Genome",
-                         "kbase_type": "KBaseGenomes.Genome",
-                         "object_name": "NC_005213",
-                         "filePath": "data/genbank/NC_005213/NC_005213.gbk",
-                         "downloadPath": "NC_005213.gbk"}
+                             "kbase_type": "KBaseGenomes.Genome",
+                             "object_name": "NC_005213",
+                             "filePath": "data/genbank/NC_005213/NC_005213.gbk",
+                             "downloadPath": "NC_005213.gbk",
+                             "url_mapping": "Genbank.Genome"}
+
+        fasta_transcripts_to_genome = {"external_type": "FASTA.Transcripts",
+                                       "kbase_type": "KBaseGenomes.Genome",
+                                       "object_name": "",
+                                       "filePath": None,
+                                       "downloadPath": None,
+                                       "url": "http://bioseed.mcs.anl.gov/~seaver/Files/Athaliana.TAIR10.fa",
+                                       "url_mapping": "FASTA.Transcripts"}
+                         
 
         genbank_to_genome_ftp_ncbi_gz = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
@@ -405,9 +409,9 @@ if __name__ == "__main__":
                         "filePath": "",
                         "downloadPath": ""}
 
-        inputs = [fasta_to_contigset]
-        
-        #         genbank_to_genome,
+        inputs = [fasta_to_contigset,
+                  genbank_to_genome,
+                  fasta_transcripts_to_genome]
         #         genbank_to_genome_ftp_ncbi_gz,
         #         genbank_to_genome_gz, 
         #         genbank_to_genome_bz2, 

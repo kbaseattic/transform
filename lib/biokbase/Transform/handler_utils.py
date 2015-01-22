@@ -155,9 +155,9 @@ class PlugIns:
                     if field in args:
                         job_details["validate"][field] =  args[field]
                     else:
-                        self.logger.info( "Optional field not present : {0}".format(field))
+                        self.logger.info("Optional field not present : {0}".format(field))
             else:
-                self.logger.warning( "No validation available for {0}".format(args["external_type"]))
+                self.logger.warning("No validation available for {0}".format(args["external_type"]))
 
             if self.scripts_config["upload"].has_key("{0}=>{1}".format(args["external_type"],args["kbase_type"])):
                 plugin_key = "{0}=>{1}".format(args["external_type"],args["kbase_type"])
@@ -168,17 +168,17 @@ class PlugIns:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.log_message("ALERT", "Required field not present : {0}".format(field))
+                        self.logger.error("Required field not present : {0}".format(field))
                 
                 for field in self.scripts_config["upload"][plugin_key]["handler_options"]["optional_fields"]:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.info( "Optional field not present : {0}".format(field))
+                        self.logger.info("Optional field not present : {0}".format(field))
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
                 
-            self.logger.info( job_details)
+            self.logger.info(job_details)
         elif method == "download":
             if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
                 plugin_key = "{0}=>{1}".format(args["kbase_type"],args["external_type"])
@@ -189,13 +189,13 @@ class PlugIns:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.log_message("ALERT", "Required field not present : {0}".format(field))
+                        self.logger.error("Required field not present : {0}".format(field))
                 
                 for field in self.scripts_config["download"][plugin_key]["handler_options"]["optional_fields"]:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.info( "Optional field not present : {0}".format(field))
+                        self.logger.info("Optional field not present : {0}".format(field))
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
         elif method == "convert":
@@ -208,13 +208,13 @@ class PlugIns:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.log_message("ALERT", "Required field not present : {0}".format(field))
+                        self.logger.error("Required field not present : {0}".format(field))
                 
                 for field in self.scripts_config["convert"][plugin_key]["handler_options"]["optional_fields"]:
                     if field in args:
                         job_details["transform"][field] =  args[field]
                     else:
-                        self.logger.info( "Optional field not present : {0}".format(field))
+                        self.logger.info("Optional field not present : {0}".format(field))
 
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))

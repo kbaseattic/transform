@@ -131,6 +131,158 @@ def upload(transform_url, options, token):
     return response
 
 
+class PlugIns:
+    def __init__(self, pluginsDir, logger):
+        self.scripts_config = {"external_types": list(),
+                               "kbase_types": list(),
+                               "validate": dict(),
+                               "upload": dict(),
+                               "download": dict(),
+                               "convert": dict()}
+
+        self.logger = logger
+
+        #pluginsDir = self.config["plugins_directory"]
+        plugins = os.listdir(pluginsDir)
+        
+        for p in plugins:
+            try:
+                f = open(os.path.join(pluginsDir, p), 'r')
+                pconfig = simplejson.loads(f.read())
+                f.close()
+
+                id = None
+
+                if pconfig["script_type"] == "validate":
+                    if pconfig["external_type"] not in self.scripts_config["external_types"]:
+                        self.scripts_config["external_types"].append(pconfig["external_type"])
+                    
+                    id = pconfig["external_type"]
+                elif pconfig["script_type"] == "upload":
+                    if pconfig["external_type"] not in self.scripts_config["external_types"]:
+		        self.scripts_config["external_types"].append(pconfig["external_type"])
+                    
+                    if pconfig["kbase_type"] not in self.scripts_config["kbase_types"]:
+                        self.scripts_config["kbase_types"].append(pconfig["kbase_type"])
+                    
+                    id = "{0}=>{1}".format(pconfig["external_type"],pconfig["kbase_type"])
+                elif pconfig["script_type"] == "download":
+                    if pconfig["external_type"] not in self.scripts_config["external_types"]:
+                        self.scripts_config["external_types"].append(pconfig["external_type"])
+                    
+                    if pconfig["kbase_type"] not in self.scripts_config["kbase_types"]:
+                        self.scripts_config["kbase_types"].append(pconfig["kbase_type"])
+                    
+                    id = "{0}=>{1}".format(pconfig["kbase_type"],pconfig["external_type"])
+                elif pconfig["script_type"] == "convert":
+                    if pconfig["source_kbase_type"] not in self.scripts_config["kbase_types"]:
+                        self.scripts_config["kbase_types"].append(pconfig["source_kbase_type"])
+                    
+                    if pconfig["destination_kbase_type"] not in self.scripts_config["kbase_types"]:
+                        self.scripts_config["kbase_types"].append(pconfig["destination_kbase_type"])
+                    
+                    id = "{0}=>{1}".format(pconfig["source_kbase_type"],pconfig["destination_kbase_type"])
+
+                self.scripts_config[pconfig["script_type"]][id] = pconfig
+            except Exception, e:
+                self.logger.warning("Unable to read plugin {0}: {1}".format(p,e.message))
+
+
+    def get_handler_args(method, args, token):
+
+        if "optional_arguments" not in args:
+            args["optional_arguments"] = '{}'
+
+        job_details = dict()
+
+        if method == "upload":
+            args["url_mapping"] = base64.urlsafe_b64encode(simplejson.dumps(args["url_mapping"]))
+
+            if self.scripts_config["validate"].has_key(args["external_type"]):
+                plugin_key = args["external_type"]
+            
+                job_details["validate"] = self.scripts_config["validate"][plugin_key]
+
+                for field in self.scripts_config["validate"][plugin_key]["handler_options"]["required_fields"]:
+                    if field in args:
+                        job_details["validate"][field] =  args[field]
+                    else:
+                        self.logger.warning("Required field not present : {0}".format(field))
+                
+                for field in self.scripts_config["validate"][plugin_key]["handler_options"]["optional_fields"]:
+                    if field in args:
+                        job_details["validate"][field] =  args[field]
+                    else:
+                        self.logger.info( "Optional field not present : {0}".format(field))
+            else:
+                self.logger.warning( "No validation available for {0}".format(args["external_type"]))
+
+            if self.scripts_config["upload"].has_key("{0}=>{1}".format(args["external_type"],args["kbase_type"])):
+                plugin_key = "{0}=>{1}".format(args["external_type"],args["kbase_type"])
+            
+                job_details["transform"] = self.scripts_config["upload"][plugin_key]
+
+                for field in self.scripts_config["upload"][plugin_key]["handler_options"]["required_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.logger.log_message("ALERT", "Required field not present : {0}".format(field))
+                
+                for field in self.scripts_config["upload"][plugin_key]["handler_options"]["optional_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.logger.info( "Optional field not present : {0}".format(field))
+            else:
+                raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
+                
+            self.logger.info( job_details)
+        elif method == "download":
+            if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
+                plugin_key = "{0}=>{1}".format(args["kbase_type"],args["external_type"])
+            
+                job_details["transform"] = self.scripts_config["download"][plugin_key]
+
+                for field in self.scripts_config["download"][plugin_key]["handler_options"]["required_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.logger.log_message("ALERT", "Required field not present : {0}".format(field))
+                
+                for field in self.scripts_config["download"][plugin_key]["handler_options"]["optional_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.logger.info( "Optional field not present : {0}".format(field))
+            else:
+                raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
+        elif method == "convert":
+            if self.scripts_config["convert"].has_key("{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])):
+                plugin_key = "{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])
+            
+                job_details["transform"] = self.scripts_config["convert"][plugin_key]
+
+                for field in self.scripts_config["convert"][plugin_key]["handler_options"]["required_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.logger.log_message("ALERT", "Required field not present : {0}".format(field))
+                
+                for field in self.scripts_config["convert"][plugin_key]["handler_options"]["optional_fields"]:
+                    if field in args:
+                        job_details["transform"][field] =  args[field]
+                    else:
+                        self.logger.info( "Optional field not present : {0}".format(field))
+
+            else:
+                raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))
+                
+        args["job_details"] = base64.urlsafe_b64encode(simplejson.dumps(job_details))
+        args["optional_arguments"] = base64.urlsafe_b64encode(simplejson.dumps(args["optional_arguments"]))
+        return args
+
+
+
 def post_to_shock(shockURL, filePath, token):
     size = os.path.getsize(filePath)
 
@@ -221,6 +373,11 @@ if __name__ == "__main__":
     parser.add_argument('--file_path', nargs='?', help='path to file for upload', const="", default="")
     parser.add_argument('--url_mapping', nargs='?', help='dictionary of urls to process', const="", default="")
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
+    parser.add_argument('--handler', help='Client bypass test', dest="handler_mode", action='store_true')
+    parser.add_argument('--client', help='Client mode test', dest="handler_mode", action='store_false')
+    parser.set_defaults(handler_mode=False)
+    ## TODO: change the default path to be relative to __FILE__
+    parser.add_argument('--plugin_dir', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
 
     args = parser.parse_args()
 
@@ -237,6 +394,10 @@ if __name__ == "__main__":
             raise Exception("Unable to find KBase token!")
 
     #read_configs(os.path.abspath("../../plugins/configs"))
+    
+
+    plugin = None
+    if args.handler_mode: plugin = PlugIns(args.plugin_dir, logger)
 
     inputs = list()
     if not args.demo:
@@ -244,7 +405,8 @@ if __name__ == "__main__":
                        "kbase_type": args.kbase_type,
                        "object_name": args.object_name,
                        "filePath": args.file_path,
-                       "downloadPath": args.download_path}
+                       "downloadPath": args.download_path,
+                       "url_mapping" : args.url_mapping}
 
         workspace = args.workspace    
         inputs = [user_inputs]
@@ -425,6 +587,7 @@ if __name__ == "__main__":
     
     term = blessings.Terminal()
     for x in inputs:
+        print x
         external_type = x["external_type"]
         kbase_type = x["kbase_type"]
         object_name = x["object_name"]
@@ -454,13 +617,20 @@ if __name__ == "__main__":
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
 
-                upload_response = upload(services["transform"], input_object, token)
-                print term.blue("\tTransform service upload requested:")
-                print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
-                print term.blue("\tTransform service responded with job ids:")
-                print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(upload_response[0], upload_response[1])
+                if args.handler_mode: 
+                    cmd_line = ["trns_upload_taskrunner"]
+                    print plugin(input_object, token)
 
-                show_job_progress(services["ujs"], services["awe"], upload_response[0], upload_response[1], token)
+                    print "trns_upload_taskrunner --optional_arguments '$optional_arguments' --job_details '$job_details' --workspace_service_url Transform.workspace_service_url --shock_service_url Transform.shock_service_url --handle_service_url Transform.handle_service_url --ujs_service_url Transform.ujs_service_url --external_type $external_type --kbase_type $kbase_type --url_mapping '$url_mapping' --workspace_name $workspace_name --object_name $object_name  --working_directory Transform.working_directory --ujs_job_id KBWF_COMMON.ujs_jid"
+                else:
+                    upload_response = upload(services["transform"], input_object, token)
+                 
+                    print term.blue("\tTransform service upload requested:")
+                    print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
+                    print term.blue("\tTransform service responded with job ids:")
+                    print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(upload_response[0], upload_response[1])
+                 
+                    show_job_progress(services["ujs"], services["awe"], upload_response[0], upload_response[1], token)
 
                 print term.bold("Step 2: View or use workspace objects")
                 show_workspace_object_list(services["workspace"], workspace, object_name, token)

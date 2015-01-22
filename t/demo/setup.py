@@ -29,6 +29,14 @@ shutil.copytree(os.path.join(running_dir,"workspace_deluxe/lib/biokbase/workspac
 shutil.copytree(os.path.join(running_dir,"handle_service/lib/biokbase/AbstractHandle"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase/AbstractHandle"))
 shutil.copytree(os.path.join(running_dir,"../../lib/biokbase/Transform"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase/Transform"))
 
+
+scripts = list()
+
+for root, directories, files in os.walk(os.path.join(running_dir, "../../plugins/scripts/")):
+    for file in files:
+        print "copy from {0} {1}".format(os.path.join(root, file), os.path.join(virtualenv_dir,"/bin/"))
+        shutil.copy(os.path.join(root, file), os.path.join(virtualenv_dir,"bin/"))
+
 print "Cleaning up checked out repos"
 
 shutil.rmtree(os.path.join(running_dir,"user_and_job_state"))

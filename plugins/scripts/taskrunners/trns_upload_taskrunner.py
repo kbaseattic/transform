@@ -14,6 +14,10 @@ from biokbase.userandjobstate.client import UserAndJobState
 from biokbase.Transform import handler_utils
 from biokbase.Transform import script_utils
 
+def check_arg_defined (args, key):
+    if key in args["handler_options"]["required_fields"] or key in args["handler_options"]["optional_fields"]: 
+        return True
+    else: return False
 
 def main():
     """
@@ -217,11 +221,21 @@ def main():
                          None)                                  
 
     
+    # build input_mapping from user args
+    input_mapping = dict()
+    for name in args.url_mapping:
+        checkPath = os.path.join(download_directory, name)
+        files = os.listdir(checkPath)
+        
+        if len(files) == 1:
+            input_mapping[name] = files[0]
+        else:
+            input_mapping[name] = checkPath
+
     # Report progress on success of the download step
     if args.ujs_job_id is not None:
         ujs.update_job_progress(args.ujs_job_id, kb_token, "Input data download completed", 
                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
-
 
     # TODO check to see if a validator is configured, if not skip to transform
     # Step 2 : Validate the data files
@@ -229,7 +243,19 @@ def main():
         os.mkdir(validation_directory)
     
         validation_args = args.job_details["validate"]
-        validation_args["optional_arguments"] = args.optional_arguments
+        # optional argument
+        if "optional_fields" in validation_args["handler_options"]: 
+            for k in args.optional_arguments:
+                if k in validation_args["handler_options"]["optional_fields"]:
+                    validation_args[k] = args.optional_arguments[k]
+
+        # custom argument
+        if  "custom_options" in validation_args["handler_options"]: 
+            for c in validation_args["handler_options"]["custom_options"]:
+                if(c["type"] != "boolean"):
+                  validation_args[c["name"]] = c["value"]
+                else:
+                  validation_args[c["name"]] = c["value"] # TODO: Fix later with example
         
         # gather a list of all files downloaded
         files = list(handler_utils.gen_recursive_filelist(download_directory))
@@ -243,9 +269,23 @@ def main():
                 directories.append(path)
         
         # validate everything in each directory
+        # TODO: 1) The following logic assume all the same type and 
+        #          it will be broken if there are multiple types
+        #       2) input_directory assume it can handle files without input_mapping
         for d in directories:
-            validation_args["input_directory"] = d
-            validation_args["working_directory"] = validation_directory
+            if check_arg_defined(validation_args, "input_directory"): 
+                validation_args["input_directory"] = d
+            if check_arg_defined(validation_args,"working_directory"): 
+                validation_args["working_directory"] = validation_directory
+            #if check_arg_defined(validation_args,"input_mapping"):
+            #    validation_args["input_mapping"] = input_mapping
+            if check_arg_defined(validation_args,"input_file_name"):
+                files = os.listdir(d)
+                
+                if len(files) == 1:
+                    validation_args["input_file_name"] =os.path.join(d,files[0])
+                else:
+                    raise Exception("Too many files for input_file_name")
             handler_utils.run_task(logger, validation_args)
     except Exception, e:
         handler_utils.report_exception(logger, 
@@ -272,29 +312,45 @@ def main():
 
     # Step 3: Transform the data
     try:
-        os.mkdir(transform_directory)
 
         transformation_args = args.job_details["transform"]
-        transformation_args["optional_arguments"] = args.optional_arguments
-        transformation_args["input_directory"] = download_directory
-        transformation_args["working_directory"] = transform_directory
+        # optional argument
+        if "optional_fields" in transformation_args["handler_options"]: 
+            for k in args.optional_arguments:
+                if k in transformation_args["handler_options"]["optional_fields"]:
+                    transformation_args[k] = args.optional_arguments[k]
 
-        transformation_args["shock_service_url"] = args.shock_service_url
-        transformation_args["handle_service_url"] = args.handle_service_url
+        # custom argument
+        if  "custom_options" in transformation_args["handler_options"]: 
+            for c in transformation_args["handler_options"]["custom_options"]:
+                if(c["type"] != "boolean"):
+                  transformation_args[c["name"]] = c["value"]
+                else:
+                  transformation_args[c["name"]] = c["value"] # TODO: Fix later with example
 
-        transformation_args["input_mapping"] = dict()
-        for name in args.url_mapping:
-            checkPath = os.path.join(download_directory, name)
-            files = os.listdir(checkPath)
-            
-            if len(files) == 1:
-                transformation_args["input_mapping"][name] = files[0]
-            else:
-                transformation_args["input_mapping"][name] = checkPath
+        if check_arg_defined( transformation_args,"working_directory"): 
+            os.mkdir(transform_directory)
+            transformation_args["working_directory"] = transform_directory
+        if check_arg_defined( transformation_args,"input_directory"):
+            transformation_args["input_directory"] = download_directory
+        if check_arg_defined( transformation_args,"input_mapping"):
+            transformation_args["input_mapping"] = simplejson.dumps(input_mapping)
 
-        transformation_args["input_mapping"] = simplejson.dumps(transformation_args["input_mapping"])
+        #Need to process optional argument to be processed and converted to command arguments
+        if check_arg_defined( transformation_args,"input_file_name"):
+            for k in transformation_args["handler_options"]["input_mapping"]:
+               if k in input_mapping:
+                   transformation_args["input_file_name"] = input_mapping[k]
+        else:
+            for k in transformation_args["handler_options"]["input_mapping"]:
+               if k in input_mapping:
+                   transformation_args[transformation_args["handler_options"]["input_mapping"]] = input_mapping[k]
+
+        if check_arg_defined( transformation_args,"shock_service_url") : transformation_args["shock_service_url"] = args.shock_service_url
+        if check_arg_defined( transformation_args,"handle_service_url") : transformation_args["handle_service_url"] = args.handle_service_url
 
         handler_utils.run_task(logger, transformation_args)
+
     except Exception, e:
         handler_utils.report_exception(logger, 
                          {"message": "ERROR : Creating an object from {0}".format(args.url_mapping),
@@ -320,7 +376,7 @@ def main():
                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
 
-    # Step 3: Save the data to the Workspace
+    # Step 4: Save the data to the Workspace
     try:    
         files = os.listdir(transform_directory)
         

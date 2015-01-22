@@ -11,6 +11,7 @@ import gzip
 import zipfile
 import tarfile
 import pprint
+import subprocess
 
 # patch for handling unverified certificates
 import ssl
@@ -215,6 +216,7 @@ if __name__ == "__main__":
     parser.add_argument('--workspace_service_url', nargs='?', help='Workspace service for KBase objects', const="", default="https://kbase.us/services/ws/")
     parser.add_argument('--awe_service_url', nargs='?', help='AWE service for additional job monitoring', const="", default="http://140.221.67.242:7080")
     parser.add_argument('--transform_service_url', nargs='?', help='Transform service that handles the data conversion to KBase', const="", default="http://140.221.67.242:7778/")
+    parser.add_argument('--handle_service_url', nargs='?', help='Handle service for KBase handle', const="", default="https://kbase.us/services/handle_service")
 
     parser.add_argument('--external_type', nargs='?', help='the external type of the data', const="", default="")
     parser.add_argument('--kbase_type', nargs='?', help='the kbase object type to create', const="", default="")
@@ -227,7 +229,7 @@ if __name__ == "__main__":
     parser.add_argument('--client', help='Client mode test', dest="handler_mode", action='store_false')
     parser.set_defaults(handler_mode=False)
     ## TODO: change the default path to be relative to __FILE__
-    parser.add_argument('--plugin_dir', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
+    parser.add_argument('--plugin_directory', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
 
     args = parser.parse_args()
 
@@ -247,7 +249,8 @@ if __name__ == "__main__":
     
 
     plugin = None
-    if args.handler_mode: plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_dir, logger)
+    if args.handler_mode: 
+        plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory, logger)
 
     inputs = list()
     if not args.demo:
@@ -273,7 +276,7 @@ if __name__ == "__main__":
                               "object_name": "fasciculatum_supercontig",
                               "filePath": "data/fasciculatum_supercontig.fasta.zip",
                               "downloadPath": "fasciculatum_supercontig.fasta.zip",
-                              "url_mapping": "fasta_assembly"}
+                              "url_mapping": "FASTA.DNA.Assembly"}
 
         genbank_to_contigset = {"external_type": "Genbank.ContigSet",
                          "kbase_type": "KBaseGenomes.ContigSet",
@@ -430,7 +433,8 @@ if __name__ == "__main__":
                 "ujs": args.ujs_service_url,
                 "workspace": args.workspace_service_url,
                 "awe": args.awe_service_url,
-                "transform": args.transform_service_url}
+                "transform": args.transform_service_url,
+                "handle": args.handle_service_url}
     
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)
@@ -468,10 +472,28 @@ if __name__ == "__main__":
                 input_object["object_name"] = object_name
 
                 if args.handler_mode: 
-                    cmd_line = ["trns_upload_taskrunner"]
-                    print plugin(input_object, token)
+                    print term.blue("\tTransform handler upload started:")
+                    for attr, value in args.__dict__.iteritems():
+                       if attr.endswith("_service_url"):
+                         input_object[attr] = value
+                    input_object["working_directory"] = conversionDownloadPath
+                    input_args = plugin.get_handler_args("upload",input_object)
+                    command_list = ["trns_upload_taskrunner"]
+                    
+                    for k in input_args:
+                       command_list.append("--{0}".format(k))
+                       command_list.append("{0}".format(input_args[k]))
 
-                    print "trns_upload_taskrunner --optional_arguments '$optional_arguments' --job_details '$job_details' --workspace_service_url Transform.workspace_service_url --shock_service_url Transform.shock_service_url --handle_service_url Transform.handle_service_url --ujs_service_url Transform.ujs_service_url --external_type $external_type --kbase_type $kbase_type --url_mapping '$url_mapping' --workspace_name $workspace_name --object_name $object_name  --working_directory Transform.working_directory --ujs_job_id KBWF_COMMON.ujs_jid"
+                    task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+                    sub_stdout, sub_stderr = task.communicate()
+                
+                    if sub_stdout is not None:
+                        print sub_stdout
+                    if sub_stderr is not None:
+                        print >> sys.stderr, sub_stderr
+                
+                    if task.returncode != 0:
+                        raise Exception(sub_stderr)
                 else:
                     upload_response = upload(services["transform"], input_object, token)
                  
@@ -523,13 +545,38 @@ if __name__ == "__main__":
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
 
-                upload_response = upload(services["transform"], input_object, token)
-                print term.blue("\tTransform service upload requested:")
-                print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
-                print term.blue("\tTransform service responded with job ids:")
-                print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(upload_response[0], upload_response[1])
-    
-                show_job_progress(services["ujs"], services["awe"], upload_response[0], upload_response[1], token)
+                if args.handler_mode: 
+                    print term.blue("\tTransform handler upload started:")
+                    for attr, value in args.__dict__.iteritems():
+                       if attr.endswith("_service_url"):
+                         input_object[attr] = value
+                    input_object["working_directory"] = conversionDownloadPath
+                    input_args = plugin.get_handler_args("upload",input_object)
+                    command_list = ["trns_upload_taskrunner"]
+                    
+                    for k in input_args:
+                       command_list.append("--{0}".format(k))
+                       command_list.append("{0}".format(input_args[k]))
+
+                    task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+                    sub_stdout, sub_stderr = task.communicate()
+                
+                    if sub_stdout is not None:
+                        print sub_stdout
+                    if sub_stderr is not None:
+                        print >> sys.stderr, sub_stderr
+                
+                    if task.returncode != 0:
+                        raise Exception(sub_stderr)
+                       
+                else:
+                    upload_response = upload(services["transform"], input_object, token)
+                    print term.blue("\tTransform service upload requested:")
+                    print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
+                    print term.blue("\tTransform service responded with job ids:")
+                    print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(upload_response[0], upload_response[1])
+                 
+                    show_job_progress(services["ujs"], services["awe"], upload_response[0], upload_response[1], token)
     
                 print term.bold("Step 3: View or use workspace objects")
                 show_workspace_object_list(services["workspace"], workspace, object_name, token)

@@ -55,10 +55,13 @@ class TaskRunner(object):
     def _build_command_list(self, arguments=None):
         command_name = os.path.splitext(arguments["script_name"])[0]
         command_list = [command_name]
+        del arguments["script_name"]
+        del arguments["optional_arguments"]
 
         for k in arguments:
             command_list.append("--{0}".format(k))
             command_list.append("{0}".format(arguments[k]))
+        print command_list
 
         return command_list
 
@@ -148,6 +151,8 @@ class PlugIns(object):
                 plugin_key = args["external_type"]
             
                 job_details["validate"] = self.scripts_config["validate"][plugin_key]
+                #job_details["validate"] = dict()
+                #job_details["validate"]["script_name"] = self.scripts_config["validate"][plugin_key]["script_name"]
 
                 for field in self.scripts_config["validate"][plugin_key]["handler_options"]["required_fields"]:
                     if field in args:
@@ -160,6 +165,7 @@ class PlugIns(object):
                         job_details["validate"][field] =  args[field]
                     else:
                         self.logger.info("Optional field not present : {0}".format(field))
+                self.logger.info(job_details)
             else:
                 self.logger.warning("No validation available for {0}".format(args["external_type"]))
 
@@ -167,6 +173,8 @@ class PlugIns(object):
                 plugin_key = "{0}=>{1}".format(args["external_type"],args["kbase_type"])
             
                 job_details["transform"] = self.scripts_config["upload"][plugin_key]
+                #job_details["transform"] = dict()
+                #job_details["transform"]["script_name"] = self.scripts_config["upload"][plugin_key]["script_name"]
 
                 for field in self.scripts_config["upload"][plugin_key]["handler_options"]["required_fields"]:
                     if field in args:
@@ -179,6 +187,7 @@ class PlugIns(object):
                         job_details["transform"][field] =  args[field]
                     else:
                         self.logger.info("Optional field not present : {0}".format(field))
+                self.logger.info(job_details)
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
                 

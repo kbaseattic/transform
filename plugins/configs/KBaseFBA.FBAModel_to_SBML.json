@@ -11,7 +11,7 @@
             "input_file_name",
             "workspace_name"
         ], 
-        "optional_fields": ["version","url","output_file_name"], 
+        "optional_fields": ["version","url"], 
         "custom_options": [], 
     },  
     "user_options": [ 

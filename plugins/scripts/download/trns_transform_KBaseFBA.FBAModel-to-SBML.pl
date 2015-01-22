@@ -28,7 +28,6 @@ use Bio::KBase::fbaModelServices::ScriptHelpers qw(fbaws get_fba_client runFBACo
 my($opt, $usage) = describe_options("%c %o",
 				    ['input_file_name|i=s', 'workspace object id from which the input is to be read'],
 				    ['workspace_name|w=s', 'workspace id from which the input is to be read'],
-				    ['output_file_name|o=s', 'file to which the output is to be written'],
 				    ['url=s', 'URL for the genome annotation service'],
 				    ['help|h', 'show this help message'],
 				    );
@@ -54,6 +53,6 @@ $logger->info("fbaModelServices export_fbamodel() informational messages\n".$std
 $logger->warn("fbaModelServices export_fbamodel() warning messages\n".$stderr) if $stderr;
 $logger->info("Export of FBAModel to SBML complete");
 
-open(OUT, "> ".$opt->{workspace_name}."-".$opt->{output_file_name}."-SBML.xml");
+open(OUT, "> ".$opt->{workspace_name}."-".$opt->{input_file_name}."-SBML.xml");
 print OUT $output;
 close(OUT);

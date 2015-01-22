@@ -89,7 +89,7 @@ if($Help || !$In_File || !$Out_File){
     exit();
 }
 
-if($Genome_ID !~ /^[\w\|.-]+$/){
+if($Genome_ID ne "" && $Genome_ID !~ /^[\w\|.-]+$/){
     $logger->warn("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
     die("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
 }

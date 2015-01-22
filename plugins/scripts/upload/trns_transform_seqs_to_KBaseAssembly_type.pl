@@ -67,7 +67,7 @@ $shock_url  ||= 'https://kbase.us/services/shock-api';
 $handle_url ||= 'https://kbase.us/services/handle_service';
 
 $help and die $usage;
-$type && @inputs >= 1 && @inputs <= 2 or die $usage;
+$type && $output && @inputs >= 1 && @inputs <= 2 or die $usage;
 
 my $shock = { url => $shock_url, token => $token };
 my $handle_service = Bio::KBase::HandleService->new($handle_url);

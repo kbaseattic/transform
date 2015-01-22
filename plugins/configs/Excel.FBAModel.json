@@ -9,9 +9,13 @@
         "max_runtime": 360,
         "must_own_validation": false,
         "must_own_saving_to_workspace": false,
-        "required_fields": ["input"], 
-        "optional_fields": ["help"],
-        "custom_options": []
+        "custom_options": [],
+	"required_fields":
+	{
+	    "input_file_name"
+	},
+	"optional_fields":[],
+	"input_mapping": [{'input_file_name": "Excel.FBAModel"}]
     },
     "user_options": [],
     "user_option_groups": []

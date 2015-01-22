@@ -56,7 +56,7 @@
             "name": "outward",
             "type": "boolean",
             "required": false,
-            "help": "Whether reads in the pair point outward"
+            "help": "Whether reads in the pair point outward; set to false by default."
         }
     ],
     "user_option_groups": []

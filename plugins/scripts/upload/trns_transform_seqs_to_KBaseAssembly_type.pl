@@ -27,7 +27,7 @@ Options for PairedEndLibrary:
   -f, --input_file_name    path       - one or two read files (FASTA, FASTQ, or compressed forms)
   --insert                 float      - insert size mean
   --stdev                  float      - insert size standard deviation
-  --outward                           - this flag is set if reads in the pair point outward
+  --outward                bool       - this flag is set to 1 if reads in the pair point outward
 
 Options for SingleEndLibrary:
 
@@ -36,7 +36,7 @@ Options for SingleEndLibrary:
 Options for ReferenceAssembly:
 
   -f, --input_file_name    path       - one FASTA file containing a reference set of contigs
-  --refname    text                   - genome name of the reference contig set
+  --refname                text       - genome name of the reference contig set
 
 Examples:
 
@@ -59,7 +59,7 @@ my $rc = GetOptions("h|help"                 => \$help,
                     "t|type=s"               => \$type,
                     "insert=f"               => \$insert,
                     "stdev=f"                => \$stdev,
-                    "outward"                => \$outward,
+                    "outward=i"              => \$outward,
                     "refname=s"              => \$refname);
 
 $token      ||= $ENV{KB_AUTH_TOKEN};

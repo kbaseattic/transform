@@ -39,7 +39,7 @@ import us.kbase.shock.client.exceptions.ShockHttpException;
 public class ConvertGBK {
 
     //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
-    String[] argsPossible = {"-i", "--input_file_name", "-o", "--object_name", "-oc", "--contigset_object_name",
+    String[] argsPossible = {"-i", "--input_directory", "-o", "--object_name", "-oc", "--contigset_object_name",
             "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url", "-wd", "--working_directory"};
     String[] argsPossibleMap = {"input", "input", "outputg", "outputg", "outputc", "outputc",
             "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd"};
@@ -340,12 +340,13 @@ public class ConvertGBK {
         } else {
             /*TODO add ws url, output Genome object name, output ContigSet object name to arguments*/
             System.out.println("usage: java us.kbase.genbank.ConvertGBK " +
-                    "<-i or --input_file_name file or dir or files of GenBank .gbk files> " +
+                    "<-i or --input_directory file or dir or files of GenBank .gbk files> " +
                     "<-o or --object_name> " +
                     "<-oc or --contigset_object_name> " +
                     "<-w or --ws_name ws name> " +// <convert y/n> <save y/n>");
-                    "<-wu or --ws_url ws url>" +// <convert y/n> <save y/n>");
-                    "<-su or --shock_url shock url>");// <convert y/n> <save y/n>");
+                    "<-wu or --ws_url ws url> " +// <convert y/n> <save y/n>");
+                    "<-su or --shock_url shock url> " +
+                    "<-wd or --working_directory");// <convert y/n> <save y/n>");
 
             //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
         }

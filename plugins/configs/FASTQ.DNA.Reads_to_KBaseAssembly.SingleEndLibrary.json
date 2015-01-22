@@ -2,7 +2,7 @@
     "script_name": "trns_transform_seqs_to_KBaseAssembly_type.pl",
     "script_type": "upload",
     "external_type": "FASTQ.DNA.Reads",
-    "kbase_type": "KBaseGenomes.SingleEndLibrary",
+    "kbase_type": "KBaseAssembly.SingleEndLibrary",
     "user_description": "Converts a single end FASTQ read file into a KBaseAssembly.SingleEndLibrary typed object.",
     "developer_description": "Converts a single end FASTQ read file into a KBaseAssembly.SingleEndLibrary typed object.",
     "url_mapping": ["FASTQ.DNA.Reads"],

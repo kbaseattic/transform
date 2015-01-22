@@ -1,19 +1,22 @@
 #!/usr/bin/env perl
+#PERL USE
 use warnings;
 use strict;
 use Data::Dumper;
 use Getopt::Long;
 use File::Stream;
+
+#KBASE USE
 use Bio::KBase::Transform::ScriptHelpers qw( getStderrLogger );
 
 my $In_File   = "";
 my $Help = 0;
-GetOptions("input|i=s"  => \$In_File,
+GetOptions("input_file_name|i=s"  => \$In_File,
 	   "help|h"     => \$Help);
 
 if($Help || !$In_File){
-    print($0." --input/-i <Input CSV File>");
-    $logger->warn($0." --in_file|-i <Input CSV File>");
+    print($0." --input_file_name/-i <Input CSV File>");
+    $logger->warn($0." --input_file_name|-i <Input CSV File>");
     exit(0);
 }
 

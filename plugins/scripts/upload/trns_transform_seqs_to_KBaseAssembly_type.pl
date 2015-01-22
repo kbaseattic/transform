@@ -62,7 +62,7 @@ my $rc = GetOptions("h|help"                 => \$help,
                     "insert=f"               => \$insert,
                     "stdev=f"                => \$stdev,
                     "outward"                => \$outward,
-                    "refname"                => \$refname);
+                    "refname=s"              => \$refname);
 
 $token      ||= $ENV{KB_AUTH_TOKEN};
 $shock_url  ||= 'https://kbase.us/services/shock-api';

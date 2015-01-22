@@ -39,6 +39,7 @@ my %supported = map { $_ => 1 }
                 qw(KBaseAssembly.PairedEndLibrary
                    KBaseAssembly.SingleEndLibrary
                    KBaseAssembly.ReferenceAssembly
+                   KBaseAssembly.AssemblyInput
                    KBaseFile.PairedEndLibrary
                    KBaseFile.SingleEndLibrary);
 

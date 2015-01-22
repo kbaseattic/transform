@@ -6,7 +6,6 @@
     "user_description": "",
     "developer_description": "",
     "url_mapping":["Genbank.Genome"],
-    
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": false,
@@ -26,7 +25,7 @@
             "shock_service_url"
         ],
         
-        "input_mapping":[{"input_file_name":"Genbank.Genome"}],
+        "input_mapping":{"Genbank.Genome":"input_file_name"},
         "custom_options": []
     },
     "user_options": {

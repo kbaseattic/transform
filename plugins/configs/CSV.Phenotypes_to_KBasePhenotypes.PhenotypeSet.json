@@ -4,7 +4,7 @@
     "external_type": "CSV",
     "kbase_type": "KBasePhenotypes.PhenotypeSet",
     "user_description": "Converts CSV file to PhenotypeSet object in workspace."
-    
+    "url_mapping": ["CSV.Phenotypes"],    
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": true,
@@ -20,7 +20,7 @@
 	[
 	    "genome"
 	],
-	"input_mapping": [{'input_file_name": "CSV.Phenotypes"}]
+	"input_mapping": {"CSV.Phenotypes": "input_file_name"}
     },
     "user_options": [
         {

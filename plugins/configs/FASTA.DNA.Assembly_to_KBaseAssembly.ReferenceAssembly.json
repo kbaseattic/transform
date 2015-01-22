@@ -15,25 +15,23 @@
         [
             "shock_service_url",
             "handle_service_url",
-	    "input_directory",
 	    "type",
-	    "file"
+	    "input_file_name",
+	    "output_file_name"
         ],
         "optional_fields":
         [
-            "output_file_name",
-            "input_mapping",
 	    "refname"
         ],
         "custom_options": [
             {
                 "name": "type",
-		"value": "ReferenceAssembly",
+		"value": "SingleEndLibrary",
                 "type": "string",
                 "required": true
             }
 	],
-	"input_mapping": [{"input_directory": "FASTA.DNA.Assembly"}]
+	"input_mapping": {"FASTA.DNA.Assembly": "input_file_name"}
     },
     "user_options":
     [

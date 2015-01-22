@@ -15,15 +15,11 @@
         [
             "shock_service_url",
             "handle_service_url",
-	    "input_directory",
 	    "type",
-	    "file"
+	    "input_file_name",
+	    "output_file_name"
         ],
-        "optional_fields":
-        [
-            "output_file_name",
-            "input_mapping"
-        ],
+        "optional_fields": [],
         "custom_options": [
             {
                 "name": "type",
@@ -32,7 +28,7 @@
                 "required": true
             }
 	],
-	"input_mapping": [{"input_directory": "SequenceReads"}]
+	"input_mapping": {"SequenceReads": "input_file_name"}
     },
     "user_options": [],
     "user_option_groups": []

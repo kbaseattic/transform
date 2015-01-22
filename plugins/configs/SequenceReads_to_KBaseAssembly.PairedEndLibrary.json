@@ -5,7 +5,7 @@
     "kbase_type": "KBaseAssembly.PairedEndLibrary",
     "user_description": "Converts one or two paired sequence read files into a KBaseAssembly.PairedEndLibrary typed object.",
     "developer_description": "Converts one or two paired sequence read files into a KBaseAssembly.PairedEndLibrary typed object.",
-    "url_mapping": ["SequenceReads"],
+    "url_mapping": ["SequenceReads.1", "SequenceReads.2"],
     "handler_options":
     {
         "max_runtime": 3600,
@@ -15,14 +15,12 @@
         [
             "shock_service_url",
             "handle_service_url",
-	    "input_directory",
-	    "type",
-	    "file"
+	    "input_file_name",
+            "output_file_name",
+	    "type"
         ],
         "optional_fields":
         [
-            "output_file_name",
-            "input_mapping",
 	    "insert",
 	    "stdev",
 	    "outward"
@@ -35,7 +33,10 @@
                 "required": true
             }
 	],
-	"input_mapping": [{"input_directory": "SequenceReads"}]
+	"input_mapping": {
+	    "SequenceReads.1": "input_file_name",
+	    "SequenceReads.2": "input_file_name"
+	}
     },
     "user_options":
     [

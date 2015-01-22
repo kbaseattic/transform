@@ -1,11 +1,11 @@
 {
     "script_name": "trns_transform_seqs_to_KBaseAssembly_type.pl",
     "script_type": "upload",
-    "external_type": "FASTQ.DNA.Reads",
+    "external_type": "SequenceReads",
     "kbase_type": "KBaseAssembly.PairedEndLibrary",
-    "user_description": "Converts one or two paired FASTQ read files into a KBaseAssembly.PairedEndLibrary typed object.",
-    "developer_description": "Converts one or two paired FASTQ read files into a KBaseAssembly.PairedEndLibrary typed object.",
-    "url_mapping": ["FASTQ.DNA.Reads"],
+    "user_description": "Converts one or two paired sequence read files into a KBaseAssembly.PairedEndLibrary typed object.",
+    "developer_description": "Converts one or two paired sequence read files into a KBaseAssembly.PairedEndLibrary typed object.",
+    "url_mapping": ["SequenceReads"],
     "handler_options":
     {
         "max_runtime": 3600,
@@ -35,7 +35,7 @@
                 "required": true
             }
 	],
-	"input_mapping": [{"input_directory": "FASTQ.DNA.Reads"}]
+	"input_mapping": [{"input_directory": "SequenceReads"}]
     },
     "user_options":
     [

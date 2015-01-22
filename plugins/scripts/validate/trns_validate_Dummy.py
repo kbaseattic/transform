@@ -55,7 +55,8 @@ if __name__ == "__main__":
     #parser.add_argument('-w', '--dst_ws_name', help='Destination workspace name', action='store', dest='ws_id', default=None, required=True)
     #parser.add_argument('-o', '--out_id', help='Output workspace object name', action='store', dest='outobj_id', default=None, required=True)
 
-    parser.add_argument('-l', '--working_directory', help='Support directory', action='store', dest='sdir', default='lib', required=True)
+    parser.add_argument('-l', '--input_directory', help='Support directory', action='store', dest='sdir', default='lib', required=False)
+    parser.add_argument('-w', '--working_directory', help='Support directory', action='store', dest='sdir', default='lib', required=False)
     parser.add_argument('-g', '--output_filename', help='Output prefix or file name', action='store', dest='otmp', default='outfile', required=False)
     # for meta data
     #parser.add_argument('-i', '--in_id', help='Input Shock node id for meta', action='store', dest='inobj_id', default='NotProvided', required=True)

@@ -30,6 +30,7 @@ import dateutil.tz
 
 import biokbase.Transform.Client
 import biokbase.Transform.script_utils
+import biokbase.Transform.handler_utils
 import biokbase.userandjobstate.client
 import biokbase.workspace.client
 
@@ -168,6 +169,11 @@ if __name__ == "__main__":
     parser.add_argument('--workspace', nargs='?', help='name of the workspace where your objects should be created', const="", default="upload_testing")
     parser.add_argument('--object_name', nargs='?', help='name of the workspace object to create', const="", default="")
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
+    parser.add_argument('--handler', help='Client bypass test', dest="handler_mode", action='store_true')
+    parser.add_argument('--client', help='Client mode test', dest="handler_mode", action='store_false')
+    parser.set_defaults(handler_mode=False)
+    ## TODO: change the default path to be relative to __FILE__
+    parser.add_argument('--plugin_dir', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
 
     args = parser.parse_args()
 
@@ -182,6 +188,9 @@ if __name__ == "__main__":
                 raise Exception("Unable to find KBase token!")
         else:
             raise Exception("Unable to find KBase token!")
+
+    plugin = None
+    if args.handler_mode: plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_dir, logger)
 
     if not args.demo:
         user_inputs = {"external_type": args.external_type,
@@ -240,13 +249,16 @@ if __name__ == "__main__":
 
         try:
             print term.bold("Step 1: Make KBase download request")
-            download_response = download(services["transform"], {"external_type": external_type, "kbase_type": kbase_type, "workspace_name": workspace, "object_name": object_name}, token)
-            print term.blue("\tTransform service download requested:")
-            print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
-            print term.blue("\tTransform service responded with job ids:")
-            print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(download_response[0], download_response[1])
 
-            shock_response = show_job_progress(services["ujs"], services["awe"], download_response[0], download_response[1], token)
+            if args.handler_mode:
+            else:
+                download_response = download(services["transform"], {"external_type": external_type, "kbase_type": kbase_type, "workspace_name": workspace, "object_name": object_name}, token)
+                print term.blue("\tTransform service download requested:")
+                print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
+                print term.blue("\tTransform service responded with job ids:")
+                print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(download_response[0], download_response[1])
+             
+                shock_response = show_job_progress(services["ujs"], services["awe"], download_response[0], download_response[1], token)
 
             print term.bold("Step 2: Grab data from SHOCK\n")
             download_from_shock(services["shock"], shock_response, downloadPath, token)

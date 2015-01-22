@@ -276,7 +276,7 @@ if __name__ == "__main__":
                               "object_name": "fasciculatum_supercontig",
                               "filePath": "data/fasciculatum_supercontig.fasta.zip",
                               "downloadPath": "fasciculatum_supercontig.fasta.zip",
-                              "url_mapping": "fasta_assembly"}
+                              "url_mapping": "FASTA.DNA.Assembly"}
 
         genbank_to_contigset = {"external_type": "Genbank.ContigSet",
                          "kbase_type": "KBaseGenomes.ContigSet",

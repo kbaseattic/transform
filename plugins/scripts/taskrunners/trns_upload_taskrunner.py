@@ -65,6 +65,7 @@ def main():
                            will be cleaned when the job ends with success or failure.
         keep_working_directory: A flag to tell the script not to delete the working
                                 directory, which is mainly for debugging purposes.
+        debug: Run the taskrunner in debug mode for local execution in a virtualenv.
     
     Returns:
         Literal return value is 0 for success and 1 for failure.
@@ -162,6 +163,10 @@ def main():
     parser.add_argument('--keep_working_directory', 
                         help=script_details["Args"]["keep_working_directory"], 
                         action='store_true')
+                        
+    parser.add_argument('--debug', 
+                        help=script_details["Args"]["debug"], 
+                        action='store_true')
 
     # ignore any extra arguments
     args, unknown = parser.parse_known_args()
@@ -222,7 +227,10 @@ def main():
         ujs.update_job_progress(args.ujs_job_id, kb_token, "Input data download completed", 
                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
-    if args.handler_options.has_key("must_own_validation") and not args.handler_options["must_own_validation"]:        
+    logger.info(str(args))
+
+    if args.job_details["transform"]["handler_options"].has_key("must_own_validation") and \
+       args.job_details["transform"]["handler_options"]["must_own_validation"] == 'false':        
         # TODO check to see if a validator is configured, if not skip to transform
         # Step 2 : Validate the data files
         try:
@@ -246,7 +254,7 @@ def main():
             for d in directories:
                 validation_args["input_directory"] = d
                 validation_args["working_directory"] = validation_directory
-                handler_utils.run_task(logger, validation_args)
+                handler_utils.run_task(logger, validation_args, debug=args.debug)
         except Exception, e:
             handler_utils.report_exception(logger, 
                              {"message": "ERROR : Validation of {0}".format(args.url_mapping),
@@ -294,7 +302,7 @@ def main():
 
         transformation_args["input_mapping"] = simplejson.dumps(transformation_args["input_mapping"])
 
-        handler_utils.run_task(logger, transformation_args)
+        handler_utils.run_task(logger, transformation_args, debug=args.debug)
     except Exception, e:
         handler_utils.report_exception(logger, 
                          {"message": "ERROR : Creating an object from {0}".format(args.url_mapping),

@@ -7,10 +7,15 @@ running_dir = os.getcwd()
 
 virtualenv_dir = os.path.join(running_dir,"venv")
 
+try:
+    shutil.rmtree(virtualenv_dir)
+except:
+    pass
+
 # create a virtualenv under the services directory
 import subprocess
 subprocess.call(["virtualenv","--python","python2.7","--system-site-packages",virtualenv_dir])
-subprocess.call([os.path.join(virtualenv_dir, "bin/pip"), "install","pip","ftputil","requests","httplib2","requests_toolbelt","gitpython","filemagic","blessings","python-dateutil"])
+subprocess.call([os.path.join(virtualenv_dir, "bin/pip"), "install","pip","ftputil","requests","httplib2","requests_toolbelt","gitpython","filemagic","blessings","python-dateutil","simplejson"])
 
 sys.path.append("./venv/lib/python2.7/site-packages/")
 
@@ -20,7 +25,7 @@ import git
 git.Git().clone("https://github.com/kbase/user_and_job_state")
 git.Git().clone("https://github.com/kbase/workspace_deluxe")
 git.Git().clone("https://github.com/mlhenderson/handle_service")
-git.Git().clone("https://github.com/mlhenderson/kbapi_common")
+git.Git().clone("https://github.com/kbase/kbapi_common")
 
 print "Copying client code to virtualenv"
 
@@ -45,6 +50,7 @@ print "Cleaning up checked out repos"
 shutil.rmtree(os.path.join(running_dir,"user_and_job_state"))
 shutil.rmtree(os.path.join(running_dir,"workspace_deluxe"))
 shutil.rmtree(os.path.join(running_dir,"handle_service"))
+shutil.rmtree(os.path.join(running_dir,"kbapi_common"))
 
 if not os.path.isdir(os.path.join(running_dir, "data")):
     print "Downloading demo data, data.tar.bz2"

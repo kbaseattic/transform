@@ -35,12 +35,12 @@ def gen_recursive_filelist(d):
             yield os.path.join(root, file)
 
 
-def run_task(logger, arguments):
+def run_task(logger, arguments, debug=False):
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
 
     h = TaskRunner(logger)
-    h.run(arguments)
+    h.run(arguments, debug)
 
 
 class TaskRunner(object):
@@ -52,11 +52,15 @@ class TaskRunner(object):
             self.logger = logger
 
 
-    def _build_command_list(self, arguments=None):
-        command_name = os.path.splitext(arguments["script_name"])[0]
+    def _build_command_list(self, arguments=None, debug=False):
+        if debug:
+            command_name = os.path.splitext(arguments["script_name"])[0]
+        else:
+            command_name = arguments["script_name"]
+        
         command_list = [command_name]
         del arguments["script_name"]
-        del arguments["optional_arguments"]
+        #del arguments["optional_arguments"]
 
         for k in arguments:
             command_list.append("--{0}".format(k))
@@ -66,8 +70,8 @@ class TaskRunner(object):
         return command_list
 
 
-    def run(self, arguments=None):
-        task = subprocess.Popen(self._build_command_list(arguments), stderr=subprocess.PIPE)
+    def run(self, arguments=None, debug=False):
+        task = subprocess.Popen(self._build_command_list(arguments,debug), stderr=subprocess.PIPE)
         sub_stdout, sub_stderr = task.communicate()
 
         if sub_stdout is not None:
@@ -147,30 +151,25 @@ class PlugIns(object):
         if "optional_arguments" not in args:
             args["optional_arguments"] = '{}'
 
-        job_details = dict()
+        job_details = dict()        
+
+        self.logger.debug((method, args))
 
         if method == "upload":
             args["url_mapping"] = base64.urlsafe_b64encode(simplejson.dumps(args["url_mapping"]))
 
             if self.scripts_config["validate"].has_key(args["external_type"]):
                 plugin_key = args["external_type"]
-            
+
+                self.logger.debug(self.scripts_config["validate"][plugin_key])
+                        
                 job_details["validate"] = self.scripts_config["validate"][plugin_key]
                 #job_details["validate"] = dict()
                 #job_details["validate"]["script_name"] = self.scripts_config["validate"][plugin_key]["script_name"]
 
-                for field in self.scripts_config["validate"][plugin_key]["handler_options"]["required_fields"]:
-                    if field in args:
-                        job_details["validate"][field] =  args[field]
-                    else:
-                        self.logger.warning("Required field not present : {0}".format(field))
+                job_details["validate"] = self.scripts_config["validate"][plugin_key]
                 
-                for field in self.scripts_config["validate"][plugin_key]["handler_options"]["optional_fields"]:
-                    if field in args:
-                        job_details["validate"][field] =  args[field]
-                    else:
-                        self.logger.info("Optional field not present : {0}".format(field))
-                self.logger.info(job_details)
+                self.logger.debug(job_details)
             else:
                 self.logger.warning("No validation available for {0}".format(args["external_type"]))
 
@@ -192,11 +191,10 @@ class PlugIns(object):
                         job_details["transform"][field] =  args[field]
                     else:
                         self.logger.info("Optional field not present : {0}".format(field))
-                self.logger.info(job_details)
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
                 
-            self.logger.info(job_details)
+            self.logger.info(simplejson.dumps(job_details, indent=4, sort_keys=True))
         elif method == "download":
             if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
                 plugin_key = "{0}=>{1}".format(args["kbase_type"],args["external_type"])

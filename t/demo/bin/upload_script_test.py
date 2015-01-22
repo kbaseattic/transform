@@ -244,8 +244,7 @@ if __name__ == "__main__":
             raise Exception("Unable to find KBase token!")
 
     plugin = None
-    if args.handler_mode: 
-        plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory, logger)
+    plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory, logger)
 
     inputs = list()
     if not args.demo:
@@ -325,7 +324,7 @@ if __name__ == "__main__":
                      input_object[attr] = value
                 input_object["working_directory"] = conversionDownloadPath
                 input_args = plugin.get_handler_args("upload",input_object)
-                command_list = ["trns_upload_taskrunner"]
+                command_list = ["venv/bin/python venv/bin/trns_upload_taskrunner.py"]
 
                 if "user_options" in input_args: del input_args["user_options"]
                 
@@ -385,42 +384,37 @@ if __name__ == "__main__":
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
 
-                if args.handler_mode: 
-                    print term.blue("\tTransform handler upload started:")
-                    for attr, value in args.__dict__.iteritems():
-                       if attr.endswith("_service_url"):
-                         input_object[attr] = value
-                    input_object["working_directory"] = conversionDownloadPath
-                    input_args = plugin.get_handler_args("upload",input_object)
-                    command_list = ["trns_upload_taskrunner"]
-
-                    if "user_options" in input_args: del input_args["user_options"]
-
-                    for k in input_args:
-                       command_list.append("--{0}".format(k))
-                       command_list.append("{0}".format(input_args[k]))
-                    
-                    print command_list
-
-                    task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
-                    sub_stdout, sub_stderr = task.communicate()
+                print term.blue("\tTransform handler upload started:")
                 
-                    if sub_stdout is not None:
-                        print sub_stdout
-                    if sub_stderr is not None:
-                        print >> sys.stderr, sub_stderr
+                for attr, value in args.__dict__.iteritems():
+                    if attr.endswith("_service_url"):
+                        input_object[attr] = value
                 
-                    if task.returncode != 0:
-                        raise Exception(sub_stderr)
-                       
-                else:
-                    upload_response = upload(services["transform"], input_object, token)
-                    print term.blue("\tTransform service upload requested:")
-                    print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
-                    print term.blue("\tTransform service responded with job ids:")
-                    print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(upload_response[0], upload_response[1])
-                 
-                    show_job_progress(services["ujs"], services["awe"], upload_response[0], upload_response[1], token)
+                print conversionDownloadPath
+                
+                input_object["working_directory"] = conversionDownloadPath
+                input_object["input_directory"] = conversionDownloadPath
+                input_args = plugin.get_handler_args("upload",input_object)
+                command_list = ["{0} {1}".format(os.path.join(os.cwd(),"venv/bin/python"), "trns_upload_taskrunner.py")]
+                
+                if "user_options" in input_args: del input_args["user_options"]
+
+                for k in input_args:
+                   command_list.append("--{0}".format(k))
+                   command_list.append("{0}".format(input_args[k]))
+                
+                print "\n\nHandler invocation {0}".format(" ".join(command_list))
+
+                task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+                sub_stdout, sub_stderr = task.communicate()
+            
+                if sub_stdout is not None:
+                    print sub_stdout
+                if sub_stderr is not None:
+                    print >> sys.stderr, sub_stderr
+            
+                if task.returncode != 0:
+                    raise Exception(sub_stderr)
     
                 print term.bold("Step 3: View or use workspace objects")
                 show_workspace_object_list(services["workspace"], workspace, object_name, token)

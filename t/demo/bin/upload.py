@@ -230,7 +230,6 @@ if __name__ == "__main__":
     parser.set_defaults(handler_mode=False)
     ## TODO: change the default path to be relative to __FILE__
     parser.add_argument('--plugin_directory', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
-    parser.add_argument('--working_directory', nargs='?', help='path to the working dir', const="", default="./working_dir")
 
     args = parser.parse_args()
 
@@ -250,10 +249,8 @@ if __name__ == "__main__":
     
 
     plugin = None
-    task_runner = None
     if args.handler_mode: 
         plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory, logger)
-        task_runner = biokbase.Transform.handler_utils.TaskRunner(logger)
 
     inputs = list()
     if not args.demo:
@@ -279,7 +276,7 @@ if __name__ == "__main__":
                               "object_name": "fasciculatum_supercontig",
                               "filePath": "data/fasciculatum_supercontig.fasta.zip",
                               "downloadPath": "fasciculatum_supercontig.fasta.zip",
-                              "url_mapping": "fasta_assembly"}
+                              "url_mapping": "FASTA.DNA.Assembly"}
 
         genbank_to_contigset = {"external_type": "Genbank.ContigSet",
                          "kbase_type": "KBaseGenomes.ContigSet",
@@ -476,16 +473,16 @@ if __name__ == "__main__":
 
                 if args.handler_mode: 
                     print term.blue("\tTransform handler upload started:")
+                    for attr, value in args.__dict__.iteritems():
+                       if attr.endswith("_service_url"):
+                         input_object[attr] = value
+                    input_object["working_directory"] = conversionDownloadPath
                     input_args = plugin.get_handler_args("upload",input_object, token)
-                    command_list = ["trns_upload_taskrunner", "--working_directory", args.working_directory ]
+                    command_list = ["trns_upload_taskrunner"]
                     
                     for k in input_args:
                        command_list.append("--{0}".format(k))
                        command_list.append("{0}".format(input_args[k]))
-                    for attr, value in args.__dict__.iteritems():
-                       if attr.endswith("_service_url"):
-                         command_list.append("--{0}".format(attr))
-                         command_list.append("{0}".format(value))
 
                     task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
                     sub_stdout, sub_stderr = task.communicate()
@@ -550,16 +547,16 @@ if __name__ == "__main__":
 
                 if args.handler_mode: 
                     print term.blue("\tTransform handler upload started:")
+                    for attr, value in args.__dict__.iteritems():
+                       if attr.endswith("_service_url"):
+                         input_object[attr] = value
+                    input_object["working_directory"] = conversionDownloadPath
                     input_args = plugin.get_handler_args("upload",input_object, token)
-                    command_list = ["trns_upload_taskrunner", "--working_directory", args.working_directory ]
+                    command_list = ["trns_upload_taskrunner"]
                     
                     for k in input_args:
                        command_list.append("--{0}".format(k))
                        command_list.append("{0}".format(input_args[k]))
-                    for attr, value in args.__dict__.iteritems():
-                       if attr.endswith("_service_url"):
-                         command_list.append("--{0}".format(attr))
-                         command_list.append("{0}".format(value))
 
                     task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
                     sub_stdout, sub_stderr = task.communicate()

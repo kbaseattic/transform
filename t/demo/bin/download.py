@@ -12,6 +12,7 @@ import zipfile
 import tarfile
 import json
 import pprint
+import subprocess
 
 # patch for handling unverified certificates
 import ssl
@@ -34,7 +35,7 @@ import biokbase.Transform.handler_utils
 import biokbase.userandjobstate.client
 import biokbase.workspace.client
 
-logger = biokbase.Transform.script_utils.getStderrLogger(__file__)
+logger = biokbase.Transform.script_utils.stdoutlogger(__file__)
 
 
 def show_workspace_object_list(workspace_url, workspace_name, object_name, token):
@@ -196,7 +197,8 @@ if __name__ == "__main__":
         user_inputs = {"external_type": args.external_type,
                        "kbase_type": args.kbase_type,
                        "object_name": args.object_name,
-                       "downloadPath": args.download_path}
+                       "downloadPath": args.download_path,
+                       "workspace_name": args.workspace}
 
         workspace = args.workspace    
         demos = [user_inputs]
@@ -251,6 +253,30 @@ if __name__ == "__main__":
             print term.bold("Step 1: Make KBase download request")
 
             if args.handler_mode:
+                print term.blue("\tTransform handler download started:")
+                demo_inputs["working_directory"] = conversionDownloadPath
+                for attr, value in args.__dict__.iteritems():
+                   if attr.endswith("_service_url"):
+                     print "arg : " + attr
+                     demo_inputs[attr] = value
+                input_args = plugin.get_handler_args("download",demo_inputs, token)
+                command_list = ["trns_download_taskrunner"]
+                
+                for k in input_args:
+                   command_list.append("--{0}".format(k))
+                   command_list.append("{0}".format(input_args[k]))
+                print command_list
+
+                task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+                sub_stdout, sub_stderr = task.communicate()
+                
+                if sub_stdout is not None:
+                    print sub_stdout
+                if sub_stderr is not None:
+                    print >> sys.stderr, sub_stderr
+                
+                if task.returncode != 0:
+                    raise Exception(sub_stderr)
             else:
                 download_response = download(services["transform"], {"external_type": external_type, "kbase_type": kbase_type, "workspace_name": workspace, "object_name": object_name}, token)
                 print term.blue("\tTransform service download requested:")

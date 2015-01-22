@@ -75,8 +75,10 @@ class TaskRunner(object):
         if task.returncode != 0:
             raise Exception(sub_stderr)
 
-class PlugIns:
-    def __init__(self, pluginsDir, logger):
+
+class PlugIns(object):
+
+    def __init__(self, pluginsDir, logger=script_utils.stderrlogger(__file__)):
         self.scripts_config = {"external_types": list(),
                                "kbase_types": list(),
                                "validate": dict(),
@@ -96,7 +98,7 @@ class PlugIns:
                 f.close()
 
                 id = None
-
+                
                 if pconfig["script_type"] == "validate":
                     if pconfig["external_type"] not in self.scripts_config["external_types"]:
                         self.scripts_config["external_types"].append(pconfig["external_type"])
@@ -132,7 +134,7 @@ class PlugIns:
                 self.logger.warning("Unable to read plugin {0}: {1}".format(p,e.message))
 
 
-    def get_handler_args(self, method, args, token):
+    def get_handler_args(self, method, args):
 
         if "optional_arguments" not in args:
             args["optional_arguments"] = '{}'

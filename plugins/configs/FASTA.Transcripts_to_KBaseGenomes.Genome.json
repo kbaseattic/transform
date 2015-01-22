@@ -4,6 +4,8 @@
     "external_type": "FASTA.Transcripts",
     "kbase_type": "KBaseGenomes.Genome",
     "user_description": "Converts FASTA file containing either NA or AA sequences of transcripts to KBaseGenomes.Genome json string.",    
+    "developer_description": "Converts FASTA file containing either NA or AA sequences of transcripts to KBaseGenomes.Genome json string.",    	  
+    "url_mapping": ["FASTA.Transcripts"],
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": false,
@@ -19,8 +21,7 @@
             "genome_id",
 	    "dna"
 	],
-	"input_mapping": [{"input_file_name": "FASTA.Transcripts"}]
-	]
+	"input_mapping": {"FASTA.Transcripts":"input_file_name"}
     },
     "user_options": [
         {

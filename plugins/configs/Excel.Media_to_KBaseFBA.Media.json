@@ -4,7 +4,7 @@
     "external_type": "Excel",
     "kbase_type": "KBaseBiochem.Media",
     "user_description": "Converts Excel file to Media object in workspace."
-    
+    "url_mapping": ["Excel:Media"],    
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": true,
@@ -17,7 +17,7 @@
 	    "workspace_name"
 	},
 	"optional_fields":[],
-	"input_mapping": [{'input_file_name": "Excel.Media"}]
+	"input_mapping": {"Excel.Media": "input_file_name"}
     },
     "user_options": [
         {

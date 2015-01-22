@@ -14,6 +14,7 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['object_name=s', 'Object name', { required => 1 }],
 				    ['working_directory=s', 'Output directory for generated files', { required => 1 }],
 				    ['object_version', 'Workspace object version'],
+                                    ['download_all', 'Download all assembly output files'],
                                     ['token', 'KBase token', { default => $ENV{KB_AUTH_TOKEN}}],
 				    ['help|h', 'show this help message'],
 				   );
@@ -36,6 +37,20 @@ my $type = type_of_object($obj);
 my $data = $obj->{data};
 
 print_output($data->{report}, $opt->working_directory .'/report.txt');
+
+if ($opt->download_all && $opt->token && exists_cmd('ar-get')) {
+    my $user = $obj->{user};
+    ($user) = $opt->token =~ /^un=(\S*?)\|/ if !$user;
+    $ENV{KB_AUTH_USER_ID} = $user;
+    my $job = $data->{job_id};
+    chdir($opt->working_directory);
+    system "ar-get -j $job";
+}
+
+sub exists_cmd {
+    my ($cmd) = @_;
+    return 0 == system("which $cmd >/dev/null");
+}
 
 sub print_output {
     my ($text, $file) = @_;

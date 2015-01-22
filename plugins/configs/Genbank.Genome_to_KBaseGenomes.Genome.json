@@ -14,7 +14,7 @@
         [
             "input_file_name",
             "workspace_name",
-            "workspace_url",
+            "workspace_url"
         ], 
         "optional_fields": 
         [
@@ -28,7 +28,7 @@
         "input_mapping":{"Genbank.Genome":"input_file_name"},
         "custom_options": []
     },
-    "user_options": {
+    "user_options": [
         { 
             "name": "object_name",
             "type": "string",
@@ -40,7 +40,7 @@
             "type": "string",
             "required": false,
             "help": "If not supplied, will default the base input_file_name with '_contig_set.json' appended to the end."
-        },
+        }
         ],
     "user_option_groups": []
 }

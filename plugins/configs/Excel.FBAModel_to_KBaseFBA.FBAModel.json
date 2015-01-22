@@ -11,11 +11,11 @@
         "max_runtime": 360,
         "custom_options": [],
 	"required_fields":
-	{
+	[
 	    "input_file_name",
 	    "object_name",
 	    "workspace_name"
-	},
+	],
 	"optional_fields":
 	[
 	    "genome",

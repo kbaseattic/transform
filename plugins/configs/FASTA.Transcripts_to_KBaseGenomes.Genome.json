@@ -12,13 +12,13 @@
         "max_runtime": 360,
         "custom_options": [],
 	"required_fields":
-	{
+	[
             "input_file_name",
-	    "output_file_name"
-	},
+	    "output_file_name",
+	    "genome_id"
+	],
 	"optional_fields":
 	[
-            "genome_id",
 	    "dna"
 	],
 	"input_mapping": {"FASTA.Transcripts":"input_file_name"}
@@ -39,7 +39,7 @@
         {
             "name": "genome_id",
             "type": "string",
-            "required": false,
+            "required": true,
             "help": "Genome Identifier"
         },
         {

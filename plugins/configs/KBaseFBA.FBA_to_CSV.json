@@ -8,21 +8,21 @@
     "handler_options": { 
         "max_runtime": 600, 
         "required_fields": [ 
-            "input",
-            "workspace" 
+            "input_file_name",
+            "workspace_name" 
         ], 
-        "optional_fields": ["version","url","output"], 
-        "custom_options": [], 
+        "optional_fields": ["version","url"], 
+        "custom_options": []
     },  
     "user_options": [ 
         { 
-            "name": "input", 
+            "name": "input_file_name", 
             "type": "string", 
             "required": true, 
             "help": "Name of the workspace object." 
         }, 
         { 
-            "name": "workspace",
+            "name": "workspace_name",
             "type": "string", 
             "required": false,
             "help": "Workspace containing object."

@@ -9,7 +9,7 @@
         "max_runtime": 360,
         "custom_options": [],
         "required_fields": [
-            "working_directory"
+            "input_directory"
         ],
         "optional_fields": []
     },

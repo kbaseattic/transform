@@ -85,6 +85,8 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             status[1] = "ERROR"
             status[2] = "Caught Exception"
         
+        print status
+        
         if (datetime.datetime.utcnow() - start).seconds > time_limit:
             print "\t\tJob is taking longer than it should, check debugging messages for more information."
             status[1] = "ERROR"

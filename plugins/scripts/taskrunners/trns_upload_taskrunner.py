@@ -378,6 +378,9 @@ def main():
                 if k in input_mapping:
                     transformation_args[transformation_args["handler_options"]["input_mapping"][k]] = input_mapping[k]
 
+        if "workspace_service_url" in transformation_fields: 
+            transformation_args["workspace_service_url"] = args.workspace_service_url
+
         if "shock_service_url" in transformation_fields: 
             transformation_args["shock_service_url"] = args.shock_service_url
         

@@ -15,7 +15,7 @@ def report_exception(logger=None, report_details=None, cleanup_details=None):
         report_details["ujs"].complete_job(report_details["ujs_job_id"], 
                                            report_details["token"], 
                                            report_details["message"], 
-                                           None, 
+                                           report_details["exc"], 
                                            None) 
     
     if not cleanup_details["keep_working_directory"]:

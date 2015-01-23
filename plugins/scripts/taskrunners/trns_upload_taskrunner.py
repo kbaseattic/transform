@@ -387,15 +387,15 @@ def main():
             if k in input_mapping:
                 transformation_args[transformation_args["handler_options"]["input_mapping"][k]] = input_mapping[k]
 
-        # remove any argument keys that should not be passed to the transform step
-        for x in remove_keys:
-            if x in transformation_args:
-                del transformation_args[x]
-
         # check that we are not missing any required arguments
         for k in transformation_args["handler_options"]["required_fields"]:
             if k not in transformation_args:
                 raise Exception("Missing required field {0}, please provide using optional_arguments.".format(k))
+
+        # remove any argument keys that should not be passed to the transform step
+        for x in remove_keys:
+            if x in transformation_args:
+                del transformation_args[x]
 
         handler_utils.run_task(logger, transformation_args, debug=args.debug)
     except Exception, e:

@@ -14,10 +14,6 @@ from biokbase.userandjobstate.client import UserAndJobState
 from biokbase.Transform import handler_utils
 from biokbase.Transform import script_utils
 
-# clean out arguments passed to transform script
-remove_keys = ["handler_options","user_options","user_option_groups",
-               "url_mapping","developer_description","user_description", 
-               "kbase_type", "external_type", "script_type"]
 
 def main():
     """
@@ -200,6 +196,12 @@ def main():
     validation_directory = os.path.join(args.working_directory, "validation")
     transform_directory = os.path.join(args.working_directory, "objects")
 
+    # clean out arguments passed to transform script
+    remove_keys = ["handler_options","user_options","user_option_groups",
+                   "url_mapping","developer_description","user_description", 
+                   "kbase_type", "external_type", "script_type"]
+
+
     if args.ujs_job_id is not None:
         ujs.update_job_progress(args.ujs_job_id, kb_token, 
                                 "Downloading input data from {0}".format(args.url_mapping), 
@@ -276,6 +278,9 @@ def main():
             validation_fields.extend(validation_args["handler_options"]["optional_fields"])
         
             for d in directories:
+                for k in validation_fields:
+                    validation_args[k] = validation_fields[k]
+            
                 if "input_directory" in validation_fields: 
                     validation_args["input_directory"] = d
                 
@@ -338,65 +343,59 @@ def main():
     
         transformation_args = args.job_details["transform"]
         
-        # optional argument
-        if "optional_fields" in transformation_args["handler_options"]: 
-            for k in args.optional_arguments["transform"]:
-                if k in transformation_args["handler_options"]["optional_fields"]:
-                    if k == "output_file_name":
-                        transformation_args[k] = os.path.join(transform_directory, args.optional_arguments["transform"][k])
-                    else: 
-                        transformation_args[k] = args.optional_arguments["transform"][k]
+        # take in user options
+        for k in args.optional_arguments["transform"]:
+            if k in transformation_args["handler_options"]["required_fields"] or 
+               k in transformation_args["handler_options"]["optional_fields"]:
+                transformation_args[k] = args.optional_arguments["transform"][k]
+            else:
+                logger.warning("Unrecognized parameter {0}".format(k))
 
-        # custom argument
+        
+        # take in all taskrunner args
+        for k in args.__dict__:
+            if k in transformation_args["handler_options"]["required_fields"] or 
+               k in transformation_args["handler_options"]["optional_fields"]:
+                transformation_args[k] = args.__dict__[k]
+
+        # take in any handler custom args
         if  "custom_options" in transformation_args["handler_options"]: 
             for c in transformation_args["handler_options"]["custom_options"]:
                 if(c["type"] != "boolean"):
                     transformation_args[c["name"]] = c["value"]
                 else:
-                    transformation_args[c["name"]] = c["value"] # TODO: Fix later with example
-
-        transformation_fields = transformation_args["handler_options"]["required_fields"][:]
-        transformation_fields.extend(transformation_args["handler_options"]["optional_fields"])
+                    if c["value"] == "true":
+                        transformation_args[c["name"]] = 1
+                    else:
+                        transformation_args[c["name"]] = 0
 
         os.mkdir(transform_directory)            
-        if "working_directory" in transformation_fields: 
+        
+        # take in generated system args like input_directory
+        if "output_file_name" in transformation_args:
+            transformation_args["output_file_name"] = os.path.join(transform_directory, transformation_args["output_file_name"])
+        
+        if "working_directory" in transformation_args: 
             transformation_args["working_directory"] = transform_directory
-        
-        if "input_directory" in transformation_fields:
+
+        if "input_directory" in transformation_args["handler_options"]["required_fields"] or 
+           "input_directory" in transformation_args["handler_options"]["optional_fields"]:
             transformation_args["input_directory"] = download_directory
-        
-        if "input_mapping" in transformation_fields:
-            transformation_args["input_mapping"] = simplejson.dumps(input_mapping)
 
-        #Need to process optional argument to be processed and converted to command arguments
-        if "input_file_name" in transformation_fields:
-            for k in transformation_args["handler_options"]["input_mapping"]:
-                if k in input_mapping:
-                    transformation_args["input_file_name"] = input_mapping[k]
-        else:
-            for k in transformation_args["handler_options"]["input_mapping"]:
-                if k in input_mapping:
-                    transformation_args[transformation_args["handler_options"]["input_mapping"][k]] = input_mapping[k]
+        # fill out the input mapping
+        for k in transformation_args["handler_options"]["input_mapping"]:
+            if k in input_mapping:
+                transformation_args[transformation_args["handler_options"]["input_mapping"][k]] = input_mapping[k]
 
-        if "workspace_service_url" in transformation_fields: 
-            transformation_args["workspace_service_url"] = args.workspace_service_url
-
-        if "shock_service_url" in transformation_fields: 
-            transformation_args["shock_service_url"] = args.shock_service_url
-        
-        if "handle_service_url" in transformation_fields: 
-            transformation_args["handle_service_url"] = args.handle_service_url
-
-        for k in args.optional_arguments["transform"]:
-            if k in transformation_args["handler_options"]["required_fields"]:
-                if k == "output_file_name":
-                    transformation_args[k] = os.path.join(transform_directory, args.optional_arguments["transform"][k])
-                else: 
-                    transformation_args[k] = args.optional_arguments["transform"][k]
-
+        # remove any argument keys that should not be passed to the transform step
         for x in remove_keys:
             if x in transformation_args:
                 del transformation_args[x]
+
+        # check that we are not missing any required arguments
+        for k in transformation_args["handler_options"]["required_fields"]:
+            if k not in transformation_args:
+                raise Exception("Missing required field {0}, please provide using optional_arguments.".format(k))
 
         handler_utils.run_task(logger, transformation_args, debug=args.debug)
     except Exception, e:

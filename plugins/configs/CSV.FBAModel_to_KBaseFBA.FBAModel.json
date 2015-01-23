@@ -4,7 +4,7 @@
     "external_type": "CSV",
     "kbase_type": "KBaseFBA.FBAModel",
     "user_description": "Converts Reaction and Compound CSV files to FBAModel object in workspace.",
-    "url_mapping":["CSV.FBAModel"],    
+    "url_mapping":["CSV.FBAModel", "CSV.Compounds"],    
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": true,
@@ -22,7 +22,7 @@
 	    "genome",
 	    "biomass"
 	],
-	"input_mapping": {"CSV.FBAModel":"input_file_name"}
+	"input_mapping": {"CSV.FBAModel":"input_file_name", "CSV.Compounds" : "compounds"}
     },
     "user_options": [
         {

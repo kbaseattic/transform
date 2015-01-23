@@ -41,16 +41,16 @@ public class GenometoGbk {
 
     //object_name, object_id, object_version_number,
     String[] argsPossible = {"-ig", "--in_file_genome", "-ic", "--in_file_contig",
-            "-o", "--out_file", "-on", "--object_name", "-oi", "--object_id",
+            "-o", "--output_file", "-on", "--object_name", "-oi", "--object_id",
             "-ov", "--object_version",
-            "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url", "-wd", "--working_directory"};
+            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_service_url", "-wd", "--working_directory", "--test"};
     String[] argsPossibleMap = {"inputg", "inputg", "inputc", "inputc",
             "output", "output", "objectn", "objectn", "objecti", "objecti",
             "objectv", "objectv",
-            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd"};
+            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "t"};
 
 
-    boolean isTest = true;
+    boolean isTest = false;
 
     Genome genome;
     ContigSet contigSet;
@@ -102,6 +102,9 @@ public class GenometoGbk {
                     shockurl = args[i + 1];
                 } else if (argsPossibleMap[index].equals("wd")) {
                     workdir = args[i + 1];
+                } else if (argsPossibleMap[index].equals("t")) {
+                    if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
+                        isTest = true;
                 }
             }
         }
@@ -653,13 +656,13 @@ public class GenometoGbk {
 
                     "<-ig or --in_file_genome Genome object json file> " +
                     "<-ic or --in_file_contig ContigSet object json file> " +
-                    "<-o or --out_file> " +
+                    "<-o or --output_file> " +
                     "<-on or --object_name> " +
                     "<-oi or --object_id> " +
                     "<-ov or --object_version> " +
-                    "<-w or --ws_name ws name> " +
-                    "<-wu or --ws_url ws url> " +
-                    "<-su or --shock_url shock url> " +
+                    "<-w or --workspace_name ws name> " +
+                    "<-wu or --workspace_service_url ws url> " +
+                    "<-su or --shock_service_url shock url> " +
                     "<-wd or --working_directory");
 
 

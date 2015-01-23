@@ -15,32 +15,33 @@ import biokbase.Transform.script_utils as script_utils
 
 
 def transform(shock_service_url=None, workspace_service_url=None,
-              workspace_name=None, object_name=None, contigset_object_name=None,
-              input_directory=None, working_directory=None, 
+              workspace_name=None, object_name=None, object_id=None, object_version=None,
+              working_directory=None, output_file=None,
               level=logging.INFO, logger=None):
     """
-    Transforms Genbank file to KBaseGenomes.Genome and KBaseGenomes.ContigSet objects.
+    Transforms KBaseGenomes.Genome and KBaseGenomes.ContigSet objects to Genbank file.
     
     Args:
         shock_service_url: If you have shock references you need to make.
         workspace_service_url: KBase Workspace URL
         workspace_name: Name of the workspace to save the data to
         object_name: Name of the genome object to save
-        contigset_object_name: Name of the ContigSet object that is created with this Genome
-        input_directory: A directory of either a genbank file or a directory of partial genome files to merge
+        object_id: Id of the genome object to save
+        object_version: Version of the genome object to save
         working_directory: A directory where you can do work
+        output_file: File name for Genbank output
     
     Returns:
-        Workspace objects saved to the user's workspace.
+        Genbank output file.
     
     Authors:
-        Shinjae Yoo, Matt Henderson
+        Shinjae Yoo, Matt Henderson, Marcin Joachimiak
     """
 
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
     
-    logger.info("Starting transformation of Genbank to KBaseGenomes.Genome")
+    logger.info("Starting transformation of KBaseGenomes.Genome to Genbank")
     
     token = os.environ.get("KB_AUTH_TOKEN")
 
@@ -49,26 +50,32 @@ def transform(shock_service_url=None, workspace_service_url=None,
 
     java_classpath = os.path.join(os.environ.get("KB_TOP"), classpath.replace('$KB_TOP', os.environ.get("KB_TOP")))
     
-    argslist = "{0} {1} {2} {3} {4} {5}".format("--shock_service_url {0}".format(shock_service_url),
-                                                      "--workspace_service_url {0}".format(workspace_service_url),
-                                                      "--workspace_name {0}".format(workspace_name),
-                                                      "--object_name {0}".format(object_name),
-                                                      "--working_directory {0}".format(working_directory),
-                                                      "--input_directory {0}".format(input_directory))
-    if contigset_object_name is not None:
-        argslist = "{0} {1}".format(arglist, "--contigset_object_name {0}".format(contigset_object_name))
+    argslist = "{0} {1} {2}".format("--workspace_service_url {0}".format(workspace_service_url),
+                                                      "--workspace_name {0}".format(workspace_name),                                                     
+                                                      "--working_directory {0}".format(working_directory))
+    object_name_print = object_name.replace("|","\|")
+    #"--shock_service_url {0}".format(shock_service_url),
+    if object_name is not None:
+        argslist = "{0} {1}".format(argslist, "--object_name {0}".format(object_name_print))
+    elif object_id is not None:
+         argslist = "{0} {1}".format(argslist, "--object_id {0}".format(object_id))
+    else:
+        logger.error("Transformation from KBaseGenomes.Genome to Genbank.Genome failed due to no object name or id")
+        sys.exit(1)   
+    if object_version is not None:
+        argslist = "{0} {1}".format(argslist, "--object_version {0}".format(object_version))
 
-    arguments = ["java", "-classpath", java_classpath, "us.kbase.genbank.ConvertGBK", argslist]
+    arguments = ["java", "-classpath", java_classpath, "us.kbase.genbank.GenometoGbk", argslist]
 
     print arguments        
     tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)
     stdout, stderr = tool_process.communicate()
 
     if len(stderr) > 0:
-        logger.error("Transformation from Genbank.Genome to KBaseGenomes.Genome failed on {0}".format(input_directory))
+        logger.error("Transformation from KBaseGenomes.Genome to Genbank.Genome failed on {0}".format(input_directory))
         sys.exit(1)
     else:
-        logger.info("Transformation from Genbank.Genome to KBaseGenomes.Genome completed.")
+        logger.info("Transformation from KBaseGenomes.Genome to Genbank.Genome completed.")
         sys.exit(0)
 
 
@@ -81,9 +88,9 @@ if __name__ == "__main__":
     parser.add_argument("--shock_service_url", 
                         help=script_details["Args"]["shock_service_url"], 
                         action="store", 
-                        type=str, 
+                       type=str, 
                         nargs='?', 
-                        required=True)
+                        required=False)
     parser.add_argument("--workspace_service_url", 
                         help=script_details["Args"]["workspace_service_url"], 
                         action="store", 
@@ -102,24 +109,24 @@ if __name__ == "__main__":
                         type=str, 
                         nargs="?", 
                         required=True)
-    parser.add_argument("--contigset_object_name", 
-                        help=script_details["Args"]["contigset_object_name"], 
+    parser.add_argument("--object_id", 
+                        help=script_details["Args"]["object_id"], 
                         action="store", 
                         type=str, 
                         nargs="?", 
                         required=False)
-    parser.add_argument("--input_directory", 
-                        help=script_details["Args"]["input_directory"], 
+    parser.add_argument("--object_version", 
+                        help=script_details["Args"]["object_version"], 
                         action="store", 
                         type=str, 
-                        nargs='?', 
-                        required=True)
+                        nargs="?", 
+                        required=False)   
     parser.add_argument("--working_directory", 
                         help=script_details["Args"]["working_directory"], 
                         action="store", 
                         type=str, 
                         nargs='?', 
-                        required=True)
+                        required=False)
     
     args, unknown = parser.parse_known_args()
     
@@ -130,8 +137,8 @@ if __name__ == "__main__":
                   workspace_service_url=args.workspace_service_url,
                   workspace_name=args.workspace_name,
                   object_name=args.object_name,
-                  contigset_object_name=args.contigset_object_name,
-                  input_directory=args.input_directory,
+                  object_id=args.object_id,
+                  object_version=args.object_version,
                   working_directory=args.working_directory,
                   logger = logger)
     except Exception, e:

@@ -183,13 +183,58 @@ def main():
         os.mkdir(transform_directory)
         
         transformation_args = args.job_details["transform"]
-        transformation_args["optional_arguments"] = args.optional_arguments
-        transformation_args["working_directory"] = transform_directory
-
-        transformation_args["shock_service_url"] = args.shock_service_url
-        transformation_args["handle_service_url"] = args.handle_service_url
         
-        handler_utils.run_task(logger, transformation_args)
+        # optional argument
+        if "optional_fields" in transformation_args["handler_options"]: 
+            for k in args.optional_arguments:
+                if k in transformation_args["handler_options"]["optional_fields"]:
+                    transformation_args[k] = args.optional_arguments[k]
+
+        # custom argument
+        if  "custom_options" in transformation_args["handler_options"]: 
+            for c in transformation_args["handler_options"]["custom_options"]:
+                if(c["type"] != "boolean"):
+                    transformation_args[c["name"]] = c["value"]
+                else:
+                    transformation_args[c["name"]] = c["value"] # TODO: Fix later with example
+
+        transformation_fields = transformation_args["handler_options"]["required_fields"][:]
+        transformation_fields.extend(transformation_args["handler_options"]["optional_fields"])
+
+        if "working_directory" in transformation_fields: 
+            os.mkdir(transform_directory)            
+            transformation_args["working_directory"] = transform_directory
+        
+        if "input_directory" in transformation_fields:
+            transformation_args["input_directory"] = download_directory
+        
+        if "input_mapping" in transformation_fields:
+            transformation_args["input_mapping"] = simplejson.dumps(input_mapping)
+
+        #Need to process optional argument to be processed and converted to command arguments
+        if "input_file_name" in transformation_fields:
+            for k in transformation_args["handler_options"]["input_mapping"]:
+                if k in input_mapping:
+                    transformation_args["input_file_name"] = input_mapping[k]
+        else:
+            for k in transformation_args["handler_options"]["input_mapping"]:
+                if k in input_mapping:
+                    transformation_args[transformation_args["handler_options"]["input_mapping"][k]] = input_mapping[k]
+
+        if "shock_service_url" in transformation_fields: 
+            transformation_args["shock_service_url"] = args.shock_service_url
+        
+        if "handle_service_url" in transformation_fields: 
+            transformation_args["handle_service_url"] = args.handle_service_url
+
+        # clean out arguments passed to transform script
+        remove_keys = ["handler_options","user_options","user_option_groups",
+                       "url_mapping","developer_description","user_description"]
+
+        for x in remove_keys:
+            del transformation_args[x]
+
+        handler_utils.run_task(logger, transformation_args, debug=args.debug)
     except Exception, e:
         handler_utils.report_exception(logger, 
                          {"message": 'ERROR : Transforming workspace data from {0}'.format(args.workspace_name),

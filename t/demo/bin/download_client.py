@@ -31,7 +31,6 @@ import dateutil.tz
 
 import biokbase.Transform.Client
 import biokbase.Transform.script_utils
-import biokbase.Transform.handler_utils
 import biokbase.userandjobstate.client
 import biokbase.workspace.client
 
@@ -121,7 +120,7 @@ def download(transform_url, options, token):
 
 def download_from_shock(shockURL, shock_id, filePath, token):
     header = dict()
-    header["Authorization"] = "Oauth %s" % token
+    header["Authorization"] = "Oauth {0}".format(token)
     
     data = requests.get(shockURL + '/node/' + shock_id + "?download_raw", headers=header, stream=True)
     size = int(data.headers['content-length'])
@@ -170,11 +169,6 @@ if __name__ == "__main__":
     parser.add_argument('--workspace', nargs='?', help='name of the workspace where your objects should be created', const="", default="upload_testing")
     parser.add_argument('--object_name', nargs='?', help='name of the workspace object to create', const="", default="")
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
-    parser.add_argument('--handler', help='Client bypass test', dest="handler_mode", action='store_true')
-    parser.add_argument('--client', help='Client mode test', dest="handler_mode", action='store_false')
-    parser.set_defaults(handler_mode=False)
-    ## TODO: change the default path to be relative to __FILE__
-    parser.add_argument('--plugin_dir', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
 
     args = parser.parse_args()
 
@@ -190,9 +184,6 @@ if __name__ == "__main__":
         else:
             raise Exception("Unable to find KBase token!")
 
-    plugin = None
-    if args.handler_mode: plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_dir, logger)
-
     if not args.demo:
         user_inputs = {"external_type": args.external_type,
                        "kbase_type": args.kbase_type,
@@ -201,7 +192,7 @@ if __name__ == "__main__":
                        "workspace_name": args.workspace}
 
         workspace = args.workspace    
-        demos = [user_inputs]
+        inputs = [user_inputs]
     else:
         if "kbasetest" not in token and len(args.workspace.strip()) == 0:
             print "If you are running the demo as a different user than kbasetest, you need to provide the name of your workspace with --workspace."
@@ -247,47 +238,28 @@ if __name__ == "__main__":
             os.mkdir(conversionDownloadPath)
         except:
             pass
+        
         downloadPath = os.path.join(conversionDownloadPath)
 
         try:
             print term.bold("Step 1: Make KBase download request")
 
-            if args.handler_mode:
-                print term.blue("\tTransform handler download started:")
-                demo_inputs["working_directory"] = conversionDownloadPath
-                for attr, value in args.__dict__.iteritems():
-                   if attr.endswith("_service_url"):
-                     print "arg : " + attr
-                     demo_inputs[attr] = value
-                input_args = plugin.get_handler_args("download",demo_inputs, token)
-                command_list = ["trns_download_taskrunner"]
-                
-                for k in input_args:
-                   command_list.append("--{0}".format(k))
-                   command_list.append("{0}".format(input_args[k]))
-                print command_list
-
-                task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
-                sub_stdout, sub_stderr = task.communicate()
-                
-                if sub_stdout is not None:
-                    print sub_stdout
-                if sub_stderr is not None:
-                    print >> sys.stderr, sub_stderr
-                
-                if task.returncode != 0:
-                    raise Exception(sub_stderr)
-            else:
-                download_response = download(services["transform"], {"external_type": external_type, "kbase_type": kbase_type, "workspace_name": workspace, "object_name": object_name}, token)
-                print term.blue("\tTransform service download requested:")
-                print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
-                print term.blue("\tTransform service responded with job ids:")
-                print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(download_response[0], download_response[1])
-             
-                shock_response = show_job_progress(services["ujs"], services["awe"], download_response[0], download_response[1], token)
+            download_response = download(services["transform"], 
+                                         {"external_type": external_type, 
+                                          "kbase_type": kbase_type, 
+                                          "workspace_name": workspace, 
+                                          "object_name": object_name}, 
+                                          token)
+            print term.blue("\tTransform service download requested:")
+            print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
+            print term.blue("\tTransform service responded with job ids:")
+            print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(download_response[0], download_response[1])
+         
+            shock_response = show_job_progress(services["ujs"], services["awe"], download_response[0], download_response[1], token)
 
             print term.bold("Step 2: Grab data from SHOCK\n")
             download_from_shock(services["shock"], shock_response, downloadPath, token)
+            
             print term.green("\tShock download of {0} successful.\n\n".format(downloadPath))
         except Exception, e:
             print e.message

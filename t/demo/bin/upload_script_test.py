@@ -272,7 +272,31 @@ if __name__ == "__main__":
                               "downloadPath": "fasciculatum_supercontig.fasta.zip",
                               "url_mapping": "FASTA.DNA.Assembly"}
 
-        inputs = [fasta_to_contigset]
+        fastq_to_singleend = {"external_type": "FASTQ.DNA.Reads",
+                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
+                              "object_name": "fastq_single_end_library_test",
+                              "filePath": None,
+                              "downloadPath": None,
+                              "url": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0",
+                              "url_mapping": "FASTQ.DNA.Reads"}
+
+        fastq_to_pairedend = {"external_type": "FASTQ.DNA.Reads",
+                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
+                              "object_name": "fastq_paired_end_library_test",
+                              "filePath": None,
+                              "downloadPath": None,
+                              "url": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0",
+                              "url_mapping": "FASTQ.DNA.Reads"}
+
+        genbank_to_genome = {"external_type": "Genbank.Genome",
+                             "kbase_type": "KBaseGenomes.Genome",
+                             "object_name": "fastq_single_end_library_test",
+                             "filePath": None,
+                             "downloadPath": None,
+                             "url": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0",
+                             "url_mapping": "Genbank.Genome"}
+
+        inputs = [fasta_to_contigset, fastq_to_singleend]
     
 
 
@@ -320,11 +344,12 @@ if __name__ == "__main__":
 
                 print term.blue("\tTransform handler upload started:")
                 for attr, value in args.__dict__.iteritems():
-                   if attr.endswith("_service_url"):
-                     input_object[attr] = value
+                    if attr.endswith("_service_url"):
+                        input_object[attr] = value
+                
                 input_object["working_directory"] = conversionDownloadPath
                 input_args = plugin.get_handler_args("upload",input_object)
-                command_list = ["venv/bin/python venv/bin/trns_upload_taskrunner.py"]
+                command_list = ["trns_upload_taskrunner"]
 
                 if "user_options" in input_args: del input_args["user_options"]
                 

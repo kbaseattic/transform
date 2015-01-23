@@ -84,9 +84,7 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             print term.red("\t\tIssue connecting to UJS!")
             status[1] = "ERROR"
             status[2] = "Caught Exception"
-        
-        print status
-        
+                
         if (datetime.datetime.utcnow() - start).seconds > time_limit:
             print "\t\tJob is taking longer than it should, check debugging messages for more information."
             status[1] = "ERROR"
@@ -274,6 +272,25 @@ if __name__ == "__main__":
                                        "filePath": None,
                                        "downloadPath": None,
                                        "url_mapping": {"FASTA.Transcripts": "http://bioseed.mcs.anl.gov/~seaver/Files/Athaliana.TAIR10.fa"}}
+
+        fasta_single_to_reads = {"external_type": "SequenceReads",
+                                 "kbase_type": "KBaseAssembly.SingleEndLibrary",
+                                 "object_name": "ERR670568",
+                                 "filePath": "data/ERR670568.fasta.gz",
+                                 "downloadPath": "ERR670568.fasta.gz",
+                                 "url_mapping": {"SequenceReads": "file://./data/ERR670568.fasta.gz"},
+                                 "optional_arguments": {'validate': {}, 'transform': {'output_file_name': 'fastq.json'}}
+                                 }
+
+        fastq_single_to_reads = {"external_type": "SequenceReads",
+                                 "kbase_type": "KBaseAssembly.SingleEndLibrary",
+                                 "object_name": "ERR670568",
+                                 "filePath": "data/ERR670568.fastq.gz",
+                                 "downloadPath": "ERR670568.fastq.gz",
+                                 "url_mapping": {"SequenceReads": "file://./data/ERR670568.fastq.gz"},
+                                 "optional_arguments": {'validate': {}, 'transform': {'output_file_name': 'fastq.json'}}
+                                 }
+
                          
 
         genbank_to_genome_ftp_ncbi_gz = {"external_type": "Genbank.Genome",
@@ -354,18 +371,6 @@ if __name__ == "__main__":
                           "filePath": "data/fasciculatum_supercontig.fasta.zip",
                           "downloadPath": "fasciculatum_supercontig.fasta.zip"}
 
-        fasta_single_to_reads = {"external_type": "FASTA.DNA.Reads",
-                             "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                             "object_name": "ERR670568",
-                             "filePath": "data/ERR670568.fasta.gz",
-                             "downloadPath": "ERR670568.fasta.gz"}
-
-        fastq_single_to_reads = {"external_type": "FASTQ.DNA.Reads",
-                             "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                             "object_name": "ERR670568",
-                             "filePath": "data/ERR670568.fastq.gz",
-                             "downloadPath": "ERR670568.fastq.gz"}
-
         fasta_paired_to_reads = {"external_type": "FASTA.DNA.Reads",
                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
                              "object_name": "SRR1569976",
@@ -373,16 +378,16 @@ if __name__ == "__main__":
                              "downloadPath": "SRR1569976.fasta.bz2"}
 
         fastq_paired1_to_reads = {"external_type": "FASTQ.DNA.Reads",
-                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                              "object_name": "SRR1569976",
-                              "filePath": "data/SRR1569976.fastq.bz2",
-                              "downloadPath": "SRR1569976.fastq.bz2"}
+                                  "kbase_type": "KBaseAssembly.PairedEndLibrary",
+                                  "object_name": "SRR1569976",
+                                  "filePath": "data/SRR1569976.fastq.bz2",
+                                  "downloadPath": "SRR1569976.fastq.bz2"}
 
         fastq_paired2_to_reads = {"external_type": "FASTQ.DNA.Reads",
-                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                              "object_name": "SRR1569976_split",
-                              "filePath": "data/SRR1569976_split.tar.bz2",
-                              "downloadPath": "SRR1569976_split.tar.bz2"}
+                                  "kbase_type": "KBaseAssembly.PairedEndLibrary",
+                                  "object_name": "SRR1569976_split",
+                                  "filePath": "data/SRR1569976_split.tar.bz2",
+                                  "downloadPath": "SRR1569976_split.tar.bz2"}
 
         sbml_to_fbamodel = {"external_type": "SBML.FBAModel",
                         "kbase_type": "KBaseFBA.FBAModel",
@@ -392,7 +397,9 @@ if __name__ == "__main__":
 
         inputs = [fasta_to_contigset,
                   genbank_to_genome,
-                  fasta_transcripts_to_genome]
+                  fasta_transcripts_to_genome,
+                  fasta_single_to_reads,
+                  fastq_single_to_reads]
         #         genbank_to_genome_ftp_ncbi_gz,
         #         genbank_to_genome_gz, 
         #         genbank_to_genome_bz2, 
@@ -431,6 +438,10 @@ if __name__ == "__main__":
         object_name = x["object_name"]
         filePath = x["filePath"]
 
+        optional_arguments = None
+        if x.has_key("optional_arguments"):
+            optional_arguments = x["optional_arguments"]
+
         print "\n\n"
         print term.bold("#"*80)
         print term.white_on_black("Converting {0} => {1}".format(external_type,kbase_type))
@@ -450,7 +461,11 @@ if __name__ == "__main__":
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
                 input_object["url_mapping"] = x["url_mapping"]
-                input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
+
+                if optional_arguments is not None:
+                    input_object["optional_arguments"] = optional_arguments
+                else:
+                    input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
 
                 upload_response = upload(services["transform"], input_object, token)
      
@@ -508,7 +523,11 @@ if __name__ == "__main__":
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
                 input_object["url_mapping"] = url_mapping
-                input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
+
+                if optional_arguments is not None:
+                    input_object["optional_arguments"] = optional_arguments
+                else:
+                    input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
 
                 upload_response = upload(services["transform"], input_object, token)
                 

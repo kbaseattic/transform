@@ -48,15 +48,19 @@ def transform(shock_service_url=None, workspace_service_url=None,
     mc = 'us.kbase.genbank.ConvertGBK'
 
     java_classpath = os.path.join(os.environ.get("KB_TOP"), classpath.replace('$KB_TOP', os.environ.get("KB_TOP")))
-    arguments = ["java", "-classpath", java_classpath, "us.kbase.genbank.ConvertGBK",    
-                 "{0} {1} {2} {3} {4} {5} {6}".format("--shock_service_url {0}".format(shock_service_url),
+    
+    argslist = "{0} {1} {2} {3} {4} {5}".format("--shock_service_url {0}".format(shock_service_url),
                                                       "--workspace_service_url {0}".format(workspace_service_url),
                                                       "--workspace_name {0}".format(workspace_name),
                                                       "--object_name {0}".format(object_name),
-                                                      "--contigset_object_name {0}".format(contigset_object_name),
                                                       "--working_directory {0}".format(working_directory),
-                                                      "--input_directory {0}".format(input_directory))]
-        
+                                                      "--input_directory {0}".format(input_directory))
+    if contigset_object_name is not None:
+        argslist = "{0} {1}".format(arglist, "--contigset_object_name {0}".format(contigset_object_name))
+
+    arguments = ["java", "-classpath", java_classpath, "us.kbase.genbank.ConvertGBK", argslist]
+
+    print arguments        
     tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)
     stdout, stderr = tool_process.communicate()
 

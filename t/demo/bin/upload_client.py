@@ -240,7 +240,7 @@ if __name__ == "__main__":
                        "object_name": args.object_name,
                        "filePath": args.file_path,
                        "downloadPath": args.download_path,
-                       "url_mapping" : simplejson.loads(args.url_mapping)}
+                       "url_mapping" : args.url_mapping}
 
         workspace = args.workspace    
         inputs = [user_inputs]

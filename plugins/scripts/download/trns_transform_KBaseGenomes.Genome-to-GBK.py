@@ -53,9 +53,10 @@ def transform(shock_service_url=None, workspace_service_url=None,
     argslist = "{0} {1} {2}".format("--workspace_service_url {0}".format(workspace_service_url),
                                                       "--workspace_name {0}".format(workspace_name),                                                     
                                                       "--working_directory {0}".format(working_directory))
+    object_name_print = object_name.replace("|","\|")
     #"--shock_service_url {0}".format(shock_service_url),
     if object_name is not None:
-        argslist = "{0} {1}".format(argslist, "--object_name {0}".format(object_name))
+        argslist = "{0} {1}".format(argslist, "--object_name {0}".format(object_name_print))
     elif object_id is not None:
          argslist = "{0} {1}".format(argslist, "--object_id {0}".format(object_id))
     else:

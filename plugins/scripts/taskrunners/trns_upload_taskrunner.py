@@ -297,7 +297,8 @@ def main():
                         validation_args[k] = args.optional_arguments["validate"][k]
                              
                 for x in remove_keys:
-                    del validation_args[x]
+                    if x in validation_args:
+                        del validation_args[x]
 
                 handler_utils.run_task(logger, validation_args)
         except Exception, e:
@@ -393,7 +394,8 @@ def main():
                     transformation_args[k] = args.optional_arguments["transform"][k]
 
         for x in remove_keys:
-            del transformation_args[x]
+            if x in transformation_args:
+                del transformation_args[x]
 
         handler_utils.run_task(logger, transformation_args, debug=args.debug)
     except Exception, e:

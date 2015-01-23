@@ -50,7 +50,7 @@ def transform(shock_service_url=None, workspace_service_url=None,
 
     java_classpath = os.path.join(os.environ.get("KB_TOP"), classpath.replace('$KB_TOP', os.environ.get("KB_TOP")))
     
-    argslist = "{0} {1} {2} {3} {4} {5}".format("--workspace_service_url {0}".format(workspace_service_url),
+    argslist = "{0} {1} {2}".format("--workspace_service_url {0}".format(workspace_service_url),
                                                       "--workspace_name {0}".format(workspace_name),                                                     
                                                       "--working_directory {0}".format(working_directory))
     #"--shock_service_url {0}".format(shock_service_url),

@@ -136,8 +136,8 @@ if __name__ == "__main__":
                   workspace_service_url=args.workspace_service_url,
                   workspace_name=args.workspace_name,
                   object_name=args.object_name,
-                  object_id=args.object_name,
-                  object_version=args.object_name,
+                  object_id=args.object_id,
+                  object_version=args.object_version,
                   working_directory=args.working_directory,
                   logger = logger)
     except Exception, e:

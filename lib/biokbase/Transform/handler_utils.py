@@ -236,6 +236,9 @@ class PlugIns(object):
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))
                 
+        print "---------"
+        print args["optional_arguments"]
+        print "---------"
         args["job_details"] = base64.urlsafe_b64encode(simplejson.dumps(job_details))
         args["optional_arguments"] = base64.urlsafe_b64encode(simplejson.dumps(args["optional_arguments"]))
         return args

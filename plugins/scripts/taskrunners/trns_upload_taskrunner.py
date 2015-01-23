@@ -14,6 +14,10 @@ from biokbase.userandjobstate.client import UserAndJobState
 from biokbase.Transform import handler_utils
 from biokbase.Transform import script_utils
 
+# clean out arguments passed to transform script
+remove_keys = ["handler_options","user_options","user_option_groups",
+               "url_mapping","developer_description","user_description", 
+               "kbase_type", "external_type", "script_type"]
 
 def main():
     """
@@ -174,7 +178,7 @@ def main():
     kb_token = os.environ.get('KB_AUTH_TOKEN')
     ujs = UserAndJobState(url=args.ujs_service_url, token=kb_token)
 
-    est = datetime.datetime.utcnow() + datetime.timedelta(minutes=3)
+    est = datetime.datetime.utcnow() + datetime.timedelta(hours=24)
     if args.ujs_job_id is not None:
         ujs.update_job_progress(args.ujs_job_id, kb_token, "KBase Data Upload started", 
                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
@@ -186,6 +190,10 @@ def main():
     args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
     args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
     
+
+    print args.optional_arguments.keys()
+
+
     if not os.path.exists(args.working_directory):
         os.mkdir(args.working_directory)
 
@@ -239,9 +247,9 @@ def main():
             
             # optional argument
             if "optional_fields" in validation_args["handler_options"]: 
-                for k in args.optional_arguments:
+                for k in args.optional_arguments["validate"]:
                     if k in validation_args["handler_options"]["optional_fields"]:
-                        validation_args[k] = args.optional_arguments[k]
+                        validation_args[k] = args.optional_arguments["validate"][k]
 
             # custom argument
             if "custom_options" in validation_args["handler_options"]: 
@@ -284,6 +292,13 @@ def main():
                     else:
                         raise Exception("Expecting one file for input_file_name, found {0}.".format(len(files)))
                         
+                for k in args.optional_arguments["validate"]:
+                    if k in validation_args["handler_options"]["required_fields"]:
+                        validation_args[k] = args.optional_arguments["validate"][k]
+                             
+                for x in remove_keys:
+                    del validation_args[x]
+
                 handler_utils.run_task(logger, validation_args)
         except Exception, e:
             handler_utils.report_exception(logger, 
@@ -326,9 +341,12 @@ def main():
         
         # optional argument
         if "optional_fields" in transformation_args["handler_options"]: 
-            for k in args.optional_arguments:
+            for k in args.optional_arguments["transform"]:
                 if k in transformation_args["handler_options"]["optional_fields"]:
-                    transformation_args[k] = args.optional_arguments[k]
+                    if k == "output_file_name":
+                        transformation_args[k] = os.path.join(transform_directory, args.optional_arguments["transform"][k])
+                    else: 
+                        transformation_args[k] = args.optional_arguments["transform"][k]
 
         # custom argument
         if  "custom_options" in transformation_args["handler_options"]: 
@@ -341,8 +359,8 @@ def main():
         transformation_fields = transformation_args["handler_options"]["required_fields"][:]
         transformation_fields.extend(transformation_args["handler_options"]["optional_fields"])
 
+        os.mkdir(transform_directory)            
         if "working_directory" in transformation_fields: 
-            os.mkdir(transform_directory)            
             transformation_args["working_directory"] = transform_directory
         
         if "input_directory" in transformation_fields:
@@ -367,9 +385,15 @@ def main():
         if "handle_service_url" in transformation_fields: 
             transformation_args["handle_service_url"] = args.handle_service_url
 
-        # clean out arguments passed to transform script
-        remove_keys = ["handler_options","user_options","user_option_groups",
-                       "url_mapping","developer_description","user_description"]
+        for k in args.optional_arguments["transform"]:
+            if k in transformation_args["handler_options"]["required_fields"]:
+                if k == "output_file_name":
+                    transformation_args[k] = os.path.join(transform_directory, args.optional_arguments["transform"][k])
+                else: 
+                    transformation_args[k] = args.optional_arguments["transform"][k]
+
+        for x in remove_keys:
+            del transformation_args[x]
 
         handler_utils.run_task(logger, transformation_args, debug=args.debug)
     except Exception, e:

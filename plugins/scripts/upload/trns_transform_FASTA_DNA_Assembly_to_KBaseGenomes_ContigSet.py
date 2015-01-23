@@ -71,12 +71,12 @@ def transform(shock_service_url=None, handle_service_url=None,
     
         logger.info("Found {0}".format(str(fasta_files)))
 
-        input_file_name = files[0]
+        input_file_name = os.path.join(working_directory,files[0])
     
         if len(fasta_files) > 1:
             logger.warning("Not sure how to handle multiple FASTA files in this context. Using {0}".format(input_file_name))
     else:
-        input_file_name = os.path.join(os.path.join(input_directory, "fasta_assembly"), simplejson.loads(input_mapping)["fasta_assembly"])
+        input_file_name = os.path.join(os.path.join(input_directory, "FASTA.DNA.Assembly"), simplejson.loads(input_mapping)["FASTA.DNA.Assembly"])
         
                 
     logger.info("Building Object.")

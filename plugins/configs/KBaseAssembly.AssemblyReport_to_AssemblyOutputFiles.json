@@ -1,0 +1,42 @@
+{
+    "script_name": "trns_transform_KBaseAssembly.AssemblyReport_to_AssemblyOutputFiles.pl",
+    "script_type": "download",
+    "external_type": "AssemblyOutputFiles",
+    "kbase_type": "KBaseAssembly.AssemblyReport",
+    "user_description": "Download all assembly output files for the assembly job corresponding the to AssemblyReport object.",
+    "developer_description": "Download all assembly output files for the assembly job corresponding the to AssemblyReport object.",
+    "handler_options": {
+        "max_runtime": 1200,
+        "required_fields": [
+            "workspace_service_url",
+            "workspace_name",
+            "object_name",
+            "working_directory",
+	    "download_all"
+        ],
+        "optional_fields": ["object_version"],
+        "custom_options": [
+	    {
+                "name": "download_all",
+		"value": true,
+                "type": "boolean",
+                "required": true
+	    }
+	]
+    },
+    "user_options": [
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "Name of the workspace object."
+        },
+        {
+            "name": "object_version",
+            "type": "int",
+            "required": false,
+            "help": "Version of the workspace object, if not given we assume the latest."
+        }
+    ],
+    "user_option_groups": []
+}

@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # This code is part of KBase project to validate 
 #the sbml files
-
+#PYTHON USE
 import sys, getopt
 import os.path
 import subprocess
 import json
 import logging
 
-# KBase imports
+#KBASE USE
 import biokbase.Transform.script_utils as script_utils
 
 desc1 = '''
@@ -72,16 +72,16 @@ def main(argv):
    logger.info("Validation of SBML")
 
    try:
-      opts, args = getopt.getopt(argv,"hi:")
+      opts, args = getopt.getopt(argv,"hi:",["help","input_file_name="])
    except getopt.GetoptError:
       print('trns_validate_KBaseFBA.SBML.py -i <inputfile>')
       sys.exit(2)
 
    for opt, arg in opts:
-      if opt == '-h':
+      if opt == '-h' or opt == '--help':
          print('trns_validate_KBaseFBA.SBML.py -i <inputfile>')
          sys.exit()
-      elif opt == "-i":
+      elif opt == '-i' or opt == '--input_file_name':
          if os.path.isfile(arg):
              ret = Validate(arg)
          else:

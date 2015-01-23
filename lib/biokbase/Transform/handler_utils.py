@@ -101,7 +101,6 @@ class PlugIns(object):
 
         self.logger = logger
 
-        #pluginsDir = self.config["plugins_directory"]
         plugins = os.listdir(pluginsDir)
         
         for p in plugins:
@@ -145,12 +144,13 @@ class PlugIns(object):
                 self.scripts_config[pconfig["script_type"]][id] = pconfig
             except Exception, e:
                 self.logger.warning("Unable to read plugin {0}: {1}".format(p,e.message))
+        
+        self.logger.debug(self.scripts_config)
 
 
     def get_handler_args(self, method, args):
-
         if "optional_arguments" not in args:
-            args["optional_arguments"] = '{}'
+            args["optional_arguments"] = dict()
 
         job_details = dict()        
 
@@ -164,13 +164,7 @@ class PlugIns(object):
 
                 self.logger.debug(self.scripts_config["validate"][plugin_key])
                         
-                job_details["validate"] = self.scripts_config["validate"][plugin_key]
-                #job_details["validate"] = dict()
-                #job_details["validate"]["script_name"] = self.scripts_config["validate"][plugin_key]["script_name"]
-
-                job_details["validate"] = self.scripts_config["validate"][plugin_key]
-                
-                self.logger.debug(job_details)
+                job_details["validate"] = self.scripts_config["validate"][plugin_key]                
             else:
                 self.logger.warning("No validation available for {0}".format(args["external_type"]))
 
@@ -178,63 +172,28 @@ class PlugIns(object):
                 plugin_key = "{0}=>{1}".format(args["external_type"],args["kbase_type"])
             
                 job_details["transform"] = self.scripts_config["upload"][plugin_key]
-                #job_details["transform"] = dict()
-                #job_details["transform"]["script_name"] = self.scripts_config["upload"][plugin_key]["script_name"]
-
-                for field in self.scripts_config["upload"][plugin_key]["handler_options"]["required_fields"]:
-                    if field in args:
-                        job_details["transform"][field] =  args[field]
-                    else:
-                        self.logger.error("Required field not present : {0}".format(field))
-                
-                for field in self.scripts_config["upload"][plugin_key]["handler_options"]["optional_fields"]:
-                    if field in args:
-                        job_details["transform"][field] =  args[field]
-                    else:
-                        self.logger.info("Optional field not present : {0}".format(field))
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
                 
-            self.logger.info(simplejson.dumps(job_details, indent=4, sort_keys=True))
+            self.logger.debug(simplejson.dumps(job_details, indent=4, sort_keys=True))
         elif method == "download":
             if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
                 plugin_key = "{0}=>{1}".format(args["kbase_type"],args["external_type"])
             
                 job_details["transform"] = self.scripts_config["download"][plugin_key]
-
-                for field in self.scripts_config["download"][plugin_key]["handler_options"]["required_fields"]:
-                    if field in args:
-                        job_details["transform"][field] =  args[field]
-                    else:
-                        self.logger.error("Required field not present : {0}".format(field))
-                
-                for field in self.scripts_config["download"][plugin_key]["handler_options"]["optional_fields"]:
-                    if field in args:
-                        job_details["transform"][field] =  args[field]
-                    else:
-                        self.logger.info("Optional field not present : {0}".format(field))
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
+                
+            self.logger.debug(simplejson.dumps(job_details, indent=4, sort_keys=True))
         elif method == "convert":
             if self.scripts_config["convert"].has_key("{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])):
                 plugin_key = "{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])
             
                 job_details["transform"] = self.scripts_config["convert"][plugin_key]
-
-                for field in self.scripts_config["convert"][plugin_key]["handler_options"]["required_fields"]:
-                    if field in args:
-                        job_details["transform"][field] =  args[field]
-                    else:
-                        self.logger.error("Required field not present : {0}".format(field))
-                
-                for field in self.scripts_config["convert"][plugin_key]["handler_options"]["optional_fields"]:
-                    if field in args:
-                        job_details["transform"][field] =  args[field]
-                    else:
-                        self.logger.info("Optional field not present : {0}".format(field))
-
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))
+            
+            self.logger.debug(simplejson.dumps(job_details, indent=4, sort_keys=True))
                 
         print "---------"
         print args["optional_arguments"]

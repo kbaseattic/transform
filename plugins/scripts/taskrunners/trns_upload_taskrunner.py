@@ -190,8 +190,8 @@ def main():
     args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
     args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
     
-
-    print args.optional_arguments.keys()
+    logger.debug(args.optional_arguments)
+    logger.debug(dir(args.optional_arguments))
 
 
     if not os.path.exists(args.working_directory):

@@ -94,11 +94,12 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             print "\t\t{0} status update: {1}".format(status[0], status[2])
             last_status = status[2]
         
-        if status[1] in completed or status[1] in error:
+        if status[1] in completed:
             print term.green("\t\tKBase upload completed!\n")
             break
         elif status[1] in error:
             print term.red("\t\tOur job failed!\n")
+            print status
             
             print term.red("{0}".format(c.get_detailed_error(ujs_id)))
             print term.red("{0}".format(c.get_results(ujs_id)))
@@ -239,7 +240,7 @@ if __name__ == "__main__":
                        "object_name": args.object_name,
                        "filePath": args.file_path,
                        "downloadPath": args.download_path,
-                       "url_mapping" : args.url_mapping}
+                       "url_mapping" : simplejson.loads(args.url_mapping)}
 
         workspace = args.workspace    
         inputs = [user_inputs]
@@ -256,22 +257,21 @@ if __name__ == "__main__":
                               "object_name": "fasciculatum_supercontig",
                               "filePath": "data/fasciculatum_supercontig.fasta.zip",
                               "downloadPath": "fasciculatum_supercontig.fasta.zip",
-                              "url_mapping": "FASTA.DNA.Assembly"}
+                              "url_mapping": {"FASTA.DNA.Assembly": "file://./data/fasciculatum_supercontig.fasta.zip"}}
 
         genbank_to_genome = {"external_type": "Genbank.Genome",
                              "kbase_type": "KBaseGenomes.Genome",
                              "object_name": "NC_005213",
                              "filePath": "data/genbank/NC_005213/NC_005213.gbk",
                              "downloadPath": "NC_005213.gbk",
-                             "url_mapping": "Genbank.Genome"}
+                             "url_mapping": {"Genbank.Genome": "file://./data/genbank/NC_005213/NC_005213.gbk"}}
 
         fasta_transcripts_to_genome = {"external_type": "FASTA.Transcripts",
                                        "kbase_type": "KBaseGenomes.Genome",
-                                       "object_name": "",
+                                       "object_name": "transcripts_test",
                                        "filePath": None,
                                        "downloadPath": None,
-                                       "url": "http://bioseed.mcs.anl.gov/~seaver/Files/Athaliana.TAIR10.fa",
-                                       "url_mapping": "FASTA.Transcripts"}
+                                       "url_mapping": {"FASTA.Transcripts": "http://bioseed.mcs.anl.gov/~seaver/Files/Athaliana.TAIR10.fa"}}
                          
 
         genbank_to_genome_ftp_ncbi_gz = {"external_type": "Genbank.Genome",
@@ -279,8 +279,7 @@ if __name__ == "__main__":
                             "object_name": "ecoli_reference.NCBI",
                             "filePath": None,
                             "downloadPath": None,
-                            "url": "ftp://ftp.ncbi.nih.gov/genomes/genbank/bacteria/Escherichia_coli/reference/GCA_000005845.2_ASM584v2/GCA_000005845.2_ASM584v2_genomic.gbff.gz",
-                            "url_mapping": "genbank_genome"}
+                            "url_mapping": {"Genbank.Genome": "ftp://ftp.ncbi.nih.gov/genomes/genbank/bacteria/Escherichia_coli/reference/GCA_000005845.2_ASM584v2/GCA_000005845.2_ASM584v2_genomic.gbff.gz"}}
 
         genbank_to_genome_http_mol_zip = {"external_type": "Genbank.Genome",
                             "kbase_type": "KBaseGenomes.Genome",
@@ -425,49 +424,43 @@ if __name__ == "__main__":
     
     term = blessings.Terminal()
     for x in inputs:
-        print x
         external_type = x["external_type"]
         kbase_type = x["kbase_type"]
         object_name = x["object_name"]
         filePath = x["filePath"]
-        url_mapping = x["url_mapping"]
 
         print "\n\n"
         print term.bold("#"*80)
         print term.white_on_black("Converting {0} => {1}".format(external_type,kbase_type))
         print term.bold("#"*80)
 
-        if x.has_key("url"):
-            url = x["url"]
-
+        if len([k for k in x["url_mapping"] if not x["url_mapping"][k].startswith("file://")]) > 0:
             try:
-                print term.bright_blue("Uploading from remote http or ftp url")
-                print term.bold("Step 1: Make KBase upload request with a url")
-                print term.bold("Using data from : {0}".format(url))
+                print term.bright_blue("Uploading from remote http or ftp urls")
+                print term.bold("Step 1: Make KBase upload request with urls of data")
+                print term.bold("Using data from : {0}".format(url_mapping.values()))
 
-                biokbase.Transform.script_utils.download_from_urls(logger, urls=url, shock_service_url=services["shock"], token=token)
+                biokbase.Transform.script_utils.download_from_urls(logger, urls=x["url_mapping"], shock_service_url=services["shock"], token=token)
                 
                 input_object = dict()
                 input_object["external_type"] = external_type
                 input_object["kbase_type"] = kbase_type
-                input_object["url_mapping"] = dict()
-                input_object["url_mapping"][url_mapping] =  url
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
+                input_object["url_mapping"] = x["url_mapping"]
+                input_object["optional_arguments"] = "{'validate': {}, 'transform': {}}"
 
                 upload_response = upload(services["transform"], input_object, token)
-             
+     
                 print term.blue("\tTransform service upload requested:")
                 print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
                 print term.blue("\tTransform service responded with job ids:")
                 print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(upload_response[0], upload_response[1])
-             
+     
                 show_job_progress(services["ujs"], services["awe"], upload_response[0], upload_response[1], token)
 
                 print term.bold("Step 2: View or use workspace objects")
                 show_workspace_object_list(services["workspace"], workspace, object_name, token)
-
-                #show_workspace_object_contents(services["workspace"], workspace, object_name, token)
             except Exception, e:
                 print e.message
                 print e
@@ -483,29 +476,40 @@ if __name__ == "__main__":
 
             print term.bright_blue("Uploading local files")
             print term.bold("Step 1: Place local files in SHOCK")
-            print term.blue("\tPreparing to upload {0}".format(filePath))
-            print "\tFile size : {0:f} MB".format(int(os.path.getsize(filePath))/float(1024*1024))
 
-            shock_response = post_to_shock(services["shock"], filePath, token)
-            print term.green("\tShock upload of {0} successful.".format(filePath))
-            print "\tShock id : {0}\n\n".format(shock_response['id'])
-        
-            print term.bold("Optional Step: Verify files uploaded to SHOCK\n")
-            download_from_shock(services["shock"], shock_response["id"], downloadPath, token)
-            print term.green("\tShock download of {0} successful.\n\n".format(downloadPath))
+            url_mapping = dict()
+
+            try: 
+                for k in x["url_mapping"]:                
+                    print term.blue("\tPreparing to upload {0}".format(filePath))
+                    print "\tFile size : {0:f} MB".format(int(os.path.getsize(filePath))/float(1024*1024))
+
+                    shock_response = post_to_shock(services["shock"], filePath, token)
+                    print term.green("\tShock upload of {0} successful.".format(filePath))
+                    print "\tShock id : {0}\n\n".format(shock_response['id'])
+            
+                    url_mapping[k] = "{0}/node/{1}".format(services["shock"],shock_response["id"])
+            
+                    print term.bold("Optional Step: Verify files uploaded to SHOCK\n")
+                    download_from_shock(services["shock"], shock_response["id"], downloadPath, token)
+                    print term.green("\tShock download of {0} successful.\n\n".format(downloadPath))
+            except Exception, e:
+                print e.message
+                raise
+
+            print term.bold("Step 2: Make KBase upload request")
 
             try:
-                print term.bold("Step 2: Make KBase upload request")
-
                 input_object = dict()
                 input_object["external_type"] = external_type
                 input_object["kbase_type"] = kbase_type
-                input_object["url_mapping"] = dict()
-                input_object["url_mapping"][url_mapping] = "{0}/node/{1}".format(services["shock"],shock_response["id"])
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
+                input_object["url_mapping"] = url_mapping
+                input_object["optional_arguments"] = "{'validate': {}, 'transform': {}}"
 
                 upload_response = upload(services["transform"], input_object, token)
+                
                 print term.blue("\tTransform service upload requested:")
                 print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
                 print term.blue("\tTransform service responded with job ids:")

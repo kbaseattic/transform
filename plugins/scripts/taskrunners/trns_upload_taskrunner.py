@@ -345,7 +345,7 @@ def main():
         
         # take in user options
         for k in args.optional_arguments["transform"]:
-            if k in transformation_args["handler_options"]["required_fields"] or \ 
+            if k in transformation_args["handler_options"]["required_fields"] or \
                k in transformation_args["handler_options"]["optional_fields"]:
                 transformation_args[k] = args.optional_arguments["transform"][k]
             else:

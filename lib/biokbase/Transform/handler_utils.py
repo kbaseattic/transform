@@ -145,7 +145,7 @@ class PlugIns(object):
             except Exception, e:
                 self.logger.warning("Unable to read plugin {0}: {1}".format(p,e.message))
         
-        self.logger.debug(self.scripts_config)
+        self.logger.debug(simplejson.dumps(self.scripts_config, indent=4, sort_keys=True))
 
 
     def get_handler_args(self, method, args):

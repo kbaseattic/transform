@@ -281,33 +281,30 @@ if __name__ == "__main__":
                               "object_name": "fasciculatum_supercontig",
                               "filePath": "data/fasciculatum_supercontig.fasta.zip",
                               "downloadPath": "fasciculatum_supercontig.fasta.zip",
-                              "url_mapping": "FASTA.DNA.Assembly"}
+                              "url_mapping": {"FASTA.DNA.Assembly": "file://./data/fasciculatum_supercontig.fasta.zip"}}
 
         fastq_to_singleend = {"external_type": "FASTQ.DNA.Reads",
                               "kbase_type": "KBaseAssembly.SingleEndLibrary",
                               "object_name": "fastq_single_end_library_test",
                               "filePath": None,
                               "downloadPath": None,
-                              "url": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0",
-                              "url_mapping": "FASTQ.DNA.Reads"}
+                              "url_mapping": {"FASTQ.DNA.Reads": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"}}
 
         fastq_to_pairedend = {"external_type": "FASTQ.DNA.Reads",
                               "kbase_type": "KBaseAssembly.PairedEndLibrary",
                               "object_name": "fastq_paired_end_library_test",
                               "filePath": None,
                               "downloadPath": None,
-                              "url": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0",
-                              "url_mapping": "FASTQ.DNA.Reads"}
+                              "url_mapping": {"FASTQ.DNA.Reads": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"}}
 
         genbank_to_genome = {"external_type": "Genbank.Genome",
                              "kbase_type": "KBaseGenomes.Genome",
                              "object_name": "fastq_single_end_library_test",
                              "filePath": None,
                              "downloadPath": None,
-                             "url": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0",
-                             "url_mapping": "Genbank.Genome"}
+                             "url_mapping": {"Genbank.Genome": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"}}
 
-        inputs = [fasta_to_contigset, fastq_to_singleend]
+        inputs = [fasta_to_contigset, fastq_to_singleend, fastq_to_pairedend, genbank_to_genome]
     
 
 
@@ -327,7 +324,11 @@ if __name__ == "__main__":
         external_type = x["external_type"]
         kbase_type = x["kbase_type"]
         object_name = x["object_name"]
-        #filePath = x["filePath"]
+        
+        filePath = None
+        if x.has_key("filePath") and os.path.exists(x["filePath"]):
+            filePath = x["filePath"]
+        
         url_mapping = x["url_mapping"]
 
         print "\n\n"
@@ -335,8 +336,7 @@ if __name__ == "__main__":
         print term.white_on_black("Converting {0} => {1}".format(external_type,kbase_type))
         print term.bold("#"*80)
 
-        if x.has_key("url_mapping"):
-
+        if len([k for k in x["url_mapping"] if not x["url_mapping"][k].startswith("file://")]) > 0:
             #conversionDownloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
             #try:
             #    os.mkdir(conversionDownloadPath)
@@ -408,28 +408,37 @@ if __name__ == "__main__":
 
             print term.bright_blue("Uploading local files")
             print term.bold("Step 1: Place local files in SHOCK")
-            print term.blue("\tPreparing to upload {0}".format(filePath))
-            print "\tFile size : {0:f} MB".format(int(os.path.getsize(filePath))/float(1024*1024))
 
-            shock_response = post_to_shock(services["shock"], filePath, token)
-            print term.green("\tShock upload of {0} successful.".format(filePath))
-            print "\tShock id : {0}\n\n".format(shock_response['id'])
-        
-            print term.bold("Optional Step: Verify files uploaded to SHOCK\n")
-            download_from_shock(services["shock"], shock_response["id"], downloadPath, token)
-            print term.green("\tShock download of {0} successful.\n\n".format(downloadPath))
+            url_mapping = dict()
+
+            try: 
+                for k in x["url_mapping"]:                
+                    print term.blue("\tPreparing to upload {0}".format(filePath))
+                    print "\tFile size : {0:f} MB".format(int(os.path.getsize(filePath))/float(1024*1024))
+
+                    shock_response = post_to_shock(services["shock"], filePath, token)
+                    print term.green("\tShock upload of {0} successful.".format(filePath))
+                    print "\tShock id : {0}\n\n".format(shock_response['id'])
+            
+                    url_mapping[k] = "{0}/node/{1}".format(services["shock"],shock_response["id"])
+            
+                    print term.bold("Optional Step: Verify files uploaded to SHOCK\n")
+                    download_from_shock(services["shock"], shock_response["id"], downloadPath, token)
+                    print term.green("\tShock download of {0} successful.\n\n".format(downloadPath))
+            except Exception, e:
+                print e.message
+                raise
+
+            print term.bold("Step 2: Make KBase upload request")
 
             try:
-                print term.bold("Step 2: Make KBase upload request")
-
                 input_object = dict()
                 input_object["external_type"] = external_type
                 input_object["kbase_type"] = kbase_type
-                input_object["url_mapping"] = dict()
-                input_object["url_mapping"][url_mapping] = "{0}/node/{1}".format(services["shock"],shock_response["id"])
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
-                input_object["optional_arguments"] =args.optional_arguments
+                input_object["url_mapping"] = url_mapping
+                input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
 
                 print term.blue("\tTransform handler upload started:")
                 
@@ -465,7 +474,7 @@ if __name__ == "__main__":
             
                 if task.returncode != 0:
                     raise Exception(sub_stderr)
-    
+
                 print term.bold("Step 3: View or use workspace objects")
                 show_workspace_object_list(services["workspace"], workspace, object_name, token)
     

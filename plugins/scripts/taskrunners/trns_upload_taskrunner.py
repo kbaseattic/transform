@@ -189,10 +189,8 @@ def main():
     args.url_mapping = simplejson.loads(base64.urlsafe_b64decode(args.url_mapping))
     args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
     args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
-    
-    logger.debug(args.optional_arguments)
-    logger.debug(dir(args.optional_arguments))
 
+    logger.debug(args)
 
     if not os.path.exists(args.working_directory):
         os.mkdir(args.working_directory)

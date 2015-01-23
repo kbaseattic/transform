@@ -448,7 +448,7 @@ if __name__ == "__main__":
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
                 input_object["url_mapping"] = x["url_mapping"]
-                input_object["optional_arguments"] = "{'validate': {}, 'transform': {}}"
+                input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
 
                 upload_response = upload(services["transform"], input_object, token)
      
@@ -506,7 +506,7 @@ if __name__ == "__main__":
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
                 input_object["url_mapping"] = url_mapping
-                input_object["optional_arguments"] = "{'validate': {}, 'transform': {}}"
+                input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
 
                 upload_response = upload(services["transform"], input_object, token)
                 

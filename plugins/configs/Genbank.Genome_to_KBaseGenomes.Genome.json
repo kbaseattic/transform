@@ -14,14 +14,14 @@
         [
             "input_file_name",
             "workspace_name",
-            "workspace_url"
+            "workspace_service_url",
+            "working_directory",
+            "object_name"
         ], 
         "optional_fields": 
         [
-            "object_name",
             "contigset_object_name",
             "input_mapping",
-            "working_directory",
             "shock_service_url"
         ],
         

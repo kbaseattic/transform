@@ -230,7 +230,7 @@ def main():
     logger.info(str(args))
 
     # Step 2 : Validate the data files, if there is a separate validation script
-    if args.job_details["transform"]["handler_options"].has_key("must_own_validation") and \
+    if not args.job_details["transform"]["handler_options"].has_key("must_own_validation") or \
         args.job_details["transform"]["handler_options"]["must_own_validation"] == 'false':        
         try:
             os.mkdir(validation_directory)

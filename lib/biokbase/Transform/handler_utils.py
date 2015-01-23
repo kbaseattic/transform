@@ -65,6 +65,7 @@ class TaskRunner(object):
         for k in arguments:
             command_list.append("--{0}".format(k))
             command_list.append("{0}".format(arguments[k]))
+        
         print command_list
 
         return command_list

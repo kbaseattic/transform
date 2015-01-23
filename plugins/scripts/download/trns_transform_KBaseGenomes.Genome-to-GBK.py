@@ -55,14 +55,14 @@ def transform(shock_service_url=None, workspace_service_url=None,
                                                       "--working_directory {0}".format(working_directory))
     #"--shock_service_url {0}".format(shock_service_url),
     if object_name is not None:
-        argslist = "{0} {1}".format(arglist, "--object_name {0}".format(object_name))
+        argslist = "{0} {1}".format(argslist, "--object_name {0}".format(object_name))
     elif object_id is not None:
-         argslist = "{0} {1}".format(arglist, "--object_id {0}".format(object_id))
+         argslist = "{0} {1}".format(argslist, "--object_id {0}".format(object_id))
     else:
         logger.error("Transformation from KBaseGenomes.Genome to Genbank.Genome failed due to no object name or id")
         sys.exit(1)   
     if object_version is not None:
-        argslist = "{0} {1}".format(arglist, "--object_version {0}".format(object_version))
+        argslist = "{0} {1}".format(argslist, "--object_version {0}".format(object_version))
 
     arguments = ["java", "-classpath", java_classpath, "us.kbase.genbank.GenometoGbk", argslist]
 

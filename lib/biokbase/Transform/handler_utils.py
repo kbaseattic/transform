@@ -54,9 +54,9 @@ class TaskRunner(object):
 
     def _build_command_list(self, arguments=None, debug=False):
         if debug:
-            command_name = os.path.splitext(arguments["script_name"])[0]
-        else:
             command_name = arguments["script_name"]
+        else:
+            command_name = os.path.splitext(arguments["script_name"])[0]
         
         command_list = [command_name]
         del arguments["script_name"]

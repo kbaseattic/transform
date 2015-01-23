@@ -12,6 +12,7 @@ import zipfile
 import tarfile
 import pprint
 import subprocess
+import base64
 
 # patch for handling unverified certificates
 import ssl
@@ -228,8 +229,13 @@ if __name__ == "__main__":
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
 
     parser.add_argument('--plugin_directory', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
+    parser.add_argument('--optional_arguments', nargs='?', help='optional arguments', const="", default='{"validate" : {}, "transform" : {}}')
 
     args = parser.parse_args()
+
+    #args.optional_arguments = base64.urlsafe_b64decode(args.optional_arguments)
+    #args.optional_arguments = (args.optional_arguments)
+    args.optional_arguments = simplejson.loads(args.optional_arguments)
 
     token = os.environ.get("KB_AUTH_TOKEN")
     if token is None:
@@ -324,7 +330,8 @@ if __name__ == "__main__":
                      input_object[attr] = value
                 input_object["working_directory"] = conversionDownloadPath
                 input_args = plugin.get_handler_args("upload",input_object)
-                command_list = ["venv/bin/python venv/bin/trns_upload_taskrunner.py"]
+                #command_list = ["venv/bin/python venv/bin/trns_upload_taskrunner.py"]
+                command_list = ["trns_upload_taskrunner"]
 
                 if "user_options" in input_args: del input_args["user_options"]
                 
@@ -383,6 +390,7 @@ if __name__ == "__main__":
                 input_object["url_mapping"][url_mapping] = "{0}/node/{1}".format(services["shock"],shock_response["id"])
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
+                input_object["optional_arguments"] =args.optional_arguments
 
                 print term.blue("\tTransform handler upload started:")
                 

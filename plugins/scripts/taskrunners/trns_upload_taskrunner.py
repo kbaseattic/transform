@@ -345,7 +345,7 @@ def main():
         
         # take in user options
         for k in args.optional_arguments["transform"]:
-            if k in transformation_args["handler_options"]["required_fields"] or 
+            if k in transformation_args["handler_options"]["required_fields"] or \ 
                k in transformation_args["handler_options"]["optional_fields"]:
                 transformation_args[k] = args.optional_arguments["transform"][k]
             else:
@@ -354,7 +354,7 @@ def main():
         
         # take in all taskrunner args
         for k in args.__dict__:
-            if k in transformation_args["handler_options"]["required_fields"] or 
+            if k in transformation_args["handler_options"]["required_fields"] or \
                k in transformation_args["handler_options"]["optional_fields"]:
                 transformation_args[k] = args.__dict__[k]
 
@@ -378,7 +378,7 @@ def main():
         if "working_directory" in transformation_args: 
             transformation_args["working_directory"] = transform_directory
 
-        if "input_directory" in transformation_args["handler_options"]["required_fields"] or 
+        if "input_directory" in transformation_args["handler_options"]["required_fields"] or \
            "input_directory" in transformation_args["handler_options"]["optional_fields"]:
             transformation_args["input_directory"] = download_directory
 

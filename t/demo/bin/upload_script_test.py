@@ -288,14 +288,18 @@ if __name__ == "__main__":
                               "object_name": "fastq_single_end_library_test",
                               "filePath": None,
                               "downloadPath": None,
-                              "url_mapping": {"FASTQ.DNA.Reads": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"}}
+                              "url_mapping": {"FASTQ.DNA.Reads": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"},
+                              "optional_arguments": {'validate': {}, 'transform': {'output_file_name': 'fastq.json'}}
+                              }
 
         fastq_to_pairedend = {"external_type": "FASTQ.DNA.Reads",
                               "kbase_type": "KBaseAssembly.PairedEndLibrary",
                               "object_name": "fastq_paired_end_library_test",
                               "filePath": None,
                               "downloadPath": None,
-                              "url_mapping": {"FASTQ.DNA.Reads": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"}}
+                              "url_mapping": {"FASTQ.DNA.Reads": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"},
+                              "optional_arguments": {'validate': {}, 'transform': {'output_file_name': 'fastq.json'}}
+                              }
 
         genbank_to_genome = {"external_type": "Genbank.Genome",
                              "kbase_type": "KBaseGenomes.Genome",
@@ -304,7 +308,7 @@ if __name__ == "__main__":
                              "downloadPath": None,
                              "url_mapping": {"Genbank.Genome": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"}}
 
-        inputs = [fasta_to_contigset, fastq_to_singleend, fastq_to_pairedend, genbank_to_genome]
+        inputs = [fastq_to_singleend]
     
 
 
@@ -324,6 +328,10 @@ if __name__ == "__main__":
         external_type = x["external_type"]
         kbase_type = x["kbase_type"]
         object_name = x["object_name"]
+
+        optional_arguments = None
+        if x.has_key("optional_arguments"):
+            optional_arguments = x["optional_arguments"]
         
         filePath = None
         if x.has_key("filePath") and x["filePath"] is not None and os.path.exists(x["filePath"]):
@@ -438,7 +446,11 @@ if __name__ == "__main__":
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
                 input_object["url_mapping"] = url_mapping
-                input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
+                
+                if optional_arguments is not None:
+                    input_object["optional_arguments"] = optional_arguments
+                else:
+                    input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
 
                 print term.blue("\tTransform handler upload started:")
                 

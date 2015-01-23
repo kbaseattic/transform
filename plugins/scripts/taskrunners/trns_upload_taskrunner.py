@@ -221,7 +221,7 @@ def main():
                          e, 
                          None)                                  
 
-    
+
     # Report progress on success of the download step
     if args.ujs_job_id is not None:
         ujs.update_job_progress(args.ujs_job_id, kb_token, "Input data download completed", 
@@ -229,32 +229,62 @@ def main():
 
     logger.info(str(args))
 
+    # Step 2 : Validate the data files, if there is a separate validation script
     if args.job_details["transform"]["handler_options"].has_key("must_own_validation") and \
-       args.job_details["transform"]["handler_options"]["must_own_validation"] == 'false':        
-        # TODO check to see if a validator is configured, if not skip to transform
-        # Step 2 : Validate the data files
+        args.job_details["transform"]["handler_options"]["must_own_validation"] == 'false':        
         try:
             os.mkdir(validation_directory)
     
             validation_args = args.job_details["validate"]
-            validation_args["optional_arguments"] = args.optional_arguments
+            
+            # optional argument
+            if "optional_fields" in validation_args["handler_options"]: 
+                for k in args.optional_arguments:
+                    if k in validation_args["handler_options"]["optional_fields"]:
+                        validation_args[k] = args.optional_arguments[k]
+
+            # custom argument
+            if "custom_options" in validation_args["handler_options"]: 
+                for c in validation_args["handler_options"]["custom_options"]:
+                    if c["type"] != "boolean":
+                        validation_args[c["name"]] = c["value"]
+                    else:
+                        validation_args[c["name"]] = c["value"] # TODO: Fix later with example
         
             # gather a list of all files downloaded
             files = list(handler_utils.gen_recursive_filelist(download_directory))
-        
+    
             # get the directories common to those files
             directories = list()
             for x in files:
                 path = os.path.dirname(x)
-            
+        
                 if path not in directories:
                     directories.append(path)
         
             # validate everything in each directory
+            # TODO: 1) The following logic assume all the same type and 
+            #          it will be broken if there are multiple types
+            #       2) input_directory assume it can handle files without input_mapping        
+            validation_fields = validation_args["handler_options"]["required_fields"][:]
+            validation_fields.extend(validation_args["handler_options"]["optional_fields"])
+        
             for d in directories:
-                validation_args["input_directory"] = d
-                validation_args["working_directory"] = validation_directory
-                handler_utils.run_task(logger, validation_args, debug=args.debug)
+                if "input_directory" in validation_fields: 
+                    validation_args["input_directory"] = d
+                
+                if "working_directory" in validation_fields:
+                    validation_args["working_directory"] = validation_directory
+                
+                if "input_file_name" in validation_fields:
+                    files = os.listdir(d)
+                
+                    if len(files) == 1:
+                        validation_args["input_file_name"] = os.path.join(d,files[0])
+                    else:
+                        raise Exception("Expecting one file for input_file_name, found {0}.".format(len(files)))
+                        
+                handler_utils.run_task(logger, validation_args)
         except Exception, e:
             handler_utils.report_exception(logger, 
                              {"message": "ERROR : Validation of {0}".format(args.url_mapping),
@@ -275,32 +305,71 @@ def main():
 
         # Report progress on success of validation step
         if args.ujs_job_id is not None:
-            ujs.update_job_progress(args.ujs_job_id, kb_token, 'Input data has passed validation', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+            ujs.update_job_progress(args.ujs_job_id, kb_token, 'Input data has passed validation', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
 
     # Step 3: Transform the data
     try:
-        os.mkdir(transform_directory)
-
-        transformation_args = args.job_details["transform"]
-        transformation_args["optional_arguments"] = args.optional_arguments
-        transformation_args["input_directory"] = download_directory
-        transformation_args["working_directory"] = transform_directory
-
-        transformation_args["shock_service_url"] = args.shock_service_url
-        transformation_args["handle_service_url"] = args.handle_service_url
-
-        transformation_args["input_mapping"] = dict()
+        # build input_mapping from user args
+        input_mapping = dict()
         for name in args.url_mapping:
             checkPath = os.path.join(download_directory, name)
             files = os.listdir(checkPath)
-            
+        
             if len(files) == 1:
-                transformation_args["input_mapping"][name] = files[0]
+                input_mapping[name] = os.path.abspath(os.path.join(checkPath, files[0]))
             else:
-                transformation_args["input_mapping"][name] = checkPath
+                input_mapping[name] = checkPath
+    
+    
+        transformation_args = args.job_details["transform"]
+        
+        # optional argument
+        if "optional_fields" in transformation_args["handler_options"]: 
+            for k in args.optional_arguments:
+                if k in transformation_args["handler_options"]["optional_fields"]:
+                    transformation_args[k] = args.optional_arguments[k]
 
-        transformation_args["input_mapping"] = simplejson.dumps(transformation_args["input_mapping"])
+        # custom argument
+        if  "custom_options" in transformation_args["handler_options"]: 
+            for c in transformation_args["handler_options"]["custom_options"]:
+                if(c["type"] != "boolean"):
+                    transformation_args[c["name"]] = c["value"]
+                else:
+                    transformation_args[c["name"]] = c["value"] # TODO: Fix later with example
+
+        transformation_fields = transformation_args["handler_options"]["required_fields"][:]
+        transformation_fields.extend(transformation_args["handler_options"]["optional_fields"])
+
+        if "working_directory" in transformation_fields: 
+            os.mkdir(transform_directory)            
+            transformation_args["working_directory"] = transform_directory
+        
+        if "input_directory" in transformation_fields:
+            transformation_args["input_directory"] = download_directory
+        
+        if "input_mapping" in transformation_fields:
+            transformation_args["input_mapping"] = simplejson.dumps(input_mapping)
+
+        #Need to process optional argument to be processed and converted to command arguments
+        if "input_file_name" in transformation_fields:
+            for k in transformation_args["handler_options"]["input_mapping"]:
+                if k in input_mapping:
+                    transformation_args["input_file_name"] = input_mapping[k]
+        else:
+            for k in transformation_args["handler_options"]["input_mapping"]:
+                if k in input_mapping:
+                    transformation_args[transformation_args["handler_options"]["input_mapping"][k]] = input_mapping[k]
+
+        if "shock_service_url" in transformation_fields: 
+            transformation_args["shock_service_url"] = args.shock_service_url
+        
+        if "handle_service_url" in transformation_fields: 
+            transformation_args["handle_service_url"] = args.handle_service_url
+
+        # clean out arguments passed to transform script
+        remove_keys = ["handler_options","user_options","user_option_groups",
+                       "url_mapping","developer_description","user_description"]
 
         handler_utils.run_task(logger, transformation_args, debug=args.debug)
     except Exception, e:
@@ -328,7 +397,7 @@ def main():
                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
 
-    # Step 3: Save the data to the Workspace
+    # Step 4: Save the data to the Workspace
     try:    
         files = os.listdir(transform_directory)
         

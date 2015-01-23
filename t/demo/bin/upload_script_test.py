@@ -395,7 +395,10 @@ if __name__ == "__main__":
                 input_object["working_directory"] = conversionDownloadPath
                 input_object["input_directory"] = conversionDownloadPath
                 input_args = plugin.get_handler_args("upload",input_object)
-                command_list = ["{0} {1}".format(os.path.join(os.cwd(),"venv/bin/python"), "trns_upload_taskrunner.py")]
+                #command_list = ["{0} {1}".format("venv/bin/python", "trns_upload_taskrunner.py")]
+                command_list = ["trns_upload_taskrunner"]
+                
+                print command_list
                 
                 if "user_options" in input_args: del input_args["user_options"]
 

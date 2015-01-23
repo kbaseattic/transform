@@ -83,7 +83,7 @@ GetOptions("input_file_name|i=s"   => \$In_File,
 	   "dna|d"         => \$IsDNA,
            "help|h"        => \$Help);
 
-if($Help || !$In_File || !$Out_File){
+if($Help || !$In_File || !$Out_File ||!$Genome_ID){
     print($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (input_file_name used by default)> --dna|d");
     $logger->warn($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (input_file_name used by default)> --dna|d");
     exit();
@@ -111,7 +111,7 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 my $fh = getFileHandle($In_File);
 my @seqs = read_fasta($fh,1);
 
-my $GenomeHash = {id => ($Genome_ID ? $Genome_ID : $In_File),
+my $GenomeHash = {id => $Genome_ID,
 		  scientific_name => '',
 		  domain => "Plant",
 		  genetic_code => 11,

@@ -18,25 +18,24 @@ Options:
   -h, --help                          - print this help message and exit
   -s, --shock_service_url  URL        - shock service URL (D = https://kbase.us/services/shock-api)
   -n, --handle_service_url URL        - handle service URL (D = https://kbase.us/services/handle_service)
-  -d, --input_directory    dir        - directory containing the input files
   -o, --output_file_name   json       - output JSON file of KBaseAssembly.PairedEndLibrary type
   --token                  string     - token string
   -t, --type               string     - output KBaseAssembly type (PairedEndLibrary, SingleEndLibrary, ReferenceAssembly)
 
 Options for PairedEndLibrary:
 
-  -f, --file   sequence_file          - one or two read files (FASTA, FASTQ, or compressed forms)
-  --insert     float                  - insert size mean
-  --stdev      float                  - insert size standard deviation
+  -f, --input_file_name    path       - one or two read files (FASTA, FASTQ, or compressed forms)
+  --insert                 float      - insert size mean
+  --stdev                  float      - insert size standard deviation
   --outward                           - this flag is set if reads in the pair point outward
 
 Options for SingleEndLibrary:
 
-  -f, --file   read_file              - one read file (FASTA, FASTQ, or compressed forms)
+  -f, --input_file_name    path       - one read file (FASTA, FASTQ, or compressed forms)
 
 Options for ReferenceAssembly:
 
-  -f, --file   contig_set             - one FASTA file containing a reference set of contigs
+  -f, --input_file_name    path       - one FASTA file containing a reference set of contigs
   --refname    text                   - genome name of the reference contig set
 
 Examples:
@@ -48,7 +47,7 @@ Examples:
 End_of_Usage
 
 my ($help, $shock_url, $handle_url);
-my ($type, $dir, $token);
+my ($type, $token);
 my (@inputs, $output);
 my ($insert, $stdev, $outward, $refname);
 
@@ -56,8 +55,7 @@ my $rc = GetOptions("h|help"                 => \$help,
                     "s|shock_service_url=s"  => \$shock_url,
                     "n|handle_service_url=s" => \$handle_url,
                     "o|output_file_name=s"   => \$output,
-                    "d|input_directory=s"    => \$dir,
-                    "f|file=s"               => \@inputs,
+                    "f|input_file_name=s"    => \@inputs,
                     "t|type=s"               => \$type,
                     "insert=f"               => \$insert,
                     "stdev=f"                => \$stdev,
@@ -67,10 +65,9 @@ my $rc = GetOptions("h|help"                 => \$help,
 $token      ||= $ENV{KB_AUTH_TOKEN};
 $shock_url  ||= 'https://kbase.us/services/shock-api';
 $handle_url ||= 'https://kbase.us/services/handle_service';
-$dir        ||= '.';
 
 $help and die $usage;
-$type && @inputs >= 1 && @inputs <= 2 or die $usage;
+$type && $output && @inputs >= 1 && @inputs <= 2 or die $usage;
 
 my $shock = { url => $shock_url, token => $token };
 my $handle_service = Bio::KBase::HandleService->new($handle_url);
@@ -78,11 +75,11 @@ my $handle_service = Bio::KBase::HandleService->new($handle_url);
 my $obj;
 
 if ($type eq 'PairedEndLibrary') {
-    $obj = upload_pe_lib($shock, $dir, \@inputs, $insert, $stdev, $outward);
+    $obj = upload_pe_lib($shock, \@inputs, $insert, $stdev, $outward);
 } elsif ($type eq 'SingleEndLibrary') {
-    $obj = upload_se_lib($shock, $dir, \@inputs);
+    $obj = upload_se_lib($shock, \@inputs);
 } elsif ($type eq 'ReferenceAssembly') {
-    $obj = upload_ref($shock, $dir, \@inputs, $refname);
+    $obj = upload_ref($shock, \@inputs, $refname);
 } else {
     die "Unrecognized output type: $type\n";
 }
@@ -90,7 +87,7 @@ if ($type eq 'PairedEndLibrary') {
 print_output($output, encode_json($obj));
 
 sub upload_pe_lib {
-    my ($shock, $dir, $inputs, $insert, $stdev, $outward) = @_;
+    my ($shock, $inputs, $insert, $stdev, $outward) = @_;
 
     my $obj;
     $obj->{interleaved} = 1 if @$inputs == 1;
@@ -99,8 +96,7 @@ sub upload_pe_lib {
     $obj->{read_orientation_outward} = 1 if $outward;
 
     my $i;
-    for (@$inputs) {
-        my $file = "$dir/$_";
+    for my $file (@$inputs) {
         $obj->{'handle_'.++$i} = validate_seq_file($file);
     }
 
@@ -108,20 +104,20 @@ sub upload_pe_lib {
 }
 
 sub upload_se_lib {
-    my ($shock, $dir, $inputs) = @_;
+    my ($shock, $inputs) = @_;
 
     my $obj;
-    my $file = join("/", $dir, $inputs->[0]);
+    my $file = $inputs->[0];
     $obj->{handle} = validate_seq_file($file);
 
     return upload_files_in_obj($obj, $shock);
 }
 
 sub upload_ref {
-    my ($shock, $dir, $inputs, $refname) = @_;
+    my ($shock, $inputs, $refname) = @_;
 
     my $obj;
-    my $file = join("/", $dir, $inputs->[0]);
+    my $file = $inputs->[0];
     $obj->{handle} = validate_seq_file($file);
     $obj->{reference_name} = $refname if $refname;
 

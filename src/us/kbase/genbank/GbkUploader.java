@@ -86,7 +86,7 @@ public class GbkUploader {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
-                .withNumContigs(1L).withSource("NCBI").withSourceId("NCBI");
+                .withSource("KBase user upload").withSourceId("noid");//.withNumContigs(1L)
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
         final Map<String, Integer> generatedFeatureIds = new HashMap<String, Integer>();
@@ -402,7 +402,7 @@ public class GbkUploader {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
-                .withNumContigs(1L).withSource("NCBI").withSourceId("NCBI");
+                .withSource("KBase user upload").withSourceId("noid");//.withNumContigs(1L)
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
         final Map<String, Integer> generatedFeatureIds = new HashMap<String, Integer>();
@@ -558,6 +558,7 @@ public class GbkUploader {
         String contigId = id + ".contigset";
         List<Long> contigLengths = new ArrayList<Long>();
         long dnaLen = 0;
+        genome.setNumContigs((long) contigMap.size());
         for (Contig contig : contigMap.values()) {
             if (contig.getSequence() == null || contig.getSequence().length() == 0) {
                 throw new Exception("Contig " + contig.getId() + " has no DNA-sequence");

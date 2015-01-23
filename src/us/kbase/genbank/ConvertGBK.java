@@ -53,6 +53,7 @@ public class ConvertGBK {
 
     String outfileg = null;
     String outfilec = null;
+    File indir;
 
 
     boolean isTest = false;
@@ -62,9 +63,6 @@ public class ConvertGBK {
      * @throws Exception
      */
     public ConvertGBK(String[] args) throws Exception {
-
-        File indir = null;//new File(args[0]);
-
 
         for (int i = 0; i < args.length; i++) {
             int index = Arrays.asList(argsPossible).indexOf(args[i]);

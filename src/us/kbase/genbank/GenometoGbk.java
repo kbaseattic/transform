@@ -6,25 +6,27 @@ import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
 import us.kbase.common.service.JsonClientException;
+import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.Tuple4;
 import us.kbase.common.service.UObject;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Feature;
 import us.kbase.kbasegenomes.Genome;
-import us.kbase.shock.client.BasicShockClient;
-import us.kbase.shock.client.ShockNodeId;
-import us.kbase.shock.client.exceptions.InvalidShockUrlException;
-import us.kbase.shock.client.exceptions.ShockHttpException;
+import us.kbase.workspace.GetObjectInfoNewParams;
 import us.kbase.workspace.ObjectData;
 import us.kbase.workspace.ObjectIdentity;
 import us.kbase.workspace.WorkspaceClient;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -37,6 +39,17 @@ public class GenometoGbk {
 
     //NC_009925.jsonp NC_009925_ContigSet.jsonp
 
+    //object_name, object_id, object_version_number,
+    String[] argsPossible = {"-ig", "--in_file_genome", "-ic", "--in_file_contig",
+            "-o", "--out_file", "-on", "--object_name", "-oi", "--object_id",
+            "-ov", "--object_version",
+            "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url", "-wd", "--working_directory"};
+    String[] argsPossibleMap = {"inputg", "inputg", "inputc", "inputc",
+            "output", "output", "objectn", "objectn", "objecti", "objecti",
+            "objectv", "objectv",
+            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd"};
+
+
     boolean isTest = true;
 
     Genome genome;
@@ -46,8 +59,18 @@ public class GenometoGbk {
     final static String molecule_type_long = "genome DNA";
 
 
-    String wsurl = "http://blah.blah/";
-    static String shockurl = "https://kbase.us/services/shock-api/";
+    String wsurl;// = "http://blah.blah/";
+    String wsname;
+    static String shockurl;// = "https://kbase.us/services/shock-api/";
+
+    String genomefile;
+    String contigfile;
+    String outfile;
+    String workdir;
+
+    String objectname;
+    String objectid;
+    Long objectversion;
 
     /**
      * @param args
@@ -55,12 +78,54 @@ public class GenometoGbk {
      */
     public GenometoGbk(String[] args) throws Exception {
 
+
+        for (int i = 0; i < args.length; i++) {
+            int index = Arrays.asList(argsPossible).indexOf(args[i]);
+            if (index > -1) {
+                if (argsPossibleMap[index].equals("inputg")) {
+                    genomefile = args[i + 1];
+                } else if (argsPossibleMap[index].equals("inputc")) {
+                    contigfile = args[i + 1];
+                } else if (argsPossibleMap[index].equals("objectn")) {
+                    objectname = args[i + 1];
+                } else if (argsPossibleMap[index].equals("objecti")) {
+                    objectid = args[i + 1];
+                } else if (argsPossibleMap[index].equals("objectv")) {
+                    objectversion = Long.getLong(args[i + 1]);
+                } else if (argsPossibleMap[index].equals("output")) {
+                    outfile = args[i + 1];
+                } else if (argsPossibleMap[index].equals("wsn")) {
+                    wsname = args[i + 1];
+                } else if (argsPossibleMap[index].equals("wsu")) {
+                    wsurl = args[i + 1];
+                } else if (argsPossibleMap[index].equals("shocku")) {
+                    shockurl = args[i + 1];
+                } else if (argsPossibleMap[index].equals("wd")) {
+                    workdir = args[i + 1];
+                }
+            }
+        }
+
+        if (genomefile == null && contigfile == null) {
+            if (objectname == null && objectid == null) {
+                System.err.println("no object name or id provided and no input files provided");
+            }
+        }
+
+        if (workdir == null) {
+            File tmpf = new File("./");
+            workdir = tmpf.getAbsolutePath();
+            if (workdir.endsWith("."))
+                workdir = workdir.substring(0, workdir.length() - 2);
+            System.out.println("set work dir to default " + workdir);
+        }
+
         ObjectMapper mapper = UObject.getMapper();//new ObjectMapper();
 
         if (args.length == 2) {
-            getDatafromFiles(args, mapper);
+            getDatafromFiles(mapper);
         } else {
-            getDatafromWorkspace(args, mapper);
+            getDatafromWorkspace(mapper);
         }
 
         System.out.println(genome.getTaxonomy());
@@ -218,33 +283,56 @@ public class GenometoGbk {
             out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
             //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
 
-            int start = Math.max(0, args[0].lastIndexOf("/"));
-            int end = args[0].lastIndexOf(".");
-            final String outpath = args[0].substring(start, end) + "_fromKBaseGenome.gbk";
+
+            String outname = "";
+            if (outfile != null) {
+                if (!outfile.endsWith(".gbk") && !outfile.endsWith(".gb") &&
+                        outfile.endsWith(".genbank") && outfile.endsWith(".gbff")) {
+                    outname = outfile + ".gbk";
+                }
+            } else if (objectname != null) {
+                outname = objectname + ".gbk";
+            } else if (objectid != null) {
+                outname = objectid + ".gbk";
+            } else if (genomefile != null) {
+                int start = Math.max(0, genomefile.lastIndexOf("/"));
+                int end = genomefile.lastIndexOf(".");
+                outname = genomefile.substring(start, end) + ".gbk";
+            }
+            outname = outname.replace("|", "_");
+            final String outpath = (workdir != null ? workdir + "/" : "") + outname;
             System.out.println("writing " + outpath);
-            File outf = new File(outpath);
-            PrintWriter pw = new PrintWriter(outf);
-            pw.print(out);
-            pw.close();
+            try {
+                File outf = new File(outpath);
+                PrintWriter pw = new PrintWriter(outf);
+                pw.print(out);
+                pw.close();
+            } catch (FileNotFoundException e) {
+                System.err.println("failed to write output " + outpath);
+                e.printStackTrace();
+            }
         }
     }
 
-    private void getDatafromFiles(String[] args, ObjectMapper mapper) throws IOException {
-        File loadGenome = new File(args[0]);
-        File loadContigs = new File(args[1]);
+    /**
+     * @param mapper
+     * @throws IOException
+     */
+    private void getDatafromFiles(ObjectMapper mapper) throws IOException {
+        File loadGenome = new File(this.genomefile);
+        File loadContigs = new File(this.contigfile);
         genome = mapper.readValue(loadGenome, Genome.class);
         contigSet = mapper.readValue(loadContigs, ContigSet.class);
     }
 
 
     /**
-     * @param args
      * @param mapper
      * @throws AuthException
      * @throws IOException
      * @throws JsonClientException
      */
-    private void getDatafromWorkspace(String[] args, ObjectMapper mapper) throws AuthException, IOException, JsonClientException {
+    private void getDatafromWorkspace(ObjectMapper mapper) throws AuthException, IOException, JsonClientException {
         WorkspaceClient wc = null;
 
         String user = System.getProperty("test.user");
@@ -254,34 +342,66 @@ public class GenometoGbk {
 
         if (isTest) {
             AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
-            wc = new WorkspaceClient(new URL(wsurl + args[2]), at);
+            wc = new WorkspaceClient(new URL(wsurl + "/" + wsname), at);
         } else {
-            wc = new WorkspaceClient(new URL(wsurl + args[2]), new AuthToken(kbtok));
+            wc = new WorkspaceClient(new URL(wsurl + "/" + wsname), new AuthToken(kbtok));
         }
 
+        System.out.println("new ws client");
         wc.setAuthAllowedForHttp(true);
 
         List<ObjectIdentity> objectIds = new ArrayList<ObjectIdentity>();
         ObjectIdentity genobj = new ObjectIdentity();
-        genobj.setName(args[0]);
-        genobj.setWorkspace(args[2]);
-
+        genobj.setName(objectname);
+        genobj.setVer(objectversion);
+        genobj.setWorkspace(wsname);
         objectIds.add(genobj);
 
+        System.out.println("getting Genome object");
+        long startg = System.currentTimeMillis();
         List<ObjectData> lod = wc.getObjects(objectIds);
-
         final UObject data1 = lod.get(0).getData();
-        final UObject data2 = lod.get(1).getData();
+        long endg = System.currentTimeMillis();
+
+        System.out.println("got Genome in " + ((endg - startg) / 1000));
 
         genome = data1.asClassInstance(Genome.class);
         String contigref = genome.getContigsetRef();
+
+        GetObjectInfoNewParams params = new GetObjectInfoNewParams();
+        params.setObjects(objectIds);
+        params.setIncludeMetadata(1L);
+
+        List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> oinfo = wc.getObjectInfoNew(params);
+        Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>> tup = oinfo.get(0);
+        System.out.println("got Genome object size " + tup.getE10() / (1024 * 1024) + "M");
+
+        List<ObjectIdentity> objectIds2 = new ArrayList<ObjectIdentity>();
+        ObjectIdentity contigobj = new ObjectIdentity();
+        contigobj.setRef(contigref);
+        objectIds2.add(contigobj);
+        System.out.println("got contigref " + contigref);
         try {
+
+            long startg2 = System.currentTimeMillis();
+            List<ObjectData> lod2 = wc.getObjects(objectIds2);
+            long endg2 = System.currentTimeMillis();
+            final UObject data2 = lod2.get(0).getData();
+            System.out.println("got ContigSet in " + ((endg2 - startg2) / 1000));
+
             contigSet = data2.asClassInstance(ContigSet.class);
+
+            GetObjectInfoNewParams params2 = new GetObjectInfoNewParams();
+            params2.setObjects(objectIds2);
+            params2.setIncludeMetadata(1L);
+            //System.out.println(Instrumentation.getObjectSize(contigSet));
+            List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> oinfo2 = wc.getObjectInfoNew(params2);
+            Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>> tup2 = oinfo2.get(0);
+            System.out.println("got ContigSet object number " + contigSet.getContigs().size() + ", size " + tup2.getE10() / (1024 * 1024) + "M");
         } catch (Exception e) {
-            System.out.println("ContigSet not found in workspace.");
             System.err.println("ContigSet not found in workspace.");
 
-            String outputfile = args[0] + "_ContigSet.json";
+            /*String outputfile = args[0] + "_ContigSet.json";
             try {
                 BasicShockClient client = null;
                 if (isTest) {
@@ -302,9 +422,9 @@ public class GenometoGbk {
                 System.err.println("Shock HTPP error.");
                 e1.printStackTrace();
             }
-
             File loadContigs = new File(args[1]);
             contigSet = mapper.readValue(loadContigs, ContigSet.class);
+            */
         }
 
     }
@@ -520,16 +640,37 @@ public class GenometoGbk {
      * @param args
      */
     public final static void main(String[] args) {
-        if (args.length == 1 || args.length == 2 || args.length == 3) {
+        //System.out.println(args.length % 2);
+
+        if (args.length % 2 == 0 && args.length > 1) {
             try {
                 GenometoGbk gtg = new GenometoGbk(args);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("usage: java us.kbase.genbank.GenometoGbk <Genome .json (XXXX.json) or Genome object name in workspace> " +
-                    "<ContigSet .json (XXXX_ContigSet.json) or ContigSet object name in workspace> " +
-                    "<OTPIONAL workspace name (and then REQUIRED Genome object name and ContigSet name>");// <convert y/n> <save y/n>");
+            System.out.println("usage: java us.kbase.genbank.GenometoGbk " +
+
+                    "<-ig or --in_file_genome Genome object json file> " +
+                    "<-ic or --in_file_contig ContigSet object json file> " +
+                    "<-o or --out_file> " +
+                    "<-on or --object_name> " +
+                    "<-oi or --object_id> " +
+                    "<-ov or --object_version> " +
+                    "<-w or --ws_name ws name> " +
+                    "<-wu or --ws_url ws url> " +
+                    "<-su or --shock_url shock url> " +
+                    "<-wd or --working_directory");
+
+
+           /* String[] argsPossible = {"-ig", "--in_file_genome","-ic","--in_file_contig",
+                    "-o", "--out_file", "-on","--object_name","-oi","--object_id",
+                   "-ov","--object_version",
+                    "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url", "-wd", "--working_directory"};*/
+
+            //"<Genome .json (XXXX.json) or Genome object name in workspace> " +
+            // "<ContigSet .json (XXXX_ContigSet.json) or ContigSet object name in workspace> " +
+            //"<OTPIONAL workspace name (and then REQUIRED Genome object name and ContigSet name>");
         }
     }
 

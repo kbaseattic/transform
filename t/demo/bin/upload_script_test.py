@@ -225,7 +225,7 @@ if __name__ == "__main__":
     parser.add_argument('--workspace', nargs='?', help='name of the workspace where your objects should be created', const="", default="upload_testing")
     parser.add_argument('--object_name', nargs='?', help='name of the workspace object to create', const="", default="")
     parser.add_argument('--file_path', nargs='?', help='path to file for upload', const="", default="")
-    parser.add_argument('--url_mapping', nargs='?', help='dictionary of urls to process', const="", default="")
+    parser.add_argument('--url_mapping', nargs='?', help='input url maps', const="", default="{}")
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
 
     parser.add_argument('--plugin_directory', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
@@ -236,6 +236,10 @@ if __name__ == "__main__":
     #args.optional_arguments = base64.urlsafe_b64decode(args.optional_arguments)
     #args.optional_arguments = (args.optional_arguments)
     args.optional_arguments = simplejson.loads(args.optional_arguments)
+    args.url_mapping = simplejson.loads(args.url_mapping)
+
+    print "--opt arg--"
+    print args.optional_arguments
 
     token = os.environ.get("KB_AUTH_TOKEN")
     if token is None:
@@ -257,9 +261,10 @@ if __name__ == "__main__":
         user_inputs = {"external_type": args.external_type,
                        "kbase_type": args.kbase_type,
                        "object_name": args.object_name,
-                       "filePath": args.file_path,
                        "downloadPath": args.download_path,
                        "url_mapping" : args.url_mapping}
+        if args.file_path != "": 
+            user_inputs["filePath"] =  args.file_path
 
         workspace = args.workspace    
         inputs = [user_inputs]
@@ -322,7 +327,7 @@ if __name__ == "__main__":
         external_type = x["external_type"]
         kbase_type = x["kbase_type"]
         object_name = x["object_name"]
-        filePath = x["filePath"]
+        #filePath = x["filePath"]
         url_mapping = x["url_mapping"]
 
         print "\n\n"
@@ -330,30 +335,38 @@ if __name__ == "__main__":
         print term.white_on_black("Converting {0} => {1}".format(external_type,kbase_type))
         print term.bold("#"*80)
 
-        if x.has_key("url"):
-            url = x["url"]
+        if x.has_key("url_mapping"):
+
+            #conversionDownloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
+            #try:
+            #    os.mkdir(conversionDownloadPath)
+            #except:
+            #    pass
+            #downloadPath = os.path.join(conversionDownloadPath, x["downloadPath"])
 
             try:
                 print term.bright_blue("Uploading from remote http or ftp url")
-                print term.bold("Step 1: Make KBase upload request with a url")
-                print term.bold("Using data from : {0}".format(url))
-
-                biokbase.Transform.script_utils.download_from_urls(logger, urls=url, shock_service_url=services["shock"], token=token)
+                print term.bold("Step 1: Make KBase upload request with url")
+                for k,v in url_mapping.items():
+                    print term.bold("Using data from : {0} -> {1}".format(k,v))
+                biokbase.Transform.script_utils.download_from_urls(logger, urls=url_mapping, working_directory = stamp, shock_service_url=services["shock"], token=token)
                 
                 input_object = dict()
                 input_object["external_type"] = external_type
                 input_object["kbase_type"] = kbase_type
-                input_object["url_mapping"] = dict()
-                input_object["url_mapping"][url_mapping] =  url
+                #input_object["url_mapping"] = dict()
+                #input_object["url_mapping"][url_mapping] =  url
+                input_object["url_mapping"]=url_mapping
                 input_object["workspace_name"] = workspace
                 input_object["object_name"] = object_name
+                input_object["optional_arguments"] =args.optional_arguments
 
                 print term.blue("\tTransform handler upload started:")
                 for attr, value in args.__dict__.iteritems():
                     if attr.endswith("_service_url"):
                         input_object[attr] = value
                 
-                input_object["working_directory"] = conversionDownloadPath
+                input_object["working_directory"] = stamp
                 input_args = plugin.get_handler_args("upload",input_object)
                 command_list = ["trns_upload_taskrunner"]
 
@@ -362,6 +375,8 @@ if __name__ == "__main__":
                 for k in input_args:
                    command_list.append("--{0}".format(k))
                    command_list.append("{0}".format(input_args[k]))
+
+                print command_list
 
                 task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
                 sub_stdout, sub_stderr = task.communicate()

@@ -128,11 +128,13 @@ sub validate_seq_file {
     my ($file) = @_;
     -s $file or die "Invalid file: $file\n";
     my $name = $file;
+    my $abs_file = $file;
     $name =~ s/\.(gz|gzip|bzip|bzip2|bz|bz2|zip)$//;
     $name =~ s/\.tar$//;
     $name =~ /\.(fasta|fastq|fa|fq|fna|bas\.h5|bax\.h5)$/ or die "Unrecognized file type: $file\n";
     $file =~ s|.*/||;
-    return { file_name => $file, type => '_handle_to_be_' };
+    #return { file_name => $file, type => '_handle_to_be_' };
+    return { full_path_file => $abs_file, file_name => $file, type => '_handle_to_be_' };
 }
 
 sub upload_files_in_obj {
@@ -151,8 +153,11 @@ sub is_handle {
 sub update_handle {
     my ($handle, $shock) = @_;
 
-    my $file = $handle->{file_name};
+    #my $file = $handle->{file_name};
+    my $file = $handle->{full_path_file};
     my $id = curl_post_file($file, $shock);
+
+    undef $handle->{full_path_file};
 
     $handle->{type} = 'shock';
     $handle->{url}  = $shock->{url};

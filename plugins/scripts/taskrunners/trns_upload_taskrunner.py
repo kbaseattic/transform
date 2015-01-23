@@ -382,6 +382,10 @@ def main():
            "input_directory" in transformation_args["handler_options"]["optional_fields"]:
             transformation_args["input_directory"] = download_directory
 
+        if "input_mapping" in transformation_args["handler_options"]["required_fields"] or \
+           "input_mapping" in transformation_args["handler_options"]["optional_fields"]:
+            transformation_args["input_mapping"] = simplejson.dumps(input_mapping)
+            
         # fill out the input mapping
         for k in transformation_args["handler_options"]["input_mapping"]:
             if k in input_mapping:

@@ -326,7 +326,7 @@ if __name__ == "__main__":
         object_name = x["object_name"]
         
         filePath = None
-        if x.has_key("filePath") and os.path.exists(x["filePath"]):
+        if x.has_key("filePath") and x["filePath"] is not None and os.path.exists(x["filePath"]):
             filePath = x["filePath"]
         
         url_mapping = x["url_mapping"]

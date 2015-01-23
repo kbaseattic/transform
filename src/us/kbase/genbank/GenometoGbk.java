@@ -43,14 +43,14 @@ public class GenometoGbk {
     String[] argsPossible = {"-ig", "--in_file_genome", "-ic", "--in_file_contig",
             "-o", "--output_file", "-on", "--object_name", "-oi", "--object_id",
             "-ov", "--object_version",
-            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_service_url", "-wd", "--working_directory"};
+            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_service_url", "-wd", "--working_directory", "--test"};
     String[] argsPossibleMap = {"inputg", "inputg", "inputc", "inputc",
             "output", "output", "objectn", "objectn", "objecti", "objecti",
             "objectv", "objectv",
-            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd"};
+            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "t"};
 
 
-    boolean isTest = true;
+    boolean isTest = false;
 
     Genome genome;
     ContigSet contigSet;
@@ -102,6 +102,9 @@ public class GenometoGbk {
                     shockurl = args[i + 1];
                 } else if (argsPossibleMap[index].equals("wd")) {
                     workdir = args[i + 1];
+                } else if (argsPossibleMap[index].equals("t")) {
+                    if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
+                        isTest = true;
                 }
             }
         }

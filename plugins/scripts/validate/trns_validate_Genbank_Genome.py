@@ -64,7 +64,7 @@ if __name__ == "__main__":
                                      description=script_details["Description"],
                                      epilog=script_details["Authors"])
     parser.add_argument("--input_file", 
-                        help=script_details["input_file"], 
+                        help=script_details["Args"]["input_file"], 
                         action="store", 
                         type=str, 
                         nargs='?', 

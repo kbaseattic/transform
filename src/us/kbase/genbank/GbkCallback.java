@@ -7,8 +7,8 @@ import java.util.List;
  * @author rsutormin
  */
 public interface GbkCallback {
-	public void addHeader(String contigName, String headerType, String value, List<GbkSubheader> items) throws Exception;
-    public void addFeature(String contigName, String featureType, int strand, int start, int stop, List<GbkLocation> locations, List<GbkQualifier> props) throws Exception;
-    public void setGenome(String contigName, String genomeName, int taxId, String plasmid) throws Exception;
-    public void addSeqPart(String contigName, int seqPartIndex, String seqPart, int commonLen) throws Exception;
+	public void addHeaderTrackFile(String contigName, String headerType, String value, List<GbkSubheader> items, String filename) throws Exception;
+    public void addFeatureTrackFile(String contigName, String featureType, int strand, int start, int stop, List<GbkLocation> locations, List<GbkQualifier> props, String filename) throws Exception;
+    public void setGenomeTrackFile(String contigName, String genomeName, int taxId, String plasmid, String filename) throws Exception;
+    public void addSeqPartTrackFile(String contigName, int seqPartIndex, String seqPart, int commonLen, String filename) throws Exception;
 }

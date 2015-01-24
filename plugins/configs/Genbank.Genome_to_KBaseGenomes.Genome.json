@@ -12,7 +12,7 @@
         "max_runtime": 360,
         "required_fields": 
         [
-            "input_file_name",
+            "input_directory",
             "workspace_name",
             "workspace_service_url",
             "working_directory",
@@ -24,7 +24,7 @@
             "shock_service_url"
         ],
         
-        "input_mapping":{"Genbank.Genome":"input_file_name"},
+        "input_mapping":{"Genbank.Genome":"input_directory"},
         "custom_options": []
     },
     "user_options": [

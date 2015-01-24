@@ -50,7 +50,7 @@ def transform(input_file=None,
     stdout, stderr = tool_process.communicate()
 
     if len(stderr) > 0:
-        logger.error("Validation of Genbank.Genome failed on {0}".format(input_directory))
+        logger.error("Validation of Genbank.Genome failed on {0}".format(input_file))
         sys.exit(1)
     else:
         logger.info("Validation of Genbank.Genome completed.")

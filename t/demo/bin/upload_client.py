@@ -249,28 +249,31 @@ if __name__ == "__main__":
     services = dict()
 
     if not args.demo:
-        user_inputs = {"external_type": args.external_type,
-                       "kbase_type": args.kbase_type,
-                       "object_name": args.object_name,
-                       "filePath": args.file_path,
-                       "downloadPath": args.download_path,
-                       "url_mapping" : simplejson.loads(args.url_mapping)}
-
-        workspace = args.workspace    
-        inputs = [user_inputs]
-
-        services = {"shock": args.shock_service_url,
-                    "ujs": args.ujs_service_url,
-                    "workspace": args.workspace_service_url,
-                    "awe": args.awe_service_url,
-                    "transform": args.transform_service_url,
-                    "handle": args.handle_service_url}
-
         if args.config_file:
-            config = simplejson.loads(args.config_file)
+            f = open(args.config_file, 'r')
+            config = simplejson.loads(f.read())
+            f.close()
         
             services = config["services"]
             inputs = [config["upload"][x] for x in sorted(config["upload"])]
+        else:
+            user_inputs = {"external_type": args.external_type,
+                           "kbase_type": args.kbase_type,
+                           "object_name": args.object_name,
+                           "filePath": args.file_path,
+                           "downloadPath": args.download_path,
+                           "url_mapping" : simplejson.loads(args.url_mapping)}
+
+            inputs = [user_inputs]
+
+            services = {"shock": args.shock_service_url,
+                        "ujs": args.ujs_service_url,
+                        "workspace": args.workspace_service_url,
+                        "awe": args.awe_service_url,
+                        "transform": args.transform_service_url,
+                        "handle": args.handle_service_url}
+
+        workspace = args.workspace    
     else:
         if "kbasetest" not in token and len(args.workspace.strip()) == 0:
             print "If you are running the demo as a different user than kbasetest, you need to provide the name of your workspace with --workspace."

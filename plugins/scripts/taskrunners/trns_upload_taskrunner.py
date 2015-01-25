@@ -77,7 +77,7 @@ def main():
         Shinjae Yoo, Matt Henderson            
     """
 
-    logger = script_utils.stderrlogger(__file__)
+    logger = script_utils.stderrlogger(__file__, level=logging.DEBUG)
     logger.info("Executing KBase Upload tasks")
     
     script_details = script_utils.parse_docs(main.__doc__)
@@ -164,6 +164,7 @@ def main():
                         help=script_details["Args"]["keep_working_directory"], 
                         action='store_true')
                         
+    # turn on debugging options for script developers running locally
     parser.add_argument('--debug', 
                         help=script_details["Args"]["debug"], 
                         action='store_true')
@@ -235,15 +236,16 @@ def main():
         ujs.update_job_progress(args.ujs_job_id, kb_token, "Input data download completed", 
                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
-    logger.info(str(args))
+    logger.debug(str(args))
 
     # Step 2 : Validate the data files, if there is a separate validation script
     if not args.job_details["transform"]["handler_options"].has_key("must_own_validation") or \
-        args.job_details["transform"]["handler_options"]["must_own_validation"] == 'false':        
+       not args.job_details["transform"]["handler_options"]["must_own_validation"]:        
         try:
             os.mkdir(validation_directory)
     
-            validation_args = args.job_details["validate"]
+            validation_args = dict()
+            validation_args.update(args.job_details["validate"])
             
             # optional argument
             if "optional_fields" in validation_args["handler_options"]: 
@@ -278,8 +280,8 @@ def main():
             validation_fields.extend(validation_args["handler_options"]["optional_fields"])
         
             for d in directories:
-                for k in validation_fields:
-                    validation_args[k] = validation_fields[k]
+                for field in validation_fields:
+                    validation_args[field] = str()
             
                 if "input_directory" in validation_fields: 
                     validation_args["input_directory"] = d
@@ -303,11 +305,15 @@ def main():
                     if x in validation_args:
                         del validation_args[x]
 
+                # Update on validation steps
+                ujs.update_job_progress(args.ujs_job_id, kb_token, "Attempting to validate {0}".format(files[0]), 
+                                        1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+
                 handler_utils.run_task(logger, validation_args)
         except Exception, e:
             handler_utils.report_exception(logger, 
                              {"message": "ERROR : Validation of {0}".format(args.url_mapping),
-                              "exc": e,
+                              "exc": str(e),
                               "ujs": ujs,
                               "ujs_job_id": args.ujs_job_id,
                               "token": kb_token,
@@ -319,13 +325,22 @@ def main():
                              kb_token, 
                              "Upload to {0} failed.".format(args.workspace_name), 
                              e, 
-                             None)                                  
+                             None)
 
 
         # Report progress on success of validation step
         if args.ujs_job_id is not None:
             ujs.update_job_progress(args.ujs_job_id, kb_token, 'Input data has passed validation', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+    else:
+        logger.warning("Validation not available, skipping.")
 
+        if args.ujs_job_id is not None:
+            ujs.update_job_progress(args.ujs_job_id, kb_token, 'Validation not available, skipping.', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+
+
+    # Report progress of transformation about to begin
+    if args.ujs_job_id is not None:
+        ujs.update_job_progress(args.ujs_job_id, kb_token, 'Performing data transformation to KBase', 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
     # Step 3: Transform the data
     try:
@@ -341,7 +356,8 @@ def main():
                 input_mapping[name] = checkPath
     
     
-        transformation_args = args.job_details["transform"]
+        transformation_args = dict()
+        transformation_args.update(args.job_details["transform"])
         
         # take in user options
         for k in args.optional_arguments["transform"]:
@@ -420,70 +436,87 @@ def main():
                          None)                                  
 
 
-    # Report progress on success of transform step
-    if args.ujs_job_id is not None:
-        ujs.update_job_progress(args.ujs_job_id, kb_token, 
-                                'Data is in a KBase format, preparing to save...', 
-                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
-
+    logger.debug(args.job_details["transform"]["handler_options"])
 
     # Step 4: Save the data to the Workspace
-    try:    
-        files = os.listdir(transform_directory)
+    if not args.job_details["transform"]["handler_options"].has_key("must_own_saving_to_workspace") or \
+       not args.job_details["transform"]["handler_options"]["must_own_saving_to_workspace"]:        
+
+        # Report progress on success of transform step
+        if args.ujs_job_id is not None:
+            ujs.update_job_progress(args.ujs_job_id, kb_token, 
+                                    'Data is in a KBase format, preparing to save...', 
+                                    1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+
+        try:    
+            files = os.listdir(transform_directory)
         
-        for f in files:
-            path = os.path.join(transform_directory, f)
+            for f in files:
+                path = os.path.join(transform_directory, f)
             
-            if os.path.isfile(path):
-                object_details = dict()
-                object_details["workspace_service_url"] = args.workspace_service_url
-                object_details["workspace_name"] = args.workspace_name
-                object_details["object_name"] = args.object_name
-                object_details["kbase_type"] = args.kbase_type
-                object_details["object_meta"] = {}
-                object_details["provenance"] = [{"time": datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S+0000'),
-                                                 "service": "KBase Transform",
-                                                 "service_ver": "0.1",
-                                                 "method": "upload",
-                                                 "method_params": [args.kbase_type,
-                                                                   args.external_type,
-                                                                   args.workspace_name,
-                                                                   args.object_name,
-                                                                   args.url_mapping,
-                                                                   args.optional_arguments],
-                                                 "script": __file__,
-                                                 "script_ver": "0.0.1",
-                                                 "description": "KBase Upload"}]
+                if os.path.isfile(path):
+                    object_details = dict()
+                    object_details["workspace_service_url"] = args.workspace_service_url
+                    object_details["workspace_name"] = args.workspace_name
+                    object_details["object_name"] = args.object_name
+                    object_details["kbase_type"] = args.kbase_type
+                    object_details["object_meta"] = {}
+                    object_details["provenance"] = [{"time": datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S+0000'),
+                                                     "service": "KBase Transform",
+                                                     "service_ver": "0.1",
+                                                     "method": "upload",
+                                                     "method_params": [args.kbase_type,
+                                                                       args.external_type,
+                                                                       args.workspace_name,
+                                                                       args.object_name,
+                                                                       args.url_mapping,
+                                                                       args.optional_arguments],
+                                                     "script": __file__,
+                                                     "script_ver": "0.0.1",
+                                                     "description": "KBase Upload"}]
                 
-                script_utils.save_json_to_workspace(logger = logger,
-                                                    json_file = path,
-                                                    workspace_service_url = args.workspace_service_url,
-                                                    object_details = object_details,
-                                                    token = kb_token)
+                    script_utils.save_json_to_workspace(logger = logger,
+                                                        json_file = path,
+                                                        workspace_service_url = args.workspace_service_url,
+                                                        object_details = object_details,
+                                                        token = kb_token)
                 
-                # Report progress on success of saving the object
-                #if args.ujs_job_id is not None:
-                #    ujs.update_job_progress(args.ujs_job_id, 
-                #                            kb_token, 
-                #                            "Saved object {0} to {1}".format(args.object_name, args.workspace_name), 
-                #                            1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
-    except Exception, e:
-        handler_utils.report_exception(logger, 
-                         {"message": "ERROR : Saving object {0} to {1}".format(args.object_name, args.workspace_name),
-                          "exc": e,
-                          "ujs": ujs,
-                          "ujs_job_id": args.ujs_job_id,
-                          "token": kb_token,
-                         },
-                         {"keep_working_directory": args.keep_working_directory,
-                          "working_directory": args.working_directory})
+                    # Report progress on success of saving the object
+                    if args.ujs_job_id is not None:
+                        ujs.update_job_progress(args.ujs_job_id, 
+                                                kb_token, 
+                                                "Saved object {0} to {1}".format(args.object_name, args.workspace_name), 
+                                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+        except Exception, e:
+            handler_utils.report_exception(logger, 
+                             {"message": "ERROR : Saving object {0} to {1}".format(args.object_name, args.workspace_name),
+                              "exc": e,
+                              "ujs": ujs,
+                              "ujs_job_id": args.ujs_job_id,
+                              "token": kb_token,
+                             },
+                             {"keep_working_directory": args.keep_working_directory,
+                              "working_directory": args.working_directory})
 
-        ujs.complete_job(args.ujs_job_id, 
-                         kb_token, 
-                         "Upload to {0} failed.".format(args.workspace_name), 
-                         e, 
-                         None)                                  
+            ujs.complete_job(args.ujs_job_id, 
+                             kb_token, 
+                             "Upload to {0} failed.".format(args.workspace_name), 
+                             e, 
+                             None)                                  
+    
+        if args.ujs_job_id is not None:
+            ujs.update_job_progress(args.ujs_job_id, kb_token, 
+                                    'Objects saved to {}'.format(args.workspace_name), 
+                                    1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+    else:
+        # Report progress on success of transform step
+        if args.ujs_job_id is not None:
+            ujs.update_job_progress(args.ujs_job_id, kb_token, 
+                                    'Data is in a KBase format and objects saved to {0}'.format(args.workspace_name), 
+                                    1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
+        logger.warning("Transform step responsible for saving Workspace objects.")
+        
     
     # Report progress on the overall task being completed
     if args.ujs_job_id is not None:

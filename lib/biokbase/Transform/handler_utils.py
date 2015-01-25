@@ -66,8 +66,6 @@ class TaskRunner(object):
             command_list.append("--{0}".format(k))
             command_list.append("{0}".format(arguments[k]))
         
-        print command_list
-
         return command_list
 
 
@@ -91,6 +89,7 @@ def PluginManager(directory=None, logger=script_utils.stderrlogger(__file__)):
 
 class PlugIns(object):
 
+    # read in all configs
     def __init__(self, pluginsDir, logger=script_utils.stderrlogger(__file__)):
         self.scripts_config = {"external_types": list(),
                                "kbase_types": list(),
@@ -101,7 +100,7 @@ class PlugIns(object):
 
         self.logger = logger
 
-        plugins = os.listdir(pluginsDir)
+        plugins = sorted(os.listdir(pluginsDir))
         
         for p in plugins:
             try:
@@ -142,10 +141,10 @@ class PlugIns(object):
                     id = "{0}=>{1}".format(pconfig["source_kbase_type"],pconfig["destination_kbase_type"])
 
                 self.scripts_config[pconfig["script_type"]][id] = pconfig
+
+                self.logger.info("Successfully added plugin {0}".format(p))
             except Exception, e:
                 self.logger.warning("Unable to read plugin {0}: {1}".format(p,e.message))
-        
-        self.logger.debug(simplejson.dumps(self.scripts_config, indent=4, sort_keys=True))
 
 
     def get_handler_args(self, method, args):
@@ -154,15 +153,11 @@ class PlugIns(object):
 
         job_details = dict()        
 
-        self.logger.debug((method, args))
-
         if method == "upload":
             args["url_mapping"] = base64.urlsafe_b64encode(simplejson.dumps(args["url_mapping"]))
 
             if self.scripts_config["validate"].has_key(args["external_type"]):
                 plugin_key = args["external_type"]
-
-                self.logger.debug(self.scripts_config["validate"][plugin_key])
                         
                 job_details["validate"] = self.scripts_config["validate"][plugin_key]                
             else:
@@ -174,8 +169,6 @@ class PlugIns(object):
                 job_details["transform"] = self.scripts_config["upload"][plugin_key]
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
-                
-            self.logger.debug(simplejson.dumps(job_details, indent=4, sort_keys=True))
         elif method == "download":
             if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
                 plugin_key = "{0}=>{1}".format(args["kbase_type"],args["external_type"])
@@ -183,8 +176,6 @@ class PlugIns(object):
                 job_details["transform"] = self.scripts_config["download"][plugin_key]
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
-                
-            self.logger.debug(simplejson.dumps(job_details, indent=4, sort_keys=True))
         elif method == "convert":
             if self.scripts_config["convert"].has_key("{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])):
                 plugin_key = "{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])
@@ -193,12 +184,12 @@ class PlugIns(object):
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))
             
-            self.logger.debug(simplejson.dumps(job_details, indent=4, sort_keys=True))
+        self.logger.debug("job_details : " + simplejson.dumps(job_details, indent=4, sort_keys=True))
+
+        self.logger.debug(args)
                 
-        print "---------"
-        print args["optional_arguments"]
-        print "---------"
         args["job_details"] = base64.urlsafe_b64encode(simplejson.dumps(job_details))
         args["optional_arguments"] = base64.urlsafe_b64encode(simplejson.dumps(args["optional_arguments"]))
+        
         return args
 

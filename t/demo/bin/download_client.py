@@ -201,16 +201,23 @@ if __name__ == "__main__":
             if args.workspace is not None:
                 workspace = args.workspace
 
+        single_reads_to_fasta = {"external_type": "SequenceReads",
+                                 "kbase_type": "KBaseAssembly.SingleEndLibrary",
+                                 "object_name": "ERR670568"}
+
+        contigset_to_fasta = {"external_type": "FASTA.DNA.Assembly",
+                              "kbase_type": "KBaseGenomes.ContigSet",
+                              "object_name": "fasciculatum_supercontig"}
+
         genome_to_genbank = {"external_type": "Genbank.Genome",
                              "kbase_type": "KBaseGenomes.Genome",
                              "object_name": "NC_005213"}
 
-        single_reads_to_fasta = {"external_type": "FASTA.DNA.Reads",
-                                 "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                                 "object_name": "ERR670568"}
-
-        demos = [genome_to_genbank,
-                 single_reads_to_fasta]
+        inputs = [
+                  contigset_to_fasta,
+                  single_reads_to_fasta,
+                  genome_to_genbank
+                 ]
     
 
     services = {"ujs": args.ujs_service_url,
@@ -223,17 +230,17 @@ if __name__ == "__main__":
     os.mkdir(stamp)
     
     term = blessings.Terminal()
-    for demo_inputs in demos:
-        external_type = demo_inputs["external_type"]
-        kbase_type = demo_inputs["kbase_type"]
-        object_name = demo_inputs["object_name"]
+    for x in inputs:
+        external_type = x["external_type"]
+        kbase_type = x["kbase_type"]
+        object_name = x["object_name"]
 
         print "\n\n"
         print term.bold("#"*80)
         print term.white_on_black("Converting {0} => {1}".format(kbase_type,external_type))
         print term.bold("#"*80)
 
-        conversionDownloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
+        conversionDownloadPath = os.path.join(stamp, kbase_type + "_to_" + external_type)
         try:
             os.mkdir(conversionDownloadPath)
         except:
@@ -244,12 +251,18 @@ if __name__ == "__main__":
         try:
             print term.bold("Step 1: Make KBase download request")
 
-            download_response = download(services["transform"], 
-                                         {"external_type": external_type, 
-                                          "kbase_type": kbase_type, 
-                                          "workspace_name": workspace, 
-                                          "object_name": object_name}, 
-                                          token)
+            input_object = dict()
+            input_object["external_type"] = external_type
+            input_object["kbase_type"] = kbase_type
+            input_object["workspace_name"] = workspace
+            input_object["object_name"] = object_name
+
+            #if optional_arguments is not None:
+            #    input_object["optional_arguments"] = optional_arguments
+            #else:
+            #    input_object["optional_arguments"] = {'transform': {}}
+
+            download_response = download(services["transform"], input_object, token)
             print term.blue("\tTransform service download requested:")
             print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
             print term.blue("\tTransform service responded with job ids:")

@@ -201,7 +201,7 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
 
 
 def download_file_from_shock(logger = None,
-                             shock_service_url = "https://kbase.us/services/shock-api/",
+                             shock_service_url = None,
                              shock_id = None,
                              filePath = None,
                              token = None):
@@ -237,7 +237,7 @@ def download_file_from_shock(logger = None,
 
 
 def upload_file_to_shock(logger = None,
-                         shock_service_url = "https://kbase.us/services/shock-api/",
+                         shock_service_url = None,
                          filePath = None,
                          ssl_verify = True,
                          token = None):
@@ -276,8 +276,8 @@ def upload_file_to_shock(logger = None,
 
 
 def getHandles(logger = None,
-               shock_service_url = "https://kbase.us/services/shock-api/",
-               handle_service_url = "https://kbase.us/services/handle_service/",
+               shock_service_url = None,
+               handle_service_url = None,
                shock_ids = None,
                handle_ids = None,
                token = None):
@@ -365,7 +365,7 @@ def getHandles(logger = None,
 def download_from_urls(logger = None,
                        working_directory = os.getcwd(),
                        urls = None,
-                       shock_service_url = "https://kbase.us/services/shock-api/",
+                       shock_service_url = None,
                        ssl_verify = True,
                        token = None, 
                        chunkSize = 10 * 2**20):

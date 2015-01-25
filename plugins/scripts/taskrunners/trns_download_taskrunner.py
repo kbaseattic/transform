@@ -59,6 +59,7 @@ def main():
                            will be cleaned when the job ends with success or failure.
         keep_working_directory: A flag to tell the script not to delete the working
                                 directory, which is mainly for debugging purposes.
+        debug: Run the taskrunner in debug mode for local execution in a virtualenv.
     
     Returns:
         Literal return value is 0 for success and 1 for failure.
@@ -150,6 +151,11 @@ def main():
                         help=script_details["Args"]["keep_working_directory"], 
                         action='store_true')
 
+    # turn on debugging options for script developers running locally
+    parser.add_argument('--debug', 
+                        help=script_details["Args"]["debug"], 
+                        action='store_true')
+
     # ignore any extra arguments
     args, unknown = parser.parse_known_args()
             
@@ -202,24 +208,10 @@ def main():
         transformation_fields.extend(transformation_args["handler_options"]["optional_fields"])
 
         if "working_directory" in transformation_fields: 
-            os.mkdir(transform_directory)            
             transformation_args["working_directory"] = transform_directory
-        
-        if "input_directory" in transformation_fields:
-            transformation_args["input_directory"] = download_directory
-        
-        if "input_mapping" in transformation_fields:
-            transformation_args["input_mapping"] = simplejson.dumps(input_mapping)
 
-        #Need to process optional argument to be processed and converted to command arguments
-        if "input_file_name" in transformation_fields:
-            for k in transformation_args["handler_options"]["input_mapping"]:
-                if k in input_mapping:
-                    transformation_args["input_file_name"] = input_mapping[k]
-        else:
-            for k in transformation_args["handler_options"]["input_mapping"]:
-                if k in input_mapping:
-                    transformation_args[transformation_args["handler_options"]["input_mapping"][k]] = input_mapping[k]
+        if "workspace_service_url" in transformation_fields: 
+            transformation_args["shock_service_url"] = args.workspace_service_url
 
         if "shock_service_url" in transformation_fields: 
             transformation_args["shock_service_url"] = args.shock_service_url
@@ -229,7 +221,7 @@ def main():
 
         # clean out arguments passed to transform script
         remove_keys = ["handler_options","user_options","user_option_groups",
-                       "url_mapping","developer_description","user_description"]
+                       "developer_description","user_description"]
 
         for x in remove_keys:
             del transformation_args[x]

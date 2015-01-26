@@ -88,14 +88,18 @@ public class ConvertGBK {
             }
         }
 
-        System.out.println("indir "+indir);
-        System.out.println("wsname "+wsname);
-        System.out.println("wsurl "+wsurl);
-        System.out.println("isTest "+isTest);
+        System.out.println("indir " + indir);
+        System.out.println("wsname " + wsname);
+        System.out.println("wsurl " + wsurl);
+        System.out.println("isTest " + isTest);
 
         if (workdir == null) {
             File tmpf = new File("./");
             workdir = tmpf.getAbsolutePath();
+        }
+
+        if (workdir.endsWith(".")) {
+            workdir = workdir.substring(0, workdir.length() - 2);
         }
 
         parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
@@ -156,8 +160,10 @@ public class ConvertGBK {
         Genome genome = (Genome) ar.get(2);
         genome.setAdditionalProperties("SOURCE", "KBASE_USER_UPLOAD");
         String outpath = workdir + "/" + outfileg;
+
+        System.out.println("workdir " + workdir + "\toutfileg " + outfileg + "\toutfilec " + outfilec);
         if (outfileg == null)
-            outpath = workdir + "/" + outfileg + ".jsonp";
+            outpath = workdir + "/" + genome.getId() + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
             out.print(UObject.transformObjectToString(genome));
@@ -172,9 +178,14 @@ public class ConvertGBK {
         //final String contigId = genome.getId() + "_ContigSet";
 
         String outpath2 = workdir + "/" + outfilec;//contigId + ".jsonp";
-
-        if (outfilec == null)
-            outpath2 = workdir + "/" + genome.getId() + "_ContigSet" + ".jsonp";
+        if (outfilec == null) {
+            int start = 0;
+            if (outfileg.lastIndexOf("/") != -1) {
+                start = outfileg.lastIndexOf("/");
+            }
+            outfilec = outfileg.substring(start, outfileg.lastIndexOf("."));
+            outpath2 = workdir + "/" + outfilec + "_ContigSet.jsonp";
+        }
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));
             out.print(UObject.transformObjectToString(contigSet));

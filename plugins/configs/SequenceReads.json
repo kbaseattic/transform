@@ -1,7 +1,7 @@
 {
     "script_name": "trns_validate_Sequence.py",
     "script_type": "validate",
-    "external_type": "FASTA.DNA.Assembly",
+    "external_type": "SequenceReads",
     "user_description": "",
     "developer_description": "",
     

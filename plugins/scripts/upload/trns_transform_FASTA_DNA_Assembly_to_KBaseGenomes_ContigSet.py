@@ -36,7 +36,7 @@ def transform(shock_service_url=None, handle_service_url=None,
         output_file_name: A file name where the output JSON string should be stored.  
                           If the output file name is not specified the name will default 
                           to the name of the input file appended with '_contig_set'
-        input_directory: The directory the resulting json file will be written to.
+        input_directory: The directory where files will be read from.
         working_directory: The directory the resulting json file will be written to.
         shock_id: Shock id for the fasta file if it already exists in shock
         handle_id: Handle id for the fasta file if it already exists as a handle
@@ -64,14 +64,14 @@ def transform(shock_service_url=None, handle_service_url=None,
     
         valid_extensions = [".fa",".fasta",".fna"]
     
-        files = os.listdir(working_directory)
+        files = os.listdir(input_directory)
         fasta_files = [x for x in files if os.path.splitext(x)[-1] in valid_extensions]
             
         assert len(fasta_files) != 0
     
         logger.info("Found {0}".format(str(fasta_files)))
 
-        input_file_name = os.path.join(working_directory,files[0])
+        input_file_name = os.path.join(input_directory,files[0])
     
         if len(fasta_files) > 1:
             logger.warning("Not sure how to handle multiple FASTA files in this context. Using {0}".format(input_file_name))

@@ -201,7 +201,7 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
 
 
 def download_file_from_shock(logger = None,
-                             shock_service_url = "https://kbase.us/services/shock-api/",
+                             shock_service_url = None,
                              shock_id = None,
                              filePath = None,
                              token = None):
@@ -237,7 +237,7 @@ def download_file_from_shock(logger = None,
 
 
 def upload_file_to_shock(logger = None,
-                         shock_service_url = "https://kbase.us/services/shock-api/",
+                         shock_service_url = None,
                          filePath = None,
                          ssl_verify = True,
                          token = None):
@@ -276,8 +276,8 @@ def upload_file_to_shock(logger = None,
 
 
 def getHandles(logger = None,
-               shock_service_url = "https://kbase.us/services/shock-api/",
-               handle_service_url = "https://kbase.us/services/handle_service/",
+               shock_service_url = None,
+               handle_service_url = None,
                shock_ids = None,
                handle_ids = None,
                token = None):
@@ -365,7 +365,7 @@ def getHandles(logger = None,
 def download_from_urls(logger = None,
                        working_directory = os.getcwd(),
                        urls = None,
-                       shock_service_url = "https://kbase.us/services/shock-api/",
+                       shock_service_url = None,
                        ssl_verify = True,
                        token = None, 
                        chunkSize = 10 * 2**20):
@@ -456,6 +456,7 @@ def download_from_urls(logger = None,
             # check for a shock url
             try:
                 shock_id = re.search('^http[s]://.*/node/([a-fA-f0-9\-]+).*', url).group(1)
+                shock_download_url = re.search('^(http[s]://.*)/node/[a-fA-f0-9\-]+.*', url).group(1)
             except Exception, e:
                 shock_id = None
 
@@ -463,13 +464,13 @@ def download_from_urls(logger = None,
                 download_url = url
                 fileName = url.split('/')[-1]
             else:
-                metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(shock_service_url, shock_id), headers=header, stream=True, verify=ssl_verify)
+                metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(shock_download_url, shock_id), headers=header, stream=True, verify=ssl_verify)
                 shock_metadata = metadata_response.json()['data']
                 fileName = shock_metadata['file']['name']
                 fileSize = shock_metadata['file']['size']
                 metadata_response.close()
                     
-                download_url = "{0}/node/{1}?download_raw".format(shock_service_url, shock_id)
+                download_url = "{0}/node/{1}?download_raw".format(shock_download_url, shock_id)
 
             data = None
             size = 0

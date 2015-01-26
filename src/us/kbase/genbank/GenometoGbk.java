@@ -22,7 +22,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.RoundingMode;
 import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +46,8 @@ public class GenometoGbk {
     String[] argsPossible = {"-ig", "--in_file_genome", "-ic", "--in_file_contig",
             "-o", "--output_file", "-on", "--object_name", "-oi", "--object_id",
             "-ov", "--object_version",
-            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_service_url", "-wd", "--working_directory", "--test"};
+            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_service_url",
+            "-wd", "--working_directory", "--test"};
     String[] argsPossibleMap = {"inputg", "inputg", "inputc", "inputc",
             "output", "output", "objectn", "objectn", "objecti", "objecti",
             "objectv", "objectv",
@@ -221,11 +225,20 @@ public class GenometoGbk {
                 //System.out.println("*" + cur.getType() + "*");
 
                 String id = null;
-                final List<String> aliases = cur.getAliases();
-                if (aliases != null)
-                    id = aliases.get(0);
-                else
-                    id = cur.getId();
+                try {
+                    final List<String> aliases = cur.getAliases();
+                    if (aliases != null) {
+                        try {
+                            id = aliases.get(0);
+                        } catch (Exception e) {
+                            //e.printStackTrace();
+                        }
+                    }
+                    if (id == null)
+                        id = cur.getId();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
                 String function = cur.getFunction();
                 String[] allfunction = function.split(" ");
@@ -366,7 +379,13 @@ public class GenometoGbk {
         final UObject data1 = lod.get(0).getData();
         long endg = System.currentTimeMillis();
 
-        System.out.println("got Genome in " + ((endg - startg) / 1000));
+        final double doub = (double) (endg - startg) / (double) 1000;
+        NumberFormat df = DecimalFormat.getInstance();
+        df.setMinimumFractionDigits(2);
+        df.setMaximumFractionDigits(2);
+        df.setRoundingMode(RoundingMode.DOWN);
+        String result = df.format(doub);
+        System.out.println("got Genome in " + result + " s");
 
         genome = data1.asClassInstance(Genome.class);
         String contigref = genome.getContigsetRef();
@@ -377,7 +396,18 @@ public class GenometoGbk {
 
         List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> oinfo = wc.getObjectInfoNew(params);
         Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>> tup = oinfo.get(0);
-        System.out.println("got Genome object size " + tup.getE10() / (1024 * 1024) + "M");
+
+        final double doub2 = (double) tup.getE10() / (double) (1024 * 1024);
+        df = DecimalFormat.getInstance();
+        df.setMinimumFractionDigits(2);
+        df.setMaximumFractionDigits(2);
+        df.setRoundingMode(RoundingMode.DOWN);
+        String result2 = df.format(doub2);
+
+        //DecimalFormat df = new DecimalFormat("0.00##");
+        //String result = df.format(doub);
+
+        System.out.println("got Genome object size " + result2 + "M");
 
         List<ObjectIdentity> objectIds2 = new ArrayList<ObjectIdentity>();
         ObjectIdentity contigobj = new ObjectIdentity();
@@ -390,7 +420,14 @@ public class GenometoGbk {
             List<ObjectData> lod2 = wc.getObjects(objectIds2);
             long endg2 = System.currentTimeMillis();
             final UObject data2 = lod2.get(0).getData();
-            System.out.println("got ContigSet in " + ((endg2 - startg2) / 1000));
+            final double doub3 = (double) (endg2 - startg2) / (double) 1000;
+            df = DecimalFormat.getInstance();
+            df.setMinimumFractionDigits(2);
+            df.setMaximumFractionDigits(2);
+            df.setRoundingMode(RoundingMode.DOWN);
+            String result3 = df.format(doub3);
+
+            System.out.println("got ContigSet in " + result3 + " s");
 
             contigSet = data2.asClassInstance(ContigSet.class);
 
@@ -400,7 +437,15 @@ public class GenometoGbk {
             //System.out.println(Instrumentation.getObjectSize(contigSet));
             List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> oinfo2 = wc.getObjectInfoNew(params2);
             Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>> tup2 = oinfo2.get(0);
-            System.out.println("got ContigSet object number " + contigSet.getContigs().size() + ", size " + tup2.getE10() / (1024 * 1024) + "M");
+
+            final double doub4 = (double) tup2.getE10() / (double) (1024 * 1024);
+            df = DecimalFormat.getInstance();
+            df.setMinimumFractionDigits(2);
+            df.setMaximumFractionDigits(2);
+            df.setRoundingMode(RoundingMode.DOWN);
+            String result4 = df.format(doub4);
+
+            System.out.println("got ContigSet object number " + contigSet.getContigs().size() + ", size " + result4 + "M");
         } catch (Exception e) {
             System.err.println("ContigSet not found in workspace.");
 

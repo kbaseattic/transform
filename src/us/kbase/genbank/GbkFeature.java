@@ -88,6 +88,13 @@ public class GbkFeature extends GbkLocation {
 		this.stop = maxStop;
 	}
 
+    /**
+     *
+     * @param locus
+     * @param ret
+     * @param filename
+     * @throws Exception
+     */
 	public void save(GbkLocus locus, GbkCallback ret, String filename) throws Exception {
 		if (wasError)
             return;
@@ -107,6 +114,7 @@ public class GbkFeature extends GbkLocation {
                 	plasmid = qualifier.getValue();
                 }
             }
+            System.out.println("taxid "+taxId);
             ret.setGenomeTrackFile(locus.name, genomeName, taxId, plasmid, filename);
         } else {
         	ret.addFeatureTrackFile(locus.name, type, strand, start, stop, locations, qualifiers, filename);

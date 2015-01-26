@@ -205,8 +205,8 @@ def main():
 
     if args.ujs_job_id is not None:
         ujs.update_job_progress(args.ujs_job_id, kb_token, 
-                                "Downloading input data from {0}".format(args.url_mapping), 
-                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+                                "Downloading input data", 
+                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
     # Step 1 : Download the data to disk
     try:
@@ -215,7 +215,7 @@ def main():
                                         urls=args.url_mapping, token=kb_token)
     except Exception, e:
         handler_utils.report_exception(logger, 
-                         {"message": 'ERROR : Input data download from {0}'.format(args.url_mapping),
+                         {"message": 'ERROR : Input data download',
                           "exc": e,
                           "ujs": ujs,
                           "ujs_job_id": args.ujs_job_id,
@@ -306,13 +306,13 @@ def main():
                         del validation_args[x]
 
                 # Update on validation steps
-                ujs.update_job_progress(args.ujs_job_id, kb_token, "Attempting to validate {0}".format(files[0]), 
+                ujs.update_job_progress(args.ujs_job_id, kb_token, "Attempting to validate {0}".format(files[0][:handler_utils.UJS_STATUS_MAX]), 
                                         1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
                 handler_utils.run_task(logger, validation_args)
         except Exception, e:
             handler_utils.report_exception(logger, 
-                             {"message": "ERROR : Validation of {0}".format(args.url_mapping),
+                             {"message": "ERROR : Validation of input data",
                               "exc": str(e),
                               "ujs": ujs,
                               "ujs_job_id": args.ujs_job_id,
@@ -420,7 +420,7 @@ def main():
         handler_utils.run_task(logger, transformation_args, debug=args.debug)
     except Exception, e:
         handler_utils.report_exception(logger, 
-                         {"message": "ERROR : Creating an object from {0}".format(args.url_mapping),
+                         {"message": "ERROR : Creating an object from {0}".format(args.url_mapping)[:handler_utils.UJS_STATUS_MAX],
                           "exc": e,
                           "ujs": ujs,
                           "ujs_job_id": args.ujs_job_id,
@@ -431,7 +431,7 @@ def main():
 
         ujs.complete_job(args.ujs_job_id, 
                          kb_token, 
-                         "Upload to {0} failed.".format(args.workspace_name), 
+                         "Upload to {0} failed.".format(args.workspace_name)[:handler_utils.UJS_STATUS_MAX], 
                          e, 
                          None)                                  
 
@@ -489,7 +489,7 @@ def main():
                                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
         except Exception, e:
             handler_utils.report_exception(logger, 
-                             {"message": "ERROR : Saving object {0} to {1}".format(args.object_name, args.workspace_name),
+                             {"message": "ERROR : Saving object {0} to {1}".format(args.object_name, args.workspace_name)[:handler_utils.UJS_STATUS_MAX],
                               "exc": e,
                               "ujs": ujs,
                               "ujs_job_id": args.ujs_job_id,
@@ -506,13 +506,13 @@ def main():
     
         if args.ujs_job_id is not None:
             ujs.update_job_progress(args.ujs_job_id, kb_token, 
-                                    'Objects saved to {}'.format(args.workspace_name), 
+                                    'Objects saved to {0}'.format(args.workspace_name)[:handler_utils.UJS_STATUS_MAX], 
                                     1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
     else:
         # Report progress on success of transform step
         if args.ujs_job_id is not None:
             ujs.update_job_progress(args.ujs_job_id, kb_token, 
-                                    'Data is in a KBase format and objects saved to {0}'.format(args.workspace_name), 
+                                    'Data is in a KBase format and objects saved to {0}'.format(args.workspace_name)[:handler_utils.UJS_STATUS_MAX], 
                                     1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
         logger.warning("Transform step responsible for saving Workspace objects.")
@@ -522,7 +522,7 @@ def main():
     if args.ujs_job_id is not None:
         ujs.complete_job(args.ujs_job_id, 
                          kb_token, 
-                         "Upload to {0} completed".format(args.workspace_name), 
+                         "Upload to {0} completed".format(args.workspace_name)[:handler_utils.UJS_STATUS_MAX], 
                          None, 
                          {"shocknodes" : [], 
                           "shockurl" : args.shock_service_url, 

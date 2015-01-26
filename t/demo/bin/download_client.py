@@ -70,7 +70,7 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
     print term.blue("\tUJS Job Status:")
     # wait for UJS to complete    
     last_status = ""
-    time_limit = 40
+    time_limit = 300
     start = datetime.datetime.utcnow()
     while 1:        
         try:
@@ -89,10 +89,9 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             print "\t\t{0} status update: {1}".format(status[0], status[2])
             last_status = status[2]
         
-        if status[1].startswith("http://"):
+        if status[1] in completed:
             print term.green("\t\tKBase download completed!\n")
-            return status
-            break
+            return status, c.get_results(ujs_id)
         elif status[1] in error:
             print term.red("\t\tOur job failed!\n")
             
@@ -108,7 +107,7 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             awe_stderr = requests.get("{0}/work/{1}?report=stderr".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
             print term.red("STDERR : " + json.dumps(awe_stderr.json()["data"], sort_keys=True, indent=4))
             
-            break
+            return status, None
     
 
 def download(transform_url, options, token):
@@ -118,39 +117,46 @@ def download(transform_url, options, token):
     return response
 
 
-def download_from_shock(shockURL, shock_id, filePath, token):
+def download_from_shock(shockURL, shock_id, outPath, token):
     header = dict()
     header["Authorization"] = "Oauth {0}".format(token)
+
+    metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(shockURL, shock_id), headers=header, stream=True)
+    shock_metadata = metadata_response.json()['data']
+    filename = shock_metadata['file']['name']
+    filesize = shock_metadata['file']['size']
+    metadata_response.close()
     
     data = requests.get(shockURL + '/node/' + shock_id + "?download_raw", headers=header, stream=True)
-    size = int(data.headers['content-length'])
     
     chunkSize = 10 * 2**20
     download_iter = data.iter_content(chunkSize)
 
+    outFile = os.path.join(outPath, filename)
+
     term = blessings.Terminal()
-    f = open(filePath, 'wb')
+    f = open(outFile, 'wb')
 
     downloaded = 0
     try:
         for chunk in download_iter:
             f.write(chunk)
             
-            if downloaded + chunkSize > size:
-                downloaded = size
+            if downloaded + chunkSize > filesize:
+                downloaded = filesize
             else:
                 downloaded += chunkSize
         
-            print term.move_up + term.move_left + "\tDownloaded from shock {0:.2f}%".format(downloaded/float(size) * 100.0)
+            print term.move_up + term.move_left + "\tDownloaded from shock {0:.2f}%".format(downloaded/float(filesize) * 100.0)
     except:
         raise        
     finally:
         f.close()
         data.close()
         
-    print "\tFile size : {0:f} MB".format(int(os.path.getsize(filePath))/float(1024*1024))
+    print "\tFile size : {0:f} MB".format(int(os.path.getsize(outFile))/float(1024*1024))
 
-    biokbase.Transform.script_utils.extract_data(logger, filePath)
+    biokbase.Transform.script_utils.extract_data(logger, outFile)
 
 
 
@@ -203,20 +209,24 @@ if __name__ == "__main__":
 
         single_reads_to_fasta = {"external_type": "SequenceReads",
                                  "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                                 "object_name": "ERR670568"}
+                                 "object_name": "ERR670568",
+                                 "optional_arguments": {"transform": {"output_file_name": "ERR670568.fastq"}}
+                                }
 
         contigset_to_fasta = {"external_type": "FASTA.DNA.Assembly",
                               "kbase_type": "KBaseGenomes.ContigSet",
-                              "object_name": "fasciculatum_supercontig"}
+                              "object_name": "fasciculatum_supercontig",
+                              "optional_arguments": {"transform": {"output_file_name": "fs.fasta"}}
+                             }
 
         genome_to_genbank = {"external_type": "Genbank.Genome",
                              "kbase_type": "KBaseGenomes.Genome",
-                             "object_name": "NC_005213"}
+                             "object_name": "NC_005213",
+                             "optional_arguments": {"transform": {}}
+                            }
 
         inputs = [
                   contigset_to_fasta,
-                  single_reads_to_fasta,
-                  genome_to_genbank
                  ]
     
 
@@ -234,6 +244,10 @@ if __name__ == "__main__":
         external_type = x["external_type"]
         kbase_type = x["kbase_type"]
         object_name = x["object_name"]
+
+        optional_arguments = None
+        if x.has_key("optional_arguments"):
+            optional_arguments = x["optional_arguments"]
 
         print "\n\n"
         print term.bold("#"*80)
@@ -257,10 +271,10 @@ if __name__ == "__main__":
             input_object["workspace_name"] = workspace
             input_object["object_name"] = object_name
 
-            #if optional_arguments is not None:
-            #    input_object["optional_arguments"] = optional_arguments
-            #else:
-            #    input_object["optional_arguments"] = {'transform': {}}
+            if optional_arguments is not None:
+                input_object["optional_arguments"] = optional_arguments
+            else:
+                input_object["optional_arguments"] = {'transform': {}}
 
             download_response = download(services["transform"], input_object, token)
             print term.blue("\tTransform service download requested:")
@@ -268,10 +282,10 @@ if __name__ == "__main__":
             print term.blue("\tTransform service responded with job ids:")
             print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(download_response[0], download_response[1])
          
-            shock_response = show_job_progress(services["ujs"], services["awe"], download_response[0], download_response[1], token)
-
+            status, results = show_job_progress(services["ujs"], services["awe"], download_response[0], download_response[1], token)
+            
             print term.bold("Step 2: Grab data from SHOCK\n")
-            download_from_shock(services["shock"], shock_response, downloadPath, token)
+            download_from_shock(results["shockurl"], results["results"][0]["id"], downloadPath, token)
             
             print term.green("\tShock download of {0} successful.\n\n".format(downloadPath))
         except Exception, e:

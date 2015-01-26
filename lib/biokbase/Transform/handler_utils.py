@@ -7,6 +7,8 @@ import simplejson
 
 from biokbase.Transform import script_utils
 
+UJS_STATUS_MAX = 200
+
 def report_exception(logger=None, report_details=None, cleanup_details=None):
     logger.error(report_details["message"])
     logger.exception(report_details["exc"])

@@ -181,7 +181,7 @@ if __name__ == "__main__":
     token = os.environ.get("KB_AUTH_TOKEN")
     if token is None:
         if os.path.exists(os.path.expanduser("~/.kbase_config")):
-            f = open(os.path.expanduser("~/.kbase_config", 'r'))
+            f = open(os.path.expanduser("~/.kbase_config"), 'r')
             config = f.read()
             if "token=" in config:
                 token = config.split("token=")[1].split("\n",1)[0]            

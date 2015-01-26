@@ -207,7 +207,7 @@ public class ConvertGBK {
 
         String globalmd5 = out.toString();
 
-        genome.setMd5(globalmd5);
+        genome.setMd5(MD5(globalmd5));
 
         if (wsname != null) {
 

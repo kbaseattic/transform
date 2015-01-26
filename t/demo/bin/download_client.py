@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
             download_response = download(services["transform"], input_object, token)
             print term.blue("\tTransform service download requested:")
-            print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
+            print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(kbase_type,external_type,workspace,object_name)
             print term.blue("\tTransform service responded with job ids:")
             print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(download_response[0], download_response[1])
          

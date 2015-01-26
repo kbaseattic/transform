@@ -114,10 +114,10 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
                 else:
                     outFile.close()    
                     raise IOError("This ContigSet does not have a fasta_ref to shock or sequences in the contigs. A fasta file can not be created.")
-        
-        if output_file_name is not None and len(output_file_name) > 0:
-            name = os.listdir(working_directory)[0]
-            os.rename(os.path.join(working_directory, name), os.path.join(working_directory, output_file_name))
+    
+    if output_file_name is not None and len(output_file_name) > 0:
+        name = os.listdir(working_directory)[0]
+        os.rename(os.path.join(working_directory, name), os.path.join(working_directory, output_file_name))
 
     logger.info("Conversion completed.")
 
@@ -198,6 +198,7 @@ if __name__ == "__main__":
                   object_name = args.object_name, 
                   object_id = args.object_id, 
                   object_version_number = args.object_version_number, 
+                  output_file_name = args.output_file_name,
                   working_directory = args.working_directory, 
                   logger = logger)
     except Exception, e:

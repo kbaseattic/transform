@@ -121,6 +121,12 @@ if __name__ == "__main__":
                         type=str, 
                         nargs="?", 
                         required=False)   
+    parser.add_argument("--output_file",
+                        help=script_details["Args"]["output_file"],
+                        action="store",
+                        type=str,
+                        nargs="?",
+                        required=False)
     parser.add_argument("--working_directory", 
                         help=script_details["Args"]["working_directory"], 
                         action="store", 

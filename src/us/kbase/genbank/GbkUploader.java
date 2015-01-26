@@ -110,9 +110,9 @@ public class GbkUploader {
 
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
             try {
-                GbkParser.parse(br, new GbkParsingParams(true), new GbkCallback() {
+                GbkParser.parse(br, new GbkParsingParams(true), f.getName(), new GbkCallback() {
                     @Override
-                    public void setGenome(String contigName, String genomeName, int taxId, String plasmid) {
+                    public void setGenomeTrackFile(String contigName, String genomeName, int taxId, String plasmid, String filename) {
                         try {
                             if (contigToOrgName.get(contigName) == null)
                                 contigToOrgName.put(contigName, genomeName);
@@ -127,8 +127,8 @@ public class GbkUploader {
                     }
 
                     @Override
-                    public void addSeqPart(String contigName, int seqPartIndex, String seqPart,
-                                           int commonLen) {
+                    public void addSeqPartTrackFile(String contigName, int seqPartIndex, String seqPart,
+                                           int commonLen, String filename) {
                         try {
                             Contig contig = contigMap.get(contigName);
                             if (contig == null) {
@@ -149,8 +149,8 @@ public class GbkUploader {
                     }
 
                     @Override
-                    public void addHeader(String contigName, String headerType, String value,
-                                          List<GbkSubheader> items) {
+                    public void addHeaderTrackFile(String contigName, String headerType, String value,
+                                          List<GbkSubheader> items, String filename) {
                         try {
                             if (headerType.equals("SOURCE")) {
                                 String genomeName = value;
@@ -184,9 +184,9 @@ public class GbkUploader {
                     }
 
                     @Override
-                    public void addFeature(String contigName, String featureType, int strand,
+                    public void addFeatureTrackFile(String contigName, String featureType, int strand,
                                            int start, int stop, List<GbkLocation> locations,
-                                           List<GbkQualifier> props) {
+                                           List<GbkQualifier> props, String filename) {
                         try {
                             Feature f = null;
                             if (featureType.equals("CDS")) {
@@ -211,7 +211,7 @@ public class GbkUploader {
                                     try {
                                         f.setId(prop.getValue());
                                     } catch (Exception e) {
-                                        System.err.println("locus_tag");
+                                        System.err.println("locus_tag error "+filename);
                                         System.err.print(e.getMessage());
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
@@ -221,7 +221,7 @@ public class GbkUploader {
                                         String seq = prop.getValue();
                                         f.withProteinTranslation(seq).withProteinTranslationLength((long) seq.length());
                                     } catch (Exception e) {
-                                        System.err.println("translation");
+                                        System.err.println("translation error "+filename);
                                         System.err.print(e.getMessage());
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
@@ -230,7 +230,7 @@ public class GbkUploader {
                                     try {
                                         f.setFunction(prop.getValue());
                                     } catch (Exception e) {
-                                        System.err.println("note");
+                                        System.err.println("note error "+filename);
                                         System.err.print(e.getMessage());
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
@@ -240,7 +240,7 @@ public class GbkUploader {
                                         if (f.getFunction() == null)
                                             f.setFunction(prop.getValue());
                                     } catch (Exception e) {
-                                        System.err.println("product");
+                                        System.err.println("product error "+filename);
                                         System.err.print(e.getMessage());
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
@@ -251,7 +251,7 @@ public class GbkUploader {
                                             f.setId(prop.getValue());
                                         f.getAliases().add(prop.getValue());
                                     } catch (Exception e) {
-                                        System.err.println("gene");
+                                        System.err.println("gene error "+filename);
                                         System.err.print(e.getMessage());
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
@@ -260,7 +260,7 @@ public class GbkUploader {
                                     try {
                                         f.getAliases().add(prop.getValue());
                                     } catch (Exception e) {
-                                        System.err.println("addFeature");
+                                        System.err.println("addFeature error "+filename);
                                         System.err.print(e.getMessage());
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
@@ -278,8 +278,8 @@ public class GbkUploader {
                             features.add(f);
                             usedFeatureIds.add(f.getId());
                         } catch (Exception e) {
-                            System.err.println("addFeature");
-                            System.err.print(e.getMessage());
+                            System.err.println("addFeature error "+filename);
+                           System.err.print(e.getMessage());
                             System.err.print(e.getStackTrace());
                             e.printStackTrace();
                         }
@@ -353,7 +353,7 @@ public class GbkUploader {
             }
             contigSet = new ContigSet().withContigs(new ArrayList<Contig>(contigMap.values()))
                     .withId(contigSetId).withMd5("md5").withName(id)
-                    .withSource("User uploaded data").withSourceId("USER").withType("Organism");
+                    .withSource("User uploaded data").withSourceId("noid").withType("Organism");
 
             if (ws != null) {
                 String ctgRef = ws + "/" + contigSetId;
@@ -412,9 +412,9 @@ public class GbkUploader {
         for (final File f : files) {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
             try {
-                GbkParser.parse(br, new GbkParsingParams(true), new GbkCallback() {
+                GbkParser.parse(br, new GbkParsingParams(true), f.getName(), new GbkCallback() {
                     @Override
-                    public void setGenome(String contigName, String genomeName, int taxId, String plasmid) throws Exception {
+                    public void setGenomeTrackFile(String contigName, String genomeName, int taxId, String plasmid, String filename) throws Exception {
                         if (contigToOrgName.get(contigName) == null)
                             contigToOrgName.put(contigName, genomeName);
                         genome.getAdditionalProperties().put("tax_id", taxId);
@@ -422,8 +422,8 @@ public class GbkUploader {
                     }
 
                     @Override
-                    public void addSeqPart(String contigName, int seqPartIndex, String seqPart,
-                                           int commonLen) throws Exception {
+                    public void addSeqPartTrackFile(String contigName, int seqPartIndex, String seqPart,
+                                           int commonLen, String filename) throws Exception {
                         Contig contig = contigMap.get(contigName);
                         if (contig == null) {
                             contig = new Contig().withId(contigName).withName(contigName).withMd5("md5")
@@ -434,8 +434,8 @@ public class GbkUploader {
                     }
 
                     @Override
-                    public void addHeader(String contigName, String headerType, String value,
-                                          List<GbkSubheader> items) throws Exception {
+                    public void addHeaderTrackFile(String contigName, String headerType, String value,
+                                          List<GbkSubheader> items, String filename) throws Exception {
                         if (headerType.equals("SOURCE")) {
                             String genomeName = value;
                             //genome.withScientificName(genomeName);
@@ -462,9 +462,9 @@ public class GbkUploader {
                     }
 
                     @Override
-                    public void addFeature(String contigName, String featureType, int strand,
+                    public void addFeatureTrackFile(String contigName, String featureType, int strand,
                                            int start, int stop, List<GbkLocation> locations,
-                                           List<GbkQualifier> props) throws Exception {
+                                           List<GbkQualifier> props, String filename) throws Exception {
                         Feature f = null;
                         if (featureType.equals("CDS")) {
                             f = new Feature().withType("CDS");

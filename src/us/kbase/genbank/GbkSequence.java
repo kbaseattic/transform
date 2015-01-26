@@ -18,18 +18,18 @@ public class GbkSequence {
         locus = l;
 		this.ret = ret;
 	}
-	public void append(String seq) throws Exception {
+	public void append(String seq, String filename) throws Exception {
 		seqPart.append(seq);
         seqCommonLen += seq.length();
         if (seqPart.length() >= MAX_SEQ_PART) {
-            ret.addSeqPart(locus.name, seqPartNum, seqPart.toString(), seqCommonLen);
+            ret.addSeqPartTrackFile(locus.name, seqPartNum, seqPart.toString(), seqCommonLen, filename);
             seqPartNum++;
             seqPart = new StringBuilder();
         }
 	}
-	public void close() throws Exception {
+	public void close(String filename) throws Exception {
 		if (seqPart != null && seqPart.length() > 0) {
-            ret.addSeqPart(locus.name, seqPartNum, seqPart.toString(), seqCommonLen);
+            ret.addSeqPartTrackFile(locus.name, seqPartNum, seqPart.toString(), seqCommonLen, filename);
             seqPart = null;
         }
 	}

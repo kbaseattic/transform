@@ -40,9 +40,9 @@ public class ConvertGBK {
 
     //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
     String[] argsPossible = {"-i", "--input_directory", "-o", "--object_name", "-oc", "--contigset_object_name",
-            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory","--test"};
+            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
     String[] argsPossibleMap = {"input", "input", "outputg", "outputg", "outputc", "outputc",
-            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd","t"};
+            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "t"};
 
     static String wsurl = null;
     static String shockurl = null;
@@ -82,19 +82,24 @@ public class ConvertGBK {
                 } else if (argsPossibleMap[index].equals("wd")) {
                     workdir = args[i + 1];
                 } else if (argsPossibleMap[index].equals("t")) {
-		if(args[i+1].equalsIgnoreCase("Y") || args[i+1].equalsIgnoreCase("yes") || args[i+1].equalsIgnoreCase("T") || args[i+1].equalsIgnoreCase("TRUE")) 
-		isTest = true;
+                    if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
+                        isTest = true;
                 }
             }
         }
 
-System.out.println(indir);
-System.out.println(wsurl);
-System.out.println(isTest);
+        System.out.println("indir " + indir);
+        System.out.println("wsname " + wsname);
+        System.out.println("wsurl " + wsurl);
+        System.out.println("isTest " + isTest);
 
         if (workdir == null) {
             File tmpf = new File("./");
             workdir = tmpf.getAbsolutePath();
+        }
+
+        if (workdir.endsWith(".")) {
+            workdir = workdir.substring(0, workdir.length() - 2);
         }
 
         parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
@@ -155,8 +160,10 @@ System.out.println(isTest);
         Genome genome = (Genome) ar.get(2);
         genome.setAdditionalProperties("SOURCE", "KBASE_USER_UPLOAD");
         String outpath = workdir + "/" + outfileg;
+
+        System.out.println("workdir " + workdir + "\toutfileg " + outfileg + "\toutfilec " + outfilec);
         if (outfileg == null)
-            outpath = workdir + "/" + outfileg + ".jsonp";
+            outpath = workdir + "/" + genome.getId() + ".jsonp";
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
             out.print(UObject.transformObjectToString(genome));
@@ -171,9 +178,14 @@ System.out.println(isTest);
         //final String contigId = genome.getId() + "_ContigSet";
 
         String outpath2 = workdir + "/" + outfilec;//contigId + ".jsonp";
-
-        if (outfilec == null)
-            outpath2 = workdir + "/" + genome.getId() + "_ContigSet" + ".jsonp";
+        if (outfilec == null) {
+            int start = 0;
+            if (outfileg.lastIndexOf("/") != -1) {
+                start = outfileg.lastIndexOf("/");
+            }
+            outfilec = outfileg.substring(start, outfileg.lastIndexOf("."));
+            outpath2 = workdir + "/" + outfilec + "_ContigSet.jsonp";
+        }
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));
             out.print(UObject.transformObjectToString(contigSet));
@@ -206,7 +218,7 @@ System.out.println(isTest);
 
         String globalmd5 = out.toString();
 
-        genome.setMd5(globalmd5);
+        genome.setMd5(MD5(globalmd5));
 
         if (wsname != null) {
 
@@ -236,7 +248,7 @@ System.out.println(isTest);
                 WorkspaceClient wc = null;
 
                 if (isTestThis) {
-System.out.println("using test mode");
+                    System.out.println("using test mode");
                     AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
                     wc = new WorkspaceClient(new URL(http), at);
                 } else {
@@ -264,6 +276,7 @@ System.out.println("using test mode");
                 wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                         .withObjects(Arrays.asList(new ObjectSaveData().withName(genomeid).withMeta(meta)
                                 .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+                System.out.println("successfully saved object");
 
 /*
                 try {
@@ -352,8 +365,8 @@ System.out.println("using test mode");
                     "<-w or --workspace_name ws name> " +// <convert y/n> <save y/n>");
                     "<-wu or --workspace_service_url ws url> " +// <convert y/n> <save y/n>");
                     "<-su or --shock_url shock url> " +
-                    "<-wd or --working_directory> "+
-		    "<--test>");// <convert y/n> <save y/n>");
+                    "<-wd or --working_directory> " +
+                    "<--test>");// <convert y/n> <save y/n>");
 
             //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
         }

@@ -87,6 +87,8 @@ def transform(shock_service_url=None, handle_service_url=None,
     if not os.path.isdir(args.working_directory):
         raise Exception("The working directory {0} is not a valid directory!".format(working_directory))        
 
+    logger.debug(fasta_reference_only)
+
     # default if not too large
     contig_set_has_sequences = True 
     if fasta_reference_only:
@@ -252,12 +254,19 @@ if __name__ == "__main__":
     # Example of a custom argument specific to this uploader
     parser.add_argument('--fasta_reference_only', 
                         help=script_details["Args"]["fasta_reference_only"], 
-                        action='store_true', required=False)
+                        action='store', type=int, default=0, required=False)
 
     args, unknown = parser.parse_known_args()
 
-    logger = script_utils.stderrlogger(__file__)
+    logger = script_utils.stderrlogger(__file__, level=logging.DEBUG)
+
+    logger.debug(args)
     try:
+        if args.fasta_reference_only == 1:
+            ref_only = True
+        else:
+            ref_only = False
+    
         transform(shock_service_url = args.shock_service_url, 
                   handle_service_url = args.handle_service_url, 
                   output_file_name = args.output_file_name, 
@@ -266,7 +275,7 @@ if __name__ == "__main__":
                   shock_id = args.shock_id, 
                   handle_id = args.handle_id,
                   input_mapping = args.input_mapping,
-                  fasta_reference_only = args.fasta_reference_only,
+                  fasta_reference_only = ref_only,
                   logger = logger)
     except Exception, e:
         logger.exception(e)

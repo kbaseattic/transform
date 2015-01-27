@@ -9,6 +9,7 @@ use File::Stream;
 #KBASE USE
 use Bio::KBase::Transform::ScriptHelpers qw( getStderrLogger );
 
+my $logger = getStderrLogger();
 my $In_File   = "";
 my $Help = 0;
 GetOptions("input_file_name|i=s"  => \$In_File,
@@ -42,7 +43,7 @@ if(scalar(keys %Headers) < 2){
     print join("\n", map {uc($_)} split(/\t/,$Header_Line)),"\n";
     %Headers = map { uc($_) => 1 } split(/\t/,$Header_Line);
     if(scalar(keys %Headers) < 2){
-	logger->warn("$In_File either does not use commas or tabs as a separator, or does not have enough columns");
+	$logger->warn("$In_File either does not use commas or tabs as a separator, or does not have enough columns");
 	die("$In_File either does not use commas or tabs as a separator, or does not have enough columns");
     }
 }

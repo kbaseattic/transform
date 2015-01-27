@@ -40,6 +40,8 @@ import java.util.Map;
  */
 public class GenometoGbk {
 
+
+    boolean debug = true;
     //NC_009925.jsonp NC_009925_ContigSet.jsonp
 
     //object_name, object_id, object_version_number,
@@ -210,7 +212,19 @@ public class GenometoGbk {
             out.append("                     /organism=\"" + genome.getScientificName() + "\"\n");
             out.append("                     /mol_type=\"" + molecule_type_long + "\"\n");
             //out += "                     /strain=\"\"\n";
-            out.append("                     /db_xref=\"taxon:" + genome.getSourceId() + "\"\n");
+
+            String taxId = null;
+            Map<String, Object> addprops = genome.getAdditionalProperties();
+            for (String k : addprops.keySet()) {
+                //System.out.println("addprops " + k + "\t" + addprops.get(k));
+                if (k.equals("tax_id"))
+                    taxId = ""+(Integer) addprops.get(k);
+
+            }
+
+
+            if (taxId != null)
+                out.append("                     /db_xref=\"taxon:" + taxId + "\"\n");
 
             List<Feature> features = genome.getFeatures();
 
@@ -242,12 +256,15 @@ public class GenometoGbk {
 
                 String function = cur.getFunction();
                 String[] allfunction = function.split(" ");
-                boolean debug = false;
-                /*
-                if (id.equals("P75809")) {
-                    debug = true;
+
+
+                boolean test = false;
+
+                /*if (id.equals("NP_963295.1")) {
+                    test = true;
                     System.out.println("allfunction " + allfunction.length + "\t" + function.length());
                 }*/
+
                 StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
                 StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
 
@@ -280,7 +297,12 @@ public class GenometoGbk {
 
                     if (cur.getType().equals("CDS"))
                         out.append("                     /protein_id=\"" + id + "\"\n");
-                    //out += "                     /db_xref=\"GI:41614797\"\n";
+
+                    List<String> aliases = cur.getAliases();
+                    for (String s : aliases) {
+                        //System.out.println("adding alias " + s);
+                        out.append("                     /db_xref=\"id:" + s + "\"\n");
+                    }
                     //out += "                     /db_xref=\"GeneID:2732620\"\n";
 
                     //gene
@@ -292,6 +314,9 @@ public class GenometoGbk {
                     //else
                     //    System.out.println("op? " + id);
                 }
+
+                if (test)
+                    System.exit(0);
             }
 
 
@@ -483,67 +508,68 @@ public class GenometoGbk {
      * @return
      */
     private StringBuffer getAnnotation(String function, String[] allfunction, int first, int next, boolean debug) {
-        if (debug)
-            System.out.println("getAnnotation " + first + "\t" + next);
+        //if (debug)
+        //    System.out.println("getAnnotation " + first + "\t" + next);
         StringBuffer formatFunction = new StringBuffer("");
         //73
         boolean isfirst = true;
         if (function.length() < first) {
             formatFunction.append(function + "\"\n");
         } else {
-            int counter2 = 0;//allfunction[0].length();
-            int index2 = 0;//allfunction[0].length();
+            int counter2 = 0;
+            int index2 = 0;
             while (index2 < allfunction.length) {
                 //if (debug) {
                 //System.out.println("allfunction index2 " + index2 + "\t" + allfunction[index2]);
                 //    System.out.println("allfunction counter2 1 " + counter2);
                 //}
-                counter2 = +allfunction[index2].length() + 1;
-                if (debug) {
-                    StringBuffer out = new StringBuffer("");
-                    out.append(index2 + "\t");
-                    out.append(counter2 + "\t");
-                    out.append((index2 + 1 < allfunction.length ? (counter2 + allfunction[index2 + 1].length()) : "NaN") + "\t");
-                    out.append(allfunction[index2].length() + "\t");
-                    out.append((index2 + 1 < allfunction.length ? allfunction[index2 + 1].length() : "NaN") + "\t");
-                    out.append(allfunction[index2] + "\t");
-                    out.append((index2 + 1 < allfunction.length ? allfunction[index2 + 1] : "NaN") + "\t");
-                    System.out.println("allfunction " + out);
-                }
+
+                counter2 += allfunction[index2].length() + 1;
+                /*if (debug) {
+                    StringBuffer debugStr = new StringBuffer("");
+                    debugStr.append("index2 " + index2 + "\t");
+                    debugStr.append("counter2 " + counter2 + "\t");
+                    debugStr.append("index2 + 1 " +
+                            (index2 + 1 < allfunction.length ? (counter2 + allfunction[index2 + 1].length()) : "NaN") + "\t");
+                    debugStr.append("allfunction[index2].length() " + allfunction[index2].length() + "\t");
+                    debugStr.append("index2 + 1 < allfunction.length " +
+                            (index2 + 1 < allfunction.length ? allfunction[index2 + 1].length() : "NaN") + "\t");
+                    debugStr.append("allfunction[index2] " + allfunction[index2] + "\t");
+                    debugStr.append("index2 + 1 " + (index2 + 1 < allfunction.length ? allfunction[index2 + 1] : "NaN") + "\t");
+                    System.out.println("allfunction end " + debugStr);
+                }*/
 
 
-                formatFunction.append(allfunction[index2]);
-                if (index2 < allfunction.length - 1)
-                    formatFunction.append(" ");
+                if (((isfirst && counter2 >= first) || counter2 >= next)) {
+                    // if (debug)
+                    //    System.out.println("new line");
+                    if (isfirst)
+                        isfirst = false;
 
-                if (index2 + 1 < allfunction.length) {
-                    counter2 += allfunction[index2 + 1].length() + 1;
-                    if (debug)
-                        System.out.println(counter2);
-                    //if (debug)
-                    //    System.out.println("allfunction length " + (allfunction[index2].length() + 1) + "\tcounter2 " + counter2);
-                    index2++;
-                    if (((isfirst && counter2 >= first) || counter2 >= next)) {//&& index2 < allfunction.length
-                        if (debug)
-                            System.out.println("new line");
-                        if (isfirst)
-                            isfirst = false;
+                    if (index2 < allfunction.length) {
                         formatFunction.append("\n");
-                        if (index2 < allfunction.length - 1)
-                            formatFunction.append("                     ");
-                        counter2 = 0;
-                    } else if (index2 == allfunction.length) {
-                        if (debug)
-                            System.out.println("new line end");
-                        formatFunction.append("\"\n");
-                        break;
+                        formatFunction.append("                     ");
+                        formatFunction.append(allfunction[index2]);
+                        counter2 = allfunction[index2].length();
+                        if (index2 < allfunction.length - 1) {
+                            counter2++;
+                            formatFunction.append(" ");
+                        } else
+                            formatFunction.append("\"\n");
                     }
                 } else {
-                    if (debug)
-                        System.out.println("new line end");
-                    formatFunction.append("\"\n");
-                    break;
+                    if (index2 < allfunction.length) {
+                        formatFunction.append(allfunction[index2]);
+                        if (index2 < allfunction.length - 1) {
+                            counter2++;
+                            formatFunction.append(" ");
+                        } else
+                            formatFunction.append("\"\n");
+                    } else
+                        formatFunction.append("\"\n");
                 }
+
+                index2++;
             }
         }
         if (formatFunction.length() == 0) {
@@ -563,22 +589,31 @@ public class GenometoGbk {
         boolean join = false;
         for (int n = 0; n < location.size(); n++) {
             Tuple4<String, Long, String, Long> now4 = location.get(n);
+            //System.out.println("getCDS " + now4);
             if (added == 0 && now4.getE3().equals("-")) {
                 out.append("complement(");
-
                 complement = true;
             }
+            //System.out.println("complement " + complement + "\t" + now4.getE3());
             if (location.size() > 1) {
                 if (added == 0)
                     out.append("join(");
                 join = true;
             }
 
-            out.append(now4.getE2() + ".." + (now4.getE2() + (long) now4.getE4()));
+            if (!complement) {
+                //System.out.println("location +");
+                out.append(now4.getE2() + ".." + (now4.getE2() + (long) now4.getE4()));
+            } else {
+                //System.out.println("location -");
+                out.append((now4.getE2() - (long) now4.getE4() + 1) + ".." + now4.getE2());
+            }
 
             if (location.size() > 0 && n < location.size() - 1)
                 out.append(",");
             added++;
+
+            //complement = false;
         }
         if (complement && join)
             out.append("))\n");
@@ -586,6 +621,7 @@ public class GenometoGbk {
             out.append(")\n");
         } else
             out.append("\n");
+
 
         return out;
     }

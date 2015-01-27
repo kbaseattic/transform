@@ -10,6 +10,7 @@ import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
+import us.kbase.kbasegenomes.Feature;
 import us.kbase.kbasegenomes.Genome;
 import us.kbase.workspace.*;
 
@@ -98,7 +99,7 @@ public class ConvertGBK {
             workdir = tmpf.getAbsolutePath();
         }
 
-        if (workdir.endsWith(".")) {
+        if (workdir.endsWith("/.")) {
             workdir = workdir.substring(0, workdir.length() - 2);
         }
 
@@ -155,9 +156,17 @@ public class ConvertGBK {
     public void parseGenome(int[] pos, File dir, List<File> gbkFiles, String wsname, String http, boolean isTestThis) throws Exception {
         System.out.println("[" + (pos[0]++) + "] " + dir.getName());
         long time = System.currentTimeMillis();
+        //System.out.println("parseGenome "+wsname);
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
 
         Genome genome = (Genome) ar.get(2);
+
+      /*  List<Feature> features = genome.getFeatures();
+        for (int i = 0; i < features.size(); i++) {
+            Feature cur = features.get(i);
+            System.out.println("parseGenome "+i + "\t" + cur.getAliases());
+        }*/
+
         genome.setAdditionalProperties("SOURCE", "KBASE_USER_UPLOAD");
         String outpath = workdir + "/" + outfileg;
 
@@ -259,11 +268,13 @@ public class ConvertGBK {
 
                 /*TODO create provenance string --- uploaded by transform service, user*/
                 try {
+
+
                     wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                             .withObjects(Arrays.asList(new ObjectSaveData().withName(contigSetId)
                                     .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
 
-                /*TODO add workspace reference*/
+                /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
                 } catch (IOException e) {
                     System.err.println("Error saving ContigSet to workspace, data may be too large (IOException)).");

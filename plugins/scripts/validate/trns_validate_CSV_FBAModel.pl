@@ -1,19 +1,23 @@
 #!/usr/bin/env perl
+#PERL USE
 use warnings;
 use strict;
 use Data::Dumper;
 use Getopt::Long;
 use File::Stream;
+
+#KBASE USE
 use Bio::KBase::Transform::ScriptHelpers qw( getStderrLogger );
 
+my $logger = getStderrLogger();
 my $In_File   = "";
 my $Help = 0;
-GetOptions("input|i=s"  => \$In_File,
+GetOptions("input_file_name|i=s"  => \$In_File,
 	   "help|h"     => \$Help);
 
 if($Help || !$In_File){
-    print($0." --input/-i <Input CSV File>");
-    $logger->warn($0." --in_file|-i <Input CSV File>");
+    print($0." --input_file_name/-i <Input CSV File>");
+    $logger->warn($0." --input_file_name|-i <Input CSV File>");
     exit(0);
 }
 
@@ -39,14 +43,14 @@ if(scalar(keys %Headers) < 2){
     print join("\n", map {uc($_)} split(/\t/,$Header_Line)),"\n";
     %Headers = map { uc($_) => 1 } split(/\t/,$Header_Line);
     if(scalar(keys %Headers) < 2){
-	logger->warn("$In_File either does not use commas or tabs as a separator, or does not have enough columns");
+	$logger->warn("$In_File either does not use commas or tabs as a separator, or does not have enough columns");
 	die("$In_File either does not use commas or tabs as a separator, or does not have enough columns");
     }
 }
 
 #Check Obligatory Headers
 #For now, id, direction, gpr, equation for reactions and id, name, charge, formula for compounds
-my ($reactions,$compounds,$media) = (1,1,1);
+my ($reactions,$compounds) = (1,1);
 if(!exists($Headers{ID}) || !exists($Headers{DIRECTION}) || !exists($Headers{GPR}) || !exists($Headers{EQUATION})){
     $reactions=0;
 }
@@ -55,11 +59,7 @@ if(!exists($Headers{ID}) || !exists($Headers{NAME}) || !exists($Headers{CHARGE})
     $compounds=0;
 }
 
-if(!exists($Headers{ID}) || !exists($Headers{NAME})){
-    $media=0;
-}
-
-if(!$reactions && !$compounds && !$media){
+if(!$reactions && !$compounds){
     $logger->warn("$In_File does not contain the obligatory headers for either reactions (ID,DIRECTION,GPR,EQUATION) or compounds (ID,NAME,CHARGE,FORMULA) or media (ID, NAME)\n");
     die("$In_File does not contain the obligatory headers for either reactions (ID,DIRECTION,GPR,EQUATION) or compounds (ID,NAME,CHARGE,FORMULA) or media (ID, NAME)\n");
 }elsif($reactions && $compounds){

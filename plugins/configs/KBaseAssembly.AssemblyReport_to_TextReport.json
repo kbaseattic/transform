@@ -1,0 +1,34 @@
+{
+    "script_name": "trns_transform_KBaseAssembly.AssemblyReport_to_AssemblyOutputFiles.pl",
+    "script_type": "download",
+    "external_type": "TextReport",
+    "kbase_type": "KBaseAssembly.AssemblyReport",
+    "user_description": "Converts KBaseAssembly.AssemblyReport to a text report file.",
+    "developer_description": "Converts KBaseAssembly.AssemblyReport to a text report file.",
+    "handler_options": {
+        "max_runtime": 600,
+        "required_fields": [
+            "workspace_service_url",
+            "workspace_name",
+            "object_name",
+            "working_directory"
+        ],
+        "optional_fields": ["object_version"],
+        "custom_options": []
+    },
+    "user_options": [
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "Name of the workspace object."
+        },
+        {
+            "name": "object_version",
+            "type": "int",
+            "required": false,
+            "help": "Version of the workspace object, if not given we assume the latest."
+        }
+    ],
+    "user_option_groups": []
+}

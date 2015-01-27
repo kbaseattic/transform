@@ -1,129 +1,159 @@
 #!/usr/bin/env python
-# This code is part of KBase project to validate
-#the fastq and fasta files
 
-import math
-import sys, getopt
-import argparse
-import os.path
-import subprocess
-import json
-import gzip
-import io
-import cStringIO
-import hashlib
-import urllib
-import urllib2
-import datetime
-from biokbase.AbstractHandle.Client import AbstractHandle
+# standard library imports
+import os
+import sys
 import traceback
+import argparse
+import json
+import logging
 
-desc1 = '''
-NAME
-      trns_Convert_fastq -- Converts the Fasta and Fastq files to KBaseAssembly.SingleEndLibrary KBaseAssembly.PairedEndLibrary (1.0)
+# 3rd party imports
+# None
 
-SYNOPSIS
+# KBase imports
+import biokbase.Transform.script_utils as script_utils
 
-'''
 
-desc2 = '''
-DESCRIPTION
-  trans_convert_fastq converts the Fasta and Fastq files to KBaseAssembly.SingleEndLibrary KBaseAssembly.PairedEndLibrary
-  and returns a  json string of the particular type
+# conversion method that can be called if this module is imported
+def convert(shock_service_url, handle_service_url, input_directory, 
+            object_name, level=logging.INFO, logger=None):
+    """
+    Converts FASTQ file to KBaseAssembly.PairedEndLibrary json string.
 
-  TODO: It will support KBase log format.
-'''
+    Args:
+        shock_service_url: A url for the KBase SHOCK service.
+        handle_service_url: A url for the KBase Handle Service.
+        input_directory: Where the FASTQ file can be found.
+        object_name: A name to use when storing the JSON string.
+        mean_insert: The average insert size.
+        std_dev: standard deviation of the inserts
+        interleaved: Are the reads interleaved?
+        read_orientation: Do the reads have an outward orientation?
+        level: Logging level, defaults to logging.INFO.
+    """
 
-desc3 = '''
-AUTHORS
-Srividya Ramakrishnan.
+    if logger is None:
+        logger = script_utils.stderrlogger(__file__)
+    
+    logger.info("Starting conversion of FASTQ to KBaseAssembly.PairedEndLibrary.")
 
-'''
+    token = os.environ.get('KB_AUTH_TOKEN')
 
-### List of Exceptions
-class Error(Exception):
-    """Base class for exceptions in this module."""
-    pass
+    # scan the directory for files
+    logger.info("Scanning for FASTQ files.")
+    
+    valid_extensions = [".fq",".fastq",".fnq"]
+    
+    files = os.listdir(working_directory)
+    fastq_files = [x for x in files if os.path.splitext(x)[-1] in valid_extensions]
+            
+    assert len(fastq_files) != 0
+    
+    # put the files in shock, get handles
+    shock_ids = list()
+    for x in fastq_files:
+        shock_info = script_utils.upload_file_to_shock(logger, shock_service_url, input_file_name, token=token)
+        shock_ids.append(shock_info["id"])
+    
+    logger.info("Gathering information.")
+    handles = script_utils.getHandles(logger, shock_service_url, handle_service_url, shock_ids, [handle_id], token)   
+    
+    assert len(handles) != 0
 
-def to_JSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+    # fill out the object details
+    resultObject = dict()
+    resultObject["handle_1"] = handles[0]
+    
+    if len(handles) == 2:
+        resultObject["handle_2"] = handles[1]
 
-def main(argv):
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trnf_Convert_fastq', epilog=desc3)
-    parser.add_argument('-s', '--shock_url', help='Shock url', action='store', dest='shock_url', default='https://kbase.us/services/shock-api')
-    parser.add_argument('-n', '--handle_service_url', help='Handle service url', action='store', dest='hndl_url', default='https://kbase.us/services/handle_service')
-    parser.add_argument('-i', '--in_ids', help='Two input Shock node ids (comma separated)', action='store', dest='inobj_id', default=None, required=False)
-    parser.add_argument('-f','--file_names', help = 'Two optional handle file names (comma separated)', action= 'store', dest='loc_filepath',default=None,nargs=1,required=False)
-    parser.add_argument('-d','--hids', help = 'Two handle ids (comma separated)', action= 'store', dest='hid',default=None,required=False)
-    parser.add_argument('-m','--ins_mean', help = 'Mean insert size', action= 'store', dest='ins_mean',type=float,default=None)
-    parser.add_argument('-k','--std_dev', help = 'Standard deviation', action= 'store', dest='std_dev',type=float,default=None)
-    parser.add_argument('-l','--inl', help = 'Interleaved  -- true/false', action= 'store_true', dest='inl',default=None)
-    parser.add_argument('-r','--r_ori', help = 'Read Orientation -- true/false', action= 'store', dest='read_orient',default=None)
-    parser.add_argument('-o', '--out_file_name', help='Output file name', action='store', dest='out_fn', default=None, required=True)
-    usage = parser.format_usage()
-    parser.description = desc1 + ' ' + usage + desc2
-    parser.usage = argparse.SUPPRESS
-    args = parser.parse_args()
+    if mean_insert is not None :
+    	resultObject["insert_size_mean"] = mean_insert
+    
+    if std_dev is not None:
+    	resultObject["insert_size_std_dev"] = std_dev
 
-    if args.inobj_id is None and args.hid is None:
-      print >> sys.stderr, parser.description
-      print >> sys.stderr, "Need to provide either shock node ids or handle ids"
-      exit(1)
+    if interleaved:    
+        resultObject["interleaved"] = 1
+    
+    if read_orientation:
+    	resultObject["read_orientation_outward"] = 1
 
-    kb_token = os.environ.get('KB_AUTH_TOKEN')
-    hs = AbstractHandle(url=args.hndl_url, token = kb_token)
+    objectString = json.dumps(resultObject, sort_keys=True, indent=4)
+    
+    logger.info("Writing out JSON.")
+    with open(args.output_filename, "w") as outFile:
+        outFile.write(objectString)
+    
+    logger.info("Conversion completed.")
 
-    hids = []
-    if args.hid is None:
-      snids = args.inobj_id.split(',')
-      if len(snids) != 2:
-        print >> sys.stderr, "Please provide two shock node ids for pairend library"
-        exit(4)
-      try:
-        hids.append(hs.persist_handle({ "id" : snids[0] , "type" : "shock" , "url" : args.shock_url}))
-      except:
-        try:
-          hids.append(hs.ids_to_handles([snids[0]])[0]["hid"])
-        except:
-          traceback.print_exc(file=sys.stderr)
-          e,v = sys.exc_info()[:2]
-          print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered : {} -- {}".format(snids[0], str(e), str(v))
-          exit(3)
 
-      try:
-        hids.append(hs.persist_handle({ "id" : snids[1] , "type" : "shock" , "url" : args.shock_url}))
-      except:
-        try:
-          hids.append(hs.ids_to_handles([snids[1]])[0]["hid"])
-        except:
-          traceback.print_exc(file=sys.stderr)
-          e,v = sys.exc_info()[:2]
-          print >> sys.stderr, "Please provide handle id.\nThe input shock node id {} is already registered or could not be registered : {} -- {}".format(snids[1], str(e), str(v))
-          exit(3)
-    else:
-      hids = args.hid.split(',')
-      if len(hids) != 2:
-        print >> sys.stderr, "Please provide two handle ids for pairend library"
-        exit(5)
+# called only if script is run from command line
+if __name__ == "__main__":
+    script_details = script_utils.parse_docs(transform.__doc__)
 
-    hds = hs.hids_to_handles(hids)
-    if len(hds) != 2:
-      print >> sys.stderr, 'Could not register a new handle with shock node id {} or wrong input handle id'.format(args.inobj_id)
-      exit(2)
-    ret = {"handle_1" : hds[0], "handle_2" :  hds[1]}
-    if args.ins_mean is not None :
-    	ret["insert_size_mean"] = args.ins_mean
-    if args.std_dev is not None:
-    	ret["insert_size_std_dev"] = args.std_dev
-    if args.inl:
-    	ret["interleaved"] = 1
-    if args.read_orient is not None:
-        ret["read_orientation_outward"] = args.read_orient
+    parser = argparse.ArgumentParser(prog=__file__, 
+                                     description=script_details["Description"],
+                                     epilog=script_details["Authors"])
+    parser.add_argument('--shock_service_url', 
+                        help=script_details["Args"]["shock_service_url"], 
+                        action='store', 
+                        type=str, 
+                        nargs='?',
+                        required=True)
+    parser.add_argument('--handle_service_url', 
+                        help=script_details["Args"]["handle_service_url"], 
+                        action='store', 
+                        type=str, 
+                        nargs='?',
+                        required=True)
+    parser.add_argument('--input_directory', 
+                        help=script_details["Args"]["input_directory"], 
+                        action='store', 
+                        type=str, 
+                        nargs='?', 
+                        required=False)
+    parser.add_argument('--object_name', 
+                        help=script_details["Args"]["object_name"], 
+                        action='store', 
+                        type=str, 
+                        nargs='?', 
+                        required=True)
+    parser.add_argument('--mean_insert', 
+                        help= 'Mean insert size', 
+                        action='store', 
+                        type=float,
+                        default=None)
+    parser.add_argument('--std_dev', 
+                        help='Standard deviation', 
+                        action='store', 
+                        type=float, 
+                        default=None)
+    parser.add_argument('--interleaved', 
+                        help=script_details["Args"]["interleaved"], 
+                        action='store_true')
+    parser.add_argument('--read_orientation', 
+                        help=script_details["Args"]["read_orientation"], 
+                        action='store')
 
-    of = open(args.out_fn, "w")
-    of.write(to_JSON(ret))
-    of.close()
+    args, unknown = parser.parse_known_args()
 
-if __name__ == "__main__" :
-    main(sys.argv[1:])
-exit(0);
+    logger = script_utils.stderrlogger(__file__)
+
+    try:
+        transform(shock_service_url = args.shock_service_url, 
+                  handle_service_url = args.handle_service_url, 
+                  input_directory = args.input_directory, 
+                  object_name = args.object_name,
+                  mean_insert = args.mean_insert,
+                  std_dev = args.std_dev,
+                  interleaved = args.interleaved,
+                  read_orientation = args.read_orientation,
+                  logger = logger)
+    except Exception, e:
+        logger.exception(e)
+        sys.exit(1)
+    
+    sys.exit(0)
+

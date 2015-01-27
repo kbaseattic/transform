@@ -16,7 +16,11 @@ import ftputil
 import requests
 from requests_toolbelt import MultipartEncoder
 
-import biokbase.AbstractHandle.Client
+try:
+    from biokbase.HandleService.Client import HandleService 
+except:
+    from biokbase.AbstractHandle.Client import AbstractHandle as HandleService 
+
 import biokbase.workspace.client
 
 
@@ -197,7 +201,7 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
 
 
 def download_file_from_shock(logger = None,
-                             shock_service_url = "https://kbase.us/services/shock-api/",
+                             shock_service_url = None,
                              shock_id = None,
                              filePath = None,
                              token = None):
@@ -233,7 +237,7 @@ def download_file_from_shock(logger = None,
 
 
 def upload_file_to_shock(logger = None,
-                         shock_service_url = "https://kbase.us/services/shock-api/",
+                         shock_service_url = None,
                          filePath = None,
                          ssl_verify = True,
                          token = None):
@@ -272,8 +276,8 @@ def upload_file_to_shock(logger = None,
 
 
 def getHandles(logger = None,
-               shock_service_url = "https://kbase.us/services/shock-api/",
-               handle_service_url = "https://kbase.us/services/handle_service/",
+               shock_service_url = None,
+               handle_service_url = None,
                shock_ids = None,
                handle_ids = None,
                token = None):
@@ -281,7 +285,7 @@ def getHandles(logger = None,
     if token is None:
         raise Exception("Authentication token required!")
 
-    hs = biokbase.AbstractHandle.Client.AbstractHandle(url=handle_url, token=token)
+    hs = HandleService(url=handle_service_url, token=token)
     
     handles = list()
     if shock_ids is not None:
@@ -294,16 +298,16 @@ def getHandles(logger = None,
             try:
                 logger.info("Found shock id {0}, retrieving information about the data.".format(sid))
 
-                response = requests.get("{0}/node/{1}".format(shock_url, sid), headers=header, verify=True)
+                response = requests.get("{0}/node/{1}".format(shock_service_url, sid), headers=header, verify=True)
                 info = response.json()["data"]
             except:
-                logger.error("There was an error retrieving information about the shock node id {0} from url {1}".format(sid, shock_url))
+                logger.error("There was an error retrieving information about the shock node id {0} from url {1}".format(sid, shock_service_url))
             
             try:
                 logger.info("Retrieving a handle id for the data.")
                 handle = hs.persist_handle({"id" : sid, 
                                            "type" : "shock",
-                                           "url" : shock_url,
+                                           "url" : shock_service_url,
                                            "file_name": info["file"]["name"],
                                            "remote_md5": info["file"]["checksum"]["md5"]})
                 handles.append(handle)
@@ -323,7 +327,7 @@ def getHandles(logger = None,
                 except:
                     logger.error("The input shock node id {} is already registered or could not be registered".format(sid))
 
-                    hs = AbstractHandle(url=handle_url, token=token)
+                    hs = HandleService(url=handle_service_url, token=token)
                     all_handles = hs.list_handles()
 
                     for x in all_handles:
@@ -337,7 +341,7 @@ def getHandles(logger = None,
                         logger.info("Trying again to get a handle id for the data.")
                         handle_id = hs.persist_handle({"id" : sid, 
                                            "type" : "shock",
-                                           "url" : shock_url,
+                                           "url" : shock_service_url,
                                            "file_name": info["file"]["name"],
                                            "remote_md5": info["file"]["checksum"]["md5"]})
                         handles.append(handle_id)
@@ -361,7 +365,7 @@ def getHandles(logger = None,
 def download_from_urls(logger = None,
                        working_directory = os.getcwd(),
                        urls = None,
-                       shock_service_url = "https://kbase.us/services/shock-api/",
+                       shock_service_url = None,
                        ssl_verify = True,
                        token = None, 
                        chunkSize = 10 * 2**20):

@@ -88,7 +88,14 @@ public class GbkFeature extends GbkLocation {
 		this.stop = maxStop;
 	}
 
-	public void save(GbkLocus locus, GbkCallback ret) throws Exception {
+    /**
+     *
+     * @param locus
+     * @param ret
+     * @param filename
+     * @throws Exception
+     */
+	public void save(GbkLocus locus, GbkCallback ret, String filename) throws Exception {
 		if (wasError)
             return;
         if(type.equals("source")) {
@@ -107,9 +114,10 @@ public class GbkFeature extends GbkLocation {
                 	plasmid = qualifier.getValue();
                 }
             }
-            ret.setGenome(locus.name, genomeName, taxId, plasmid);
+            System.out.println("taxid "+taxId);
+            ret.setGenomeTrackFile(locus.name, genomeName, taxId, plasmid, filename);
         } else {
-        	ret.addFeature(locus.name, type, strand, start, stop, locations, qualifiers);
+        	ret.addFeatureTrackFile(locus.name, type, strand, start, stop, locations, qualifiers, filename);
         }
         /*if (type.equals("gene")) {
             String geneName = null;

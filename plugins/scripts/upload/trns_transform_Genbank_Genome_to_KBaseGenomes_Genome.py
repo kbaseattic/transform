@@ -1,113 +1,155 @@
 #!/usr/bin/env python
 
-import argparse
+# standard library imports
 import sys
 import os
-import time
-import traceback
-import sys
-import ctypes
+import argparse
+import logging
 import subprocess
-from subprocess import Popen, PIPE
-import shutil
-from optparse import OptionParser
-from biokbase.workspace.client import Workspace
-import urllib
-import urllib2
-import re
-import json
 
-desc1 = '''
-NAME
-      trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome -- convert CSV format to Pair for Transform module (version 1.0)
+# 3rd party imports
+# None
 
-SYNOPSIS      
-      
-'''
+# KBase imports
+import biokbase.Transform.script_utils as script_utils
 
-desc2 = '''
-DESCRIPTION
-  trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome convert input GBK (GenBank) format to KBaseGenomes.Genome
-  json string file for KBaseGenomes module.
 
-  TODO: It will support KBase log format.
-'''
+def transform(shock_service_url=None, workspace_service_url=None,
+              workspace_name=None, object_name=None, contigset_object_name=None,
+              input_directory=None, working_directory=None, 
+              level=logging.INFO, logger=None):
+    """
+    Transforms Genbank file to KBaseGenomes.Genome and KBaseGenomes.ContigSet objects.
+    
+    Args:
+        shock_service_url: If you have shock references you need to make.
+        workspace_service_url: KBase Workspace URL
+        workspace_name: Name of the workspace to save the data to
+        object_name: Name of the genome object to save
+        contigset_object_name: Name of the ContigSet object that is created with this Genome
+        input_directory: A directory of either a genbank file or a directory of partial genome files to merge
+        working_directory: A directory where you can do work
+    
+    Returns:
+        Workspace objects saved to the user's workspace.
+    
+    Authors:
+        Shinjae Yoo, Marcin Joachimiak, Matt Henderson
+    """
 
-desc3 = '''
-EXAMPLES
-      CSV conversion case
-      > trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome -i input_file.csv -o ouput_file.json
-      
-SEE ALSO
-      trns_transform_hndlr
+    if logger is None:
+        logger = script_utils.stderrlogger(__file__)
+    
+    logger.info("Starting transformation of Genbank to KBaseGenomes.Genome")
+    
+    classpath = ["$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar",
+                 "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar",
+                 "$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar",
+                 "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",
+                 "$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar",
+                 "$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar",
+                 "$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar",
+                 "$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar",
+                 "$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"]
+    
+    mc = "us.kbase.genbank.ConvertGBK"
 
-AUTHORS
-First Last.
-'''
+    argslist = ["--shock_url {0}".format(shock_service_url),
+                "--workspace_service_url {0}".format(workspace_service_url),
+                "--workspace_name {0}".format(workspace_name),
+                "--object_name {0}".format(object_name),
+                "--working_directory {0}".format(working_directory),
+                "--input_directory {0}".format(input_directory)]
+    
+    if contigset_object_name is not None:
+        argslist.append("--contigset_object_name {0}".format(contigset_object_name))
 
-impt = "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar:$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar:$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar:$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar:$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar:$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"
+    arguments = ["java", 
+                 "-classpath", ":".join(classpath), 
+                 "us.kbase.genbank.ConvertGBK", 
+                 " ".join(argslist)]
 
-mc = 'us.kbase.genbank.ConvertGBK'
+    # need shell in this case because the java code is depending on finding the KBase token in the environment
+    tool_process = subprocess.Popen(" ".join(arguments), stderr=subprocess.PIPE, shell=True)
+    stdout, stderr = tool_process.communicate()
 
-def transform (args):
-    kb_top = os.environ.get('KB_TOP', '/kb/deployment')
-    cp = impt.replace('$KB_TOP', kb_top)
-    kb_runtime = os.environ.get('KB_RUNTIME', '/kb/runtime')
-    java = "%s/java/bin/java" % kb_runtime
+    if stdout is not None and len(stdout) > 0:
+        logger.info(stdout)
 
-    in_dir = os.path.dirname(os.path.abspath(args.in_file))
-    out_fn = re.sub(r'^.*/','',in_dir)
-    out_fn = "{}.jsonp".format(out_fn)
+    if stderr is not None and len(stderr) > 0:
+        logger.error("Transformation from Genbank.Genome to KBaseGenomes.Genome failed on {0}".format(input_directory))
+        logger.error(stderr)
+        sys.exit(1)
+    
+    
+    logger.info("Transformation from Genbank.Genome to KBaseGenomes.Genome completed.")
+    sys.exit(0)
 
-    tcmd_lst = [java, '-cp', cp, mc, in_dir]
-
-    print in_dir
-    print out_fn
-
-    p1 = Popen(tcmd_lst, stdout=PIPE)
-    out_str = p1.communicate()
-
-    # print output message for error tracking
-    if out_str[0] is not None:
-        print out_str[0]
-    if out_str[1] is not None:
-        print >> sys.stderr, out_str[1]
-          
-    if p1.returncode != 0: 
-        exit(p1.returncode) 
-
-    # success
-    # Do not need the following anymore due to custom upload
-    #if(args.cs is not None) :
-    #  with open(out_fn, 'r') as gif:
-    #    f = json.loads(gif.read())
-    #    f['contigset_ref'] = args.cs
-    #    with open(args.out_file, 'w') as outfile:
-    #      json.dump(f, outfile)
-    #else:
-    #  with open(out_fn, 'r') as gif:
-    #    f = json.loads(gif.read())
-    #    if 'contigset_ref' in f:
-    #      del f['contigset_ref'] 
-    #    with open(args.out_file, 'w') as outfile:
-    #      json.dump(f, outfile)
-    #  #shutil.move(out_fn, args.out_file)
 
 if __name__ == "__main__":
-    # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='trns_transform_KBaseGenomes.GBK-to-KBaseGenomes.Genome', epilog=desc3)
-    parser.add_argument('-i', '--in_file', help='Input file', action='store', dest='in_file', default=None, required=True)
-    parser.add_argument('-o', '--out_file', help='Output file', action='store', dest='out_file', default=None, required=True)
-    parser.add_argument('-c', '--contigset_ref', help='Contigset reference', action='store', dest='cs', default=None, required=False)
-    usage = parser.format_usage()
-    parser.description = desc1 + '      ' + usage + desc2
-    parser.usage = argparse.SUPPRESS
-    args = parser.parse_args()
+    script_details = script_utils.parse_docs(transform.__doc__)
 
-    # main loop
-    #if os.path.isfile(args.in_file) and not args.in_file.endswith(".gbk"):
-    #    in_file = "{0}.gbk".format(os.path.abspath(args.in_file))
-    #    shutil.copy(args.in_file, in_file)
-    #    args.in_file = in_file
-    transform(args)
-    exit(0);
+    parser = argparse.ArgumentParser(prog=__file__, 
+                                     description=script_details["Description"],
+                                     epilog=script_details["Authors"])
+    parser.add_argument("--shock_service_url", 
+                        help=script_details["Args"]["shock_service_url"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=True)
+    parser.add_argument("--workspace_service_url", 
+                        help=script_details["Args"]["workspace_service_url"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=True)
+    parser.add_argument("--workspace_name", 
+                        help=script_details["Args"]["workspace_name"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=True)
+    parser.add_argument("--object_name", 
+                        help=script_details["Args"]["object_name"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=True)
+    parser.add_argument("--contigset_object_name", 
+                        help=script_details["Args"]["contigset_object_name"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=False)
+    parser.add_argument("--input_directory", 
+                        help=script_details["Args"]["input_directory"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=True)
+    parser.add_argument("--working_directory", 
+                        help=script_details["Args"]["working_directory"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?", 
+                        required=True)
+    
+    args, unknown = parser.parse_known_args()
+    
+    logger = script_utils.stderrlogger(__file__)
+    
+    try:
+        transform(shock_service_url=args.shock_service_url,
+                  workspace_service_url=args.workspace_service_url,
+                  workspace_name=args.workspace_name,
+                  object_name=args.object_name,
+                  contigset_object_name=args.contigset_object_name,
+                  input_directory=args.input_directory,
+                  working_directory=args.working_directory,
+                  logger = logger)
+    except Exception, e:
+        logger.exception(e)
+        sys.exit(1)
+    
+    sys.exit(0)

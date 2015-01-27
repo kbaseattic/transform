@@ -36,6 +36,8 @@ def main():
         source_object_name: The source object name.
         destination_object_name: The destination object name.
         source_object_id: A source object id, which can be used instead of object_name.
+        destination_object_id: A destination object id, which can be used instead of 
+                               object_name.
         source_kbase_type: The KBase Workspace type string that indicates the module
                            and type of the object being created.                       
         destination_kbase_type: The KBase Workspace type string that indicates the module
@@ -184,11 +186,14 @@ def main():
 
     # Step 1 : Convert the objects
     try:
-        convert_args = args.job_details["convert"]
+        logger.info(args)
+    
+        convert_args = args.job_details["transform"]
         convert_args["optional_arguments"] = args.optional_arguments
         convert_args["working_directory"] = args.working_directory
+        convert_args["workspace_service_url"] = args.workspace_service_url
         
-        handler_utils.run_task(logger, validation_args)
+        handler_utils.run_task(logger, convert_args)
     except Exception, e:
         handler_utils.report_exception(logger, 
                          {"message": 'ERROR : Conversion from {0} to {1}'.format(args.source_kbase_type,args.destination_kbase_type),
@@ -217,7 +222,11 @@ def main():
                           "shockurl" : args.shock_service_url, 
                           "workspaceids" : [], 
                           "workspaceurl" : args.workspace_service_url,
-                          "results" : None})
+                          "results" : [{"server_type" : "Workspace", 
+                                        "url" : args.workspace_service_url, 
+                                        "id" : "{}/{}".format(args.destination_workspace_name, 
+                                                              args.destination_object_name), 
+                                        "description" : ""}]})
     
     # Almost done, remove the working directory if possible
     if not args.keep_working_directory:

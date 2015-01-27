@@ -318,6 +318,17 @@ if __name__ == "__main__":
                 "awe": args.awe_service_url,
                 "transform": args.transform_service_url,
                 "handle": args.handle_service_url}
+
+    uc = biokbase.userandjobstate.client.UserAndJobState(url=args.ujs_service_url, token=token)
+    status = 'Initializing'
+    description = 'Mock handler testing' #method_hash["ujs_description"]
+    #progress = { 'ptype' : method_hash["ujs_ptype"], 'max' : method_hash["ujs_mstep"] };
+    progress = { 'ptype' : 'task', 'max' : 100 };
+    est = datetime.datetime.utcnow() + datetime.timedelta(minutes=int(3000))
+    ujs_job_id = uc.create_and_start_job(token, status, description, progress, est.strftime('%Y-%m-%dT%H:%M:%S+0000'));
+
+
+
     
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)
@@ -376,7 +387,7 @@ if __name__ == "__main__":
                 
                 input_object["working_directory"] = stamp
                 input_args = plugin.get_handler_args("upload",input_object)
-                command_list = ["trns_upload_taskrunner"]
+                command_list = ["trns_upload_taskrunner", "--ujs_job_id", ujs_job_id]
 
                 if "user_options" in input_args: del input_args["user_options"]
                 
@@ -464,7 +475,7 @@ if __name__ == "__main__":
                 input_object["input_directory"] = conversionDownloadPath
                 input_args = plugin.get_handler_args("upload",input_object)
                 #command_list = ["{0} {1}".format("venv/bin/python", "trns_upload_taskrunner.py")]
-                command_list = ["trns_upload_taskrunner"]
+                command_list = ["trns_upload_taskrunner", "--ujs_job_id", ujs_job_id]
                 
                 print command_list
                 

@@ -180,7 +180,7 @@ type but different versions.
         # ctx is the context object
         # return variables are: result
         #BEGIN convert
-        self.logger.debug("Calling download")
+        self.logger.debug("Calling convert")
         result = self._run_job("convert", ctx, args)
         #END convert
 

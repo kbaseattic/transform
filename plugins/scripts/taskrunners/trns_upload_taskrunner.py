@@ -305,11 +305,18 @@ def main():
                     if x in validation_args:
                         del validation_args[x]
 
-                # Update on validation steps
-                ujs.update_job_progress(args.ujs_job_id, kb_token, "Attempting to validate {0}".format(files[0][:handler_utils.UJS_STATUS_MAX]), 
-                                        1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+                if args.ujs_job_id is not None:
+                    # Update on validation steps
+                    ujs.update_job_progress(args.ujs_job_id, kb_token, "Attempting to validate {0}".format(files[0][:handler_utils.UJS_STATUS_MAX]), 
+                                            1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
-                handler_utils.run_task(logger, validation_args)
+                task_output = handler_utils.run_task(logger, validation_args)
+                
+                if task_output["stdout"] is not None:
+                    logger.debug("STDOUT : " + str(task_output["stdout"]))
+        
+                if task_output["stderr"] is not None:
+                    logger.debug("STDERR : " + str(task_output["stderr"]))        
         except Exception, e:
             handler_utils.report_exception(logger, 
                              {"message": "ERROR : Validation of input data",
@@ -417,7 +424,13 @@ def main():
             if x in transformation_args:
                 del transformation_args[x]
 
-        handler_utils.run_task(logger, transformation_args, debug=args.debug)
+        task_output = handler_utils.run_task(logger, transformation_args, debug=args.debug)
+        
+        if task_output["stdout"] is not None:
+            logger.debug("STDOUT : " + str(task_output["stdout"]))
+        
+        if task_output["stderr"] is not None:
+            logger.debug("STDERR : " + str(task_output["stderr"]))        
     except Exception, e:
         handler_utils.report_exception(logger, 
                          {"message": "ERROR : Creating an object from {0}".format(args.url_mapping)[:handler_utils.UJS_STATUS_MAX],

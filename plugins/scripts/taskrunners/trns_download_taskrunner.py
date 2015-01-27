@@ -6,6 +6,7 @@ import datetime
 import logging
 import argparse
 import base64
+import zipfile
 import shutil
 
 import simplejson
@@ -249,7 +250,13 @@ def main():
 
         logger.debug(transformation_args)
 
-        handler_utils.run_task(logger, transformation_args, debug=args.debug)
+        task_output = handler_utils.run_task(logger, transformation_args, debug=args.debug)
+        
+        if task_output["stdout"] is not None:
+            logger.debug("STDOUT : " + str(task_output["stdout"]))
+        
+        if task_output["stderr"] is not None:
+            logger.debug("STDERR : " + str(task_output["stderr"]))        
     except Exception, e:
         handler_utils.report_exception(logger, 
                          {"message": 'ERROR : Transforming workspace data from {0}'.format(args.workspace_name),
@@ -365,26 +372,15 @@ def main():
         # gather a list of all files downloaded
         files = list(handler_utils.gen_recursive_filelist(transform_directory))        
         
-        logger.debug(files)
+        archive_name = os.path.join(args.working_directory,name)
+        archive = zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED, allowZip64=True)
+        for n in files:
+            archive.write(n)
+        archive.close()
         
-        supported_archive_formats = shutil.get_archive_formats()
-        
-        logger.debug(supported_archive_formats)
-        
-        priority_archive_formats = ["zip","bztar","gztar","tar"]
-        
-        compatible_formats = [z for z in priority_archive_formats for y in supported_archive_formats if z == y[0]]
-        archive_type = compatible_formats[0]
-        
-        logger.debug(compatible_formats)
-        
-        archive = shutil.make_archive(os.path.join(args.working_directory,name), 
-                                      archive_type,
-                                      transform_directory)
-    
         shock_info = script_utils.upload_file_to_shock(logger = logger,
                                                        shock_service_url = args.shock_service_url,
-                                                       filePath = archive,
+                                                       filePath = archive_name,
                                                        token= kb_token)
         shock_id = shock_info["id"]
     except Exception, e:

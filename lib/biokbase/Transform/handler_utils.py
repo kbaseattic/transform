@@ -42,7 +42,8 @@ def run_task(logger, arguments, debug=False):
         logger = script_utils.stderrlogger(__file__)
 
     h = TaskRunner(logger)
-    h.run(arguments, debug)
+    out = h.run(arguments, debug)
+    return out
 
 
 class TaskRunner(object):
@@ -75,13 +76,14 @@ class TaskRunner(object):
         task = subprocess.Popen(self._build_command_list(arguments,debug), stderr=subprocess.PIPE)
         sub_stdout, sub_stderr = task.communicate()
 
-        if sub_stdout is not None:
-            print sub_stdout
-        if sub_stderr is not None:
-            print >> sys.stderr, sub_stderr
-
+        task_output = dict()
+        task_output["stdout"] = sub_stdout
+        task_output["stderr"] = sub_stderr
+        
         if task.returncode != 0:
-            raise Exception(sub_stderr)
+            raise Exception(task_output)
+        else:
+            return task_output
 
 
 def PluginManager(directory=None, logger=script_utils.stderrlogger(__file__)):

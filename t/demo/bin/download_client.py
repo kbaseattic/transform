@@ -129,7 +129,7 @@ def download_from_shock(shockURL, shock_id, outPath, token):
     
     data = requests.get(shockURL + '/node/' + shock_id + "?download_raw", headers=header, stream=True)
     
-    chunkSize = 10 * 2**20
+    chunkSize = filesize/4
     download_iter = data.iter_content(chunkSize)
 
     outFile = os.path.join(outPath, filename)

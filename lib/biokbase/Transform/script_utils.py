@@ -203,7 +203,8 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
 def download_file_from_shock(logger = None,
                              shock_service_url = None,
                              shock_id = None,
-                             filePath = None,
+                             filename = None,
+                             directory = None,
                              token = None):
 
     header = dict()
@@ -213,17 +214,29 @@ def download_file_from_shock(logger = None,
 
     metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(shock_service_url, shock_id), headers=header, stream=True, verify=True)
     shock_metadata = metadata_response.json()['data']
-    fileName = shock_metadata['file']['name']
-    fileSize = shock_metadata['file']['size']
+    shockFileName = shock_metadata['file']['name']
+    shockFileSize = shock_metadata['file']['size']
     metadata_response.close()
         
     download_url = "{0}/node/{1}?download_raw".format(shock_service_url, shock_id)
         
-    data = requests.get(download_url, headers=header, stream=True, verify=ssl_verify)
-    size = int(data.headers['content-length'])
+    data = requests.get(download_url, headers=header, stream=True, verify=True)
 
-    filePath = os.path.join(filePath)
+    if filename is not None:
+        shockFileName = filename
 
+    if directory is not None:
+        filePath = os.path.join(directory, shockFileName)
+    else:
+        filePath = shockFileName
+
+    chunkSize = shockFileSize/4
+    
+    maxChunkSize = 2**30
+    
+    if chunkSize > maxChunkSize:
+        chunkSize = maxChunkSize
+    
     f = io.open(filePath, 'wb')
     try:
         for chunk in data.iter_content(chunkSize):
@@ -232,7 +245,7 @@ def download_file_from_shock(logger = None,
         data.close()
         f.close()      
     
-    extract_data(filePath)
+    extract_data(logger, filePath)
                              
 
 

@@ -44,9 +44,9 @@
         },
         {
             "name": "dna",
-            "type": "boolean",
+            "type": "int",
             "required": false,
-            "help": "Indicates that transcripts are nucleic acid sequences (default: protein)."
+            "help": "Indicates that transcripts are nucleic acid sequences (default: protein).  0 = not DNA(protein), 1 = DNA.  Code has internal check to still check that it might be DNA"
         }
     ],
     "user_option_groups": []

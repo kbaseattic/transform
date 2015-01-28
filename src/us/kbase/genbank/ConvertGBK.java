@@ -10,7 +10,6 @@ import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
-import us.kbase.kbasegenomes.Feature;
 import us.kbase.kbasegenomes.Genome;
 import us.kbase.workspace.*;
 
@@ -188,11 +187,17 @@ public class ConvertGBK {
 
         String outpath2 = workdir + "/" + outfilec;//contigId + ".jsonp";
         if (outfilec == null) {
-            int start = 0;
-            if (outfileg.lastIndexOf("/") != -1) {
-                start = outfileg.lastIndexOf("/");
+            if (outfileg != null) {
+                int start = 0;
+                if (outfileg.lastIndexOf("/") != -1) {
+                    start = outfileg.lastIndexOf("/");
+                }
+                final int endIndex = outfileg.lastIndexOf(".");
+                outfilec = outfileg.substring(start, endIndex != -1 ? endIndex : outfileg.length());
+            } else {
+                outfilec = genome.getId();
             }
-            outfilec = outfileg.substring(start, outfileg.lastIndexOf("."));
+
             outpath2 = workdir + "/" + outfilec + "_ContigSet.jsonp";
         }
         try {

@@ -69,6 +69,8 @@ def transform(shock_service_url=None, workspace_service_url=None,
                  "us.kbase.genbank.ConvertGBK", 
                  " ".join(argslist)]
 
+    logger.debug(arguments)
+
     # need shell in this case because the java code is depending on finding the KBase token in the environment
     tool_process = subprocess.Popen(" ".join(arguments), stderr=subprocess.PIPE, shell=True)
     stdout, stderr = tool_process.communicate()
@@ -89,7 +91,7 @@ def transform(shock_service_url=None, workspace_service_url=None,
 if __name__ == "__main__":
     script_details = script_utils.parse_docs(transform.__doc__)
 
-    parser = argparse.ArgumentParser(prog=__file__, 
+    parser = script_utils.ArgumentParser(prog=__file__, 
                                      description=script_details["Description"],
                                      epilog=script_details["Authors"])
     parser.add_argument("--shock_service_url", 
@@ -137,7 +139,7 @@ if __name__ == "__main__":
     
     args, unknown = parser.parse_known_args()
     
-    logger = script_utils.stderrlogger(__file__)
+    logger = script_utils.stderrlogger(__file__, logging.DEBUG)
     
     try:
         transform(shock_service_url=args.shock_service_url,

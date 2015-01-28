@@ -106,7 +106,7 @@ def transform(shock_service_url=None, workspace_service_url=None,
 if __name__ == "__main__":
     script_details = script_utils.parse_docs(transform.__doc__)
 
-    parser = argparse.ArgumentParser(prog=__file__, 
+    parser = script_utils.ArgumentParser(prog=__file__, 
                                      description=script_details["Description"],
                                      epilog=script_details["Authors"])
     parser.add_argument("--shock_service_url", 

@@ -51,9 +51,11 @@ public class ConvertGBK {
 
     String workdir;
 
-    String outfileg = null;
-    String outfilec = null;
+    String out_object_g = null;
+    String out_object_c = null;
     File indir;
+
+    String allowed_objname_chars = "|._-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 
     boolean isTest = false;
@@ -70,9 +72,9 @@ public class ConvertGBK {
                 if (argsPossibleMap[index].equals("input")) {
                     indir = new File(args[i + 1]);
                 } else if (argsPossibleMap[index].equals("outputg")) {
-                    outfileg = args[i + 1];
+                    out_object_g = args[i + 1];
                 } else if (argsPossibleMap[index].equals("outputc")) {
-                    outfilec = args[i + 1];
+                    out_object_c = args[i + 1];
                 } else if (argsPossibleMap[index].equals("wsn")) {
                     wsname = args[i + 1];
                 } else if (argsPossibleMap[index].equals("wsu")) {
@@ -133,7 +135,7 @@ public class ConvertGBK {
             for (File f : dir.listFiles()) {
                 if (f.isDirectory()) {
                     parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-                } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbff)$")) {
+                } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
                     files.add(f);
                     System.out.println("Added " + f);
                 }
@@ -167,11 +169,13 @@ public class ConvertGBK {
         }*/
 
         genome.setAdditionalProperties("SOURCE", "KBASE_USER_UPLOAD");
-        String outpath = workdir + "/" + outfileg;
+        String outpath = workdir + "/" + out_object_g + ".jsonp";
 
-        System.out.println("workdir " + workdir + "\toutfileg " + outfileg + "\toutfilec " + outfilec);
-        if (outfileg == null)
-            outpath = workdir + "/" + genome.getId() + ".jsonp";
+        System.out.println("workdir " + workdir + "\tout_object_g " + out_object_g + "\tout_object_c " + out_object_c);
+        if (out_object_g == null) {
+            out_object_g = genome.getId();
+            outpath = workdir + "/" + out_object_g + ".jsonp";
+        }
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
             out.print(UObject.transformObjectToString(genome));
@@ -185,21 +189,27 @@ public class ConvertGBK {
         ContigSet contigSet = (ContigSet) ar.get(4);
         //final String contigId = genome.getId() + "_ContigSet";
 
-        String outpath2 = workdir + "/" + outfilec;//contigId + ".jsonp";
-        if (outfilec == null) {
-            if (outfileg != null) {
-                int start = 0;
-                if (outfileg.lastIndexOf("/") != -1) {
-                    start = outfileg.lastIndexOf("/");
-                }
-                final int endIndex = outfileg.lastIndexOf(".");
-                outfilec = outfileg.substring(start, endIndex != -1 ? endIndex : outfileg.length());
+        String outpath2 = workdir + "/" + out_object_c;//contigId + ".jsonp";
+        if (out_object_c == null) {
+            if (out_object_g != null) {
+                //int start = 0;
+                //if (out_object_g.lastIndexOf("/") != -1) {
+                //     start = out_object_g.lastIndexOf("/");
+                //}
+                //final int endIndex = out_object_g.lastIndexOf(".");
+                out_object_c = out_object_g + "__ContigSet";//out_object_g.substring(start, endIndex != -1 ? endIndex : out_object_g.length());
             } else {
-                outfilec = genome.getId();
+                out_object_c = genome.getId() + "_ContigSet";
             }
-
-            outpath2 = workdir + "/" + outfilec + "_ContigSet.jsonp";
         }
+
+        if (out_object_c.indexOf("ContigSet") == -1)
+            outpath2 = workdir + "/" + out_object_c + "_ContigSet.jsonp";
+        else if (!out_object_c.endsWith(".json") && !out_object_c.endsWith(".jsonp"))
+            outpath2 = workdir + "/" + out_object_c + ".jsonp";
+        else
+            outpath2 = workdir + "/" + out_object_c;
+
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));
             out.print(UObject.transformObjectToString(contigSet));
@@ -243,8 +253,7 @@ public class ConvertGBK {
             ar.add(contigSet);
             ar.add(meta);*/
 
-            String genomeid = (String) ar.get(1);
-
+            //String genomeid = (String) ar.get(1);
             //String token = (String) ar.get(2);
 
             String contigSetId = (String) ar.get(3);
@@ -270,15 +279,29 @@ public class ConvertGBK {
                 }
 
                 wc.setAuthAllowedForHttp(true);
+                String gname = contigSetId;
+                if (out_object_g != null) {
+                    gname = out_object_g;
+                }
+                gname = sanitizeObjectName(gname);
+                System.out.println("saving Genome " + gname);
+                wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                        .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
+                                .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+                System.out.println("successfully saved object");
 
                 /*TODO create provenance string --- uploaded by transform service, user*/
                 try {
-
-
+                    String cname = contigSetId;
+                    if (out_object_c != null) {
+                        cname = out_object_c;
+                    }
+                    cname = sanitizeObjectName(cname);
+                    System.out.println("saving ContigSet " + cname);
                     wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                            .withObjects(Arrays.asList(new ObjectSaveData().withName(contigSetId)
+                            .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
                                     .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
-
+                    System.out.println("successfully saved object");
                 /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
                 } catch (IOException e) {
@@ -288,11 +311,6 @@ public class ConvertGBK {
                     System.err.println("Error saving ContigSet to workspace, data may be too large (JsonClientException).");
                     e.printStackTrace();
                 }
-
-                wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                        .withObjects(Arrays.asList(new ObjectSaveData().withName(genomeid).withMeta(meta)
-                                .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
-                System.out.println("successfully saved object");
 
 /*
                 try {
@@ -344,9 +362,22 @@ public class ConvertGBK {
             }
         }
 
-        System.out.println("    time: " + (System.currentTimeMillis() - time) + " ms");
+        System.out.println("    time: " + (double)(System.currentTimeMillis() - time)/(double)1000 + " s");
     }
 
+    /**
+     * @param s
+     * @return
+     */
+    public String sanitizeObjectName(String s) {
+        StringBuilder sb = new StringBuilder(s);
+        for (int i = 0; i < s.length(); i++) {
+            if (allowed_objname_chars.indexOf(s.charAt(i)) == -1) {
+                sb.setCharAt(i, '_');
+            }
+        }
+        return sb.toString();
+    }
 
     /**
      * @param s

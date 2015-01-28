@@ -145,7 +145,7 @@ public class GenometoGbk {
             Contig curcontig = contigs.get(j);
             StringBuffer out = new StringBuffer("");
             //out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
-            out.append("LOCUS       " + "" + "             " + curcontig.getLength() + " bp    " +
+            out.append("LOCUS       " + curcontig.getName() + "             " + curcontig.getLength() + " bp    " +
                     molecule_type_short + "\n");// + "     circular CON 10-JUN-2013\n");
             out.append("DEFINITION  " + genome.getScientificName() + " genome.\n");
             //out.append("ACCESSION   NC_005213\n");
@@ -218,7 +218,7 @@ public class GenometoGbk {
             for (String k : addprops.keySet()) {
                 //System.out.println("addprops " + k + "\t" + addprops.get(k));
                 if (k.equals("tax_id"))
-                    taxId = ""+(Integer) addprops.get(k);
+                    taxId = "" + (Integer) addprops.get(k);
 
             }
 
@@ -325,21 +325,27 @@ public class GenometoGbk {
             //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
 
 
+            String numfile = "";
+            if (contigs.size() > 0)
+                numfile = "_" + j;
             String outname = "";
             if (outfile != null) {
                 if (!outfile.endsWith(".gbk") && !outfile.endsWith(".gb") &&
-                        outfile.endsWith(".genbank") && outfile.endsWith(".gbff")) {
-                    outname = outfile + ".gbk";
+                        !outfile.endsWith(".genbank") && !outfile.endsWith(".gbff") && !outfile.endsWith(".gbf")) {
+                    outname = outfile + numfile + ".gbk";
                 }
-            } else if (objectname != null) {
-                outname = objectname + ".gbk";
+            } else {
+                outname = curcontig.getName() + ".gbk";
+            }
+            /*else if (objectname != null) {
+                outname = objectname + numfile + ".gbk";
             } else if (objectid != null) {
-                outname = objectid + ".gbk";
+                outname = objectid + numfile + ".gbk";
             } else if (genomefile != null) {
                 int start = Math.max(0, genomefile.lastIndexOf("/"));
                 int end = genomefile.lastIndexOf(".");
-                outname = genomefile.substring(start, end) + ".gbk";
-            }
+                outname = genomefile.substring(start, end) + numfile + ".gbk";
+            }*/
             outname = outname.replace("|", "_");
             final String outpath = (workdir != null ? workdir + "/" : "") + outname;
             System.out.println("writing " + outpath);
@@ -394,11 +400,15 @@ public class GenometoGbk {
         List<ObjectIdentity> objectIds = new ArrayList<ObjectIdentity>();
         ObjectIdentity genobj = new ObjectIdentity();
         genobj.setName(objectname);
-        genobj.setVer(objectversion);
+        String appendver = "";
+        if (objectversion != null) {
+            genobj.setVer(objectversion);
+            appendver = "/" + objectversion;
+        }
         genobj.setWorkspace(wsname);
         objectIds.add(genobj);
 
-        System.out.println("getting Genome object");
+        System.out.println("getting Genome object " + wsname + "/" + objectname + appendver);
         long startg = System.currentTimeMillis();
         List<ObjectData> lod = wc.getObjects(objectIds);
         final UObject data1 = lod.get(0).getData();

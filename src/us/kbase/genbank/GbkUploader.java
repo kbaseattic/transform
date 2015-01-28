@@ -205,6 +205,7 @@ public class GbkUploader {
                                 locList.add(new Tuple4<String, Long, String, Long>().withE1(contigName)
                                         .withE2(realStart).withE3(dir).withE4(len));
                             }
+
                             f.withLocation(locList).withAnnotations(new ArrayList<Tuple3<String, String, Long>>());
                             f.withAliases(new ArrayList<String>());
                             for (GbkQualifier prop : props) {

@@ -73,7 +73,7 @@ public class ValidateGBK {
         for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
                 parseAllInDir(pos, f, wc);
-            } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbff)$")) {//if (f.getName().endsWith(".gbk")) {
+            } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {//if (f.getName().endsWith(".gbk")) {
                 files.add(f);
                 System.err.println("Added " + f);
             }

@@ -16,7 +16,7 @@
         ],
         "optional_fields": [
             "object_version",
-            "output_file_name",
+            "output_file_name"
         ],
         "custom_options": []
     },

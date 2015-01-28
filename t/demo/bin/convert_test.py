@@ -174,7 +174,15 @@ if __name__ == "__main__":
                         "destination_workspace_name": "upload_testing",
                         "destination_object_name": "tastythunderyak"}
 
-        demos = [bigyakattack]
+        snacksonyaks = {"source_kbase_type": "KBaseFile.AssemblyFile",
+                        "source_workspace_name": "gavinws",
+                        "source_object_name": "kayak",
+                        "destination_kbase_type": "KBaseGenomes.ContigSet",
+                        "destination_workspace_name": "upload_testing",
+                        "destination_object_name": "bitterthunderyak"
+                       }
+
+        demos = [bigyakattack, snacksonyaks]
     
 
     services = {"ujs": args.ujs_service_url,

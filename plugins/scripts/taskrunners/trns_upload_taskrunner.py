@@ -384,13 +384,7 @@ def main():
         # take in any handler custom args
         if  "custom_options" in transformation_args["handler_options"]: 
             for c in transformation_args["handler_options"]["custom_options"]:
-                if(c["type"] != "boolean"):
-                    transformation_args[c["name"]] = c["value"]
-                else:
-                    if c["value"] == "true":
-                        transformation_args[c["name"]] = 1
-                    else:
-                        transformation_args[c["name"]] = 0
+                transformation_args[c["name"]] = c["value"]
 
         os.mkdir(transform_directory)            
         

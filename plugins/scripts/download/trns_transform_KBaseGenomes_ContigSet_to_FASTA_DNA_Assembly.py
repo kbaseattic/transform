@@ -79,10 +79,14 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
         raise 
 
     shock_id = None 
-    if "fasta_ref" in contig_set: 
+    if "fasta_ref" in contig_set["data"]: 
         shock_id = contig_set["data"]["fasta_ref"] 
         logger.info("Retrieving data from Shock.")
-        script_utils.download_file_from_shock(logger, shock_service_url, shock_id, working_directory, token)
+        script_utils.download_file_from_shock(logger = logger, 
+                                              shock_service_url = shock_service_url, 
+                                              shock_id = shock_id, 
+                                              directory = working_directory, 
+                                              token = token)
     else: 
         ws_object_name = contig_set["info"][1]
         valid_chars = "-_.(){0}{1}".format(string.ascii_letters, string.digits)
@@ -190,6 +194,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = script_utils.stderrlogger(__file__)
+    logger.info("Starting download of ContigSet => FASTA")
     try:
         transform(workspace_service_url = args.workspace_service_url, 
                   shock_service_url = args.shock_service_url, 

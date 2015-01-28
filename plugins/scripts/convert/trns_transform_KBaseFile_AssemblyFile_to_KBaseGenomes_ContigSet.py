@@ -248,7 +248,7 @@ def upload_workspace_data(cs, ws_url, source_ref, target_ws, obj_name):
 
 
 def main():
-    parser = argparse.ArgumentParser(
+    parser = script_utils.ArgumentParser(
         prog=SCRIPT_NAME,
         description='Converts KBaseFile.AssemblyFile to  ' +
         'KBaseGenomes.ContigSet.',
@@ -286,7 +286,7 @@ def main():
         'behavior for files that large.', action='store_true', required=False)
 
     # ignore unknown arguments for now
-    args, _ = parser.parse_known_args()
+    args, unknown = parser.parse_known_args()
 
     logger = script_utils.stderrlogger(__file__)
     try:

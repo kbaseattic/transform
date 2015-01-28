@@ -9,6 +9,7 @@ import gzip
 import bz2
 import tarfile
 import zipfile
+import argparse
 
 import simplejson
 import magic
@@ -22,6 +23,14 @@ except:
     from biokbase.AbstractHandle.Client import AbstractHandle as HandleService 
 
 import biokbase.workspace.client
+
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    def exit(self, status=1, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+        _sys.exit(status)
 
 
 def stderrlogger(name, level=logging.INFO):

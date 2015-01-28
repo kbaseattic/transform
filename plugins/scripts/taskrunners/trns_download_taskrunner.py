@@ -372,7 +372,7 @@ def main():
         # gather a list of all files downloaded
         files = list(handler_utils.gen_recursive_filelist(transform_directory))        
         
-        archive_name = os.path.join(args.working_directory,name)
+        archive_name = os.path.join(args.working_directory,name) + ".zip"
         archive = zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED, allowZip64=True)
         for n in files:
             archive.write(n)

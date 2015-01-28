@@ -254,7 +254,7 @@ if __name__ == "__main__":
     # Example of a custom argument specific to this uploader
     parser.add_argument('--fasta_reference_only', 
                         help=script_details["Args"]["fasta_reference_only"], 
-                        action='store', type=boolean, default=False, required=False)
+                        action='store', type=str, default="False", required=False)
 
     args, unknown = parser.parse_known_args()
 
@@ -262,11 +262,12 @@ if __name__ == "__main__":
 
     logger.debug(args)
     try:
-#OLD Hack to deal with FangFang's boolean hack
-#        if args.fasta_reference_only == 1:
-#            ref_only = True
-#        else:
-#            ref_only = False
+        if args.fasta_reference_only.lower() == "true":
+            ref_only = True
+        elif args.fasta_reference_only.lower() == "false":
+            ref_only = False
+        else:
+            raise Exception("Expected true or false for fasta_reference_only.")
     
         transform(shock_service_url = args.shock_service_url, 
                   handle_service_url = args.handle_service_url, 

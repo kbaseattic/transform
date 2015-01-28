@@ -69,7 +69,7 @@ def main():
     
     logger.debug(script_details["Args"])
     
-    parser = argparse.ArgumentParser(description=script_details["Description"],
+    parser = script_utils.ArgumentParser(description=script_details["Description"],
                                      epilog=script_details["Authors"])
     # provided by service config
     parser.add_argument('--workspace_service_url', 

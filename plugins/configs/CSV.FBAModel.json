@@ -1,7 +1,7 @@
 {
     "script_name": "trns_validate_CSV_FBAModel.pl",
     "script_type": "validate",
-    "external_type": "CSV",
+    "external_type": "CSV.FBAModel",
     "user_description": "Validate Reaction or Compound CSV file for use in importing FBA Model",
     "developer_description": "",
     

@@ -1,7 +1,7 @@
 {
     "script_name": "trns_validate_CSV_Media.pl",
     "script_type": "validate",
-    "external_type": "CSV",
+    "external_type": "CSV.Media",
     "user_description": "Validate CSV file for use in importing Media",
     "developer_description": "Validate CSV file for use in importing Media",
     "handler_options": {

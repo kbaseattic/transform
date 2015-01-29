@@ -176,6 +176,8 @@ def main():
     args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
     args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
     
+    current_directory = os.getcwd()
+    
     if not os.path.exists(args.working_directory):
         os.mkdir(args.working_directory)
 
@@ -189,12 +191,15 @@ def main():
 
     # Step 1 : Call the transform task to convert the objects to local files
     try:
-        os.mkdir(transform_directory)
+        os.mkdir(transform_directory)        
+        os.chdir(transform_directory)
 
         logger.debug(args.optional_arguments)
         
         transformation_args = dict()
         transformation_args.update(args.job_details["transform"])
+        
+        logger.debug(transformation_args)
         
         # take in user options
         for k in args.optional_arguments["transform"]:
@@ -211,21 +216,16 @@ def main():
                 transformation_args[k] = args.__dict__[k]
 
         # take in any handler custom args
-        if  "custom_options" in transformation_args["handler_options"]: 
+        if "custom_options" in transformation_args["handler_options"]: 
             for c in transformation_args["handler_options"]["custom_options"]:
-                if(c["type"] != "boolean"):
-                    transformation_args[c["name"]] = c["value"]
-                else:
-                    if c["value"] == "true":
-                        transformation_args[c["name"]] = 1
-                    else:
-                        transformation_args[c["name"]] = 0
+                transformation_args[c["name"]] = c["value"]
 
         if "working_directory" in transformation_args: 
-            transformation_args["working_directory"] = transform_directory
+            logger.debug(os.path.abspath(os.getcwd()))
+            transformation_args["working_directory"] = os.path.abspath(os.getcwd())
 
         if "workspace_service_url" in transformation_args: 
-            transformation_args["shock_service_url"] = args.workspace_service_url
+            transformation_args["workspace_service_url"] = args.workspace_service_url
 
         if "shock_service_url" in transformation_args: 
             transformation_args["shock_service_url"] = args.shock_service_url
@@ -256,8 +256,12 @@ def main():
             logger.debug("STDOUT : " + str(task_output["stdout"]))
         
         if task_output["stderr"] is not None:
-            logger.debug("STDERR : " + str(task_output["stderr"]))        
+            logger.debug("STDERR : " + str(task_output["stderr"]))
+        
+        os.chdir(current_directory)        
     except Exception, e:
+        os.chdir(current_directory)        
+
         handler_utils.report_exception(logger, 
                          {"message": 'ERROR : Transforming workspace data from {0}'.format(args.workspace_name),
                           "exc": e,

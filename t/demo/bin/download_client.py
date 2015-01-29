@@ -70,7 +70,7 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
     print term.blue("\tUJS Job Status:")
     # wait for UJS to complete    
     last_status = ""
-    time_limit = 300
+    time_limit = 30
     start = datetime.datetime.utcnow()
     while 1:        
         try:
@@ -225,8 +225,22 @@ if __name__ == "__main__":
                              "optional_arguments": {"transform": {}}
                             }
 
+        model_to_csv = {"external_type": "CSV.FBAModel",
+                        "kbase_type": "KBaseFBA.FBAModel",
+                        "object_name": "kb|g.131.model",
+                        "workspace_name": "KBasePublicModelsV4",
+                        "optional_arguments": {"transform": {}}
+                       }
+
+        model_to_sbml = {"external_type": "SBML.FBAModel",
+                         "kbase_type": "KBaseFBA.FBAModel",
+                         "object_name": "kb|g.131.model",
+                         "workspace_name": "KBasePublicModelsV4",
+                         "optional_arguments": {"transform": {}}
+                       }
+
         inputs = [
-                  contigset_to_fasta,
+                  model_to_sbml
                  ]
     
 
@@ -244,6 +258,11 @@ if __name__ == "__main__":
         external_type = x["external_type"]
         kbase_type = x["kbase_type"]
         object_name = x["object_name"]
+        
+        if x.has_key("workspace_name") and x["workspace_name"]:
+            ws_name = x["workspace_name"]
+        else:
+            ws_name = workspace
 
         optional_arguments = None
         if x.has_key("optional_arguments"):
@@ -268,7 +287,7 @@ if __name__ == "__main__":
             input_object = dict()
             input_object["external_type"] = external_type
             input_object["kbase_type"] = kbase_type
-            input_object["workspace_name"] = workspace
+            input_object["workspace_name"] = ws_name
             input_object["object_name"] = object_name
 
             if optional_arguments is not None:

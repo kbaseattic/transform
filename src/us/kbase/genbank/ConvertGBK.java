@@ -98,6 +98,9 @@ public class ConvertGBK {
         if (workdir == null) {
             workdir = new File(Paths.get(".").toAbsolutePath().normalize().toString());
         }
+        else if(!workdir.exists()) {
+            workdir.mkdirs();
+        }
 
         System.out.println("workdir 1 " + workdir.getAbsolutePath());
 

@@ -34,7 +34,7 @@ def transform(shock_service_url=None, workspace_service_url=None,
         Workspace objects saved to the user's workspace.
     
     Authors:
-        Shinjae Yoo, Matt Henderson
+        Shinjae Yoo, Marcin Joachimiak, Matt Henderson
     """
 
     if logger is None:
@@ -42,43 +42,63 @@ def transform(shock_service_url=None, workspace_service_url=None,
     
     logger.info("Starting transformation of Genbank to KBaseGenomes.Genome")
     
-    token = os.environ.get("KB_AUTH_TOKEN")
+    classpath = ["$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar",
+                 "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar",
+                 "$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar",
+                 "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",
+                 "$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar",
+                 "$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar",
+                 "$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar",
+                 "$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar",
+                 "$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"]
+    
+    mc = "us.kbase.genbank.ConvertGBK"
 
-    classpath = "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar:$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar:$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar:$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar:$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar:$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar:$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"
-    mc = 'us.kbase.genbank.ConvertGBK'
+    argslist = ["--shock_url {0}".format(shock_service_url),
+                "--workspace_service_url {0}".format(workspace_service_url),
+                "--workspace_name {0}".format(workspace_name),
+                "--object_name {0}".format(object_name),
+                "--working_directory {0}".format(working_directory),
+                "--input_directory {0}".format(input_directory)]
+    
+    if contigset_object_name is not None:
+        argslist.append("--contigset_object_name {0}".format(contigset_object_name))
 
-    java_classpath = os.path.join(os.environ.get("KB_TOP"), classpath.replace('$KB_TOP', os.environ.get("KB_TOP")))
-    arguments = ["java", "-classpath", java_classpath, "us.kbase.genbank.ConvertGBK",    
-                 "{0} {1} {2} {3} {4} {5} {6}".format("--shock_service_url {0}".format(shock_service_url),
-                                                      "--workspace_service_url {0}".format(workspace_service_url),
-                                                      "--workspace_name {0}".format(workspace_name),
-                                                      "--object_name {0}".format(object_name),
-                                                      "--contigset_object_name {0}".format(contigset_object_name),
-                                                      "--working_directory {0}".format(working_directory),
-                                                      "--input_directory {0}".format(input_directory))]
-        
-    tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)
+    arguments = ["java", 
+                 "-classpath", ":".join(classpath), 
+                 "us.kbase.genbank.ConvertGBK", 
+                 " ".join(argslist)]
+
+    logger.debug(arguments)
+
+    # need shell in this case because the java code is depending on finding the KBase token in the environment
+    tool_process = subprocess.Popen(" ".join(arguments), stderr=subprocess.PIPE, shell=True)
     stdout, stderr = tool_process.communicate()
 
-    if len(stderr) > 0:
+    if stdout is not None and len(stdout) > 0:
+        logger.info(stdout)
+
+    if stderr is not None and len(stderr) > 0:
         logger.error("Transformation from Genbank.Genome to KBaseGenomes.Genome failed on {0}".format(input_directory))
+        logger.error(stderr)
         sys.exit(1)
-    else:
-        logger.info("Transformation from Genbank.Genome to KBaseGenomes.Genome completed.")
-        sys.exit(0)
+    
+    
+    logger.info("Transformation from Genbank.Genome to KBaseGenomes.Genome completed.")
+    sys.exit(0)
 
 
 if __name__ == "__main__":
     script_details = script_utils.parse_docs(transform.__doc__)
 
-    parser = argparse.ArgumentParser(prog=__file__, 
+    parser = script_utils.ArgumentParser(prog=__file__, 
                                      description=script_details["Description"],
                                      epilog=script_details["Authors"])
     parser.add_argument("--shock_service_url", 
                         help=script_details["Args"]["shock_service_url"], 
                         action="store", 
                         type=str, 
-                        nargs='?', 
+                        nargs="?", 
                         required=True)
     parser.add_argument("--workspace_service_url", 
                         help=script_details["Args"]["workspace_service_url"], 
@@ -108,18 +128,18 @@ if __name__ == "__main__":
                         help=script_details["Args"]["input_directory"], 
                         action="store", 
                         type=str, 
-                        nargs='?', 
+                        nargs="?", 
                         required=True)
     parser.add_argument("--working_directory", 
                         help=script_details["Args"]["working_directory"], 
                         action="store", 
                         type=str, 
-                        nargs='?', 
+                        nargs="?", 
                         required=True)
     
     args, unknown = parser.parse_known_args()
     
-    logger = script_utils.stderrlogger(__file__)
+    logger = script_utils.stderrlogger(__file__, logging.DEBUG)
     
     try:
         transform(shock_service_url=args.shock_service_url,

@@ -4,24 +4,26 @@
     "external_type": "Excel",
     "kbase_type": "KBaseFBA.FBAModel",
     "user_description": "Converts Excel file to FBAModel object in workspace.",
-    
+    "url_mapping": ["Excel.FBAModel"],    
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": true,
         "max_runtime": 360,
         "custom_options": [],
 	"required_fields":
-	{
+	[
 	    "input_file_name",
 	    "object_name",
-	    "workspace_name"
-	},
+	    "workspace_name",
+	    "workspace_service_url",
+	    "fba_service_url"
+	],
 	"optional_fields":
 	[
 	    "genome",
 	    "biomass"
 	],
-	"input_mapping": [{'input_file_name": "Excel.FBAModel"}]		
+	"input_mapping": {"Excel.FBAModel": "input_file_name"}		
     },
     "user_options": [
         {

@@ -3,21 +3,23 @@
     "script_type": "upload",
     "external_type": "CSV",
     "kbase_type": "KBaseBiochem.Media",
-    "user_description": "Converts CSV file to Media object in workspace."
-    
+    "user_description": "Converts CSV file to Media object in workspace.",
+    "url_mapping": ["CSV.Media"],    
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": true,
         "max_runtime": 360,
         "custom_options": [],
 	"required_fields":
-	{
+	[
 	    "input_file_name",
 	    "object_name",
-	    "workspace_name"
-	},
+	    "workspace_name",
+	    "workspace_service_url",
+	    "fba_service_url"
+	],
 	"optional_fields":[],
-	"input_mapping": [{'input_file_name": "CSV.Media"}]		
+	"input_mapping": {"CSV.Media":"input_file_name"}		
     },
     "user_options": [
         {

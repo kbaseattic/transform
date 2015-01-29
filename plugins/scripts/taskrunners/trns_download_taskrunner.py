@@ -6,6 +6,8 @@ import datetime
 import logging
 import argparse
 import base64
+import zipfile
+import shutil
 
 import simplejson
 
@@ -59,6 +61,7 @@ def main():
                            will be cleaned when the job ends with success or failure.
         keep_working_directory: A flag to tell the script not to delete the working
                                 directory, which is mainly for debugging purposes.
+        debug: Run the taskrunner in debug mode for local execution in a virtualenv.
     
     Returns:
         Literal return value is 0 for success and 1 for failure.
@@ -70,8 +73,7 @@ def main():
         Shinjae Yoo, Matt Henderson            
     """
 
-    logger = script_utils.stderrlogger(__file__)
-    logger.info("Executing KBase Download tasks")
+    logger = script_utils.stderrlogger(__file__, level=logging.DEBUG)
     
     script_details = script_utils.parse_docs(main.__doc__)
         
@@ -150,6 +152,11 @@ def main():
                         help=script_details["Args"]["keep_working_directory"], 
                         action='store_true')
 
+    # turn on debugging options for script developers running locally
+    parser.add_argument('--debug', 
+                        help=script_details["Args"]["debug"], 
+                        action='store_true')
+
     # ignore any extra arguments
     args, unknown = parser.parse_known_args()
             
@@ -161,11 +168,15 @@ def main():
         ujs.update_job_progress(args.ujs_job_id, kb_token, "KBase Data Download to external formats started", 
                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
+    logger.info("Executing KBase Download tasks")
+
     # parse all the json strings from the argument list into dicts
     # TODO had issues with json.loads and unicode strings, workaround was using simplejson and base64
     
     args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
     args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
+    
+    current_directory = os.getcwd()
     
     if not os.path.exists(args.working_directory):
         os.mkdir(args.working_directory)
@@ -180,17 +191,77 @@ def main():
 
     # Step 1 : Call the transform task to convert the objects to local files
     try:
-        os.mkdir(transform_directory)
-        
-        transformation_args = args.job_details["transform"]
-        transformation_args["optional_arguments"] = args.optional_arguments
-        transformation_args["working_directory"] = transform_directory
+        os.mkdir(transform_directory)        
+        os.chdir(transform_directory)
 
-        transformation_args["shock_service_url"] = args.shock_service_url
-        transformation_args["handle_service_url"] = args.handle_service_url
+        logger.debug(args.optional_arguments)
         
-        handler_utils.run_task(logger, transformation_args)
+        transformation_args = dict()
+        transformation_args.update(args.job_details["transform"])
+        
+        logger.debug(transformation_args)
+        
+        # take in user options
+        for k in args.optional_arguments["transform"]:
+            if k in transformation_args["handler_options"]["required_fields"] or \
+               k in transformation_args["handler_options"]["optional_fields"]:
+                transformation_args[k] = args.optional_arguments["transform"][k]
+            else:
+                logger.warning("Unrecognized parameter {0}".format(k))
+
+        # take in all taskrunner args
+        for k in args.__dict__:
+            if k in transformation_args["handler_options"]["required_fields"] or \
+               k in transformation_args["handler_options"]["optional_fields"]:
+                transformation_args[k] = args.__dict__[k]
+
+        # take in any handler custom args
+        if "custom_options" in transformation_args["handler_options"]: 
+            for c in transformation_args["handler_options"]["custom_options"]:
+                transformation_args[c["name"]] = c["value"]
+
+        if "working_directory" in transformation_args: 
+            logger.debug(os.path.abspath(os.getcwd()))
+            transformation_args["working_directory"] = os.path.abspath(os.getcwd())
+
+        if "workspace_service_url" in transformation_args: 
+            transformation_args["workspace_service_url"] = args.workspace_service_url
+
+        if "shock_service_url" in transformation_args: 
+            transformation_args["shock_service_url"] = args.shock_service_url
+        
+        if "handle_service_url" in transformation_args: 
+            transformation_args["handle_service_url"] = args.handle_service_url
+
+        # clean out arguments passed to transform script
+        remove_keys = ["handler_options", "user_options", "user_option_groups",
+                       "developer_description", "user_description", 
+                       "kbase_type", "external_type", "script_type"]
+
+        # check that we are not missing any required arguments
+        for k in transformation_args["handler_options"]["required_fields"]:
+            if k not in transformation_args:
+                raise Exception("Missing required field {0}, please provide using optional_arguments.".format(k))
+
+        # remove any argument keys that should not be passed to the transform step
+        for x in remove_keys:
+            if x in transformation_args:
+                del transformation_args[x]
+
+        logger.debug(transformation_args)
+
+        task_output = handler_utils.run_task(logger, transformation_args, debug=args.debug)
+        
+        if task_output["stdout"] is not None:
+            logger.debug("STDOUT : " + str(task_output["stdout"]))
+        
+        if task_output["stderr"] is not None:
+            logger.debug("STDERR : " + str(task_output["stderr"]))
+        
+        os.chdir(current_directory)        
     except Exception, e:
+        os.chdir(current_directory)        
+
         handler_utils.report_exception(logger, 
                          {"message": 'ERROR : Transforming workspace data from {0}'.format(args.workspace_name),
                           "exc": e,
@@ -264,17 +335,20 @@ def main():
 
     # Step 2: Extract provenance and metadata
     try:    
-        workspaceClient = Workspace(args.workspace_service_url, kb_token)
+        workspaceClient = Workspace(url=args.workspace_service_url, token=kb_token)
         
         object_info = {"workspace": args.workspace_name, "name": args.object_name}
 
         object_details = dict()
         object_details["provenance"] = workspaceClient.get_object_provenance([object_info])
-        object_details["history"] = workspaceClient.get_object_history([object_info])
-        object_details["metadata"] = workspaceClient.get_object_info_new([object_info])
-        object_details["references"] = workspaceClient.list_referencing_objects([object_info])
+        #object_details["history"] = workspaceClient.get_object_history(object_info)
+        object_details["metadata"] = workspaceClient.get_object_info_new({"objects":[object_info], "includeMetadata":1})
+        #object_details["references"] = workspaceClient.list_referencing_objects([object_info])
         
-        with open("KBase_object_details_{0}_{1}.json".format(args.object_name, datetime.datetime.utcnow().isoformat())) as f:
+        object_metadata_filename = "KBase_object_details_{0}_{1}.json".format(args.object_name, datetime.datetime.utcnow().isoformat())
+        file_name = os.path.join(transform_directory, object_metadata_filename)
+        
+        with open(file_name, 'w') as f:
             f.write(simplejson.dumps(object_details, sort_keys=True, indent=4))
     except Exception, e:
         handler_utils.report_exception(logger, 
@@ -297,19 +371,20 @@ def main():
     shock_id = None
     # Step 3: Package data files into a single compressed file and send to shock
     try:
-        name = "KBase_{0}_{1}_to_{2}_{3}.zip".format(args.object_name, args.kbase_type, args.external_type, datetime.datetime.utcnow().isoformat())
+        name = "KBase_{0}_{1}_to_{2}_{3}".format(args.object_name, args.kbase_type, args.external_type, datetime.datetime.utcnow().isoformat())
 
         # gather a list of all files downloaded
         files = list(handler_utils.gen_recursive_filelist(transform_directory))        
-    
-        with zipfile.ZipFile(name, 'w',  zipfile.ZIP_DEFLATED, zipfile.allowZip64) as z:
-            for f in files:
-                z.write(f)
-            z.close()
-    
+        
+        archive_name = os.path.join(args.working_directory,name) + ".zip"
+        archive = zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED, allowZip64=True)
+        for n in files:
+            archive.write(n)
+        archive.close()
+        
         shock_info = script_utils.upload_file_to_shock(logger = logger,
                                                        shock_service_url = args.shock_service_url,
-                                                       filePath = os.path.join(transform_directory, name),
+                                                       filePath = archive_name,
                                                        token= kb_token)
         shock_id = shock_info["id"]
     except Exception, e:
@@ -340,7 +415,8 @@ def main():
                           "shockurl" : args.shock_service_url, 
                           "results" : [{"server_type" : "Shock", 
                                         "url" : "{0}/node/{1}?download_raw".format(args.shock_service_url,shock_id), 
-                                        "id" : shock_id }]})
+                                        "id" : shock_id,
+                                        "description": "Download"}]})
     
     # Almost done, remove the working directory if possible
     if not args.keep_working_directory:

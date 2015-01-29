@@ -1,37 +1,32 @@
 { 
     "script_name": "trns_transform_KBaseFBA.FBAModel-to-CSV.pl", 
     "script_type": "download", 
-    "external_type": "CSV", 
+    "external_type": "CSV.FBAModel", 
     "kbase_type": "KBaseFBA.FBAModel", 
     "user_description": "Download model in CSV format", 
     "developer_description": "Download model in CSV format", 
     "handler_options": { 
         "max_runtime": 600, 
         "required_fields": [ 
-            "input",
-            "workspace", 
+            "object_name",
+            "workspace_name",
+            "workspace_service_url" 
         ], 
-        "optional_fields": ["version","url","output"], 
-        "custom_options": [], 
+        "optional_fields": ["version"], 
+        "custom_options": []
     },  
     "user_options": [ 
         { 
-            "name": "input", 
+            "name": "object_name", 
             "type": "string", 
             "required": true, 
-            "help": "Name of the workspace object." 
-        }, 
-        { 
-            "name": "workspace",
-            "type": "string", 
-            "required": false,
-            "help": "Workspace containing object."
+            "help": "Name of the model object." 
         }, 
         { 
             "name": "version", 
             "type": "int", 
             "required": false,
-            "help": "Version of the workspace object, if not given we assume the latest."
+            "help": "Version of the model object, if not given we assume the latest."
         } 
     ], 
     "user_option_groups": [] 

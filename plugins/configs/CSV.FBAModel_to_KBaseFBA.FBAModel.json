@@ -1,28 +1,30 @@
 {
     "script_name": "trns_transform_CSV_FBAModel_to_KBaseFBA_FBAModel.pl",
     "script_type": "upload",
-    "external_type": "CSV",
+    "external_type": "CSV.FBAModel",
     "kbase_type": "KBaseFBA.FBAModel",
-    "user_description": "Converts Reaction and Compound CSV files to FBAModel object in workspace."
-    
+    "user_description": "Converts Reaction and Compound CSV files to FBAModel object in workspace.",
+    "url_mapping":["CSV.FBAModel", "CSV.Compounds"],    
     "handler_options": {        
-        "must_own_validation": false,
+        "must_own_validation": true,
         "must_own_saving_to_workspace": true,
         "max_runtime": 360,
         "custom_options": [],
 	"required_fields":
-	{
+	[
 	    "input_file_name",
 	    "object_name",
 	    "workspace_name",
-	    "compounds"
-	},
+	    "compounds",
+	    "workspace_service_url",
+	    "fba_service_url"
+	],
 	"optional_fields":
 	[
 	    "genome",
 	    "biomass"
 	],
-	"input_mapping": [{'input_file_name": "CSV.FBAModel"}]
+	"input_mapping": {"CSV.FBAModel":"input_file_name", "CSV.Compounds" : "compounds"}
     },
     "user_options": [
         {

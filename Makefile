@@ -126,12 +126,15 @@ include $(TOP_DIR)/tools/Makefile.common.rules
 
 # here are the standard KBase deployment targets (deploy,deploy-client, deploy-scripts, & deploy-service)
 
-deploy: deploy-libs deploy-scripts deploy-service deploy-r-scripts deploy-bins
+deploy: deploy-libs deploy-scripts deploy-service deploy-r-scripts deploy-bins deploy-jars
 
 deploy-bins:
 	rsync --exclude '*.bak*' -arv bin/. $(TARGET)/bin/.
 	bash deps/pylib.sh
 	bash deps/pllib.sh
+
+deploy-jars:
+	cp lib/jars/kbase/transform/* $(TARGET)/lib/jars/kbase/transform/
 
 # Deploy client artifacts, including the application programming interface
 # libraries, command line scripts, and associated reference documentation.

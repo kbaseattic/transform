@@ -1,16 +1,14 @@
 {
-    "script_name": "trns_validate_Transcripts.FASTA.py",
+    "script_name": "trns_validate_Sequence.py",
     "script_type": "validate",
-    "external_type": "FASTA",
+    "external_type": "FASTA.Transcripts",
     "user_description": "Validate Fasta file containing transcripts",
     "developer_description": "",
     
     "handler_options": {
         "max_runtime": 360,
-        "must_own_validation": false,
-        "must_own_saving_to_workspace": false,
-        "required_fields": ["input"], 
-        "optional_fields": ["help"],
+        "required_fields": ["input_directory", "working_directory"], 
+        "optional_fields": [],
         "custom_options": []
     },
     "user_options": [],

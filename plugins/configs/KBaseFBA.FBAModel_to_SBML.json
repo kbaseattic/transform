@@ -1,25 +1,26 @@
 { 
     "script_name": "trns_transform_KBaseFBA.FBAModel-to-SBML.pl", 
     "script_type": "download", 
-    "external_type": "SBML", 
+    "external_type": "SBML.FBAModel", 
     "kbase_type": "KBaseFBA.FBAModel", 
     "user_description": "Download model in SBML format", 
     "developer_description": "Download model in SBML format", 
     "handler_options": { 
         "max_runtime": 600, 
         "required_fields": [ 
-            "input_file_name",
-            "workspace_name"
+            "object_name",
+            "workspace_name",
+            "workspace_service_url" 
         ], 
-        "optional_fields": ["version","url"], 
-        "custom_options": [], 
+        "optional_fields": ["version"], 
+        "custom_options": []
     },  
     "user_options": [ 
         { 
-            "name": "input_file_name", 
+            "name": "object_name", 
             "type": "string", 
             "required": true, 
-            "help": "Name of the workspace object." 
+            "help": "Name of the model object." 
         }, 
         { 
             "name": "workspace_name",
@@ -31,7 +32,7 @@
             "name": "version", 
             "type": "int", 
             "required": false,
-            "help": "Version of the workspace object, if not given we assume the latest."
+            "help": "Version of the model object, if not given we assume the latest."
         } 
     ], 
     "user_option_groups": [] 

@@ -5,7 +5,7 @@
     "kbase_type": "KBaseAssembly.PairedEndLibrary",
     "user_description": "Converts one or two paired FASTA read files into a KBaseAssembly.PairedEndLibrary typed object.",
     "developer_description": "Converts one or two paired FASTA read files into a KBaseAssembly.PairedEndLibrary typed object.",
-    "url_mapping": ["FASTA.DNA.Reads"],
+    "url_mapping": ["FASTA.DNA.Reads.1", "FASTA.DNA.Reads.2"],
     "handler_options":
     {
         "max_runtime": 3600,
@@ -15,14 +15,12 @@
         [
             "shock_service_url",
             "handle_service_url",
-	    "input_directory",
-	    "type",
-	    "file"
+	    "input_file_name",
+            "output_file_name",
+	    "type"
         ],
         "optional_fields":
         [
-            "output_file_name",
-            "input_mapping",
 	    "insert",
 	    "stdev",
 	    "outward"
@@ -35,7 +33,10 @@
                 "required": true
             }
 	],
-	"input_mapping": [{"input_directory": "FASTA.DNA.Reads"}]
+	"input_mapping": {
+	    "FASTA.DNA.Reads.1": "input_file_name",
+	    "FASTA.DNA.Reads.2": "input_file_name"
+	}
     },
     "user_options":
     [
@@ -53,9 +54,10 @@
         },
         {
             "name": "outward",
-            "type": "boolean",
+            "type": "int",
+	    "value" : 0,
             "required": false,
-            "help": "Whether reads in the pair point outward"
+            "help": "Whether reads in the pair point outward. 0 is false, 1 is true."
         }
     ],
     "user_option_groups": []

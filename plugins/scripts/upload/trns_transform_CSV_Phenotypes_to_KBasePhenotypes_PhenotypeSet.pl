@@ -47,8 +47,8 @@ GetOptions("input_file_name|i=s"  => \$In_File,
 	   "object_name|o=s" => \$Out_Object,
 	   "workspace_name|w=s" => \$Out_WS,
 	   "genome|g=s" => \$Genome,
-	   "wsurl=s" => $wsurl,
-	   "fbaurl=s" => $fbaurl,
+	   "workspace_service_url=s" => $wsurl,
+	   "fba_service_url=s" => $fbaurl,
 	   "help|h"     => \$Help);
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){

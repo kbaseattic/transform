@@ -66,7 +66,7 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
     term = blessings.Terminal()
 
     header = dict()
-    header["Authorization"] = "Oauth %s" % token
+    header["Authorization"] = "Oauth {0}".format(token)
 
     print term.blue("\tUJS Job Status:")
     # wait for UJS to complete    
@@ -158,12 +158,12 @@ def download_from_shock(shockURL, shock_id, filePath, token):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='KBase Download demo and client')
+    parser = argparse.ArgumentParser(description='KBase Download script test driver')
     parser.add_argument('--demo', action="store_true")
     parser.add_argument('--ujs_service_url', nargs='?', help='UserandJobState service for monitoring progress', const="", default="https://kbase.us/services/userandjobstate/")
     parser.add_argument('--workspace_service_url', nargs='?', help='Workspace service for KBase objects', const="", default="https://kbase.us/services/ws/")
-    parser.add_argument('--awe_service_url', nargs='?', help='AWE service for additional job monitoring', const="", default="http://140.221.67.242:7080")
-    parser.add_argument('--transform_service_url', nargs='?', help='Transform service that handles the data conversion to KBase', const="", default="http://140.221.67.242:7778/")
+    parser.add_argument('--awe_service_url', nargs='?', help='AWE service for additional job monitoring', const="", default="http://140.221.67.3:7080")
+    parser.add_argument('--transform_service_url', nargs='?', help='Transform service that handles the data conversion to KBase', const="", default="http://140.221.67.3:7778/")
 
     parser.add_argument('--external_type', nargs='?', help='the external type of the data', const="", default="")
     parser.add_argument('--kbase_type', nargs='?', help='the kbase object type to create', const="", default="")
@@ -174,9 +174,11 @@ if __name__ == "__main__":
     parser.add_argument('--client', help='Client mode test', dest="handler_mode", action='store_false')
     parser.set_defaults(handler_mode=False)
     ## TODO: change the default path to be relative to __FILE__
-    parser.add_argument('--plugin_dir', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
+    parser.add_argument('--plugin_directory', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
 
     args = parser.parse_args()
+
+    print args
 
     token = os.environ.get("KB_AUTH_TOKEN")
     if token is None:
@@ -190,8 +192,7 @@ if __name__ == "__main__":
         else:
             raise Exception("Unable to find KBase token!")
 
-    plugin = None
-    if args.handler_mode: plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_dir, logger)
+    plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory, logger)
 
     if not args.demo:
         user_inputs = {"external_type": args.external_type,
@@ -247,44 +248,39 @@ if __name__ == "__main__":
             os.mkdir(conversionDownloadPath)
         except:
             pass
+        
         downloadPath = os.path.join(conversionDownloadPath)
 
         try:
             print term.bold("Step 1: Make KBase download request")
 
-            if args.handler_mode:
-                print term.blue("\tTransform handler download started:")
-                demo_inputs["working_directory"] = conversionDownloadPath
-                for attr, value in args.__dict__.iteritems():
-                   if attr.endswith("_service_url"):
-                     print "arg : " + attr
-                     demo_inputs[attr] = value
-                input_args = plugin.get_handler_args("download",demo_inputs, token)
-                command_list = ["trns_download_taskrunner"]
-                
-                for k in input_args:
-                   command_list.append("--{0}".format(k))
-                   command_list.append("{0}".format(input_args[k]))
-                print command_list
+            print term.blue("\tTransform handler download started:")
+            demo_inputs["working_directory"] = conversionDownloadPath
+            for attr, value in args.__dict__.iteritems():
+                if attr.endswith("_service_url"):
+                    print "arg : " + attr
+                    demo_inputs[attr] = value
+            
+            input_args = plugin.get_handler_args("download", demo_inputs)
+            command_list = ["trns_download_taskrunner"]
+            
+            for k in input_args:
+                command_list.append("--{0}".format(k))
+                command_list.append("{0}".format(input_args[k]))
+            
+            print command_list
 
-                task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
-                sub_stdout, sub_stderr = task.communicate()
-                
-                if sub_stdout is not None:
-                    print sub_stdout
-                if sub_stderr is not None:
-                    print >> sys.stderr, sub_stderr
-                
-                if task.returncode != 0:
-                    raise Exception(sub_stderr)
-            else:
-                download_response = download(services["transform"], {"external_type": external_type, "kbase_type": kbase_type, "workspace_name": workspace, "object_name": object_name}, token)
-                print term.blue("\tTransform service download requested:")
-                print "\t\tConverting from {0} => {1}\n\t\tUsing workspace {2} with object name {3}".format(external_type,kbase_type,workspace,object_name)
-                print term.blue("\tTransform service responded with job ids:")
-                print "\t\tAWE job id {0}\n\t\tUJS job id {1}".format(download_response[0], download_response[1])
-             
-                shock_response = show_job_progress(services["ujs"], services["awe"], download_response[0], download_response[1], token)
+            task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+            sub_stdout, sub_stderr = task.communicate()
+            
+            if sub_stdout is not None:
+                print sub_stdout
+            
+            if sub_stderr is not None:
+                print >> sys.stderr, sub_stderr
+            
+            if task.returncode != 0:
+                raise Exception(sub_stderr)
 
             print term.bold("Step 2: Grab data from SHOCK\n")
             download_from_shock(services["shock"], shock_response, downloadPath, token)

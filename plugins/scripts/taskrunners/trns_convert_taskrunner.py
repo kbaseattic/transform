@@ -35,9 +35,6 @@ def main():
         destination_workspace_name: The name of the destination workspace.
         source_object_name: The source object name.
         destination_object_name: The destination object name.
-        source_object_id: A source object id, which can be used instead of object_name.
-        destination_object_id: A destination object id, which can be used instead of 
-                               object_name.
         source_kbase_type: The KBase Workspace type string that indicates the module
                            and type of the object being created.                       
         destination_kbase_type: The KBase Workspace type string that indicates the module
@@ -65,12 +62,14 @@ def main():
         Matt Henderson, Gavin Price            
     """
 
-    logger = script_utils.stderrlogger(__file__)
+    logger = script_utils.stderrlogger(__file__, level=logging.DEBUG)
     logger.info("Executing KBase Convert tasks")
     
     script_details = script_utils.parse_docs(main.__doc__)
-        
-    parser = argparse.ArgumentParser(description=script_details["Description"],
+    
+    logger.debug(script_details["Args"])
+    
+    parser = script_utils.ArgumentParser(description=script_details["Description"],
                                      epilog=script_details["Authors"])
     # provided by service config
     parser.add_argument('--workspace_service_url', 
@@ -101,10 +100,6 @@ def main():
                         help=script_details["Args"]["source_object_name"], 
                         action='store', 
                         required=True)
-    parser.add_argument('--source_object_id', 
-                        help=script_details["Args"]["source_object_id"], 
-                        action='store')
-
 
     # workspace info for saving the data
     parser.add_argument('--destination_workspace_name', 
@@ -115,9 +110,6 @@ def main():
                         help=script_details["Args"]["destination_object_name"], 
                         action='store', 
                         required=True)
-    parser.add_argument('--destination_object_id', 
-                        help=script_details["Args"]["destination_object_id"], 
-                        action='store')
 
     # the types that we are transforming between, currently assumed one to one 
     parser.add_argument('--source_kbase_type', 
@@ -192,8 +184,20 @@ def main():
         convert_args["optional_arguments"] = args.optional_arguments
         convert_args["working_directory"] = args.working_directory
         convert_args["workspace_service_url"] = args.workspace_service_url
+        convert_args["source_workspace_name"] = args.source_workspace_name
+        convert_args["source_object_name"] = args.source_object_name
+        convert_args["destination_workspace_name"] = args.destination_workspace_name
+        convert_args["destination_object_name"] = args.destination_object_name
         
-        handler_utils.run_task(logger, convert_args)
+        logger.info(convert_args)
+        
+        task_output = handler_utils.run_task(logger, convert_args)
+        
+        if task_output["stdout"] is not None:
+            logger.debug("STDOUT : " + str(task_output["stdout"]))
+        
+        if task_output["stderr"] is not None:
+            logger.debug("STDERR : " + str(task_output["stderr"]))        
     except Exception, e:
         handler_utils.report_exception(logger, 
                          {"message": 'ERROR : Conversion from {0} to {1}'.format(args.source_kbase_type,args.destination_kbase_type),

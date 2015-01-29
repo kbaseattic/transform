@@ -9,7 +9,7 @@
     "handler_options": 
     { 
         "max_runtime": 360,
-        "must_own_validation": false,
+        "must_own_validation": true,
         "must_own_saving_to_workspace": false,
         "required_fields": 
         [
@@ -27,7 +27,7 @@
             "fasta_reference_only"
         ],
         "custom_options": [],
-	"input_mapping": [{"input_directory": "FASTA.DNA.Assembly"}]
+	"input_mapping": {"FASTA.DNA.Assembly":"input_directory"}
     }, 
     "user_options": 
     [ 

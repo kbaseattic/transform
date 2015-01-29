@@ -25,44 +25,39 @@ use Bio::KBase::workspace::Client;
 use Bio::KBase::Transform::ScriptHelpers qw(write_csv_tables get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
 
 my($opt, $usage) = describe_options("%c %o",
-				    ['input_file_name|i=s', 'workspace object id from which the input is to be read'],
-				    ['workspace_name|w=s', 'workspace id from which the input is to be read'],
-				    ['from_file', 'specifies to use the local filesystem instead of workspace'],
-				    ['wsurl=s', 'URL for the workspace'],
-				    ['help|h', 'show this help message'],
-				    );
+				    ['object_name=s', 'workspace object name from which the input is to be read'],
+				    ['workspace_name=s', 'workspace name from which the input is to be read'],
+				    ['workspace_service_url=s', 'workspace service url to pull from'],
+				    ['help|h', 'show this help message']
+);
 
 print($usage->text), exit  if $opt->help;
 print($usage->text), exit 1 unless @ARGV == 0;
 
-my $obj;
-my $wsclient = Bio::KBase::workspace::Client->new($opt->{wsurl});
-if ($opt->from_file)
+if (!$opt->workspace_name)
 {
-    $obj = load_input($opt);
+    die "A workspace name must be provided";
+}
+
+
+my $obj;
+my $wsclient = Bio::KBase::workspace::Client->new($opt->workspace_service_url);
+
+my $ret = $wsclient->get_objects([{ name => $opt->object_name, workspace => $opt->workspace_name }])->[0];
+if ($ret->{data})
+{
+    $obj = $ret->{data};
 }
 else
 {
-    if (!$opt->workspace_name)
-    {
-	die "A workspace name must be provided";
-    }
-    my $ret = $wsclient->get_object({ id => $opt->input_file_name, workspace => $opt->workspace_name });
-    if ($ret->{data})
-    {
-	$obj = $ret->{data};
-    }
-    else
-    {
-	die "Invalid return from get_object for ws=" . $opt->workspace_name . " input=" . $opt->input_file_name;
-    }
+    die "Invalid return from get_object for ws=" . $opt->workspace_name . " input=" . $opt->object_name;
 }
 my $ret = $wsclient->get_objects([{ "ref" => $obj->{phenotypeset_ref} }]);
 my $phenohash = {};
 for (my $i=0; $i < @{$ret->[0]->{data}->{phenotypes}}; $i++) {
 	$phenohash->{$ret->[0]->{data}->{phenotypes}->[$i]->{id}} = $ret->[0]->{data}->{phenotypes}->[$i];
 }
-my $tables = {$opt->workspace_name."_".$opt->input_file_name."_PhenotypeSimulations" => [["geneko","mediaws","media","addtlCpd","observed_growth","simulated_growth","simulated_growth_fraction","phenotype_class"]]};
+my $tables = {$opt->workspace_name."_".$opt->object_name."_PhenotypeSimulations" => [["geneko","mediaws","media","addtlCpd","observed_growth","simulated_growth","simulated_growth_fraction","phenotype_class"]]};
 for (my $i=0; $i < @{$obj->{phenotypeSimulations}}; $i++) {
 	my $simpheno = $obj->{phenotypeSimulations}->[$i];
 	my $array = [split(/\//,$simpheno->{phenotype_ref})];
@@ -81,6 +76,6 @@ for (my $i=0; $i < @{$obj->{phenotypeSimulations}}; $i++) {
 	my $output = $wsclient->get_object_info([{"ref" => $pheno->{media_ref}}],0);
 	my $mediaws = $output->[0]->[7];
 	my $media = $output->[0]->[1];
-	push(@{$tables->{$opt->workspace_name."_".$opt->input_file_name."_PhenotypeSimulations"}},[join(";",@{$genekolist}),$mediaws,$media,join(";",@{$cpdlist}),$pheno->{normalizedGrowth},$simpheno->{simulatedGrowth},$simpheno->{simulatedGrowthFraction},$simpheno->{phenoclass}]);
+	push(@{$tables->{$opt->workspace_name."_".$opt->object_name."_PhenotypeSimulations"}},[join(";",@{$genekolist}),$mediaws,$media,join(";",@{$cpdlist}),$pheno->{normalizedGrowth},$simpheno->{simulatedGrowth},$simpheno->{simulatedGrowthFraction},$simpheno->{phenoclass}]);
 }
 write_csv_tables($tables);

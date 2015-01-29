@@ -1,0 +1,19 @@
+{
+    "script_name": "trns_validate_Sequence.py",
+    "script_type": "validate",
+    "external_type": "SequenceReads",
+    "user_description": "",
+    "developer_description": "",
+    
+    "handler_options": {        
+        "max_runtime": 360,
+        "custom_options": [],
+        "required_fields": [
+            "input_directory",
+            "working_directory"
+        ],
+        "optional_fields": []
+    },
+    "user_options": [],
+    "user_option_groups": []
+}

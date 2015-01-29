@@ -13,10 +13,7 @@ import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
 import us.kbase.workspace.*;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.math.BigInteger;
 import java.net.URL;
 import java.security.MessageDigest;
@@ -104,6 +101,34 @@ public class ConvertGBK {
             workdir = workdir.substring(0, workdir.length() - 2);
         }
 
+
+        int start = "LOCUS       ".length();
+        if (indir.isDirectory()) {
+            final String splitpath = indir.getAbsolutePath() + "/split";
+            File[] files = indir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$");
+                }
+            });
+            for (int i = 0; i < files.length; i++) {
+                boolean wasSplit = splitRecord(start, files[i], splitpath);
+                if (wasSplit && files.length > 1) {
+                    System.err.println("Multiple multi-record Genbank files currently not supported.");
+                } else if (wasSplit) {
+                    System.out.println("Split single input file " + files[i].getName() + " into muultiple records? " + wasSplit);
+                    indir = new File(indir.getAbsolutePath() + "/split");
+                }
+            }
+        } else {
+            boolean wasSplit = splitRecord(start, indir, null);
+            System.out.println("Split single input file into muultiple records? " + wasSplit);
+            if (wasSplit) {
+                indir = new File("./split");
+            }
+        }
+
+
         parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
             @Override
             public List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> saveObjects(
@@ -119,6 +144,65 @@ public class ConvertGBK {
                 throw new IllegalStateException("Unsupported method");
             }
         }, wsname, wsurl, isTest);
+    }
+
+    /**
+     * @param start
+     * @throws FileNotFoundException
+     */
+    private boolean splitRecord(int start, File path, String outpath) throws FileNotFoundException {
+
+        boolean split = false;
+        Scanner fileScanner = new Scanner(path);
+        List<String> locitest = new ArrayList<String>();
+        while (fileScanner.hasNextInt()) {
+            String cur = fileScanner.next();
+            if (cur.indexOf("LOCUS") == 0) {
+                String curlocus = cur.substring(start, cur.indexOf(" ", start + 1));
+                locitest.add(curlocus);
+                if (locitest.size() > 1) {
+                    break;
+                }
+            }
+        }
+
+        if (locitest.size() > 1) {
+
+            if (outpath == null)
+                outpath = "./split";
+
+            File splitdir = new File(outpath);
+            if (!splitdir.exists()) {
+                splitdir.mkdir();
+            }
+
+            fileScanner = new Scanner(indir);
+            List<String> loci = new ArrayList<String>();
+            StringBuilder sb = new StringBuilder("");
+            while (fileScanner.hasNextInt()) {
+                String cur = fileScanner.next();
+                if (cur.indexOf("LOCUS") == 0) {
+                    String curlocus = cur.substring(start, cur.indexOf(" ", start + 1));
+                    loci.add(curlocus);
+                    sb.append(cur);
+                } else if (cur.indexOf("//") != -1) {
+                    String curoutpath = outpath + "/" + loci.get(loci.size() - 1) + ".gbk";
+                    try {
+                        PrintWriter out = new PrintWriter(new FileWriter(curoutpath));
+                        out.print(sb);
+                        out.close();
+                        split = true;
+                        System.out.println("    wrote: " + outpath);
+                    } catch (IOException e) {
+                        System.err.println("Error creating or writing file " + outpath);
+                        System.err.println("IOException: " + e.getMessage());
+                    }
+
+                    sb = new StringBuilder("");
+                }
+            }
+        }
+        return split;
     }
 
 
@@ -362,7 +446,7 @@ public class ConvertGBK {
             }
         }
 
-        System.out.println("    time: " + (double)(System.currentTimeMillis() - time)/(double)1000 + " s");
+        System.out.println("    time: " + (double) (System.currentTimeMillis() - time) / (double) 1000 + " s");
     }
 
     /**

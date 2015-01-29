@@ -16,6 +16,7 @@ import us.kbase.workspace.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -46,8 +47,7 @@ public class ConvertGBK {
 
     String wsname = null;
 
-    String workdir;
-
+    File workdir;
     String out_object_g = null;
     String out_object_c = null;
     File indir;
@@ -67,7 +67,10 @@ public class ConvertGBK {
             int index = Arrays.asList(argsPossible).indexOf(args[i]);
             if (index > -1) {
                 if (argsPossibleMap[index].equals("input")) {
-                    indir = new File(args[i + 1]);
+                    String arg = args[i + 1];
+                    if (arg.startsWith("./"))
+                        arg = arg.substring(2);
+                    indir = new File(arg);
                 } else if (argsPossibleMap[index].equals("outputg")) {
                     out_object_g = args[i + 1];
                 } else if (argsPossibleMap[index].equals("outputc")) {
@@ -79,7 +82,7 @@ public class ConvertGBK {
                 } else if (argsPossibleMap[index].equals("shocku")) {
                     shockurl = args[i + 1];
                 } else if (argsPossibleMap[index].equals("wd")) {
-                    workdir = args[i + 1];
+                    workdir = new File(args[i + 1]);
                 } else if (argsPossibleMap[index].equals("t")) {
                     if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
                         isTest = true;
@@ -93,41 +96,45 @@ public class ConvertGBK {
         System.out.println("isTest " + isTest);
 
         if (workdir == null) {
-            File tmpf = new File("./");
-            workdir = tmpf.getAbsolutePath();
+            workdir = new File(Paths.get(".").toAbsolutePath().normalize().toString());
         }
 
-        if (workdir.endsWith("/.")) {
-            workdir = workdir.substring(0, workdir.length() - 2);
-        }
-
+        System.out.println("workdir 1 " + workdir.getAbsolutePath());
 
         int start = "LOCUS       ".length();
+
         if (indir.isDirectory()) {
-            final String splitpath = indir.getAbsolutePath() + "/split";
             File[] files = indir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
                     return name.matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$");
                 }
             });
+            System.out.println("testing name matches " + files.length + "\t" + files[0]);
+
+            String outpath = workdir.getAbsolutePath();
             for (int i = 0; i < files.length; i++) {
-                boolean wasSplit = splitRecord(start, files[i], splitpath);
+                boolean wasSplit = splitRecord(start, files[i], null);
                 if (wasSplit && files.length > 1) {
                     System.err.println("Multiple multi-record Genbank files currently not supported.");
                 } else if (wasSplit) {
-                    System.out.println("Split single input file " + files[i].getName() + " into muultiple records? " + wasSplit);
-                    indir = new File(indir.getAbsolutePath() + "/split");
+                    System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
+                    indir = new File(workdir.getAbsolutePath() + "/split");
+                } else {
+                    System.out.println("Single input file was not split");
                 }
             }
         } else {
             boolean wasSplit = splitRecord(start, indir, null);
-            System.out.println("Split single input file into muultiple records? " + wasSplit);
+            System.out.println("Split single input file into multiple records? " + wasSplit);
             if (wasSplit) {
-                indir = new File("./split");
+                indir = new File(workdir.getAbsolutePath() + "/split");
+                System.out.println("workdir 2 " + workdir.getAbsolutePath());
             }
         }
 
+
+        System.out.println("indir " + indir);
 
         parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
             @Override
@@ -155,8 +162,10 @@ public class ConvertGBK {
         boolean split = false;
         Scanner fileScanner = new Scanner(path);
         List<String> locitest = new ArrayList<String>();
-        while (fileScanner.hasNextInt()) {
-            String cur = fileScanner.next();
+        while (fileScanner.hasNextLine()) {
+            String cur = fileScanner.nextLine();
+            if (!cur.startsWith(" "))
+                System.out.println("curtest " + cur);
             if (cur.indexOf("LOCUS") == 0) {
                 String curlocus = cur.substring(start, cur.indexOf(" ", start + 1));
                 locitest.add(curlocus);
@@ -165,28 +174,36 @@ public class ConvertGBK {
                 }
             }
         }
+        fileScanner.close();
 
+        System.out.println("locitest " + locitest.size());
         if (locitest.size() > 1) {
-
             if (outpath == null)
-                outpath = "./split";
-
+                outpath = workdir.getAbsolutePath() + "/split";
+            System.out.println("split outpath " + outpath);
             File splitdir = new File(outpath);
-            if (!splitdir.exists()) {
+            if (!splitdir.isDirectory()) {
                 splitdir.mkdir();
             }
 
-            fileScanner = new Scanner(indir);
+            Scanner fileScanner2 = new Scanner(path);
             List<String> loci = new ArrayList<String>();
             StringBuilder sb = new StringBuilder("");
-            while (fileScanner.hasNextInt()) {
-                String cur = fileScanner.next();
+            while (fileScanner2.hasNextLine()) {
+                String cur = fileScanner2.nextLine();
+                if (!cur.startsWith(" "))
+                    System.out.println(cur);
                 if (cur.indexOf("LOCUS") == 0) {
                     String curlocus = cur.substring(start, cur.indexOf(" ", start + 1));
+                    System.out.println("loci add " + curlocus);
                     loci.add(curlocus);
-                    sb.append(cur);
-                } else if (cur.indexOf("//") != -1) {
-                    String curoutpath = outpath + "/" + loci.get(loci.size() - 1) + ".gbk";
+                    sb.append(cur).append("\n");
+                } else if (cur.indexOf("//") == 0) {
+                    sb.append(cur).append("\n");
+                    System.out.println("loci2 " + loci.size());
+                    final int index = loci.size() - 1;
+                    System.out.println("loci2 " + loci.size() + "\t" + index);
+                    String curoutpath = outpath + "/" + loci.get(index) + ".gbk";
                     try {
                         PrintWriter out = new PrintWriter(new FileWriter(curoutpath));
                         out.print(sb);
@@ -199,8 +216,11 @@ public class ConvertGBK {
                     }
 
                     sb = new StringBuilder("");
+                } else {
+                    sb.append(cur).append("\n");
                 }
             }
+            fileScanner.close();
         }
         return split;
     }
@@ -214,18 +234,20 @@ public class ConvertGBK {
      */
     public void parseAllInDir(int[] pos, File dir, ObjectStorage wc, String wsname, String http, boolean isTestThis) throws Exception {
         List<File> files = new ArrayList<File>();
-
+        System.out.println("parseAllInDir " + dir.getAbsolutePath());
         if (dir.isDirectory()) {
             for (File f : dir.listFiles()) {
+                //System.out.println("parseAllInDir file " + f.getAbsolutePath());
                 if (f.isDirectory()) {
                     parseAllInDir(pos, f, wc, wsname, http, isTestThis);
                 } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
                     files.add(f);
-                    System.out.println("Added " + f);
+                    System.out.println("Added from dir " + f + "\ttotal " + files.size());
                 }
             }
         } else {
             files.add(dir);
+            System.out.println("Added from file " + dir);
         }
         if (files.size() > 0)
             parseGenome(pos, dir, files, wsname, http, isTestThis);
@@ -239,10 +261,15 @@ public class ConvertGBK {
      * @throws Exception
      */
     public void parseGenome(int[] pos, File dir, List<File> gbkFiles, String wsname, String http, boolean isTestThis) throws Exception {
-        System.out.println("[" + (pos[0]++) + "] " + dir.getName());
+        System.out.println("[" + (pos[0]++) + "] input dir " + dir.getName() + "\tfirst file " + gbkFiles.get(0));
         long time = System.currentTimeMillis();
         //System.out.println("parseGenome "+wsname);
-        ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
+        //ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
+        String name = gbkFiles.get(0).getName();
+        final int endIndex = name.indexOf(".");
+        name = name.substring(0, endIndex != -1 ? endIndex : name.length());
+        System.out.println("parseGenome " + name);
+        ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, name, true);
 
         Genome genome = (Genome) ar.get(2);
 
@@ -255,7 +282,7 @@ public class ConvertGBK {
         genome.setAdditionalProperties("SOURCE", "KBASE_USER_UPLOAD");
         String outpath = workdir + "/" + out_object_g + ".jsonp";
 
-        System.out.println("workdir " + workdir + "\tout_object_g " + out_object_g + "\tout_object_c " + out_object_c);
+        System.out.println("workdir " + workdir + "\nout_object_g " + out_object_g + "\tout_object_c " + out_object_c);
         if (out_object_g == null) {
             out_object_g = genome.getId();
             outpath = workdir + "/" + out_object_g + ".jsonp";
@@ -281,7 +308,7 @@ public class ConvertGBK {
                 //     start = out_object_g.lastIndexOf("/");
                 //}
                 //final int endIndex = out_object_g.lastIndexOf(".");
-                out_object_c = out_object_g + "__ContigSet";//out_object_g.substring(start, endIndex != -1 ? endIndex : out_object_g.length());
+                out_object_c = out_object_g + "_ContigSet";//out_object_g.substring(start, endIndex != -1 ? endIndex : out_object_g.length());
             } else {
                 out_object_c = genome.getId() + "_ContigSet";
             }
@@ -363,24 +390,14 @@ public class ConvertGBK {
                 }
 
                 wc.setAuthAllowedForHttp(true);
-                String gname = contigSetId;
-                if (out_object_g != null) {
-                    gname = out_object_g;
-                }
-                gname = sanitizeObjectName(gname);
-                System.out.println("saving Genome " + gname);
-                wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                        .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
-                                .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
-                System.out.println("successfully saved object");
 
-                /*TODO create provenance string --- uploaded by transform service, user*/
+
+                String cname = contigSetId;
+                if (out_object_c != null) {
+                    cname = out_object_c;
+                }
+                cname = sanitizeObjectName(cname);
                 try {
-                    String cname = contigSetId;
-                    if (out_object_c != null) {
-                        cname = out_object_c;
-                    }
-                    cname = sanitizeObjectName(cname);
                     System.out.println("saving ContigSet " + cname);
                     wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                             .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
@@ -395,6 +412,19 @@ public class ConvertGBK {
                     System.err.println("Error saving ContigSet to workspace, data may be too large (JsonClientException).");
                     e.printStackTrace();
                 }
+
+
+                genome.setContigsetRef(wsname + "/" + cname);
+                String gname = contigSetId;
+                if (out_object_g != null) {
+                    gname = out_object_g;
+                }
+                gname = sanitizeObjectName(gname);
+                System.out.println("saving Genome " + gname + "\t:" + genome.getContigsetRef() + ":");
+                wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                        .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
+                                .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+                System.out.println("successfully saved object");
 
 /*
                 try {

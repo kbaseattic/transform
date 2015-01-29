@@ -79,6 +79,7 @@ public class GbkUploader {
      * @return
      * @throws Exception
      */
+    //  ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
     public static ArrayList uploadGbk(List<File> files, String ws, String id, boolean doStderr) throws Exception {
 
         boolean tmptooBig = false;
@@ -104,9 +105,6 @@ public class GbkUploader {
             }
 
             final boolean tooBig = tmptooBig;
-
-
-            //genome.setContigsetRef();
 
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
             try {

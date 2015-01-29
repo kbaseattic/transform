@@ -28,7 +28,8 @@ use Bio::KBase::fbaModelServices::ScriptHelpers qw(fbaws get_fba_client runFBACo
 my($opt, $usage) = describe_options("%c %o",
 				    ['input_file_name|i=s', 'workspace object id from which the input is to be read'],
 				    ['workspace_name|w=s', 'workspace id from which the input is to be read'],
-				    ['url=s', 'URL for the genome annotation service'],
+				    ['fbaurl=s', 'URL for the fba service'],
+				    ['wsurl=s', 'URL for the workspace'],
 				    ['help|h', 'show this help message'],
 				    );
 
@@ -41,12 +42,16 @@ $logger->info("Generating SBML for WS model");
 my $output;
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
-    my $fba = get_fba_client();
-    $output = $fba->export_fbamodel({
+    my $fba = get_fba_client($opt->{fbaurl});
+    my $input = {
     	workspace => $opt->{workspace_name},
     	model => $opt->{input_file_name},
     	format => "sbml"
-    });
+    };
+    if (defined($opt->{wsurl})) {
+    	$input->{wsurl} = $opt->{wsurl};
+    }
+    $output = $fba->export_fbamodel($input);
 };
 
 $logger->info("fbaModelServices export_fbamodel() informational messages\n".$stdout) if $stdout;

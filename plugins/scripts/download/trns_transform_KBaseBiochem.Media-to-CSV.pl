@@ -25,7 +25,7 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['workspace|w=s', 'workspace id from which the input is to be read'],
 				    ['from-file', 'specifies to use the local filesystem instead of workspace'],
 				    ['output|o=s', 'file to which the output is to be written'],
-				    ['url=s', 'URL for the genome annotation service'],
+				    ['wsurl=s', 'URL for the workspace'],
 				    ['help|h', 'show this help message'],
 				    );
 
@@ -44,7 +44,7 @@ else
     {
 	die "A workspace name must be provided";
     }
-    my $wsclient = Bio::KBase::workspace::Client->new();
+    my $wsclient = Bio::KBase::workspace::Client->new($opt->{wsurl});
     my $ret = $wsclient->get_object({ id => $opt->input, workspace => $opt->workspace });
     if ($ret->{data})
     {

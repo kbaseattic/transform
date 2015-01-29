@@ -27,7 +27,7 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['input_file_name|i=s', 'workspace object id from which the input is to be read'],
 				    ['workspace_name|w=s', 'workspace id from which the input is to be read'],
 				    ['from_file', 'specifies to use the local filesystem instead of workspace'],
-				    ['url=s', 'URL for the genome annotation service'],
+				    ['wsurl=s', 'URL for the workspace'],
 				    ['help|h', 'show this help message'],
 				    );
 
@@ -35,7 +35,7 @@ print($usage->text), exit  if $opt->help;
 print($usage->text), exit 1 unless @ARGV == 0;
 
 my $obj;
-my $wsclient = Bio::KBase::workspace::Client->new();
+my $wsclient = Bio::KBase::workspace::Client->new($opt->{wsurl});
 if ($opt->from_file)
 {
     $obj = load_input($opt);

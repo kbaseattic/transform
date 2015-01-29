@@ -5,7 +5,6 @@ from __future__ import print_function
 import os
 import sys
 import traceback
-import argparse
 import logging
 import re
 import hashlib
@@ -286,7 +285,7 @@ def main():
         'behavior for files that large.', action='store_true', required=False)
 
     # ignore unknown arguments for now
-    args, unknown = parser.parse_known_args()
+    args, _ = parser.parse_known_args()
 
     logger = script_utils.stderrlogger(__file__)
     try:

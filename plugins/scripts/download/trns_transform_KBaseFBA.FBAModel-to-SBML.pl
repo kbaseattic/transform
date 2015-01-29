@@ -28,6 +28,7 @@ use Bio::KBase::fbaModelServices::ScriptHelpers qw(fbaws get_fba_client runFBACo
 my($opt, $usage) = describe_options("%c %o",
 				    ['object_name=s', 'workspace object name from which the input is to be read'],
 				    ['workspace_name=s', 'workspace name from which the input is to be read'],
+				    ['fba_service_url=s', 'fba service url to use'],
 				    ['workspace_service_url=s', 'workspace service url to pull from'],
 				    ['help|h', 'show this help message'],
 				    );
@@ -38,18 +39,19 @@ print($usage->text), exit 1 unless @ARGV == 0;
 my $logger = getStderrLogger();
 $logger->info("Generating SBML for WS model");
 
-my $wsclient = Bio::KBase::workspace::Client->new($opt->workspace_service_url);
-my $object_id = $wsclient->get_object_info_new({objects => [{workspace => $opt->{workspace_name}, name => $opt->{object_name}}]})->[0]->[0];
-
 my $output;
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
-    my $fba = get_fba_client();
-    $output = $fba->export_fbamodel({
+    my $fba = get_fba_client($opt->{fba_service_url});
+    my $input = {
     	workspace => $opt->{workspace_name},
-    	model => $object_id,
+    	model => $opt->{object_name},
     	format => "sbml"
-    });
+    };
+    if (defined($opt->{workspace_service_url})) {
+    	$input->{wsurl} = $opt->{workspace_service_url};
+    }
+    $output = $fba->export_fbamodel($input);
 };
 
 $logger->info("fbaModelServices export_fbamodel() informational messages\n".$stdout) if $stdout;

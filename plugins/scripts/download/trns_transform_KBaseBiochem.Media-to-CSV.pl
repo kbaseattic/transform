@@ -28,7 +28,7 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['workspace_name=s', 'workspace name from which the input is to be read'],
 				    ['workspace_service_url=s', 'workspace service url to pull from'],
 				    ['help|h', 'show this help message'],
-				    );
+);
 
 print($usage->text), exit  if $opt->help;
 print($usage->text), exit 1 unless @ARGV == 0;
@@ -39,12 +39,13 @@ if (!$opt->workspace_name)
 }
 
 my $wsclient = Bio::KBase::workspace::Client->new($opt->workspace_service_url);
-my $ret = $wsclient->get_objects([{workspace => $opt->{workspace_name}, name => $opt->{object_name}}]);
+my $ret = $wsclient->get_objects([{ name => $opt->object_name, workspace => $opt->workspace_name }])->[0];
+
 my $obj;
 
 if ($ret->{data})
 {
-    $obj = $ret->{data}[0];
+    $obj = $ret->{data};
 }
 else
 {

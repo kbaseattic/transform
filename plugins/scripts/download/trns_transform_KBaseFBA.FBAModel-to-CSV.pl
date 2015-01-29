@@ -29,15 +29,11 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['workspace_name=s', 'workspace name from which the input is to be read'],
 				    ['workspace_service_url=s', 'workspace service url to pull from'],
 				    ['help|h', 'show this help message'],
-				    );
+);
 
 print($usage->text), exit  if $opt->help;
 print($usage->text), exit 1 unless @ARGV == 0;
 
-if (!$opt->workspace_service_url)
-{
-    die "A workspace service url must be provided";
-}
 if (!$opt->workspace_name)
 {
     die "A workspace name must be provided";

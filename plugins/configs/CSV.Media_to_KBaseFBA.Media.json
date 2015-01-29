@@ -14,7 +14,9 @@
 	[
 	    "input_file_name",
 	    "object_name",
-	    "workspace_name"
+	    "workspace_name",
+	    "workspace_service_url",
+	    "fba_service_url"
 	],
 	"optional_fields":[],
 	"input_mapping": {"CSV.Media":"input_file_name"}		

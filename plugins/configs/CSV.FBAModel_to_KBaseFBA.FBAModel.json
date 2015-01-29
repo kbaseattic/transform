@@ -15,7 +15,9 @@
 	    "input_file_name",
 	    "object_name",
 	    "workspace_name",
-	    "compounds"
+	    "compounds",
+	    "workspace_service_url",
+	    "fba_service_url"
 	],
 	"optional_fields":
 	[

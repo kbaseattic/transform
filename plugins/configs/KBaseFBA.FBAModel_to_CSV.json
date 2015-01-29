@@ -12,7 +12,7 @@
             "workspace_name",
             "workspace_service_url" 
         ], 
-        "optional_fields": [], 
+        "optional_fields": ["version"], 
         "custom_options": []
     },  
     "user_options": [ 
@@ -20,8 +20,14 @@
             "name": "object_name", 
             "type": "string", 
             "required": true, 
-            "help": "Name of the workspace object." 
-        }
+            "help": "Name of the model object." 
+        }, 
+        { 
+            "name": "version", 
+            "type": "int", 
+            "required": false,
+            "help": "Version of the model object, if not given we assume the latest."
+        } 
     ], 
     "user_option_groups": [] 
 }

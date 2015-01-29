@@ -46,11 +46,11 @@ my $Biomass    = "";
 my $Help       = 0;
 
 GetOptions("input_file_name=s"  => \$In_RxnFile,
-	   "compounds|c=s"      => \$In_CpdFile,
-	   "object_name|o=s"    => \$Out_Object,
-	   "workspace_name|w=s" => \$Out_WS,
-	   "genome|g=s"         => \$Genome,
-	   "biomass|b=s"        => \$Biomass,
+	   "compounds=s"      => \$In_CpdFile,
+	   "object_name=s"    => \$Out_Object,
+	   "workspace_name=s" => \$Out_WS,
+	   "genome=s"         => \$Genome,
+	   "biomass=s"        => \$Biomass,
 	   "help|h"             => \$Help);
 
 if($Help || !$In_RxnFile || !$Out_Object || !$Out_WS){
@@ -59,7 +59,7 @@ if($Help || !$In_RxnFile || !$Out_Object || !$Out_WS){
     exit();
 }
 
-$logger->info("Mandatory Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
+$logger->info("Mandatory Data passed = ".join(" | ", ($In_RxnFile,$Out_Object,$Out_WS)));
 $logger->info("Optional Data passed = ".join(" | ", ("Compounds:".$In_CpdFile,"Genome:".$Genome,"Biomass:".$Biomass)));
 
 my $input = {

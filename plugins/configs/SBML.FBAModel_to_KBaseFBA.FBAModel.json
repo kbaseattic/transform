@@ -1,12 +1,12 @@
 {
     "script_name": "trns_transform_SBML_FBAModel_to_KBaseFBA_FBAModel.pl",
     "script_type": "upload",
-    "external_type": "SBML",
+    "external_type": "SBML.FBAModel",
     "kbase_type": "KBaseFBA.FBAModel",
     "user_description": "Converts SBML file to FBAModel object in workspace.",
     "url_mapping": ["SBML.FBAModel"],    
     "handler_options": {        
-        "must_own_validation": false,
+        "must_own_validation": true,
         "must_own_saving_to_workspace": true,
         "max_runtime": 360,
         "custom_options": [],

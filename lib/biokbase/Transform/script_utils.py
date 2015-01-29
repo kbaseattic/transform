@@ -29,8 +29,8 @@ import biokbase.workspace.client
 class ArgumentParser(argparse.ArgumentParser):
     def exit(self, status=1, message=None):
         if message:
-            self._print_message(message, _sys.stderr)
-        _sys.exit(status)
+            self._print_message(message, sys.stderr)
+        sys.exit(status)
 
 
 def stderrlogger(name, level=logging.INFO):

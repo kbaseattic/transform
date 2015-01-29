@@ -39,7 +39,7 @@ my $logger = getStderrLogger();
 $logger->info("Generating SBML for WS model");
 
 my $wsclient = Bio::KBase::workspace::Client->new($opt->workspace_service_url);
-my $object_id = $wsclient->get_object_info_new({objects => [{workspace => $opt->{workspace_name}, name => $opt->{object_name}}]})->[0];
+my $object_id = $wsclient->get_object_info_new({objects => [{workspace => $opt->{workspace_name}, name => $opt->{object_name}}]})->[0]->[0];
 
 my $output;
 use Capture::Tiny qw( capture );

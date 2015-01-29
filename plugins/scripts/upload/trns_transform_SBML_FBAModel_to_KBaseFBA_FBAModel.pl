@@ -44,13 +44,17 @@ my $Out_WS     = "";
 my $Genome     = "Empty";
 my $Biomass    = "";
 my $Help       = 0;
+my $fbaurl;
+my $wsurl;
 
 GetOptions("input_file_name=s"  => \$In_RxnFile,
-	   "compounds=s"      => \$In_CpdFile,
-	   "object_name=s"    => \$Out_Object,
-	   "workspace_name=s" => \$Out_WS,
-	   "genome=s"         => \$Genome,
-	   "biomass=s"        => \$Biomass,
+	   "compounds|c=s"      => \$In_CpdFile,
+	   "object_name|o=s"    => \$Out_Object,
+	   "workspace_name|w=s" => \$Out_WS,
+	   "genome|g=s"         => \$Genome,
+	   "biomass|b=s"        => \$Biomass,
+	   "workspace_service_url=s" => $wsurl,
+	   "fba_service_url=s" => $fbaurl,
 	   "help|h"             => \$Help);
 
 if($Help || !$In_RxnFile || !$Out_Object || !$Out_WS){
@@ -97,7 +101,10 @@ $logger->info("Loading FBAModel WS Object");
 
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
-    my $fba = get_fba_client();
+    my $fba = get_fba_client($fbaurl);
+    if (defined($wsurl)) {
+    	$input->{wsurl} = $wsurl;
+    }
     $fba->import_fbamodel($input);
 };
 

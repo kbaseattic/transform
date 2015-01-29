@@ -9,7 +9,8 @@
         "max_runtime": 600, 
         "required_fields": [ 
             "object_name",
-            "workspace_name"
+            "workspace_name",
+            "workspace_service_url" 
         ], 
         "optional_fields": ["version"], 
         "custom_options": []
@@ -19,7 +20,7 @@
             "name": "object_name", 
             "type": "string", 
             "required": true, 
-            "help": "Name of the workspace object." 
+            "help": "Name of the model object." 
         }, 
         { 
             "name": "workspace_name",
@@ -31,7 +32,7 @@
             "name": "version", 
             "type": "int", 
             "required": false,
-            "help": "Version of the workspace object, if not given we assume the latest."
+            "help": "Version of the model object, if not given we assume the latest."
         } 
     ], 
     "user_option_groups": [] 

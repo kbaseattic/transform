@@ -1,7 +1,7 @@
 {
     "script_name": "trns_transform_CSV_Media_to_KBaseBiochem_Media.pl",
     "script_type": "upload",
-    "external_type": "CSV",
+    "external_type": "CSV.Media",
     "kbase_type": "KBaseBiochem.Media",
     "user_description": "Converts CSV file to Media object in workspace.",
     "url_mapping": ["CSV.Media"],    

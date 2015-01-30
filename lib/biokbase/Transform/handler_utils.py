@@ -21,7 +21,7 @@ def report_exception(logger=None, report_details=None, cleanup_details=None):
                                            None) 
     
     if not cleanup_details["keep_working_directory"]:
-        cleanup(cleanup_details["working_directory"])
+        cleanup(directory=cleanup_details["working_directory"])
         
 
 def cleanup(logger=None, directory=None):

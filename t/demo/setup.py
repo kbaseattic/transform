@@ -7,6 +7,7 @@ import git
 import tarfile
 import requests
 from distutils.dir_util import mkpath
+import stat
 
 KBASE_DEPENDENCIES = ['kbase/user_and_job_state', 'kbase/workspace_deluxe',
                       'mlhenderson/handle_service', 'kbase/kbapi_common']
@@ -33,8 +34,8 @@ def touch(fname, times=None):
 class TransformVirtualEnv(object):
 
     def __init__(self, working_dir, venv_name, transform_repo):
-        self.working_dir = working_dir
-        self.venv_dir = os.path.join(working_dir, venv_name)
+        self.working_dir = os.path.abspath(working_dir)
+        self.venv_dir = os.path.join(self.working_dir, venv_name)
 
         try:
             shutil.rmtree(self.venv_dir)
@@ -78,9 +79,11 @@ class TransformVirtualEnv(object):
         bin_dir = os.path.join(self.venv_dir, "bin/")
         for root, _, files in os.walk(scripts_dir):
             for file_ in files:
-                print("copy from {0} {1}".format(
-                    os.path.join(root, file_), bin_dir))
-                shutil.copy(os.path.join(root, file_), bin_dir)
+                filepath = os.path.join(root, file_)
+                print("copy from {0} {1}".format(filepath, bin_dir))
+                shutil.copy(filepath, bin_dir)
+                self._make_executable_for_all(os.path.join(bin_dir, file_))
+                self._make_wrapper(bin_dir, file_)
 
     def _copy_deps(self, gitdir):
         libdir = os.path.join(gitdir, 'lib/biokbase')
@@ -93,6 +96,18 @@ class TransformVirtualEnv(object):
             elif os.path.isfile(src) and src != '__init__.py':
                 shutil.copy(src, target)
             # else skip
+
+    def _make_wrapper(self, dir_, file_):
+        wrapperfile = os.path.join(dir_, os.path.splitext(file_)[0])
+        with open(wrapperfile, 'w') as wrapper:
+            wrapper.write('#!/usr/bin/env sh\n')
+            wrapper.write(os.path.join(dir_, file_) + ' "$@"\n')
+        self._make_executable_for_all(wrapperfile)
+
+    def _make_executable_for_all(self, file_):
+        st = os.stat(file_)
+        os.chmod(file_, st.st_mode | stat.S_IXUSR | stat.S_IXGRP |
+                 stat.S_IXOTH)
 
     def download_demo_data(self):
         if not os.path.isdir(os.path.join(self.working_dir, "data")):

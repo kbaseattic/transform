@@ -50,7 +50,7 @@ class TransformVirtualEnv(object):
                          "blessings", "python-dateutil", "simplejson"])
 
         sys.path.append(os.path.join(self.venv_dir,
-                                     "/lib/python2.7/site-packages/"))
+                                     "lib/python2.7/site-packages/"))
         global git
         global requests
         # these imports are actually used since they're made global by the

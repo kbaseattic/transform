@@ -258,7 +258,7 @@ def download_file_from_shock(logger = None,
                              
 
 
-def upload_file_to_shock(logger = None,
+def upload_file_to_shock(logger = stderrlogger(__file__),
                          shock_service_url = None,
                          filePath = None,
                          ssl_verify = True,

@@ -118,5 +118,12 @@ class TransformVirtualEnv(object):
         print("Run the upload developer script driver with venv/bin/python " +
               "bin/upload_script_test.py --demo")
 
+    def activate_for_current_py_process(self):
+        activate_this = os.path.join(self.venv_dir, 'bin/activate_this.py')
+        execfile(activate_this, dict(__file__=activate_this))
+
+    def get_scripts_path(self):
+        return os.path.join(self.venv_dir, 'bin')
+
 if __name__ == '__main__':
     main()

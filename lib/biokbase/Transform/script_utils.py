@@ -387,7 +387,6 @@ def getHandles(logger = None,
 def download_from_urls(logger = None,
                        working_directory = os.getcwd(),
                        urls = None,
-                       shock_service_url = None,
                        ssl_verify = True,
                        token = None, 
                        chunkSize = 10 * 2**20):

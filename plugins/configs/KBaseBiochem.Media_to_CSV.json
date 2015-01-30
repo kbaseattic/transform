@@ -1,7 +1,7 @@
 { 
     "script_name": "trns_transform_KBaseBiochem.Media-to-CSV.pl", 
     "script_type": "download", 
-    "external_type": "CSV", 
+    "external_type": "CSV.Media", 
     "kbase_type": "KBaseBiochem.Media", 
     "user_description": "Download media in CSV format", 
     "developer_description": "Download media in CSV format", 

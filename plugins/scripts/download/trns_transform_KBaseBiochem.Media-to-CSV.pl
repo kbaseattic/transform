@@ -38,11 +38,11 @@ if (!$opt->workspace_name)
     die "A workspace name must be provided";
 }
 
+my $wsclient = Bio::KBase::workspace::Client->new($opt->workspace_service_url);
+my $ret = $wsclient->get_objects([{ name => $opt->object_name, workspace => $opt->workspace_name }])->[0];
 
 my $obj;
-my $wsclient = Bio::KBase::workspace::Client->new($opt->workspace_service_url);
 
-my $ret = $wsclient->get_objects([{ name => $opt->object_name, workspace => $opt->workspace_name }])->[0];
 if ($ret->{data})
 {
     $obj = $ret->{data};
@@ -51,6 +51,7 @@ else
 {
     die "Invalid return from get_object for ws=" . $opt->workspace_name . " input=" . $opt->object_name;
 }
+
 my $tables = {$opt->workspace_name."_".$opt->object_name."_MediaCompounds" => [["compounds","concentrations","minflux","maxflux"]]};
 for (my $i=0; $i < @{$obj->{mediacompounds}}; $i++) {
 	if ($obj->{mediacompounds}->[$i]->{compound_ref} =~ m/(cpd\d+)/) {

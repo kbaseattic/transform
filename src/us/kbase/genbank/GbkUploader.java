@@ -191,7 +191,7 @@ public class GbkUploader {
                             if (featureType.equals("CDS")) {
                                 f = new Feature().withType("CDS");
                             } else if (featureType.toUpperCase().endsWith("RNA")) {
-                                f = new Feature().withType("rna");
+                                f = new Feature().withType("RNA");
                             }
                             if (f == null)
                                 return;
@@ -477,7 +477,7 @@ public class GbkUploader {
                         if (featureType.equals("CDS")) {
                             f = new Feature().withType("CDS");
                         } else if (featureType.toUpperCase().endsWith("RNA")) {
-                            f = new Feature().withType("rna");
+                            f = new Feature().withType("RNA");
                         }
                         if (f == null)
                             return;

@@ -106,7 +106,7 @@ public class TestKBDownload {
                     ar.add("--object_name");
                     ar.add(t.getE2());
                     ar.add("--working_directory");
-                    ar.add(workdir.getAbsolutePath() + "/" + t.getE2());
+                    ar.add(workdir.getAbsolutePath() + "/" + t.getE2().replace('|', '_'));
 
                     if (isTest) {
                         ar.add("--test");

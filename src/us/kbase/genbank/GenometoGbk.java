@@ -72,7 +72,7 @@ public class GenometoGbk {
     String genomefile;
     String contigfile;
     String outfile;
-    String workdir;
+    File workdir;
 
     String objectname;
     String objectid;
@@ -377,7 +377,7 @@ public class GenometoGbk {
                 } else if (argsPossibleMap[index].equals("shocku")) {
                     shockurl = args[i + 1];
                 } else if (argsPossibleMap[index].equals("wd")) {
-                    workdir = args[i + 1];
+                    workdir = new File( args[i + 1]);
                 } else if (argsPossibleMap[index].equals("t")) {
                     if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
                         isTest = true;
@@ -392,12 +392,11 @@ public class GenometoGbk {
         }
 
         if (workdir == null) {
-            File tmpf = new File("./");
-            workdir = tmpf.getAbsolutePath();
-            if (workdir.endsWith("."))
-                workdir = workdir.substring(0, workdir.length() - 2);
+            workdir = new File("./");
             System.out.println("set work dir to default " + workdir);
         }
+        if(!workdir.exists())
+            workdir.mkdirs();
 
         mapper = UObject.getMapper();//new ObjectMapper();
 

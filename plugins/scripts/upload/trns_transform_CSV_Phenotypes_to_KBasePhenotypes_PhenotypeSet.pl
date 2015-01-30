@@ -40,8 +40,8 @@ my $Out_Object = "";
 my $Out_WS    = "";
 my $Genome    = "Empty";
 my $Help      = 0;
-my $fbaurl;
-my $wsurl;
+my $fbaurl = "";
+my $wsurl = "";
 
 GetOptions("input_file_name|i=s"  => \$In_File,
 	   "object_name|o=s" => \$Out_Object,
@@ -50,6 +50,13 @@ GetOptions("input_file_name|i=s"  => \$In_File,
 	   "workspace_service_url=s" => $wsurl,
 	   "fba_service_url=s" => $fbaurl,
 	   "help|h"     => \$Help);
+
+if (length($fbaurl) == 0) {
+	$fbaurl = undef;
+}
+if (length($wsurl) == 0) {
+	$wsurl = undef;
+}
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
     print($0." --input_file_name/-i <Input CSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID>");

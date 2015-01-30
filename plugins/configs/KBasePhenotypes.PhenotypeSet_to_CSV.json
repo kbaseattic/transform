@@ -8,21 +8,22 @@
     "handler_options": { 
         "max_runtime": 600, 
         "required_fields": [ 
-            "input_file_name",
-            "workspace_name" 
+            "object_name",
+            "workspace_name",
+            "workspace_service_url"  
         ], 
-        "optional_fields": ["version","url"], 
+        "optional_fields": ["version"], 
         "custom_options": [] 
     },  
     "user_options": [ 
         { 
-            "name": "input_file_name", 
+            "name": "object_name", 
             "type": "string", 
             "required": true, 
-            "help": "Name of the workspace object." 
+            "help": "Name of the phenotype set object." 
         }, 
         { 
-            "name": "workspace",
+            "name": "workspace_name",
             "type": "string", 
             "required": false,
             "help": "Workspace containing object."
@@ -31,7 +32,7 @@
             "name": "version", 
             "type": "int", 
             "required": false,
-            "help": "Version of the workspace object, if not given we assume the latest."
+            "help": "Version of the phenotype set object, if not given we assume the latest."
         } 
     ], 
     "user_option_groups": [] 

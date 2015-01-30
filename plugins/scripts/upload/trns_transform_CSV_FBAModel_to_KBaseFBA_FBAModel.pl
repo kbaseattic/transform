@@ -44,8 +44,8 @@ my $Out_WS    = "";
 my $Genome    = "Empty";
 my $Biomass   = "";
 my $Help      = 0;
-my $fbaurl;
-my $wsurl;
+my $fbaurl = "";
+my $wsurl = "";
 
 GetOptions("input_file_name|i=s"  => \$In_RxnFile,
 	   "compounds|c=s"  => \$In_CpdFile,
@@ -56,6 +56,13 @@ GetOptions("input_file_name|i=s"  => \$In_RxnFile,
 	   "workspace_service_url=s" => $wsurl,
 	   "fba_service_url=s" => $fbaurl,
 	   "help|h"     => \$Help);
+
+if (length($fbaurl) == 0) {
+	$fbaurl = undef;
+}
+if (length($wsurl) == 0) {
+	$wsurl = undef;
+}
 
 if($Help || !$In_RxnFile || !$In_CpdFile || !$Out_Object || !$Out_WS){
     print($0." --input_file_name/-i <Input Reaction CSV File> --compounds/-c <Input Compound CSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");

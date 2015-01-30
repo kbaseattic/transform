@@ -1,7 +1,7 @@
 { 
-    "script_name": "trns_transform_KBasePhenotypes.PhenotypeSet-to-CSV.pl", 
+    "script_name": "trns_transform_KBasePhenotypes_PhenotypeSet_to_CSV_PhenotypeSet.pl", 
     "script_type": "download", 
-    "external_type": "CSV", 
+    "external_type": "CSV_PhenotypeSet", 
     "kbase_type": "KBasePhenotypes.PhenotypeSet", 
     "user_description": "Download phenotype set in CSV format", 
     "developer_description": "Download phenotype set in CSV format", 

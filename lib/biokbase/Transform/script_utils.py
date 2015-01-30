@@ -29,8 +29,8 @@ import biokbase.workspace.client
 class ArgumentParser(argparse.ArgumentParser):
     def exit(self, status=1, message=None):
         if message:
-            self._print_message(message, _sys.stderr)
-        _sys.exit(status)
+            self._print_message(message, sys.stderr)
+        sys.exit(status)
 
 
 def stderrlogger(name, level=logging.INFO):
@@ -387,7 +387,6 @@ def getHandles(logger = None,
 def download_from_urls(logger = None,
                        working_directory = os.getcwd(),
                        urls = None,
-                       shock_service_url = None,
                        ssl_verify = True,
                        token = None, 
                        chunkSize = 10 * 2**20):

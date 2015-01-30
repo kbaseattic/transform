@@ -303,12 +303,12 @@ if __name__ == "__main__":
 
         genbank_to_genome = {"external_type": "Genbank.Genome",
                              "kbase_type": "KBaseGenomes.Genome",
-                             "object_name": "fastq_single_end_library_test",
+                             "object_name": "NC_005213",
                              "filePath": None,
                              "downloadPath": None,
-                             "url_mapping": {"Genbank.Genome": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"}}
+                             "url_mapping": {"Genbank.Genome": "file://./data/NC_005213.gbk.bz2"}}
 
-        inputs = [fastq_to_singleend]
+        inputs = [genbank_to_genome]
     
 
 
@@ -340,6 +340,9 @@ if __name__ == "__main__":
         kbase_type = x["kbase_type"]
         object_name = x["object_name"]
 
+        if x["downloadPath"] is None:
+            x["downloadPath"] = "."
+
         optional_arguments = None
         if x.has_key("optional_arguments"):
             optional_arguments = x["optional_arguments"]
@@ -368,7 +371,7 @@ if __name__ == "__main__":
                 print term.bold("Step 1: Make KBase upload request with url")
                 for k,v in url_mapping.items():
                     print term.bold("Using data from : {0} -> {1}".format(k,v))
-                biokbase.Transform.script_utils.download_from_urls(logger, urls=url_mapping, working_directory = stamp, shock_service_url=services["shock"], token=token)
+                biokbase.Transform.script_utils.download_from_urls(logger, urls=url_mapping, working_directory = stamp, token=token)
                 
                 input_object = dict()
                 input_object["external_type"] = external_type
@@ -432,18 +435,20 @@ if __name__ == "__main__":
 
             try: 
                 for k in x["url_mapping"]:                
-                    print term.blue("\tPreparing to upload {0}".format(filePath))
-                    print "\tFile size : {0:f} MB".format(int(os.path.getsize(filePath))/float(1024*1024))
+                    filename = x["url_mapping"][k].split("file://")[1]
 
-                    shock_response = post_to_shock(services["shock"], filePath, token)
-                    print term.green("\tShock upload of {0} successful.".format(filePath))
+                    print term.blue("\tPreparing to upload {0}".format(filename))
+                    print "\tFile size : {0:f} MB".format(int(os.path.getsize(filename))/float(1024*1024))
+
+                    shock_response = post_to_shock(services["shock"], filename, token)
+                    print term.green("\tShock upload of {0} successful.".format(filename))
                     print "\tShock id : {0}\n\n".format(shock_response['id'])
             
                     url_mapping[k] = "{0}/node/{1}".format(services["shock"],shock_response["id"])
             
                     print term.bold("Optional Step: Verify files uploaded to SHOCK\n")
-                    download_from_shock(services["shock"], shock_response["id"], downloadPath, token)
-                    print term.green("\tShock download of {0} successful.\n\n".format(downloadPath))
+                    download_from_shock(services["shock"], shock_response["id"], os.path.split(filename)[-1], token)
+                    print term.green("\tShock download of {0} successful.\n\n".format(os.path.split(downloadPath)[-1]))
             except Exception, e:
                 print e.message
                 raise

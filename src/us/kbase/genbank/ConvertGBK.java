@@ -521,7 +521,6 @@ public class ConvertGBK {
                 e.printStackTrace();
             }
         } else {
-            /*TODO add ws url, output Genome object name, output ContigSet object name to arguments*/
             System.out.println("usage: java us.kbase.genbank.ConvertGBK " +
                     "<-i or --input_directory file or dir or files of GenBank .gbk files> " +
                     "<-o or --object_name> " +

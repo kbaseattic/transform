@@ -78,6 +78,20 @@ public class GenometoGbk {
     String objectid;
     Long objectversion;
 
+    ObjectMapper mapper;
+
+    boolean fromFile = false;
+
+    WorkspaceClient wc;
+
+    public GenometoGbk() {
+
+    }
+
+    public GenometoGbk(WorkspaceClient worksc) {
+        wc = worksc;
+    }
+
     /**
      * @param args
      * @throws Exception
@@ -85,53 +99,19 @@ public class GenometoGbk {
     public GenometoGbk(String[] args) throws Exception {
 
 
-        for (int i = 0; i < args.length; i++) {
-            int index = Arrays.asList(argsPossible).indexOf(args[i]);
-            if (index > -1) {
-                if (argsPossibleMap[index].equals("inputg")) {
-                    genomefile = args[i + 1];
-                } else if (argsPossibleMap[index].equals("inputc")) {
-                    contigfile = args[i + 1];
-                } else if (argsPossibleMap[index].equals("objectn")) {
-                    objectname = args[i + 1];
-                } else if (argsPossibleMap[index].equals("objecti")) {
-                    objectid = args[i + 1];
-                } else if (argsPossibleMap[index].equals("objectv")) {
-                    objectversion = Long.getLong(args[i + 1]);
-                } else if (argsPossibleMap[index].equals("output")) {
-                    outfile = args[i + 1];
-                } else if (argsPossibleMap[index].equals("wsn")) {
-                    wsname = args[i + 1];
-                } else if (argsPossibleMap[index].equals("wsu")) {
-                    wsurl = args[i + 1];
-                } else if (argsPossibleMap[index].equals("shocku")) {
-                    shockurl = args[i + 1];
-                } else if (argsPossibleMap[index].equals("wd")) {
-                    workdir = args[i + 1];
-                } else if (argsPossibleMap[index].equals("t")) {
-                    if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
-                        isTest = true;
-                }
-            }
-        }
+        init(args);
 
-        if (genomefile == null && contigfile == null) {
-            if (objectname == null && objectid == null) {
-                System.err.println("no object name or id provided and no input files provided");
-            }
-        }
 
-        if (workdir == null) {
-            File tmpf = new File("./");
-            workdir = tmpf.getAbsolutePath();
-            if (workdir.endsWith("."))
-                workdir = workdir.substring(0, workdir.length() - 2);
-            System.out.println("set work dir to default " + workdir);
-        }
+        run();
+    }
 
-        ObjectMapper mapper = UObject.getMapper();//new ObjectMapper();
-
-        if (args.length == 2) {
+    /**
+     * @throws IOException
+     * @throws AuthException
+     * @throws JsonClientException
+     */
+    public void run() throws IOException, AuthException, JsonClientException {
+        if (fromFile) {
             getDatafromFiles(mapper);
         } else {
             getDatafromWorkspace(mapper);
@@ -231,94 +211,96 @@ public class GenometoGbk {
 
             for (int i = 0; i < features.size(); i++) {
                 Feature cur = features.get(i);
-                List<Tuple4<java.lang.String, java.lang.Long, java.lang.String, java.lang.Long>> location = cur.getLocation();
+                List<Tuple4<String, Long, String, Long>> location = cur.getLocation();
 
                 //match features to their contig
-                if (location.get(0).getE1().equals(curcontig.getName())) {
+                if (location.get(0).getE1().equals(curcontig.getName()) || location.get(0).getE1().equals(curcontig.getId())) {
                     //"location":[["kb|g.0.c.1",3378378,"+",1368]]
                     //if (curcontig.getName().equals("NC_009926")) {
                         /*System.out.println("match feature to contig " + j + "\t" + location.get(0).getE1() + "\t" +
                                 location.get(0).getE2() + "\t" + location.get(0).getE3() + "\t" + location.get(0).getE4() + "\t"
                                 + curcontig.getName());*/
-                        String id = null;
-                        try {
-                            final List<String> aliases = cur.getAliases();
-                            if (aliases != null) {
-                                try {
-                                    id = aliases.get(0);
-                                } catch (Exception e) {
-                                    //e.printStackTrace();
-                                }
+                    String id = null;
+                    try {
+                        final List<String> aliases = cur.getAliases();
+                        if (aliases != null) {
+                            try {
+                                id = aliases.get(0);
+                            } catch (Exception e) {
+                                //e.printStackTrace();
                             }
-                            if (id == null)
-                                id = cur.getId();
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
+                        if (id == null)
+                            id = cur.getId();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
 
-                        String function = cur.getFunction();
-                        String[] allfunction = function.split(" ");
+                    String function = cur.getFunction();
+                    String[] allfunction = function.split(" ");
 
 
-                        boolean test = false;
+                    boolean test = false;
 
                 /*if (id.equals("NP_963295.1")) {
                     test = true;
                     System.out.println("allfunction " + allfunction.length + "\t" + function.length());
                 }*/
 
-                        StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
-                        StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
+                    StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
+                    StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
 
                 /*TODO add operons and promoteres and terminators as gene features ? */
-                        if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
+                    if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
 
-                            if (cur.getType().equals("CDS")) //id.indexOf(".rna.") == -1)
-                                out.append("     gene            ");
-                            else {
-                                if (function.indexOf("tRNA") != -1) {
-                                    out.append("     tRNA            ");
-                                } else {
-                                    out.append("     misc_RNA        ");
-                                }
+                        if (cur.getType().equals("CDS")) //id.indexOf(".rna.") == -1)
+                            out.append("     gene            ");
+                        else {
+                            if (function.indexOf("tRNA") != -1) {
+                                out.append("     tRNA            ");
+                            } else {
+                                out.append("     misc_RNA        ");
                             }
+                        }
+                        out = getCDS(out, location);
+                        out.append("                     /gene=\"" + id + "\"\n");
+                        //out += "                     /db_xref=\"GeneID:2732620\"\n";
+                        if (cur.getType().equals("CDS")) {
+                            out.append("     CDS             ");
                             out = getCDS(out, location);
                             out.append("                     /gene=\"" + id + "\"\n");
-                            //out += "                     /db_xref=\"GeneID:2732620\"\n";
-                            if (cur.getType().equals("CDS")) {
-                                out.append("     CDS             ");
-                                out = getCDS(out, location);
-                                out.append("                     /gene=\"" + id + "\"\n");
-                            }
+                        }
 
-                            out.append("                     /note=\"" + formatNote);
-                            //out += "                     /codon_start=1\n";
-                            //out += "                     /transl_table=11\n";
-                            out.append("                     /product=\"" + id + "\"\n");
-                            out.append("                     /function=\"" + formatFunction);
+                        out.append("                     /note=\"" + formatNote);
+                        //out += "                     /codon_start=1\n";
+                        //out += "                     /transl_table=11\n";
+                        out.append("                     /product=\"" + id + "\"\n");
+                        out.append("                     /function=\"" + formatFunction);
 
-                            if (cur.getType().equals("CDS"))
-                                out.append("                     /protein_id=\"" + id + "\"\n");
+                        if (cur.getType().equals("CDS"))
+                            out.append("                     /protein_id=\"" + id + "\"\n");
 
-                            List<String> aliases = cur.getAliases();
+                        List<String> aliases = cur.getAliases();
+                        if (aliases != null) {
                             for (String s : aliases) {
                                 //System.out.println("adding alias " + s);
                                 out.append("                     /db_xref=\"id:" + s + "\"\n");
                             }
-                            //out += "                     /db_xref=\"GeneID:2732620\"\n";
-
-                            //gene
-
-                            final String proteinTranslation = cur.getProteinTranslation();
-                            //System.out.println(proteinTranslation);
-                            if (proteinTranslation != null)
-                                out.append("                     /translation=\"" + formatString(proteinTranslation, 44, 58));
-                            //else
-                            //    System.out.println("op? " + id);
                         }
+                        //out += "                     /db_xref=\"GeneID:2732620\"\n";
 
-                        if (test)
-                            System.exit(0);
+                        //gene
+
+                        final String proteinTranslation = cur.getProteinTranslation();
+                        //System.out.println(proteinTranslation);
+                        if (proteinTranslation != null)
+                            out.append("                     /translation=\"" + formatString(proteinTranslation, 44, 58));
+                        //else
+                        //    System.out.println("op? " + id);
+                    }
+
+                    //if (test)
+                    //    System.exit(0);
                     //}
                 }
             }
@@ -338,8 +320,12 @@ public class GenometoGbk {
                         !outfile.endsWith(".genbank") && !outfile.endsWith(".gbff") && !outfile.endsWith(".gbf")) {
                     outname = outfile + numfile + ".gbk";
                 }
-            } else {
+            } else if (curcontig.getName() != null) {
                 outname = curcontig.getName() + ".gbk";
+            } else if (curcontig.getId() != null) {
+                outname = curcontig.getId() + ".gbk";
+            } else if (genome.getId() != null && curcontig.getId() != null) {
+                outname = genome.getId() + "_" + curcontig.getId();
             }
             /*else if (objectname != null) {
                 outname = objectname + numfile + ".gbk";
@@ -366,6 +352,61 @@ public class GenometoGbk {
     }
 
     /**
+     * @param args
+     */
+    public void init(String[] args) {
+        for (int i = 0; i < args.length; i++) {
+            int index = Arrays.asList(argsPossible).indexOf(args[i]);
+            if (index > -1) {
+                if (argsPossibleMap[index].equals("inputg")) {
+                    genomefile = args[i + 1];
+                } else if (argsPossibleMap[index].equals("inputc")) {
+                    contigfile = args[i + 1];
+                } else if (argsPossibleMap[index].equals("objectn")) {
+                    objectname = args[i + 1];
+                } else if (argsPossibleMap[index].equals("objecti")) {
+                    objectid = args[i + 1];
+                } else if (argsPossibleMap[index].equals("objectv")) {
+                    objectversion = Long.getLong(args[i + 1]);
+                } else if (argsPossibleMap[index].equals("output")) {
+                    outfile = args[i + 1];
+                } else if (argsPossibleMap[index].equals("wsn")) {
+                    wsname = args[i + 1];
+                } else if (argsPossibleMap[index].equals("wsu")) {
+                    wsurl = args[i + 1];
+                } else if (argsPossibleMap[index].equals("shocku")) {
+                    shockurl = args[i + 1];
+                } else if (argsPossibleMap[index].equals("wd")) {
+                    workdir = args[i + 1];
+                } else if (argsPossibleMap[index].equals("t")) {
+                    if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
+                        isTest = true;
+                }
+            }
+        }
+
+        if (genomefile == null && contigfile == null) {
+            if (objectname == null && objectid == null) {
+                System.err.println("no object name or id provided and no input files provided");
+            }
+        }
+
+        if (workdir == null) {
+            File tmpf = new File("./");
+            workdir = tmpf.getAbsolutePath();
+            if (workdir.endsWith("."))
+                workdir = workdir.substring(0, workdir.length() - 2);
+            System.out.println("set work dir to default " + workdir);
+        }
+
+        mapper = UObject.getMapper();//new ObjectMapper();
+
+        if (genomefile != null && contigfile != null) {
+            fromFile = true;
+        }
+    }
+
+    /**
      * @param mapper
      * @throws IOException
      */
@@ -384,22 +425,22 @@ public class GenometoGbk {
      * @throws JsonClientException
      */
     private void getDatafromWorkspace(ObjectMapper mapper) throws AuthException, IOException, JsonClientException {
-        WorkspaceClient wc = null;
 
         String user = System.getProperty("test.user");
         String pwd = System.getProperty("test.pwd");
 
         String kbtok = System.getenv("KB_AUTH_TOKEN");
 
-        if (isTest) {
-            AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
-            wc = new WorkspaceClient(new URL(wsurl + "/" + wsname), at);
-        } else {
-            wc = new WorkspaceClient(new URL(wsurl + "/" + wsname), new AuthToken(kbtok));
+        if (wc == null) {
+            System.out.println("new ws client");
+            if (isTest) {
+                AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
+                wc = new WorkspaceClient(new URL(wsurl + "/" + wsname), at);
+            } else {
+                wc = new WorkspaceClient(new URL(wsurl + "/" + wsname), new AuthToken(kbtok));
+            }
+            wc.setAuthAllowedForHttp(true);
         }
-
-        System.out.println("new ws client");
-        wc.setAuthAllowedForHttp(true);
 
         List<ObjectIdentity> objectIds = new ArrayList<ObjectIdentity>();
         ObjectIdentity genobj = new ObjectIdentity();
@@ -617,7 +658,7 @@ public class GenometoGbk {
 
             if (!complement) {
                 //System.out.println("location +");
-                out.append(now4.getE2() + ".." + (now4.getE2() + (long) now4.getE4()-1));
+                out.append(now4.getE2() + ".." + (now4.getE2() + (long) now4.getE4() - 1));
             } else {
                 //System.out.println("location -");
                 out.append((now4.getE2() - (long) now4.getE4() + 1) + ".." + now4.getE2());

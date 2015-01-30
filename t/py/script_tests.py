@@ -43,7 +43,8 @@ class Test_Scripts(object):
         cfg = ConfigObj(TEST_CFG_FILE)
         for url in ['ws_url', 'shock_url', 'handle_url', 'ujs_url']:
             setattr(cls, url, cfg.get(url))
-        tve = TransformVirtualEnv(FILE_LOC, 'venv', TRANSFORM_LOC)
+        tve = TransformVirtualEnv(FILE_LOC, 'venv', TRANSFORM_LOC,
+                                  keep_current_venv=False)
         tve.activate_for_current_py_process()
 
     def upload_file_to_shock_and_get_handle(self, test_file):

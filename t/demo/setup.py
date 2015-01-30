@@ -32,22 +32,25 @@ def touch(fname, times=None):
 
 class TransformVirtualEnv(object):
 
-    def __init__(self, working_dir, venv_name, transform_repo):
+    def __init__(self, working_dir, venv_name, transform_repo,
+                 keep_current_venv=False):
         self.working_dir = os.path.abspath(working_dir)
         self.venv_dir = os.path.join(self.working_dir, venv_name)
 
-        try:
-            shutil.rmtree(self.venv_dir)
-        except:
-            pass
+        if not keep_current_venv:
+            try:
+                shutil.rmtree(self.venv_dir)
+            except:
+                pass
 
-        # create a virtualenv under the services directory
-        subprocess.call(["virtualenv", "--python", "python2.7",
-                         "--system-site-packages", self.venv_dir])
-        subprocess.call([os.path.join(self.venv_dir, "bin/pip"),
-                         "install", "pip", "ftputil", "requests", "httplib2",
-                         "requests_toolbelt", "gitpython", "filemagic",
-                         "blessings", "python-dateutil", "simplejson"])
+            # create a virtualenv under the services directory
+            subprocess.call(["virtualenv", "--python", "python2.7",
+                             "--system-site-packages", self.venv_dir])
+            subprocess.call([os.path.join(self.venv_dir, "bin/pip"),
+                             "install", "pip", "ftputil", "requests",
+                             "httplib2", "requests_toolbelt", "gitpython",
+                             "filemagic", "blessings", "python-dateutil",
+                             "simplejson"])
 
         sys.path.append(os.path.join(self.venv_dir,
                                      "lib/python2.7/site-packages/"))
@@ -57,8 +60,8 @@ class TransformVirtualEnv(object):
         # above lines; the pep8 checker is just stupid in this case
         import git  # @UnusedImport
         import requests  # @UnusedImport
-
-        self._build_dependencies(transform_repo)
+        if not keep_current_venv:
+            self._build_dependencies(transform_repo)
 
     # not sure if this should be called independently from __init__, prob not
     def _build_dependencies(self, transform_dir):

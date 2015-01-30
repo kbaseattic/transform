@@ -1,10 +1,10 @@
 {
     "script_name": "trns_transform_CSV_Phenotypes_to_KBasePhenotypes_PhenotypeSet.pl",
     "script_type": "upload",
-    "external_type": "CSV",
+    "external_type": "CSV.PhenotypeSet",
     "kbase_type": "KBasePhenotypes.PhenotypeSet",
     "user_description": "Converts CSV file to PhenotypeSet object in workspace.",
-    "url_mapping": ["CSV.Phenotypes"],    
+    "url_mapping": ["CSV.PhenotypeSet"],    
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": true,
@@ -22,7 +22,7 @@
 	[
 	    "genome"
 	],
-	"input_mapping": {"CSV.Phenotypes": "input_file_name"}
+	"input_mapping": {"CSV.PhenotypeSet": "input_file_name"}
     },
     "user_options": [
         {

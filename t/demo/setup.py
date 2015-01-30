@@ -3,9 +3,8 @@ from __future__ import print_function
 import os
 import sys
 import shutil
-import git
 import tarfile
-import requests
+import subprocess
 from distutils.dir_util import mkpath
 import stat
 
@@ -43,7 +42,6 @@ class TransformVirtualEnv(object):
             pass
 
         # create a virtualenv under the services directory
-        import subprocess
         subprocess.call(["virtualenv", "--python", "python2.7",
                          "--system-site-packages", self.venv_dir])
         subprocess.call([os.path.join(self.venv_dir, "bin/pip"),
@@ -53,6 +51,12 @@ class TransformVirtualEnv(object):
 
         sys.path.append(os.path.join(self.venv_dir,
                                      "/lib/python2.7/site-packages/"))
+        global git
+        global requests
+        # these imports are actually used since they're made global by the
+        # above lines; the pep8 checker is just stupid in this case
+        import git  # @UnusedImport
+        import requests  # @UnusedImport
 
         self._build_dependencies(transform_repo)
 

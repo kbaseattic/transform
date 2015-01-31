@@ -107,8 +107,9 @@ class Test_Scripts(object):
         wsinfo = ws.create_workspace({'workspace': ws_name})
         return wsinfo[1]
 
-    def run_convert_taskrunner(self, args):
-        input_args = self.plugins_cfg.get_handler_args("convert", args)
+    @classmethod
+    def run_convert_taskrunner(cls, args):
+        input_args = cls.plugins_cfg.get_handler_args("convert", args)
         command_list = ['trns_convert_taskrunner.py']
 
         for k in input_args:

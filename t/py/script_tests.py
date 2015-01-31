@@ -15,6 +15,7 @@ from biokbase.workspace.client import Workspace
 import random
 import sys
 import subprocess
+from deep_eq import deep_eq
 
 
 KB_TOKEN = 'KB_AUTH_TOKEN'
@@ -95,31 +96,53 @@ class Test_Scripts(object):
         assyjson['assembly_file']['file']['id'] = node_id
         assyjson['assembly_file']['file']['hid'] = handle
 
-        ws_name1 = self.create_random_workspace(this_function_name)
-        ws_name2 = self.create_random_workspace(this_function_name)
+        src_ws = self.create_random_workspace(this_function_name)
+        dest_ws = self.create_random_workspace(this_function_name)
         ws = Workspace(self.ws_url, token=self.token)
         objdata = ws.save_objects(
-            {'workspace': ws_name1,
+            {'workspace': src_ws,
              'objects': [{'name': src_obj_name,
                           'type': src_type,
                           'data': assyjson}]
              })[0]
-        ref = str(objdata[6]) + '/' + str(objdata[1])
+        ref = str(objdata[6]) + '/' + str(objdata[0]) + '/' + str(objdata[4])
 
         args = {'source_kbase_type': src_type,
                 'destination_kbase_type': dest_type,
-                'source_workspace_name': ws_name1,
-                'destination_workspace_name': ws_name2,
+                'source_workspace_name': src_ws,
+                'destination_workspace_name': dest_ws,
                 'source_object_name': src_obj_name,
                 'destination_object_name': dest_obj_name,
                 'workspace_service_url': self.ws_url,
                 'ujs_service_url': self.ujs_url,
-                'working_directory': ws_name1}
+                'working_directory': src_ws}
 
         stdo, stde = self.run_convert_taskrunner(args)
-        print(stdo)
-        print("***")
-        print(stde)
+        if stdo:
+            raise TestException('Got unexpected data in standard out:\n' +
+                                stdo)
+        if 'ERROR' in stde:
+            raise TestException('Error reported in stderr:\n' + stde)
+        if 'INFO - Conversion completed.' not in stde:
+            raise TestException('Script did not report as completed:\n' + stde)
+
+        newobj = ws.get_objects([{'workspace': dest_ws,
+                                  'name': dest_obj_name}])[0]
+        prov = newobj['provenance'][0]
+        assert prov['input_ws_objects'] == [ref]
+        assert prov['resolved_ws_objects'] == [ref]
+        assert prov['script'] ==\
+            'trns_transform_KBaseFile_AssemblyFile_to_KBaseGenomes_ContigSet'
+        assert prov['script_ver'] == '0.0.1'
+
+        newobj['data']['fasta_ref'] = 'FAKE'
+        with open(os.path.join(FILE_LOC, 'test_files/ContigSetOut.json')) as f:
+            expected = json.loads(f.read())
+        deep_eq(expected, newobj['data'], _assert=True)
+
+
+class TestException(Exception):
+    pass
 
 
 def main():

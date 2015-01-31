@@ -152,7 +152,8 @@ class Test_Scripts(object):
         if 'INFO - Conversion completed.' not in stde:
             raise TestException('Script did not report as completed:\n' + stde)
         if code != 0:
-            raise TestException('Got non zero return code from script')
+            raise TestException('Got non zero return code from script:' +
+                                str(code))
 
         ws = Workspace(self.ws_url, token=self.token)
         newobj = ws.get_objects([{'workspace': dest_ws,
@@ -168,6 +169,40 @@ class Test_Scripts(object):
             expected = json.loads(f.read())
         expected['fasta_ref'] = node_id
         deep_eq(expected, newobj['data'], _assert=True)
+
+    def test_assyfile_to_cs_fail_ws_error(self):
+        this_function_name = sys._getframe().f_code.co_name
+        staged = self.staged['assy_file']
+
+        src_ws = staged['obj_info'][7]
+        src_obj_name = staged['obj_info'][1]
+        src_type = staged['obj_info'][2].split('-')[0]
+        dest_ws = self.create_random_workspace(this_function_name)
+        dest_obj_name = 'foo2'
+        dest_type = 'KBaseGenomes.ContigSet'
+
+        args = {'source_kbase_type': src_type,
+                'destination_kbase_type': dest_type,
+                'source_workspace_name': src_ws + 'thisllbreakthings',
+                'destination_workspace_name': dest_ws,
+                'source_object_name': src_obj_name,
+                'destination_object_name': dest_obj_name,
+                'workspace_service_url': self.ws_url,
+                'ujs_service_url': self.ujs_url,
+                'working_directory': src_ws}
+
+        stdo, stde, code = self.run_convert_taskrunner(args)
+        if stdo:
+            raise TestException('Got unexpected data in standard out:\n' +
+                                stdo)
+        expect = 'Object test_assy_file cannot be accessed: No workspace ' +\
+            'with name stage_assy_file'
+        if expect not in stde:
+            raise TestException('Did not get expected error in stderr:\n' +
+                                stde)
+        if code != 1:
+            raise TestException('Got unexpected return code from script:' +
+                                str(code))
 
 
 class TestException(Exception):

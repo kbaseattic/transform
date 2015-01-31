@@ -77,7 +77,8 @@ class Test_Scripts(object):
             command_list.append("{0}".format(input_args[k]))
 
         task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
-        return task.communicate()
+        so, se = task.communicate()
+        return so, se, task.returncode
 
     def test_assyfile_to_cs_basic_ops(self):
         this_function_name = sys._getframe().f_code.co_name
@@ -117,7 +118,7 @@ class Test_Scripts(object):
                 'ujs_service_url': self.ujs_url,
                 'working_directory': src_ws}
 
-        stdo, stde = self.run_convert_taskrunner(args)
+        stdo, stde, code = self.run_convert_taskrunner(args)
         if stdo:
             raise TestException('Got unexpected data in standard out:\n' +
                                 stdo)
@@ -125,6 +126,8 @@ class Test_Scripts(object):
             raise TestException('Error reported in stderr:\n' + stde)
         if 'INFO - Conversion completed.' not in stde:
             raise TestException('Script did not report as completed:\n' + stde)
+        if code != 0:
+            raise TestException('Got non zero return code from script')
 
         newobj = ws.get_objects([{'workspace': dest_ws,
                                   'name': dest_obj_name}])[0]

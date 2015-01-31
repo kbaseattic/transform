@@ -17,6 +17,8 @@ import sys
 import subprocess
 from deep_eq import deep_eq
 
+# TODO run this with makefile
+# TODO more test cases
 
 KB_TOKEN = 'KB_AUTH_TOKEN'
 TEST_CFG_FILE = 'test.cfg'
@@ -47,23 +49,60 @@ class Test_Scripts(object):
         tve = TransformVirtualEnv(FILE_LOC, 'venv', TRANSFORM_LOC,
                                   keep_current_venv=False)
         tve.activate_for_current_py_process()
+        cls.staged = {}
+        cls.stage_data()
 
-    def upload_file_to_shock_and_get_handle(self, test_file):
+    @classmethod
+    def stage_data(cls):
+        cls.stage_assy_file()
+
+    @classmethod
+    def stage_assy_file(cls):
+        this_function_name = sys._getframe().f_code.co_name
+        src_obj_name = 'test_assy_file'
+        src_type = 'KBaseFile.AssemblyFile'
+
+        test_file = os.path.join(FILE_LOC, 'test_files/sample.fa')
+        node_id, handle = cls.upload_file_to_shock_and_get_handle(test_file)
+
+        test_json = os.path.join(FILE_LOC, 'test_files/AssemblyFile.json')
+        with open(test_json) as assyjsonfile:
+            assyjson = json.loads(assyjsonfile.read())
+        assyjson['assembly_file']['file']['url'] = cls.shock_url
+        assyjson['assembly_file']['file']['id'] = node_id
+        assyjson['assembly_file']['file']['hid'] = handle
+
+        src_ws = cls.create_random_workspace(this_function_name)
+        ws = Workspace(cls.ws_url, token=cls.token)
+        objdata = ws.save_objects(
+            {'workspace': src_ws,
+             'objects': [{'name': src_obj_name,
+                          'type': src_type,
+                          'data': assyjson}]
+             })[0]
+        ref = str(objdata[6]) + '/' + str(objdata[0]) + '/' + str(objdata[4])
+        cls.staged['assy_file'] = {'obj_info': objdata,
+                                   'node': node_id,
+                                   'ref': ref}
+
+    @classmethod
+    def upload_file_to_shock_and_get_handle(cls, test_file):
         node_id = script_utils.upload_file_to_shock(
-            shock_service_url=self.shock_url,
+            shock_service_url=cls.shock_url,
             filePath=test_file,
             ssl_verify=False,
-            token=self.token)['id']
+            token=cls.token)['id']
 
-        handle = AbstractHandle(self.handle_url, token=self.token)
+        handle = AbstractHandle(cls.handle_url, token=cls.token)
         handle_id = handle.persist_handle({'id': node_id,
                                            'type': 'shock',
-                                           'url': self.shock_url
+                                           'url': cls.shock_url
                                            })
         return node_id, handle_id
 
-    def create_random_workspace(self, prefix):
-        ws = Workspace(self.ws_url, token=self.token)
+    @classmethod
+    def create_random_workspace(cls, prefix):
+        ws = Workspace(cls.ws_url, token=cls.token)
         ws_name = prefix + '_' + str(random.random())[2:]
         wsinfo = ws.create_workspace({'workspace': ws_name})
         return wsinfo[1]
@@ -82,31 +121,16 @@ class Test_Scripts(object):
 
     def test_assyfile_to_cs_basic_ops(self):
         this_function_name = sys._getframe().f_code.co_name
-        src_obj_name = 'foo'
-        dest_obj_name = 'foo2'
-        src_type = 'KBaseFile.AssemblyFile'
-        dest_type = 'KBaseGenomes.ContigSet'
+        staged = self.staged['assy_file']
 
-        test_file = os.path.join(FILE_LOC, 'test_files/sample.fa')
-        node_id, handle = self.upload_file_to_shock_and_get_handle(test_file)
-
-        test_json = os.path.join(FILE_LOC, 'test_files/AssemblyFile.json')
-        with open(test_json) as assyjsonfile:
-            assyjson = json.loads(assyjsonfile.read())
-        assyjson['assembly_file']['file']['url'] = self.shock_url
-        assyjson['assembly_file']['file']['id'] = node_id
-        assyjson['assembly_file']['file']['hid'] = handle
-
-        src_ws = self.create_random_workspace(this_function_name)
+        src_ws = staged['obj_info'][7]
+        src_obj_name = staged['obj_info'][1]
+        src_type = staged['obj_info'][2].split('-')[0]
         dest_ws = self.create_random_workspace(this_function_name)
-        ws = Workspace(self.ws_url, token=self.token)
-        objdata = ws.save_objects(
-            {'workspace': src_ws,
-             'objects': [{'name': src_obj_name,
-                          'type': src_type,
-                          'data': assyjson}]
-             })[0]
-        ref = str(objdata[6]) + '/' + str(objdata[0]) + '/' + str(objdata[4])
+        dest_obj_name = 'foo2'
+        dest_type = 'KBaseGenomes.ContigSet'
+        node_id = staged['node']
+        ref = staged['ref']
 
         args = {'source_kbase_type': src_type,
                 'destination_kbase_type': dest_type,
@@ -129,6 +153,7 @@ class Test_Scripts(object):
         if code != 0:
             raise TestException('Got non zero return code from script')
 
+        ws = Workspace(self.ws_url, token=self.token)
         newobj = ws.get_objects([{'workspace': dest_ws,
                                   'name': dest_obj_name}])[0]
         prov = newobj['provenance'][0]

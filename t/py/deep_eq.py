@@ -79,7 +79,6 @@ def deep_eq(_v1, _v2, datetime_fudge=default_fudge, _assert=False, rtol = 0,
   
   def _deep_dict_eq(d1, d2):
     k1, k2 = (sorted(d1.keys()), sorted(d2.keys()))
-    print k1, k2
     if k1 != k2: # keys should be exactly equal
       return _check_assert(False, k1, k2, "keys")
     

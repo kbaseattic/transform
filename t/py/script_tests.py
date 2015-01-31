@@ -135,9 +135,9 @@ class Test_Scripts(object):
             'trns_transform_KBaseFile_AssemblyFile_to_KBaseGenomes_ContigSet'
         assert prov['script_ver'] == '0.0.1'
 
-        newobj['data']['fasta_ref'] = 'FAKE'
         with open(os.path.join(FILE_LOC, 'test_files/ContigSetOut.json')) as f:
             expected = json.loads(f.read())
+        expected['fasta_ref'] = node_id
         deep_eq(expected, newobj['data'], _assert=True)
 
 

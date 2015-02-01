@@ -141,20 +141,14 @@ class Test_Scripts(object):
         this_function_name = sys._getframe().f_code.co_name
         staged = self.staged['assy_file']
 
-        src_ws = staged['obj_info'][7]
-        src_obj_name = staged['obj_info'][1]
-        src_type = staged['obj_info'][2].split('-')[0]
         dest_ws = self.create_random_workspace(this_function_name)
         dest_obj_name = 'foo2'
-        dest_type = 'KBaseGenomes.ContigSet'
-        node_id = staged['node']
-        ref = staged['ref']
 
-        args = {'source_kbase_type': src_type,
-                'destination_kbase_type': dest_type,
-                'source_workspace_name': src_ws,
+        args = {'source_kbase_type': staged['obj_info'][2].split('-')[0],
+                'destination_kbase_type': 'KBaseGenomes.ContigSet',
+                'source_workspace_name': staged['obj_info'][7],
                 'destination_workspace_name': dest_ws,
-                'source_object_name': src_obj_name,
+                'source_object_name': staged['obj_info'][1],
                 'destination_object_name': dest_obj_name,
                 'workspace_service_url': self.ws_url,
                 'ujs_service_url': self.ujs_url,
@@ -176,6 +170,7 @@ class Test_Scripts(object):
         newobj = ws.get_objects([{'workspace': dest_ws,
                                   'name': dest_obj_name}])[0]
         prov = newobj['provenance'][0]
+        ref = staged['ref']
         assert prov['input_ws_objects'] == [ref]
         assert prov['resolved_ws_objects'] == [ref]
         assert prov['script'] ==\
@@ -184,7 +179,7 @@ class Test_Scripts(object):
 
         with open(os.path.join(FILE_LOC, 'test_files/ContigSetOut.json')) as f:
             expected = json.loads(f.read())
-        expected['fasta_ref'] = node_id
+        expected['fasta_ref'] = staged['node']
         deep_eq(expected, newobj['data'], _assert=True)
 
     def test_assyfile_to_cs_fail_ws_error(self):

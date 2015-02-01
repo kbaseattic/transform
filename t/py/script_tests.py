@@ -192,62 +192,44 @@ class Test_Scripts(object):
         staged = self.staged['assy_file']
 
         src_ws = staged['obj_info'][7]
-        src_obj_name = staged['obj_info'][1]
-        src_type = staged['obj_info'][2].split('-')[0]
-        dest_ws = self.create_random_workspace(this_function_name)
-        dest_obj_name = 'foo2'
-        dest_type = 'KBaseGenomes.ContigSet'
 
-        args = {'source_kbase_type': src_type,
-                'destination_kbase_type': dest_type,
+        args = {'source_kbase_type': staged['obj_info'][2].split('-')[0],
+                'destination_kbase_type': 'KBaseGenomes.ContigSet',
                 'source_workspace_name': src_ws + 'thisllbreakthings',
-                'destination_workspace_name': dest_ws,
-                'source_object_name': src_obj_name,
-                'destination_object_name': dest_obj_name,
+                'destination_workspace_name': 'no-such-ws%$^%',
+                'source_object_name': staged['obj_info'][1],
+                'destination_object_name': 'foo2',
                 'workspace_service_url': self.ws_url,
                 'ujs_service_url': self.ujs_url,
-                'working_directory': dest_ws}
+                'working_directory': this_function_name}
 
-        stdo, stde, code = self.run_convert_taskrunner(args)
-        if stdo:
-            raise TestException('Got unexpected data in standard out:\n' +
-                                stdo)
         expect = 'Object test_assy_file cannot be accessed: No workspace ' +\
             'with name stage_assy_file'
-        if expect not in stde:
-            raise TestException('Did not get expected error in stderr:\n' +
-                                stde)
-        if code != 1:
-            raise TestException('Got unexpected return code from script:' +
-                                str(code))
+        self.fail_convert(args, expect)
 
     def test_assyfile_to_cs_fail_ws_type(self):
         this_function_name = sys._getframe().f_code.co_name
         staged = self.staged['empty']
 
-        src_ws = staged['obj_info'][7]
-        src_obj_name = staged['obj_info'][1]
-        src_type = 'KBaseFile.AssemblyFile'
-        dest_ws = self.create_random_workspace(this_function_name)
-        dest_obj_name = 'foo2'
-        dest_type = 'KBaseGenomes.ContigSet'
-
-        args = {'source_kbase_type': src_type,
-                'destination_kbase_type': dest_type,
-                'source_workspace_name': src_ws,
-                'destination_workspace_name': dest_ws,
-                'source_object_name': src_obj_name,
-                'destination_object_name': dest_obj_name,
+        args = {'source_kbase_type': 'KBaseFile.AssemblyFile',
+                'destination_kbase_type': 'KBaseGenomes.ContigSet',
+                'source_workspace_name': staged['obj_info'][7],
+                'destination_workspace_name': 'non-existent-workspace@#$',
+                'source_object_name': staged['obj_info'][1],
+                'destination_object_name': 'foo2',
                 'workspace_service_url': self.ws_url,
                 'ujs_service_url': self.ujs_url,
-                'working_directory': dest_ws}
+                'working_directory': this_function_name}
 
+        expect = 'This method only works on the KBaseFile.AssemblyFile type'
+        self.fail_convert(args, expect)
+
+    def fail_convert(self, args, expected_error):
         stdo, stde, code = self.run_convert_taskrunner(args)
         if stdo:
             raise TestException('Got unexpected data in standard out:\n' +
                                 stdo)
-        expect = 'This method only works on the KBaseFile.AssemblyFile type'
-        if expect not in stde:
+        if expected_error not in stde:
             raise TestException('Did not get expected error in stderr:\n' +
                                 stde)
         if code != 1:

@@ -121,14 +121,13 @@ def transform(shock_service_url=None, handle_service_url=None,
             if (not sequence_exists) and first_header_found:
                 logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header))        
                 raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header))
-                    
             if not first_header_found:
                 first_header_found = True
             else:
                 # build up sequence and remove all white space
                 total_sequence = ''.join(sequence_list)
                 total_sequence = re.sub(pattern, '', total_sequence)
-                if total_sequence == '' :
+                if not total_sequence :
                     logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
                     raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
                 fasta_key = fasta_header.strip()
@@ -163,11 +162,14 @@ def transform(shock_service_url=None, handle_service_url=None,
     if (not sequence_exists) and first_header_found: 
         logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header))        
         raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
+    elif not first_header_found :
+        logger.error("There are no contigs in this file") 
+        raise Exception("There are no contigs in this file") 
     else: 
         # build up sequence and remove all white space      
         total_sequence = ''.join(sequence_list)
         total_sequence = re.sub(pattern, '', total_sequence)
-        if total_sequence == '' :
+        if not total_sequence :
             logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
             raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
         fasta_key = fasta_header.strip()
@@ -193,10 +195,6 @@ def transform(shock_service_url=None, handle_service_url=None,
         base = os.path.basename(input_file_name)
         output_file_name = "{0}_contig_set.json".format(os.path.splitext(base)[0])
     
-    if len(test_dict) == 0:
-        logger.error("There are not contigs in this file") 
-        raise Exception("There are not contigs in this file") 
-
     contig_set_dict = dict()
     contig_set_dict["md5"] = hashlib.md5(",".join(sorted(contig_set_md5_list))).hexdigest()
     contig_set_dict["id"] = output_file_name

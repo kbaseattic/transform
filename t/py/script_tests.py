@@ -34,6 +34,7 @@ from demo.setup import TransformVirtualEnv  # @UnresolvedImport @UnusedImport
 TRANSFORM_LOC = os.path.join(FILE_LOC, '../../')
 # maybe this should be configurable...?
 PLUGIN_CFG_LOC = os.path.join(TRANSFORM_LOC, 'plugins/configs')
+TEST_CFG_LOC = os.path.join(FILE_LOC, TEST_CFG_FILE)
 
 
 class Test_Scripts(object):
@@ -45,7 +46,7 @@ class Test_Scripts(object):
             raise ValueError('No token found in environment variable ' +
                              KB_TOKEN)
         cls.plugins_cfg = PlugIns(PLUGIN_CFG_LOC)
-        cfg = ConfigObj(TEST_CFG_FILE)
+        cfg = ConfigObj(TEST_CFG_LOC)
         for url in ['ws_url', 'shock_url', 'handle_url', 'ujs_url']:
             setattr(cls, url, cfg.get(url))
         tve = TransformVirtualEnv(FILE_LOC, 'venv', TRANSFORM_LOC,

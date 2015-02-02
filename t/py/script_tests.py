@@ -20,6 +20,8 @@ from deep_eq import deep_eq
 # TODO run this with makefile
 # TODO more test cases
 
+KEEP_CURRENT_VENV = False
+
 KB_TOKEN = 'KB_AUTH_TOKEN'
 TEST_CFG_FILE = 'test.cfg'
 
@@ -47,7 +49,7 @@ class Test_Scripts(object):
         for url in ['ws_url', 'shock_url', 'handle_url', 'ujs_url']:
             setattr(cls, url, cfg.get(url))
         tve = TransformVirtualEnv(FILE_LOC, 'venv', TRANSFORM_LOC,
-                                  keep_current_venv=False)
+                                  keep_current_venv=KEEP_CURRENT_VENV)
         tve.activate_for_current_py_process()
         cls.staged = {}
         cls.stage_data()
@@ -218,6 +220,18 @@ class Test_Scripts(object):
         this_function_name = sys._getframe().f_code.co_name
         expect = 'This method only works on the KBaseFile.AssemblyFile type'
         self.fail_on_assyfile_staged_data('empty', expect, this_function_name)
+
+    def test_assyfile_to_cs_fail_missing_data(self):
+        this_function_name = sys._getframe().f_code.co_name
+        expect = 'There is no sequence related to FASTA record: id2 desc2'
+        self.fail_on_assyfile_staged_data(
+            'assy_file_missing_data', expect, this_function_name)
+
+    def test_assyfile_to_cs_fail_missing_data_last(self):
+        this_function_name = sys._getframe().f_code.co_name
+        expect = 'There is no sequence related to FASTA record: id4 desc4'
+        self.fail_on_assyfile_staged_data(
+            'assy_file_missing_data_last', expect, this_function_name)
 
     def fail_on_assyfile_staged_data(self, key, error, working_dir):
         staged = self.staged[key]

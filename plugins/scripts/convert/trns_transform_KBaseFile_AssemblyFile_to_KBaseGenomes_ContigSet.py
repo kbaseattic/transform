@@ -102,10 +102,10 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
             # found a header line
             # Wrap up previous fasta sequence
             if (not sequence_exists) and first_header_found:
-                logger.error("There is no sequence related to fasta record: " +
+                logger.error("There is no sequence related to FASTA record: " +
                              fasta_header)
                 raise Exception(
-                    "There is no sequence related to fasta record: {0}".format(
+                    "There is no sequence related to FASTA record: {0}".format(
                         fasta_header))
             if not first_header_found:
                 first_header_found = True
@@ -142,10 +142,10 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
     # wrap up last fasta sequence
     if (not sequence_exists) and first_header_found:
         logger.error(
-            "There is no sequence related to FASTA record : {0}".format(
+            "There is no sequence related to FASTA record: {0}".format(
                 fasta_header))
         raise Exception(
-            "There is no sequence related to FASTA record : {0}".format(
+            "There is no sequence related to FASTA record: {0}".format(
                 fasta_header))
     else:
         # build up sequence and remove all white space

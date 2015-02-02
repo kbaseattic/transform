@@ -103,8 +103,6 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
             # found a header line
             # Wrap up previous fasta sequence
             if (not sequence_exists) and first_header_found:
-                logger.error("There is no sequence related to FASTA record: " +
-                             fasta_header)
                 raise Exception(
                     "There is no sequence related to FASTA record: {0}".format(
                         fasta_header))
@@ -116,9 +114,6 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
                 total_sequence = re.sub(pattern, '', total_sequence)
                 fasta_key = fasta_header.strip()
                 if not total_sequence:
-                    logger.error(
-                        "There is no sequence related to FASTA record: " +
-                        fasta_key)
                     raise Exception(
                         "There is no sequence related to FASTA record: " +
                         fasta_key)
@@ -149,9 +144,6 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
 
     # wrap up last fasta sequence
     if (not sequence_exists) and first_header_found:
-        logger.error(
-            "There is no sequence related to FASTA record: {0}".format(
-                fasta_header))
         raise Exception(
             "There is no sequence related to FASTA record: {0}".format(
                 fasta_header))
@@ -161,8 +153,6 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
         total_sequence = re.sub(pattern, '', total_sequence)
         fasta_key = fasta_header.strip()
         if not total_sequence:
-            logger.error(
-                "There is no sequence related to FASTA record: " + fasta_key)
             raise Exception(
                 "There is no sequence related to FASTA record: " + fasta_key)
         contig_dict = dict()

@@ -321,7 +321,6 @@ def main():
             args.destination_workspace_name, args.destination_object_name)
     except Exception, e:
         logger.exception(e)
-        print("".join(traceback.format_exc()))
         sys.exit(1)
 
     sys.exit(0)

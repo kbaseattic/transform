@@ -154,7 +154,8 @@ class Test_Scripts(object):
             command_list.append("--{0}".format(k))
             command_list.append("{0}".format(input_args[k]))
 
-        task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+        task = subprocess.Popen(command_list, stderr=subprocess.PIPE,
+                                stdout=subprocess.PIPE)
         so, se = task.communicate()
         return so, se, task.returncode
 

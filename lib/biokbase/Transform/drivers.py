@@ -247,6 +247,8 @@ class TransformClientTerminalDriver(TransformClientDriver):
     def show_job_debug(self, awe_job_id=None, ujs_job_id=None):
         debug_details = self.get_job_debug(awe_job_id, ujs_job_id)
     
+        print debug_details
+    
         print self.terminal.red("{0}".format(debug_details["ujs"]["error"]))
         print self.terminal.red("{0}".format(debug_details["ujs"]["results"]))
 

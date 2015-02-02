@@ -94,7 +94,7 @@ test-client:
 # start-server dependancy to the test-scripts target if it makes
 # sense to you. Future versions of the make files for services
 # will move in this direction.
-test-scripts:
+test-scripts: test-py-scripts
 	# run each test
 	for t in $(SCRIPT_TESTS) ; do \
 		if [ -f $$t ] ; then \
@@ -104,6 +104,9 @@ test-scripts:
 			fi \
 		fi \
 	done
+
+test-py-scripts:
+	nosetests t/tpy
 
 # What does it mean to test a server. A server test should not
 # rely on the client libraries or scripts in so far as you should

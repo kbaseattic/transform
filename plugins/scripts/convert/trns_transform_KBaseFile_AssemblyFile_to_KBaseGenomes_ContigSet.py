@@ -4,7 +4,6 @@
 from __future__ import print_function
 import os
 import sys
-import traceback
 import logging
 import re
 import hashlib
@@ -69,11 +68,6 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
     if not os.path.isfile(input_file_name):
         raise Exception("The input file name {0} is not a file!".format(
             input_file_name))
-
-#     if not os.path.isdir(working_directory):
-#         raise Exception(
-#             "The working directory does not exist {0} does not exist".format(
-#                 working_directory))
 
     # default if not too large
     contig_set_has_sequences = True
@@ -186,18 +180,6 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
 
     contig_set_dict["fasta_ref"] = shock_id
 
-    # For future development if the type is updated to the handle_reference
-    # instead of a shock_reference
-
-    # This generates the json for the object
-#     objectString = json.dumps(contig_set_dict, sort_keys=True, indent=4)
-#
-#     logger.info("ContigSet data structure creation completed." +
-#                 " Writing out JSON.")
-#     output_file = os.path.join(working_directory, contigset_id)
-#     with open(output_file, "w") as outFile:
-#         outFile.write(objectString)
-#
     logger.info("Conversion completed.")
     return contig_set_dict
 

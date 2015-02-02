@@ -23,8 +23,14 @@ SCRIPT_NAME = 'trns_transform_KBaseFile_AssemblyFile_to_KBaseGenomes_ContigSet'
 
 TOKEN = os.environ.get('KB_AUTH_TOKEN')
 
+# TODO simplify code - remove fasta-key, found_sequence
+# TODO remove double logging
+# TODO port Jason's check for an empty file
 
 # TODO this is almost entirely duplicated in Jason's fasta->CS script. Move?
+# copied from Jason's fasta-CS script. Some unnecessary parts were cut out,
+# but the core code is the same.
+
 # conversion method that can be called if this module is imported
 # Note the logger has different levels it could be run.
 #  See: https://docs.python.org/2/library/logging.html#logging-levels
@@ -109,6 +115,13 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
                 total_sequence = ''.join(sequence_list)
                 total_sequence = re.sub(pattern, '', total_sequence)
                 fasta_key = fasta_header.strip()
+                if not total_sequence:
+                    logger.error(
+                        "There is no sequence related to FASTA record: " +
+                        fasta_key)
+                    raise Exception(
+                        "There is no sequence related to FASTA record: " +
+                        fasta_key)
                 contig_dict = dict()
                 contig_dict["id"] = fasta_key
                 contig_dict["length"] = len(total_sequence)
@@ -147,6 +160,11 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
         total_sequence = ''.join(sequence_list)
         total_sequence = re.sub(pattern, '', total_sequence)
         fasta_key = fasta_header.strip()
+        if not total_sequence:
+            logger.error(
+                "There is no sequence related to FASTA record: " + fasta_key)
+            raise Exception(
+                "There is no sequence related to FASTA record: " + fasta_key)
         contig_dict = dict()
         contig_dict["id"] = fasta_key
         contig_dict["length"] = len(total_sequence)

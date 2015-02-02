@@ -95,12 +95,11 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
     contig_set_md5_list = []
     # Pattern for replacing white space
     pattern = re.compile(r'\s+')
-    sequence_exists = False
     for current_line in input_file_handle:
         if (current_line[0] == ">"):
             # found a header line
             # Wrap up previous fasta sequence
-            if (not sequence_exists) and first_header_found:
+            if (not sequence_list) and first_header_found:
                 raise Exception(
                     "There is no sequence related to FASTA record: {0}".format(
                         fasta_header))
@@ -131,16 +130,14 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
 
                 # get set up for next fasta sequence
                 sequence_list = []
-                sequence_exists = False
             fasta_header = current_line.replace('>', '').strip()
         else:
             sequence_list.append(current_line)
-            sequence_exists = True
 
     input_file_handle.close()
 
     # wrap up last fasta sequence
-    if (not sequence_exists) and first_header_found:
+    if (not sequence_list) and first_header_found:
         raise Exception(
             "There is no sequence related to FASTA record: {0}".format(
                 fasta_header))

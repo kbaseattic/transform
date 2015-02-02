@@ -83,6 +83,10 @@ class Test_Scripts(object):
             'test_files/sample.fa', 'test_files/AssemblyFile.json', src_ws,
             'test_assy_file', 'assy_file')
         cls.load_assy_file_data(
+            'test_files/sample.fa', 'test_files/AssemblyFile.json', src_ws,
+            'test_assy_file_bad_node', 'assy_file_bad_node',
+            with_bad_node_id=True)
+        cls.load_assy_file_data(
             'test_files/sample_missing_data.fa',
             'test_files/AssemblyFile.json', src_ws,
             'test_assy_file_missing_data', 'assy_file_missing_data')
@@ -92,10 +96,13 @@ class Test_Scripts(object):
             'test_assy_file_missing_data_last', 'assy_file_missing_data_last')
 
     @classmethod
-    def load_assy_file_data(cls, fa_file, ws_file, src_ws, src_obj_name, key):
+    def load_assy_file_data(cls, fa_file, ws_file, src_ws, src_obj_name, key,
+                            with_bad_node_id=False):
         src_type = 'KBaseFile.AssemblyFile'
         test_file = os.path.join(FILE_LOC, fa_file)
         node_id, handle = cls.upload_file_to_shock_and_get_handle(test_file)
+        if (with_bad_node_id):
+            node_id += '1'
 
         test_json = os.path.join(FILE_LOC, ws_file)
         with open(test_json) as assyjsonfile:
@@ -232,6 +239,12 @@ class Test_Scripts(object):
         expect = 'There is no sequence related to FASTA record: id4 desc4'
         self.fail_on_assyfile_staged_data(
             'assy_file_missing_data_last', expect, this_function_name)
+
+    def test_assyfile_to_cs_fail_bad_shock_node(self):
+        this_function_name = sys._getframe().f_code.co_name
+        expect = 'Node not found'
+        self.fail_on_assyfile_staged_data(
+            'assy_file_bad_node', expect, this_function_name)
 
     def fail_on_assyfile_staged_data(self, key, error, working_dir):
         staged = self.staged[key]

@@ -13,6 +13,7 @@ import hashlib
 import biokbase.Transform.script_utils as script_utils
 from biokbase.workspace.client import Workspace
 import requests
+import json
 
 __VERSION__ = '0.0.1'
 
@@ -201,7 +202,8 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
     return contig_set_dict
 
 
-def download_workspace_data(ws_url, source_ws, source_obj, working_dir):
+def download_workspace_data(ws_url, source_ws, source_obj, working_dir,
+                            logger):
     ws = Workspace(ws_url, token=TOKEN)
     objdata = ws.get_objects([{'ref': source_ws + '/' + source_obj}])[0]
     info = objdata['info']
@@ -219,7 +221,13 @@ def download_workspace_data(ws_url, source_ws, source_obj, working_dir):
     with open(outfile, 'w') as f:
         response = requests.get(shock_node, stream=True, headers=headers)
         if not response.ok:
-            response.raise_for_status()
+            try:
+                err = json.loads(response.content)['error'][0]
+            except:
+                logger.error("Couldn't parse response error content: " +
+                             response.content)
+                response.raise_for_status()
+            raise Exception(str(err))
         for block in response.iter_content(1024):
             if not block:
                 break
@@ -297,7 +305,8 @@ def main():
             args.workspace_service_url,
             args.source_workspace_name,
             args.source_object_name,
-            args.working_directory)
+            args.working_directory,
+            logger)
 
         inputfile = os.path.join(args.working_directory,
                                  args.source_object_name)

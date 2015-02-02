@@ -54,7 +54,7 @@ class Test_Scripts(object):
 
     @classmethod
     def stage_data(cls):
-        cls.stage_assy_file()
+        cls.stage_assy_files()
         cls.stage_empty_data()
 
     @classmethod
@@ -74,22 +74,34 @@ class Test_Scripts(object):
         cls.staged['empty'] = {'obj_info': objdata}
 
     @classmethod
-    def stage_assy_file(cls):
+    def stage_assy_files(cls):
         this_function_name = sys._getframe().f_code.co_name
-        src_obj_name = 'test_assy_file'
-        src_type = 'KBaseFile.AssemblyFile'
+        src_ws = cls.create_random_workspace(this_function_name)
+        cls.load_assy_file_data(
+            'test_files/sample.fa', 'test_files/AssemblyFile.json', src_ws,
+            'test_assy_file', 'assy_file')
+        cls.load_assy_file_data(
+            'test_files/sample_missing_data.fa',
+            'test_files/AssemblyFile.json', src_ws,
+            'test_assy_file_missing_data', 'assy_file_missing_data')
+        cls.load_assy_file_data(
+            'test_files/sample_missing_data_last.fa',
+            'test_files/AssemblyFile.json', src_ws,
+            'test_assy_file_missing_data_last', 'assy_file_missing_data_last')
 
-        test_file = os.path.join(FILE_LOC, 'test_files/sample.fa')
+    @classmethod
+    def load_assy_file_data(cls, fa_file, ws_file, src_ws, src_obj_name, key):
+        src_type = 'KBaseFile.AssemblyFile'
+        test_file = os.path.join(FILE_LOC, fa_file)
         node_id, handle = cls.upload_file_to_shock_and_get_handle(test_file)
 
-        test_json = os.path.join(FILE_LOC, 'test_files/AssemblyFile.json')
+        test_json = os.path.join(FILE_LOC, ws_file)
         with open(test_json) as assyjsonfile:
             assyjson = json.loads(assyjsonfile.read())
         assyjson['assembly_file']['file']['url'] = cls.shock_url
         assyjson['assembly_file']['file']['id'] = node_id
         assyjson['assembly_file']['file']['hid'] = handle
 
-        src_ws = cls.create_random_workspace(this_function_name)
         ws = Workspace(cls.ws_url, token=cls.token)
         objdata = ws.save_objects(
             {'workspace': src_ws,
@@ -98,9 +110,9 @@ class Test_Scripts(object):
                           'data': assyjson}]
              })[0]
         ref = str(objdata[6]) + '/' + str(objdata[0]) + '/' + str(objdata[4])
-        cls.staged['assy_file'] = {'obj_info': objdata,
-                                   'node': node_id,
-                                   'ref': ref}
+        cls.staged[key] = {'obj_info': objdata,
+                           'node': node_id,
+                           'ref': ref}
 
     @classmethod
     def upload_file_to_shock_and_get_handle(cls, test_file):
@@ -204,20 +216,23 @@ class Test_Scripts(object):
 
     def test_assyfile_to_cs_fail_ws_type(self):
         this_function_name = sys._getframe().f_code.co_name
-        staged = self.staged['empty']
+        expect = 'This method only works on the KBaseFile.AssemblyFile type'
+        self.fail_on_assyfile_staged_data('empty', expect, this_function_name)
+
+    def fail_on_assyfile_staged_data(self, key, error, working_dir):
+        staged = self.staged[key]
 
         args = {'source_kbase_type': 'KBaseFile.AssemblyFile',
                 'destination_kbase_type': 'KBaseGenomes.ContigSet',
                 'source_workspace_name': staged['obj_info'][7],
-                'destination_workspace_name': 'non-existent-workspace@#$',
+                'destination_workspace_name': 'no-such-ws%$^%',
                 'source_object_name': staged['obj_info'][1],
                 'destination_object_name': 'foo2',
                 'workspace_service_url': self.ws_url,
                 'ujs_service_url': self.ujs_url,
-                'working_directory': this_function_name}
+                'working_directory': working_dir}
 
-        expect = 'This method only works on the KBaseFile.AssemblyFile type'
-        self.fail_convert(args, expect)
+        self.fail_convert(args, error)
 
     def fail_convert(self, args, expected_error):
         stdo, stde, code = self.run_convert_taskrunner(args)

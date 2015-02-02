@@ -1,3 +1,9 @@
+"""
+Provides utility functions for providing standardized behavior among python scripts.
+In addition, many of the functions are designed to significantly ease the burden
+to produce a new script for validation, transformation, or conversion.
+"""
+
 import sys
 import os
 import logging
@@ -25,7 +31,7 @@ except:
 import biokbase.workspace.client
 
 
-
+# override default ArgumentParser behavior
 class ArgumentParser(argparse.ArgumentParser):
     def exit(self, status=1, message=None):
         if message:
@@ -33,7 +39,33 @@ class ArgumentParser(argparse.ArgumentParser):
         sys.exit(status)
 
 
+def get_token():
+    """
+    Retrieve the KBase token in the local shell environment.
+    """
+
+    token = os.environ.get("KB_AUTH_TOKEN")
+    
+    if token is None:
+        try:
+            stdout, stderr = subprocess.call(["kbase-whoami", "-t"])
+            
+            if stdout is not None:
+                return stdout
+            else:
+                raise None
+        except:
+            raise Exception("Unable to find token, export KB_AUTH_TOKEN")
+    else:
+        return token
+
+
 def stderrlogger(name, level=logging.INFO):
+    """
+    Return a standard python logger with a stderr handler attached and using a prefix
+    format that will make logging consistent between scripts.
+    """
+    
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
@@ -50,6 +82,11 @@ def stderrlogger(name, level=logging.INFO):
 
 
 def stdoutlogger(name, level=logging.INFO):
+    """
+    Return a standard python logger with a stdout handler attached and using a prefix
+    format that will make logging consistent between scripts.
+    """
+    
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
@@ -67,7 +104,9 @@ def stdoutlogger(name, level=logging.INFO):
 
 
 def parse_docs(docstring=None):
-    """Parses the docstring of a function and returns a dictionary of the elements."""
+    """
+    Parses the docstring of a function and returns a dictionary of the elements.
+    """
 
     # TODO, revisit this, probably can use other ways of doing this
     script_details = dict()
@@ -99,6 +138,10 @@ def parse_docs(docstring=None):
 
 
 def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
+    """
+    Unpack a data file that may be compressed or an archive.
+    """
+
     def extract_tar(tarPath):
         if not tarfile.is_tarfile(tarPath):
             raise Exception("Inavalid tar file " + tarPath)
@@ -199,7 +242,7 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
                     os.makedirs(infoPath)                    
 
                 if os.path.exists(os.path.join(infoPath,os.path.split(member.name)[-1])):
-                    raise Exception("Extracting zip contents will overwrite an existing file!")
+                    raise Exception("Extracting tar contents will overwrite an existing file!")
 
                 if member.isfile():
                     with io.open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
@@ -215,6 +258,10 @@ def download_file_from_shock(logger = None,
                              filename = None,
                              directory = None,
                              token = None):
+    """
+    Given a SHOCK instance URL and a SHOCK node id, download the contents of that node
+    to a file on disk.
+    """
 
     header = dict()
     header["Authorization"] = "Oauth {0}".format(token)
@@ -263,6 +310,9 @@ def upload_file_to_shock(logger = None,
                          filePath = None,
                          ssl_verify = True,
                          token = None):
+    """
+    Use HTTP multi-part POST to save a file to a SHOCK instance.
+    """
 
     if token is None:
         raise Exception("Authentication token required!")
@@ -303,6 +353,9 @@ def getHandles(logger = None,
                shock_ids = None,
                handle_ids = None,
                token = None):
+    """
+    Retrieve KBase handles for a list of shock ids or a list of handle ids.
+    """
     
     if token is None:
         raise Exception("Authentication token required!")
@@ -390,6 +443,13 @@ def download_from_urls(logger = None,
                        ssl_verify = True,
                        token = None, 
                        chunkSize = 10 * 2**20):
+    """
+    Downloads urls defined by key names in a dictionary, with each key name getting
+    its own subdirectory and the contents of the url for that key deposited in the
+    subdirectory that matches the key name.  Key names are defined by developers in
+    a config file per upload conversion.
+    """
+    
     if token is None:
         raise Exception("Unable to find token!")
     

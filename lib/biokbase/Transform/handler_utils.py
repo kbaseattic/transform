@@ -1,3 +1,8 @@
+"""
+Provides utility functions for handler/taskrunner level code to provide consistent
+behavior across different taskrunners and reduce code repetition of similar tasks.
+"""
+
 import sys
 import os
 import shutil
@@ -10,34 +15,65 @@ from biokbase.Transform import script_utils
 UJS_STATUS_MAX = 200
 
 def report_exception(logger=None, report_details=None, cleanup_details=None):
-    logger.error(report_details["message"])
-    logger.exception(report_details["exc"])
+    """
+    Report a fatal error from a taskrunner script back to UJS if possible.
+    Clean up the working directory that the job was running in before exiting.
+    """
+
+    if logger is None:
+        raise Exception("A logger must be defined!")
+
+    logger.debug(report_details)
+    logger.error(report_details["error_message"])
 
     if report_details["ujs_job_id"] is not None:
-        report_details["ujs"].complete_job(report_details["ujs_job_id"], 
-                                           report_details["token"], 
-                                           report_details["message"], 
-                                           report_details["exc"], 
-                                           None) 
+        ujs = report_details["ujs_client"]
+        ujs.complete_job(report_details["ujs_job_id"], 
+                         report_details["token"], 
+                         report_details["status"][:UJS_STATUS_MAX], 
+                         report_details["error_message"], 
+                         None)
+    else:
+        raise Exception("No report details included!") 
     
-    if not cleanup_details["keep_working_directory"]:
-        cleanup(cleanup_details["working_directory"])
+    if cleanup_details is not None:    
+        if not cleanup_details["keep_working_directory"]:
+            try:
+                cleanup(logger=logger, directory=cleanup_details["working_directory"])            
+            except Exception, e:
+                logger.exception(e)
+    else:
+        raise Exception("Unable to cleanup working directory without cleanup info!")
         
 
 def cleanup(logger=None, directory=None):
+    """
+    Clean up after the job.  At the moment this just means removing the working
+    directory, but later could mean other things.
+    """
+    
     try:
         shutil.rmtree(directory)
     except IOError, e:
-        report_exception("{0}".format(directory), e, ujs)
+        logger.error("Unable to remove working directory {0}".format(directory))
+        raise
 
 
 def gen_recursive_filelist(d):
+    """
+    Generate a list of all files present below a given directory.
+    """
+    
     for root, directories, files in os.walk(d):
         for file in files:
             yield os.path.join(root, file)
 
 
 def run_task(logger, arguments, debug=False):
+    """
+    A factory function to abstract the implementation details of how tasks are run.
+    """
+
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
 
@@ -47,6 +83,13 @@ def run_task(logger, arguments, debug=False):
 
 
 class TaskRunner(object):
+    """
+    A simple task runner that builds a command line call from a given config, runs
+    the command and reports back the stdout and stderr of the task if it succeeds,
+    or raises an exception if the task fails, which is detected at the moment by the
+    return code of the task.
+    """
+    
     def __init__(self, logger=None):
         #logger_stdout = script_utils.getStdoutLogger()
         if logger is None:
@@ -56,6 +99,14 @@ class TaskRunner(object):
 
 
     def _build_command_list(self, arguments=None, debug=False):
+        """
+        Generate the command argument list.  If debug is True you are running in a mode
+        where the scripts are expected to be run directly.  In a KBase environment,
+        each script is wrapped in a bash shell script that sets some environment
+        variables, so we strip out the actual script extension to make sure that the
+        correct entity is invoked when the job runs.
+        """
+        
         if debug:
             command_name = arguments["script_name"]
         else:
@@ -86,7 +137,11 @@ class TaskRunner(object):
             return task_output
 
 
+
 def PluginManager(directory=None, logger=script_utils.stderrlogger(__file__)):
+    if directory is None:
+        raise Exception("Must provide a directory to read plugin configs from!")
+
     manager = PlugIns(directory, logger)
     return manager
 
@@ -94,7 +149,7 @@ def PluginManager(directory=None, logger=script_utils.stderrlogger(__file__)):
 class PlugIns(object):
 
     # read in all configs
-    def __init__(self, pluginsDir, logger=script_utils.stderrlogger(__file__)):
+    def __init__(self, plugins_directory=None, logger=script_utils.stderrlogger(__file__)):
         self.scripts_config = {"external_types": list(),
                                "kbase_types": list(),
                                "validate": dict(),
@@ -104,11 +159,11 @@ class PlugIns(object):
 
         self.logger = logger
 
-        plugins = sorted(os.listdir(pluginsDir))
+        plugins = sorted(os.listdir(plugins_directory))
         
         for p in plugins:
             try:
-                f = open(os.path.join(pluginsDir, p), 'r')
+                f = open(os.path.join(plugins_directory, p), 'r')
                 pconfig = simplejson.loads(f.read())
                 f.close()
 
@@ -151,15 +206,13 @@ class PlugIns(object):
                 self.logger.warning("Unable to read plugin {0}: {1}".format(p,e.message))
 
 
-    def get_handler_args(self, method, args):
+    def get_job_details(self, method, args):
         if "optional_arguments" not in args:
             args["optional_arguments"] = dict()
 
         job_details = dict()        
 
         if method == "upload":
-            args["url_mapping"] = base64.urlsafe_b64encode(simplejson.dumps(args["url_mapping"]))
-
             if self.scripts_config["validate"].has_key(args["external_type"]):
                 plugin_key = args["external_type"]
                         
@@ -187,13 +240,8 @@ class PlugIns(object):
                 job_details["transform"] = self.scripts_config["convert"][plugin_key]
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))
-            
-        self.logger.debug("job_details : " + simplejson.dumps(job_details, indent=4, sort_keys=True))
-
-        self.logger.debug(args)
-                
-        args["job_details"] = base64.urlsafe_b64encode(simplejson.dumps(job_details))
-        args["optional_arguments"] = base64.urlsafe_b64encode(simplejson.dumps(args["optional_arguments"]))
+        else:
+            raise Exception("Unknown method {0}".format(method))
         
-        return args
+        return job_details
 

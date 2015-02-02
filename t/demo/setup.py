@@ -19,24 +19,33 @@ subprocess.call([os.path.join(virtualenv_dir, "bin/pip"), "install","pip","ftput
 
 sys.path.append("./venv/lib/python2.7/site-packages/")
 
-print "Checking out user_and_job_state,workspace_deluxe,handle_service client code"
+
+print "Pulling git dependencies"
+
+git_dependencies = ["https://github.com/kbase/user_and_job_state",
+                    "https://github.com/kbase/workspace_deluxe",
+                    "https://github.com/mlhenderson/handle_service",
+                    "https://github.com/kbase/kbapi_common"]
 
 import git
-git.Git().clone("https://github.com/kbase/user_and_job_state")
-git.Git().clone("https://github.com/kbase/workspace_deluxe")
-git.Git().clone("https://github.com/mlhenderson/handle_service")
-git.Git().clone("https://github.com/kbase/kbapi_common")
+
+for x in git_dependencies:
+    print "Checking out {0}".format(x)
+    git.Git().clone(x)
+
 
 print "Copying client code to virtualenv"
+
+#libraries = []
+#
+#for x in libraries:
+#    shutil.copytree(os.path.join(running_dir,x), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase"))
 
 # copy client code into the virtualenv directory
 shutil.copytree(os.path.join(running_dir,"user_and_job_state/lib/biokbase"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase"))
 shutil.copytree(os.path.join(running_dir,"workspace_deluxe/lib/biokbase/workspace"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase/workspace"))
 shutil.copytree(os.path.join(running_dir,"handle_service/lib/biokbase/AbstractHandle"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase/AbstractHandle"))
 shutil.copytree(os.path.join(running_dir,"../../lib/biokbase/Transform"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase/Transform"))
-
-shutil.copy(os.path.join(running_dir,"kbapi_common/lib/biokbase/log.py"), os.path.join(virtualenv_dir, "lib/python2.7/site-packages/biokbase/"))
-
 
 scripts = list()
 

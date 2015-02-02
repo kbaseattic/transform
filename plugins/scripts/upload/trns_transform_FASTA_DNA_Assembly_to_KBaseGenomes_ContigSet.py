@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
     args, unknown = parser.parse_known_args()
 
-    logger = script_utils.stderrlogger(__file__, level=logging.DEBUG)
+    logger = script_utils.stderrlogger(__file__)
 
     logger.debug(args)
     try:

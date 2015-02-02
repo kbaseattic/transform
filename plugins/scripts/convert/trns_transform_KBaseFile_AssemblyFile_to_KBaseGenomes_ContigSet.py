@@ -23,7 +23,6 @@ SCRIPT_NAME = 'trns_transform_KBaseFile_AssemblyFile_to_KBaseGenomes_ContigSet'
 
 TOKEN = os.environ.get('KB_AUTH_TOKEN')
 
-# TODO simplify code - remove fasta-key, found_sequence
 
 # TODO this is almost entirely duplicated in Jason's fasta->CS script. Move?
 # copied from Jason's fasta-CS script. Some unnecessary parts were cut out,

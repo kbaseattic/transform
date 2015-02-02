@@ -74,8 +74,9 @@ class TransformVirtualEnv(object):
             os.path.join(self.venv_dir,
                          "lib/python2.7/site-packages/biokbase/Transform"))
 
+        print("Pulling git dependencies")
         for dep in KBASE_DEPENDENCIES:
-            print("Building {} into env".format(dep))
+            print("Checking out " + GITHUB_URL + dep)
             repo = os.path.split(dep)[1]
             gitdir = os.path.join(self.working_dir, repo)
             git.Git().clone(GITHUB_URL + dep, gitdir)

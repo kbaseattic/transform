@@ -1,7 +1,7 @@
 {
     "script_name": "trns_transform_WSBiomType-to-TabDelimited.pl", 
     "script_type": "download",
-    "external_type": "BIOM.TaxonomicProfile",
+    "external_type": "TSV.TaxonomicProfile",
     "kbase_type": "Communities.TaxonomicProfile",
     "user_description": "Download transformation from Communities.TaxonomicProfile to Tab-Delimited text file.",
     "developer_description": "",    

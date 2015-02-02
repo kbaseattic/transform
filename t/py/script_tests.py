@@ -16,6 +16,7 @@ import random
 import sys
 import subprocess
 from deep_eq import deep_eq
+import base64
 
 # TODO run this with makefile
 
@@ -154,12 +155,16 @@ class Test_Scripts(object):
 
     @classmethod
     def run_convert_taskrunner(cls, args):
-        input_args = cls.plugins_cfg.get_handler_args("convert", args)
-        command_list = ['trns_convert_taskrunner.py']
+        job_details = cls.plugins_cfg.get_job_details("convert", args)
+        args['optional_arguments'] = base64.urlsafe_b64encode(
+            json.dumps(args['optional_arguments']))
+        args['job_details'] = base64.urlsafe_b64encode(
+            json.dumps(job_details))
 
-        for k in input_args:
+        command_list = ['trns_convert_taskrunner.py']
+        for k in args:
             command_list.append("--{0}".format(k))
-            command_list.append("{0}".format(input_args[k]))
+            command_list.append("{0}".format(args[k]))
 
         task = subprocess.Popen(command_list, stderr=subprocess.PIPE,
                                 stdout=subprocess.PIPE)

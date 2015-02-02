@@ -27,6 +27,7 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['object_name=s', 'workspace object name from which the input is to be read'],
 				    ['workspace_name=s', 'workspace name from which the input is to be read'],
 				    ['workspace_service_url=s', 'workspace service url to pull from'],
+				    ['object_version=s', 'workspace service url to pull from'],
 				    ['help|h', 'show this help message']
 );
 
@@ -38,11 +39,18 @@ if (!$opt->workspace_name)
     die "A workspace name must be provided";
 }
 
-
 my $obj;
 my $wsclient = Bio::KBase::workspace::Client->new($opt->workspace_service_url);
+my $ret;
 
-my $ret = $wsclient->get_objects([{ name => $opt->object_name, workspace => $opt->workspace_name }])->[0];
+if ($opt->object_version) {
+    $ret = $wsclient->get_objects([{ name => $opt->object_name, workspace => $opt->workspace_name, ver => $opt->object_version}])->[0];
+}
+else {
+    $ret = $wsclient->get_objects([{ name => $opt->object_name, workspace => $opt->workspace_name}])->[0];
+}
+
+
 if ($ret->{data})
 {
     $obj = $ret->{data};
@@ -51,6 +59,7 @@ else
 {
     die "Invalid return from get_object for ws=" . $opt->workspace_name . " input=" . $opt->object_name;
 }
+
 my $tables = {$opt->workspace_name."_".$opt->object_name."_Phenotypes" => [["geneko","mediaws","media","addtlCpd","growth"]]};
 for (my $i=0; $i < @{$obj->{phenotypes}}; $i++) {
 	my $genekolist = $obj->{phenotypes}->[$i]->{geneko_refs};

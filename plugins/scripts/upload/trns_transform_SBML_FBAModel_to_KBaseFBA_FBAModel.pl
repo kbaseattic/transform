@@ -1,8 +1,11 @@
 #!/usr/bin/env perl
+#PERL USE
 use warnings;
 use strict;
 use Data::Dumper;
 use Getopt::Long;
+
+#KBASE USE
 use Bio::KBase::Transform::ScriptHelpers qw( parse_input_table getStderrLogger );
 use Bio::KBase::fbaModelServices::ScriptHelpers qw(fbaws get_fba_client runFBACommand universalFBAScriptCode );
 
@@ -14,7 +17,7 @@ $script
 
 =head1 SYNOPSIS
 
-$script --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --compounds-c <Input Compounds CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
+$script --input_file_name/-s <Input SBML File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --compounds-c <Input Compounds CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
 
 =head1 DESCRIPTION
 
@@ -22,10 +25,10 @@ Transform a CSV file into an object in the workspace.
 
 =head1 COMMAND-LINE OPTIONS
 $script
-	-s --sbml		name of sbml file with model data
+	-s --input_file_name		name of sbml file with model data
 	-c --compounds  csv file with compound data
-	-o --output     id under which KBaseBiochem.Media is to be saved
-	-w --out_ws     workspace where KBaseBiochem.Media is to be saved
+	-o --object_name     id under which KBaseBiochem.Media is to be saved
+	-w --workspace_name     workspace where KBaseBiochem.Media is to be saved
 	-g --genome		genome for which model was constructed
 	-b --biomass	id of biomass reaction in model
 	--help          print usage message and exit
@@ -34,29 +37,40 @@ $script
 
 my $logger = getStderrLogger();
 
-my $In_RxnFile   = "";
+my $In_RxnFile = "";
 my $In_CpdFile = "";
 my $Out_Object = "";
-my $Out_WS    = "";
-my $Genome    = "Empty";
-my $Biomass   = "";
-my $Help      = 0;
+my $Out_WS     = "";
+my $Genome     = "Empty";
+my $Biomass    = "";
+my $Help       = 0;
+my $fbaurl = "";
+my $wsurl = "";
 
-GetOptions("sbml=s"  => \$In_RxnFile,
-	   "compounds|c=s"  => \$In_CpdFile,
-	   "output|o=s" => \$Out_Object,
-	   "out_ws|w=s" => \$Out_WS,
-	   "genome|g=s" => \$Genome,
-	   "biomass|b=s" => \$Biomass,
-	   "help|h"     => \$Help);
+GetOptions("input_file_name=s"  => \$In_RxnFile,
+	   "compounds|c=s"      => \$In_CpdFile,
+	   "object_name|o=s"    => \$Out_Object,
+	   "workspace_name|w=s" => \$Out_WS,
+	   "genome|g=s"         => \$Genome,
+	   "biomass|b=s"        => \$Biomass,
+	   "workspace_service_url=s" => $wsurl,
+	   "fba_service_url=s" => $fbaurl,
+	   "help|h"             => \$Help);
+
+if (length($fbaurl) == 0) {
+	$fbaurl = undef;
+}
+if (length($wsurl) == 0) {
+	$wsurl = undef;
+}
 
 if($Help || !$In_RxnFile || !$Out_Object || !$Out_WS){
-    print($0." --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --compounds/-c <Input Compound CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
-    $logger->warn($0." --sbml/-s <Input SBML File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --compounds/-c <Input Compound CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+    print($0." --input_file_name/-s <Input SBML File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --compounds/-c <Input Compound CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+    $logger->warn($0." --input_file_name/-s <Input SBML File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --compounds/-c <Input Compound CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
     exit();
 }
 
-$logger->info("Mandatory Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
+$logger->info("Mandatory Data passed = ".join(" | ", ($In_RxnFile,$Out_Object,$Out_WS)));
 $logger->info("Optional Data passed = ".join(" | ", ("Compounds:".$In_CpdFile,"Genome:".$Genome,"Biomass:".$Biomass)));
 
 my $input = {
@@ -94,7 +108,10 @@ $logger->info("Loading FBAModel WS Object");
 
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
-    my $fba = get_fba_client();
+    my $fba = get_fba_client($fbaurl);
+    if (defined($wsurl)) {
+    	$input->{wsurl} = $wsurl;
+    }
     $fba->import_fbamodel($input);
 };
 

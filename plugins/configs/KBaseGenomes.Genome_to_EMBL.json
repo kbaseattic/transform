@@ -1,0 +1,48 @@
+{
+    "script_name": "trns_transform_KBaseGenomes.Genome-to-EMBL.pl", 
+    "script_type": "download",
+    "external_type": "EMBL",
+    "kbase_type": "KBaseGenomes.Genome",
+    "user_description": "Download transformation from KBaseGenomes.Genome to EMBL",
+    "developer_description": "Download transformation from KBaseGenomes.Genome to EMBL",
+
+    "handler_options": {
+        "max_runtime": 360,
+        "required_fields": [
+            "workspace_service_url",
+            "workspace_name",
+	    "working_directory",
+            "object_name",
+            "output_file_name"        
+        ],
+        "optional_fields": ["object_version"],
+        "custom_options": []
+    },
+    "user_options": [
+        {
+            "name": "workspace_name",
+            "type": "string",
+            "required": true,
+            "help": "Name of the workspace."
+        },
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "Name of the workspace object."
+        },
+        {
+            "name": "output_file_name",
+            "type": "string",
+            "required": false,
+            "help": "If not supplied, the name will be derived from the object_name."
+        },
+        {
+            "name": "object_version",
+            "type": "int",
+            "required": false,
+            "help": "Version of the workspace object, if not given we assume the latest."
+        }
+    ],
+    "user_option_groups": []
+}

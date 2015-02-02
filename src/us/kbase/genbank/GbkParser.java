@@ -10,7 +10,7 @@ public class GbkParser {
 	public static final int HEADER_PREFIX_LENGTH = 12;
 	public static final int FEATURE_PREFIX_LENGTH = 21;
 	
-	public static void parse(BufferedReader br, GbkParsingParams params, GbkCallback ret) throws Exception {
+	public static void parse(BufferedReader br, GbkParsingParams params, String filename, GbkCallback ret) throws Exception {
         TypeManager qual_tm = new TypeManager("qualifier_types.properties");
 		String SUBHEADER_ORGANISM_TYPE = "ORGANISM";
 		String QUALIFIER_DB_XREF_TYPE = "db_xref";
@@ -35,7 +35,7 @@ public class GbkParser {
 				else if(state==0) {
 					if(line.startsWith("FEATURES")) {
 						if(loc!=null) {
-							if(!loc.isClosed()) loc.closeHeaders();
+							if(!loc.isClosed()) loc.closeHeaders(filename);
 						}
 						state = 1;
 						continue;
@@ -45,7 +45,7 @@ public class GbkParser {
 					if(prefix.trim().length()>0) {
 						if(prefix.startsWith("LOCUS")) {
 							StringTokenizer st = new StringTokenizer(line," \t");
-							if((loc!=null)&&(!loc.isClosed())) loc.close();
+							if((loc!=null)&&(!loc.isClosed())) loc.close(filename);
 							loc = new GbkLocus(line_num, st.nextToken(),ret);
 							head = null;
 							sub = null;
@@ -57,7 +57,7 @@ public class GbkParser {
 							String type = prefix.trim();
 							head = new GbkHeader(line_num,type,line);
 							sub = null;
-							loc.addHeader(head);
+							loc.addHeader(head, filename);
 						}
 					} else {
 						if(sub!=null) {
@@ -79,7 +79,7 @@ public class GbkParser {
 						if(feat!=null) feat.close(params);
 						feat = null;
 						if(!loc.isClosed()) {
-							loc.close();
+							loc.close(filename);
 						}
 						seq = new GbkSequence(loc, ret);
 						loc = null;
@@ -95,7 +95,7 @@ public class GbkParser {
 						feat = new GbkFeature(line_num,prefix,line);
 						if(qual!=null) qual.close();
 						qual = null;
-						loc.addFeature(feat);
+						loc.addFeature(feat, filename);
 					}
 					else {
 						if((line.startsWith("/"))&&(qual_tm.isType(line.substring(1)))) {
@@ -141,7 +141,7 @@ public class GbkParser {
 				}
 				else if(state==2) {
 					if(line.startsWith("//")) {
-						seq.close();
+						seq.close(filename);
 						seq = null;
 						state = 0;
 						continue;
@@ -149,39 +149,40 @@ public class GbkParser {
 					StringTokenizer st = new StringTokenizer(line," \t");
 					st.nextToken();
 					while(st.hasMoreTokens()) {
-						seq.append(st.nextToken());
+						seq.append(st.nextToken(), filename);
 					}
 				}
 			}
 		} catch (Throwable t) {
-			throw new IllegalStateException("Error parsing GBK-file at line " + line_num + " (" + t.getMessage() + ")", t);
+			throw new IllegalStateException("Error parsing GBK-file "+filename+" at line " + line_num + " (" + t.getMessage() + ")", t);
 		}
-		if((loc!=null)&&(loc.isClosed())) loc.close();
-		if(seq!=null) seq.close();				
+		if((loc!=null)&&(loc.isClosed())) loc.close(filename);
+		if(seq!=null) seq.close(filename);
 	}
 
     public static void main(String[] args) throws Exception {
     	final PrintWriter pw = new PrintWriter("test/parse.txt");
-        BufferedReader br = new BufferedReader(new FileReader(new File("test/Pseudomonas_stutzeri_DSM_10701.gb")));
-        parse(br, new GbkParsingParams(false), new GbkCallback() {
+        final String filename = "Pseudomonas_stutzeri_DSM_10701.gb";
+        BufferedReader br = new BufferedReader(new FileReader(new File("test/" + filename)));
+        parse(br, new GbkParsingParams(false), filename, new GbkCallback() {
             @Override
-            public void setGenome(String contigName, String genomeName, int taxId, String plasmid) throws Exception {
+            public void setGenomeTrackFile(String contigName, String genomeName, int taxId, String plasmid, String filename) throws Exception {
                 pw.println("setGenome: contigName=" + contigName + ", genomeName=" + genomeName + ", taxId=" + taxId + ", plasmid=" + plasmid);
             }
 
             @Override
-            public void addHeader(String contigName, String headerType, String value, List<GbkSubheader> items) throws Exception {
+            public void addHeaderTrackFile(String contigName, String headerType, String value, List<GbkSubheader> items, String filename) throws Exception {
                 pw.println("addHeader: contigName=" + contigName + ", type=" + headerType + ", value=" + value + ", subheader=" + items);
             }
 
             @Override
-            public void addFeature(String contigName, String featureType, int strand, int start, int stop, List<GbkLocation> locations, List<GbkQualifier> props) throws Exception {
+            public void addFeatureTrackFile(String contigName, String featureType, int strand, int start, int stop, List<GbkLocation> locations, List<GbkQualifier> props, String filename) throws Exception {
                 pw.println("addFeature: contigName=" + contigName + ", type=" + featureType + ", " +
                         "start=" + start + ", stop=" + stop + ", strand=" + strand + ", locations=" + locations + ", props=" + props);
             }
 
             @Override
-            public void addSeqPart(String contigName, int seqPartIndex, String seqPart, int commonLen) {
+            public void addSeqPartTrackFile(String contigName, int seqPartIndex, String seqPart, int commonLen, String filename) {
                 pw.println("addSeqPart: contigName=" + contigName + ", seqPartIndex=" + seqPartIndex +
                         ", seqPart=" + seqPart.length());
             }

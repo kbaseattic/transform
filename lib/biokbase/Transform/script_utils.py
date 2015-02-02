@@ -1,3 +1,9 @@
+"""
+Provides utility functions for providing standardized behavior among python scripts.
+In addition, many of the functions are designed to significantly ease the burden
+to produce a new script for validation, transformation, or conversion.
+"""
+
 import sys
 import os
 import logging
@@ -9,6 +15,7 @@ import gzip
 import bz2
 import tarfile
 import zipfile
+import argparse
 
 import simplejson
 import magic
@@ -16,11 +23,49 @@ import ftputil
 import requests
 from requests_toolbelt import MultipartEncoder
 
-import biokbase.AbstractHandle.Client
+try:
+    from biokbase.HandleService.Client import HandleService 
+except:
+    from biokbase.AbstractHandle.Client import AbstractHandle as HandleService 
+
 import biokbase.workspace.client
 
 
+# override default ArgumentParser behavior
+class ArgumentParser(argparse.ArgumentParser):
+    def exit(self, status=1, message=None):
+        if message:
+            self._print_message(message, sys.stderr)
+        sys.exit(status)
+
+
+def get_token():
+    """
+    Retrieve the KBase token in the local shell environment.
+    """
+
+    token = os.environ.get("KB_AUTH_TOKEN")
+    
+    if token is None:
+        try:
+            stdout, stderr = subprocess.call(["kbase-whoami", "-t"])
+            
+            if stdout is not None:
+                return stdout
+            else:
+                raise None
+        except:
+            raise Exception("Unable to find token, export KB_AUTH_TOKEN")
+    else:
+        return token
+
+
 def stderrlogger(name, level=logging.INFO):
+    """
+    Return a standard python logger with a stderr handler attached and using a prefix
+    format that will make logging consistent between scripts.
+    """
+    
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
@@ -37,6 +82,11 @@ def stderrlogger(name, level=logging.INFO):
 
 
 def stdoutlogger(name, level=logging.INFO):
+    """
+    Return a standard python logger with a stdout handler attached and using a prefix
+    format that will make logging consistent between scripts.
+    """
+    
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
@@ -54,7 +104,9 @@ def stdoutlogger(name, level=logging.INFO):
 
 
 def parse_docs(docstring=None):
-    """Parses the docstring of a function and returns a dictionary of the elements."""
+    """
+    Parses the docstring of a function and returns a dictionary of the elements.
+    """
 
     # TODO, revisit this, probably can use other ways of doing this
     script_details = dict()
@@ -86,6 +138,10 @@ def parse_docs(docstring=None):
 
 
 def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
+    """
+    Unpack a data file that may be compressed or an archive.
+    """
+
     def extract_tar(tarPath):
         if not tarfile.is_tarfile(tarPath):
             raise Exception("Inavalid tar file " + tarPath)
@@ -186,7 +242,7 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
                     os.makedirs(infoPath)                    
 
                 if os.path.exists(os.path.join(infoPath,os.path.split(member.name)[-1])):
-                    raise Exception("Extracting zip contents will overwrite an existing file!")
+                    raise Exception("Extracting tar contents will overwrite an existing file!")
 
                 if member.isfile():
                     with io.open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
@@ -197,10 +253,15 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
 
 
 def download_file_from_shock(logger = None,
-                             shock_service_url = "https://kbase.us/services/shock-api/",
+                             shock_service_url = None,
                              shock_id = None,
-                             filePath = None,
+                             filename = None,
+                             directory = None,
                              token = None):
+    """
+    Given a SHOCK instance URL and a SHOCK node id, download the contents of that node
+    to a file on disk.
+    """
 
     header = dict()
     header["Authorization"] = "Oauth {0}".format(token)
@@ -209,17 +270,29 @@ def download_file_from_shock(logger = None,
 
     metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(shock_service_url, shock_id), headers=header, stream=True, verify=True)
     shock_metadata = metadata_response.json()['data']
-    fileName = shock_metadata['file']['name']
-    fileSize = shock_metadata['file']['size']
+    shockFileName = shock_metadata['file']['name']
+    shockFileSize = shock_metadata['file']['size']
     metadata_response.close()
         
     download_url = "{0}/node/{1}?download_raw".format(shock_service_url, shock_id)
         
-    data = requests.get(download_url, headers=header, stream=True, verify=ssl_verify)
-    size = int(data.headers['content-length'])
+    data = requests.get(download_url, headers=header, stream=True, verify=True)
 
-    filePath = os.path.join(filePath)
+    if filename is not None:
+        shockFileName = filename
 
+    if directory is not None:
+        filePath = os.path.join(directory, shockFileName)
+    else:
+        filePath = shockFileName
+
+    chunkSize = shockFileSize/4
+    
+    maxChunkSize = 2**30
+    
+    if chunkSize > maxChunkSize:
+        chunkSize = maxChunkSize
+    
     f = io.open(filePath, 'wb')
     try:
         for chunk in data.iter_content(chunkSize):
@@ -228,15 +301,18 @@ def download_file_from_shock(logger = None,
         data.close()
         f.close()      
     
-    extract_data(filePath)
+    extract_data(logger, filePath)
                              
 
 
 def upload_file_to_shock(logger = None,
-                         shock_service_url = "https://kbase.us/services/shock-api/",
+                         shock_service_url = None,
                          filePath = None,
                          ssl_verify = True,
                          token = None):
+    """
+    Use HTTP multi-part POST to save a file to a SHOCK instance.
+    """
 
     if token is None:
         raise Exception("Authentication token required!")
@@ -272,16 +348,19 @@ def upload_file_to_shock(logger = None,
 
 
 def getHandles(logger = None,
-               shock_service_url = "https://kbase.us/services/shock-api/",
-               handle_service_url = "https://kbase.us/services/handle_service/",
+               shock_service_url = None,
+               handle_service_url = None,
                shock_ids = None,
                handle_ids = None,
                token = None):
+    """
+    Retrieve KBase handles for a list of shock ids or a list of handle ids.
+    """
     
     if token is None:
         raise Exception("Authentication token required!")
 
-    hs = biokbase.AbstractHandle.Client.AbstractHandle(url=handle_url, token=token)
+    hs = HandleService(url=handle_service_url, token=token)
     
     handles = list()
     if shock_ids is not None:
@@ -294,16 +373,16 @@ def getHandles(logger = None,
             try:
                 logger.info("Found shock id {0}, retrieving information about the data.".format(sid))
 
-                response = requests.get("{0}/node/{1}".format(shock_url, sid), headers=header, verify=True)
+                response = requests.get("{0}/node/{1}".format(shock_service_url, sid), headers=header, verify=True)
                 info = response.json()["data"]
             except:
-                logger.error("There was an error retrieving information about the shock node id {0} from url {1}".format(sid, shock_url))
+                logger.error("There was an error retrieving information about the shock node id {0} from url {1}".format(sid, shock_service_url))
             
             try:
                 logger.info("Retrieving a handle id for the data.")
                 handle = hs.persist_handle({"id" : sid, 
                                            "type" : "shock",
-                                           "url" : shock_url,
+                                           "url" : shock_service_url,
                                            "file_name": info["file"]["name"],
                                            "remote_md5": info["file"]["checksum"]["md5"]})
                 handles.append(handle)
@@ -323,7 +402,7 @@ def getHandles(logger = None,
                 except:
                     logger.error("The input shock node id {} is already registered or could not be registered".format(sid))
 
-                    hs = AbstractHandle(url=handle_url, token=token)
+                    hs = HandleService(url=handle_service_url, token=token)
                     all_handles = hs.list_handles()
 
                     for x in all_handles:
@@ -337,7 +416,7 @@ def getHandles(logger = None,
                         logger.info("Trying again to get a handle id for the data.")
                         handle_id = hs.persist_handle({"id" : sid, 
                                            "type" : "shock",
-                                           "url" : shock_url,
+                                           "url" : shock_service_url,
                                            "file_name": info["file"]["name"],
                                            "remote_md5": info["file"]["checksum"]["md5"]})
                         handles.append(handle_id)
@@ -361,10 +440,16 @@ def getHandles(logger = None,
 def download_from_urls(logger = None,
                        working_directory = os.getcwd(),
                        urls = None,
-                       shock_service_url = "https://kbase.us/services/shock-api/",
                        ssl_verify = True,
                        token = None, 
                        chunkSize = 10 * 2**20):
+    """
+    Downloads urls defined by key names in a dictionary, with each key name getting
+    its own subdirectory and the contents of the url for that key deposited in the
+    subdirectory that matches the key name.  Key names are defined by developers in
+    a config file per upload conversion.
+    """
+    
     if token is None:
         raise Exception("Unable to find token!")
     

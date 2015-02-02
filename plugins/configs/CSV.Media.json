@@ -1,0 +1,21 @@
+{
+    "script_name": "trns_validate_CSV_Media.pl",
+    "script_type": "validate",
+    "external_type": "CSV.Media",
+    "user_description": "Validate CSV file for use in importing Media",
+    "developer_description": "Validate CSV file for use in importing Media",
+    "handler_options": {
+        "max_runtime": 360,
+        "must_own_validation": false,
+        "must_own_saving_to_workspace": false,
+        "custom_options": [],
+	"required_fields":
+	[
+	    "input_file_name"
+	],
+	"optional_fields":[],
+	"input_mapping": [{"input_file_name": "CSV.Media"}]		
+    },
+    "user_options": [],
+    "user_option_groups": []
+}

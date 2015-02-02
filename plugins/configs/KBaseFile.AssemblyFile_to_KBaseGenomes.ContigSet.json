@@ -1,0 +1,28 @@
+{
+    "script_name": "trns_transform_KBaseFile_AssemblyFile_to_KBaseGenomes_ContigSet.py", 
+    "script_type": "convert",
+    "source_kbase_type": "KBaseFile.AssemblyFile",
+    "destination_kbase_type": "KBaseGenomes.ContigSet",
+    "user_description": "",
+    "developer_description": "",
+    "handler_options": {
+        "required_fields": [ 
+            "workspace_service_url",
+            "source_workspace_name", 
+            "source_object_name", 
+            "destination_workspace_name", 
+            "destination_object_name", 
+            "working_directory"
+        ], 
+        "optional_fields": []
+    },
+    "user_options": [
+        { 
+            "name": "destination_object_name", 
+            "type": "string", 
+            "required": true, 
+            "help": "Name of the workspace object to create." 
+        }    
+    ],
+    "user_option_groups": []
+}

@@ -24,8 +24,6 @@ SCRIPT_NAME = 'trns_transform_KBaseFile_AssemblyFile_to_KBaseGenomes_ContigSet'
 TOKEN = os.environ.get('KB_AUTH_TOKEN')
 
 # TODO simplify code - remove fasta-key, found_sequence
-# TODO remove double logging
-# TODO port Jason's check for an empty file
 
 # TODO this is almost entirely duplicated in Jason's fasta->CS script. Move?
 # copied from Jason's fasta-CS script. Some unnecessary parts were cut out,
@@ -147,6 +145,8 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
         raise Exception(
             "There is no sequence related to FASTA record: {0}".format(
                 fasta_header))
+    elif not first_header_found:
+        raise Exception("There are no contigs in this file")
     else:
         # build up sequence and remove all white space
         total_sequence = ''.join(sequence_list)

@@ -18,7 +18,6 @@ import subprocess
 from deep_eq import deep_eq
 
 # TODO run this with makefile
-# TODO test w/ empty file
 
 KEEP_CURRENT_VENV = False
 
@@ -98,6 +97,10 @@ class Test_Scripts(object):
             'test_files/sample_missing_data_ws.fa',
             'test_files/AssemblyFile.json', src_ws,
             'test_assy_file_missing_data_ws', 'assy_file_missing_data_ws')
+        cls.load_assy_file_data(
+            'test_files/empty.fa',
+            'test_files/AssemblyFile.json', src_ws,
+            'test_assy_file_empty', 'assy_file_empty')
 
     @classmethod
     def load_assy_file_data(cls, fa_file, ws_file, src_ws, src_obj_name, key,
@@ -250,6 +253,12 @@ class Test_Scripts(object):
         expect = 'There is no sequence related to FASTA record: id3 desc3'
         self.fail_on_assyfile_staged_data(
             'assy_file_missing_data_ws', expect, this_function_name)
+
+    def test_assyfile_to_cs_fail_empty_file(self):
+        this_function_name = sys._getframe().f_code.co_name
+        expect = 'There are no contigs in this file'
+        self.fail_on_assyfile_staged_data(
+            'assy_file_empty', expect, this_function_name)
 
     def test_assyfile_to_cs_fail_bad_shock_node(self):
         this_function_name = sys._getframe().f_code.co_name

@@ -7,16 +7,14 @@ from __future__ import print_function
 import os
 import inspect
 from biokbase.Transform import script_utils
-from biokbase.Transform.handler_utils import PlugIns
 from biokbase.AbstractHandle.Client import AbstractHandle
 from bzrlib.config import ConfigObj
 import json
 from biokbase.workspace.client import Workspace
 import random
 import sys
-import subprocess
 from deep_eq import deep_eq
-import base64
+from biokbase.Transform.drivers import TransformTaskRunnerDriver
 
 # TODO run this with makefile
 
@@ -36,6 +34,11 @@ TRANSFORM_LOC = os.path.join(FILE_LOC, '../../')
 PLUGIN_CFG_LOC = os.path.join(TRANSFORM_LOC, 'plugins/configs')
 TEST_CFG_LOC = os.path.join(FILE_LOC, TEST_CFG_FILE)
 
+URL_SHORTCUTS = {'workspace_service_url': 'ws_url',
+                 'shock_service_url': 'shock_url',
+                 'handle_service_url': 'handle_url',
+                 'ujs_service_url': 'ujs_url'}
+
 
 class Test_Scripts(object):
 
@@ -45,10 +48,10 @@ class Test_Scripts(object):
         if not cls.token:
             raise ValueError('No token found in environment variable ' +
                              KB_TOKEN)
-        cls.plugins_cfg = PlugIns(PLUGIN_CFG_LOC)
         cfg = ConfigObj(TEST_CFG_LOC)
-        for url in ['ws_url', 'shock_url', 'handle_url', 'ujs_url']:
-            setattr(cls, url, cfg.get(url))
+        for url in URL_SHORTCUTS:
+            setattr(cls, URL_SHORTCUTS[url], cfg.get(url))
+        cls.runner = TransformTaskRunnerDriver(cfg, PLUGIN_CFG_LOC)
         tve = TransformVirtualEnv(FILE_LOC, 'venv', TRANSFORM_LOC,
                                   keep_current_venv=KEEP_CURRENT_VENV)
         tve.activate_for_current_py_process()
@@ -156,21 +159,8 @@ class Test_Scripts(object):
 
     @classmethod
     def run_convert_taskrunner(cls, args):
-        job_details = cls.plugins_cfg.get_job_details("convert", args)
-        args['optional_arguments'] = base64.urlsafe_b64encode(
-            json.dumps(args['optional_arguments']))
-        args['job_details'] = base64.urlsafe_b64encode(
-            json.dumps(job_details))
-
-        command_list = ['trns_convert_taskrunner.py']
-        for k in args:
-            command_list.append("--{0}".format(k))
-            command_list.append("{0}".format(args[k]))
-
-        task = subprocess.Popen(command_list, stderr=subprocess.PIPE,
-                                stdout=subprocess.PIPE)
-        so, se = task.communicate()
-        return so, se, task.returncode
+        _, results = cls.runner.run_job('convert', args)
+        return results['stdout'], results['stderr'], results['exit_code']
 
     def test_assyfile_to_cs_basic_ops(self):
         this_function_name = sys._getframe().f_code.co_name

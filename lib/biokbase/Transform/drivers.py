@@ -13,6 +13,7 @@ import tarfile
 import json
 import pprint
 import subprocess
+import base64
 
 # patch for handling unverified certificates
 import ssl
@@ -29,8 +30,8 @@ try:
     import simplejson
 
     import biokbase.Transform.Client
-    import biokbase.Transform.script_utils
-    import biokbase.Transform.handler_utils
+    import biokbase.Transform.script_utils as script_utils
+    import biokbase.Transform.handler_utils as handler_utils
     import biokbase.userandjobstate.client
     import biokbase.workspace.client
 
@@ -42,25 +43,27 @@ except ImportError, e:
     raise ImportError("Your environment is not setup correctly : {0}".format(e.message))
 
 
-
 class TransformDriver(object):
-    def __init__(self, service_urls=dict(), logger=biokbase.Transform.script_utils.stdoutlogger(__file__)):        
+    def __init__(self, service_urls=dict(),
+                 logger=biokbase.Transform.script_utils.stdoutlogger(
+                     __file__)):
         self.logger = logger
-        
+
         if self.logger is None:
-            raise Exception("The logger instance you provided appears to be None.")
-        
+            raise Exception(
+                "The logger instance you provided appears to be None.")
+
         logger.info("Instantiating Transform Client Driver")
-        
+
         self.token = biokbase.Transform.script_utils.get_token()
-        
+
         # create all service clients
-        if service_urls.has_key("transform_service_url"):        
+        if service_urls.has_key("transform_service_url"):
             self.transform_client = biokbase.Transform.Client.Transform(url=service_urls["transform_service_url"], token=self.token)
         else:
             raise Exception("Missing transform_service_url")
 
-        if service_urls.has_key("ujs_service_url"):        
+        if service_urls.has_key("ujs_service_url"):
             self.ujs_client = biokbase.userandjobstate.client.UserAndJobState(url=service_urls["ujs_service_url"], token=self.token)
         else:
             raise Exception("Missing ujs_service_url")
@@ -75,16 +78,16 @@ class TransformDriver(object):
         else:
             raise Exception("Missing shock_service_url")
 
-        if service_urls.has_key("workspace_service_url"):        
+        if service_urls.has_key("workspace_service_url"):
             self.workspace_client = biokbase.workspace.client.Workspace(url=service_urls["workspace_service_url"], token=self.token)
         else:
             raise Exception("Missing workspace_service_url")
 
-        if service_urls.has_key("handle_service_url"):        
+        if service_urls.has_key("handle_service_url"):
             self.handle_client = HandleClient(url=service_urls["handle_service_url"], token=self.token)
         else:
             raise Exception("Missing handle_service_url")
-    
+
 
 class TransformClientDriver(TransformDriver):
     def __init__(self, service_urls=dict(), logger=None):
@@ -171,22 +174,34 @@ class TransformClientDriver(TransformDriver):
                 self.logger.info("{0}".format(error_message))
                 return (False, status)
 
-    
+
 class TransformTaskRunnerDriver(TransformDriver):
-    def __init__(self, service_urls=dict(), logger=None, plugin_directory=None):
-        super(TransformDriver, self).__init__(service_urls, logger)
-        
-        if plugin_directory is None or not os.path.exists(plugin_directory):
-            raise ("No plugins directory found!")
-        
+
+    def __init__(self, service_urls, plugin_directory,
+                 logger=script_utils.stderrlogger(__file__)):
+        if not service_urls:
+            raise ValueError('Must provide a dictionary of service urls')
+        super(TransformTaskRunnerDriver, self).__init__(service_urls, logger)
+
+        if not plugin_directory or not os.path.exists(plugin_directory):
+            raise ValueError("No plugins directory found!")
+        self._plugin_dir = plugin_directory
         self.load_plugins()
 
-        
-    def load_plugins(self):
-        self.pluginManager = handler_utils.PluginManager(directory=plugin_directory, logger=self.logger)
+    '''
+    Load plugins from the directory configured in __init__. If
+    plugin_directory is provided, it overrides the configured directory
+    temporarily.
+    '''
+    def load_plugins(self, plugin_directory=None):
+        plugins = self._plugin_dir
+        if (plugin_directory):
+            plugins = plugin_directory
 
+        self.pluginManager = handler_utils.PluginManager(
+            directory=plugins, logger=self.logger)
 
-    def run_job(self, method=None, arguments=None, description=None):
+    def run_job(self, method, arguments, description=None):
         if method == "upload":
             command_list = ["trns_upload_taskrunner"]
         elif method == "download":
@@ -194,39 +209,43 @@ class TransformTaskRunnerDriver(TransformDriver):
         elif method == "convert":
             command_list = ["trns_convert_taskrunner"]
         else:
-            raise Exception("Unrecognized method {0}.  Unable to begin.".format(method))
+            raise Exception("Unrecognized method {0}.  Unable to begin."
+                            .format(method))
 
         if arguments is None:
             raise Exception("Missing arguments")
 
-        arguments["job_details"] = self.pluginManager.get_job_details(method,input_object)
+        arguments["job_details"] = self.pluginManager.get_job_details(
+            method, arguments)
 
         for k in arguments:
-            if type(arguments[x]) == type(dict()):
-                args[x] = base64.urlsafe_b64encode(simplejson.dumps(arguments[x]))
+            if type(arguments[k]) == type(dict()):
+                arguments[k] = base64.urlsafe_b64encode(
+                    simplejson.dumps(arguments[k]))
 
             command_list.append("--{0}".format(k))
             command_list.append("{0}".format(arguments[k]))
 
-        estimated_running_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=int(3000))
-        ujs_job_id = self.ujs_client.create_and_start_job(self.token, 
-                                                          "Starting", 
-                                                          description, 
-                                                          {"ptype": "task", "max": 100}, 
-                                                          estimated_running_time.strftime('%Y-%m-%dT%H:%M:%S+0000'));
-        
-        taskrunner = subprocess.Popen(command_list, stderr=subprocess.PIPE)
-        stdout, stderr = task.communicate()
+        estimated_running_time = (datetime.datetime.utcnow() +
+                                  datetime.timedelta(minutes=int(3000)))
+        ujs_job_id = self.ujs_client.create_and_start_job(
+            self.token, "Starting", description, {"ptype": "task", "max": 100},
+            estimated_running_time.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+
+        taskrunner = subprocess.Popen(command_list, stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE)
+        stdout, stderr = taskrunner.communicate()
 
         task_output = dict()
-        task_output["stdout"] = stdout
-        task_output["stderr"] = stderr
-                
-        if task.returncode != 0:
+        task_output['stdout'] = stdout
+        task_output['stderr'] = stderr
+        task_output['ujs_id'] = ujs_job_id
+        task_output['exit_code'] = taskrunner.returncode
+
+        if taskrunner.returncode != 0:
             return (False, task_output)
         else:
             return (True, task_output)
-
 
 
 class TransformClientTerminalDriver(TransformClientDriver):

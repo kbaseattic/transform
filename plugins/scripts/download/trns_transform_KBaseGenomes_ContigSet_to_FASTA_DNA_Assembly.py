@@ -107,6 +107,9 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
         logger.warning("This ContigSet does not have a fasta_ref to shock.  The fasta file will be attempted to be built from contig sequences in the object.")
         
         output_file = os.path.join(working_directory,temp_file_name)
+        if not contig_set["data"]["contigs"]:
+            #The contig list is empty
+            raise Exception("This ContigSet does not have a fasta_ref to shock and does not have any contigs. Likely due to the ContigSet being too large.")
 
         with open(output_file, "w") as outFile:
             for contig in contig_set["data"]["contigs"]:
@@ -117,7 +120,7 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
                     outFile.write(insert_newlines(contig["sequence"],80))
                 else:
                     outFile.close()    
-                    raise IOError("This ContigSet does not have a fasta_ref to shock or sequences in the contigs. A fasta file can not be created.")
+                    raise IOError("This ContigSet does not have a fasta_ref to shock or sequences in the contigs. A fasta file can not be created.  Likely dueto the ContigSet being too large.")
     
     if output_file_name is not None and len(output_file_name) > 0:
         name = os.listdir(working_directory)[0]

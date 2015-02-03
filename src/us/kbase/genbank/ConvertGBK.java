@@ -54,8 +54,20 @@ public class ConvertGBK {
 
     String allowed_objname_chars = "|._-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
+    WorkspaceClient wc = null;
+
 
     boolean isTest = false;
+
+
+    /**
+     *
+     * @param workc
+     * @throws Exception
+     */
+    public ConvertGBK(WorkspaceClient workc) throws Exception {
+        wc = workc;
+    }
 
     /**
      * @param args
@@ -63,6 +75,39 @@ public class ConvertGBK {
      */
     public ConvertGBK(String[] args) throws Exception {
 
+        init(args);
+
+        run();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public void run() throws Exception {
+        System.out.println("indir " + indir);
+
+        parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
+            @Override
+            public List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> saveObjects(
+                    String authToken, SaveObjectsParams params) throws Exception {
+                //validateObject(validator, params.getObjects().get(0).getName(),
+                //			params.getObjects().get(0).getData(), params.getObjects().get(0).getType());
+                return null;
+            }
+
+            @Override
+            public List<ObjectData> getObjects(String authToken,
+                                               List<ObjectIdentity> objectIds) throws Exception {
+                throw new IllegalStateException("Unsupported method");
+            }
+        }, wsname, wsurl, isTest);
+    }
+
+    /**
+     * @param args
+     * @throws FileNotFoundException
+     */
+    public void init(String[] args) throws FileNotFoundException {
         for (int i = 0; i < args.length; i++) {
             int index = Arrays.asList(argsPossible).indexOf(args[i]);
             if (index > -1) {
@@ -135,25 +180,6 @@ public class ConvertGBK {
                 System.out.println("workdir 2 " + workdir.getAbsolutePath());
             }
         }
-
-
-        System.out.println("indir " + indir);
-
-        parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
-            @Override
-            public List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> saveObjects(
-                    String authToken, SaveObjectsParams params) throws Exception {
-                //validateObject(validator, params.getObjects().get(0).getName(),
-                //			params.getObjects().get(0).getData(), params.getObjects().get(0).getType());
-                return null;
-            }
-
-            @Override
-            public List<ObjectData> getObjects(String authToken,
-                                               List<ObjectIdentity> objectIds) throws Exception {
-                throw new IllegalStateException("Unsupported method");
-            }
-        }, wsname, wsurl, isTest);
     }
 
     /**
@@ -382,7 +408,7 @@ public class ConvertGBK {
             //System.out.println(http);
 
             try {
-                WorkspaceClient wc = null;
+
 
                 if (isTestThis) {
                     System.out.println("using test mode");

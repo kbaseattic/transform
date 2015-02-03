@@ -320,9 +320,9 @@ public class GenometoGbk {
                         !outfile.endsWith(".genbank") && !outfile.endsWith(".gbff") && !outfile.endsWith(".gbf")) {
                     outname = outfile + numfile + ".gbk";
                 }
-            } else if (curcontig.getName() != null) {
+            } /*else if (curcontig.getName() != null && ) {
                 outname = curcontig.getName() + ".gbk";
-            } else if (curcontig.getId() != null) {
+            }*/ else if (curcontig.getId() != null) {
                 outname = curcontig.getId() + ".gbk";
             } else if (genome.getId() != null && curcontig.getId() != null) {
                 outname = genome.getId() + "_" + curcontig.getId();

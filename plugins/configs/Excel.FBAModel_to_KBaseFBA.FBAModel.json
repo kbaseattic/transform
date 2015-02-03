@@ -1,7 +1,7 @@
 {
     "script_name": "trns_transform_Excel_FBAModel_to_KBaseFBA_FBAModel.pl",
     "script_type": "upload",
-    "external_type": "Excel",
+    "external_type": "Excel.FBAModel",
     "kbase_type": "KBaseFBA.FBAModel",
     "user_description": "Converts Excel file to FBAModel object in workspace.",
     "url_mapping": ["Excel.FBAModel"],    

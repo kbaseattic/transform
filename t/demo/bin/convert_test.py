@@ -163,7 +163,8 @@ if __name__ == "__main__":
                        "source_object_name": args.source_object_name,
                        "destination_kbase_type": args.destination_kbase_type,
                        "destination_workspace_name": args.destination_workspace_name,
-                       "destination_object_name": args.destination_object_name}
+                       "destination_object_name": args.destination_object_name,
+                       "optional_arguments": {"transform": {}}}
 
         demos = [user_inputs]
     else:
@@ -172,15 +173,16 @@ if __name__ == "__main__":
                         "source_object_name": "final.assembly.fasta",
                         "destination_kbase_type": "KBaseGenomes.ContigSet",
                         "destination_workspace_name": "upload_testing",
-                        "destination_object_name": "tastythunderyak"}
+                        "destination_object_name": "tastythunderyak",
+                        "optional_arguments": {"transform": {}}}
 
         snacksonyaks = {"source_kbase_type": "KBaseFile.AssemblyFile",
                         "source_workspace_name": "gavinws",
                         "source_object_name": "kayak",
                         "destination_kbase_type": "KBaseGenomes.ContigSet",
                         "destination_workspace_name": "upload_testing",
-                        "destination_object_name": "bitterthunderyak"
-                       }
+                        "destination_object_name": "bitterthunderyak",
+                        "optional_arguments": {"transform": {}}}
 
         demos = [bigyakattack, snacksonyaks]
     
@@ -225,7 +227,8 @@ if __name__ == "__main__":
                                         "source_object_name": source_object_name,
                                         "destination_kbase_type": destination_kbase_type,
                                         "destination_workspace_name": destination_workspace_name,
-                                        "destination_object_name": destination_object_name
+                                        "destination_object_name": destination_object_name,
+                                        "optional_arguments": {"transform": {}}
                                        }, 
                                        token)
             print term.blue("\tTransform service conversion requested:")

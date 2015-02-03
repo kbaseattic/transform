@@ -4,8 +4,10 @@ import os
 import time
 import logging
 import logging.handlers
+import base64
 
 #import pymemcache.client
+import simplejson
 
 from biokbase.workflow.KBW import run_async
 import biokbase.Transform.handler_utils as handler_utils
@@ -62,7 +64,11 @@ type but different versions.
         #memcacheClient = self._get_memcache_client()
 
         # filter the config information for this request so that the script arguments are proper
-        args = self.pluginManager.get_handler_args(method, args)
+        args["job_details"] = self.pluginManager.get_job_details(method, args)
+
+        for x in args:
+            if type(args[x]) == type(dict()):
+                args[x] = base64.urlsafe_b64encode(simplejson.dumps(args[x]))
         
         return run_async(self.config, ctx, args)
 

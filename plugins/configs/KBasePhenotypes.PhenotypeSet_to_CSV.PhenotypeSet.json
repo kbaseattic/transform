@@ -1,7 +1,7 @@
 { 
     "script_name": "trns_transform_KBasePhenotypes_PhenotypeSet_to_CSV_PhenotypeSet.pl", 
     "script_type": "download", 
-    "external_type": "CSV_PhenotypeSet", 
+    "external_type": "CSV.PhenotypeSet", 
     "kbase_type": "KBasePhenotypes.PhenotypeSet", 
     "user_description": "Download phenotype set in CSV format", 
     "developer_description": "Download phenotype set in CSV format", 
@@ -10,9 +10,9 @@
         "required_fields": [ 
             "object_name",
             "workspace_name",
-	    "workspace_service_url" 
+	        "workspace_service_url"
         ], 
-        "optional_fields": [], 
+        "optional_fields": ["object_version"], 
         "custom_options": [] 
     },  
     "user_options": [ 
@@ -21,7 +21,13 @@
             "type": "string", 
             "required": true, 
             "help": "Name of the workspace object." 
-        } 
+        },
+        { 
+            "name": "object_version", 
+            "type": "int", 
+            "required": false,
+            "help": "Version of the phenotype set object, if not given we assume the latest."
+        }          
     ], 
     "user_option_groups": [] 
 }

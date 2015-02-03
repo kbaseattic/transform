@@ -1,0 +1,42 @@
+{
+    "contigs": [
+        {
+            "description": "Note MD5 is generated from uppercasing the sequence", 
+            "sequence": "MSLLFQQTVPLSHLHRSLDPPLCFRTHILLILLLLSRHLPGFTGSDCESADPSIVSAIAPGTATTSERDCPVRTAGSDPVPIGDSGTFFDVGTAAPELLSPNRHHMITRAKDGIRKPNPRYNLFTQKYTPSEPKTITSASQDGDKLCKKRCRH", 
+            "name": "id1 desc1", 
+            "length": 153, 
+            "id": "id1 desc1", 
+            "md5": "bbbd1d7c1c462c0b3bbf4b7d699002e3"
+        }, 
+        {
+            "description": "Note MD5 is generated from uppercasing the sequence", 
+            "sequence": "MFQFAKFSKSKERRLATELGYGFPIGDPWITDGISPWPFASESVLPSQCPGIHPMHSFRSCTQGTLNTTKISMKLTISDCGFEPLTEGFTVLHSTRATTCYHFLFNS", 
+            "name": "id2 desc2", 
+            "length": 107, 
+            "id": "id2 desc2", 
+            "md5": "5a6c2f721ad11e2316d04e6072acc2cb"
+        }, 
+        {
+            "description": "Note MD5 is generated from uppercasing the sequence", 
+            "sequence": "MTKREYNSQPEMLEGAKSIGAGAATIASAGAAIGIGNVFSSLIHSVARNPSLATTTVLVVTLTLLGGVAAFYLHSFRLKGPLKKIIYLFLVFFIAVGISLIRIKAIHLLGLALPLLVPPLVWNAIGGGGEALPSTGPNGASSYSEWFTYTSDLEDSASSGRTSSSVNQPIQREQAGPSNALPEPAASPVAQQQDHLDQPFGEGGEREARAQEHDRISAEVETITSACENLEAAMVRKAHILLHQRGVTLGDPEDVKRALQLALHDDWEHDIDDRKRHFTVLRRDFGTARCERWNPFIDELRGLGNRQVNARHYVD", 
+            "name": "id3 desc3", 
+            "length": 315, 
+            "id": "id3 desc3", 
+            "md5": "d56a5655d9cddaf07529cb2deb4b554f"
+        }, 
+        {
+            "description": "Note MD5 is generated from uppercasing the sequence", 
+            "sequence": "MSGVYLTVPQAPELINERIPSFTASCSEVAPEHSEMPLTVIYIVLPVVMESQLESTLDILWIPESYSTLMQENMGFPYHGRLQILAGARDSLYLGRDAVVLLCPSLPFPTFTKWLIQVILLLSYWGSGGFG", 
+            "name": "id4 desc4", 
+            "length": 131, 
+            "id": "id4 desc4", 
+            "md5": "ce77023adc6728ed962485febb7ffc85"
+        }
+    ], 
+    "fasta_ref": "FAKE", 
+    "name": "foo2", 
+    "source": "JGI", 
+    "source_id": "546544ab0d8785589ead8b33", 
+    "id": "foo2", 
+    "md5": "f4eab2ce8821bd24e8c1c0df1896918f"
+}

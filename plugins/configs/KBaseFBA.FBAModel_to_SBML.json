@@ -10,7 +10,8 @@
         "required_fields": [ 
             "object_name",
             "workspace_name",
-            "workspace_service_url" 
+            "workspace_service_url",
+            "fba_service_url" 
         ], 
         "optional_fields": ["version"], 
         "custom_options": []

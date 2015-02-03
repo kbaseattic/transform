@@ -185,7 +185,7 @@ class PlugIns(object):
                     id = pconfig["external_type"]
                 elif pconfig["script_type"] == "upload":
                     if pconfig["external_type"] not in self.scripts_config["external_types"]:
-		                self.scripts_config["external_types"].append(pconfig["external_type"])
+                        self.scripts_config["external_types"].append(pconfig["external_type"])
                     
                     if pconfig["kbase_type"] not in self.scripts_config["kbase_types"]:
                         self.scripts_config["kbase_types"].append(pconfig["kbase_type"])

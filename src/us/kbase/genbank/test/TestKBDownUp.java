@@ -171,9 +171,9 @@ public class TestKBDownUp {
                     int count5 = 0;
                     for (String s : ar2) {
                         cmd2 += s;
-                        if (count4 < ar2.size() - 1)
+                        if (count5 < ar2.size() - 1)
                             cmd2 += ",";
-                        count4++;
+                        count5++;
                     }
 
                     System.out.println("Error down " + cmd1);

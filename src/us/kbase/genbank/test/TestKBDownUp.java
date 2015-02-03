@@ -151,7 +151,6 @@ public class TestKBDownUp {
                     cg.init(argsgt2);
                     cg.run();
 
-
                     File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
                     rmdir(tobermed);
 

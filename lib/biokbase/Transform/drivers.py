@@ -26,6 +26,7 @@ try:
     import blessings
     import dateutil.parser
     import dateutil.tz
+    import simplejson
 
     import biokbase.Transform.Client
     import biokbase.Transform.script_utils
@@ -70,7 +71,7 @@ class TransformDriver(object):
             raise Exception("Missing awe_service_url")
 
         if service_urls.has_key("shock_service_url"):
-            self.awe_service_url = service_urls["shock_service_url"]
+            self.shock_service_url = service_urls["shock_service_url"]
         else:
             raise Exception("Missing shock_service_url")
 
@@ -91,7 +92,7 @@ class TransformClientDriver(TransformDriver):
 
     def get_workspace_object_list(self, workspace_name=None, object_name=None):
         object_list = self.workspace_client.list_objects({"workspaces": [workspace_name]})
-        return [x for x in object_list if object_name in x[1]]
+        return [x for x in object_list if object_name == x[1]]
 
 
     def get_workspace_object_contents(self, workspace_name=None, object_name=None):
@@ -101,26 +102,37 @@ class TransformClientDriver(TransformDriver):
     def get_job_debug(self, awe_job_id=None, ujs_job_id=None):
         debug_details = dict()
         debug_details["ujs"] = dict()
-        debug_details["ujs"]["error"] = self.ujs_client.get_detailed_error(ujs_job_id)
-        debug_details["ujs"]["results"] = self.ujs_client.get_results(ujs_job_id)
+
+        try:
+            debug_details["ujs"]["error"] = self.ujs_client.get_detailed_error(ujs_job_id)
+            debug_details["ujs"]["results"] = self.ujs_client.get_results(ujs_job_id)
+        except Exception, e:
+            self.logger.exception(e)
 
         header = dict()
         header["Authorization"] = "Oauth {0}".format(self.token)
 
-        debug_details["awe"] = dict()    
-        # check awe job output
-        awe_details = requests.get("{0}/job/{1}".format(self.awe_service_url,awe_job_id), headers=header, verify=True)
-        debug_details["awe"]["details"] = awe_details.json()["data"]
-    
-        awe_stdout = requests.get("{0}/work/{1}?report=stdout".format(self.awe_service_url,
+        debug_details["awe"] = dict()
+                    
+        try:
+            # check awe job output
+            awe_details = requests.get("{0}/job/{1}".format(self.awe_service_url,awe_job_id), headers=header, verify=True)
+
+            awe_response = awe_details.json()
+                    
+            debug_details["awe"]["details"] = awe_response["data"]
+                
+            awe_stdout = requests.get("{0}/work/{1}?report=stdout".format(self.awe_service_url,
                                   debug_details["awe"]["details"]["tasks"][0]["taskid"]+"_0"), 
                                   headers=header, verify=True).json()["data"]
-        awe_stderr = requests.get("{0}/work/{1}?report=stderr".format(self.awe_service_url,
+            awe_stderr = requests.get("{0}/work/{1}?report=stderr".format(self.awe_service_url,
                                   debug_details["awe"]["details"]["tasks"][0]["taskid"]+"_0"), 
                                   headers=header, verify=True).json()["data"]
         
-        debug_details["awe"]["stdout"] = awe_stdout
-        debug_details["awe"]["stderr"] = awe_stderr
+            debug_details["awe"]["stdout"] = awe_stdout
+            debug_details["awe"]["stderr"] = awe_stderr
+        except Exception, e:
+            self.logger.exception(e)
         
         return debug_details
 
@@ -247,24 +259,35 @@ class TransformClientTerminalDriver(TransformClientDriver):
     def show_job_debug(self, awe_job_id=None, ujs_job_id=None):
         debug_details = self.get_job_debug(awe_job_id, ujs_job_id)
     
-        print debug_details
-    
-        print self.terminal.red("{0}".format(debug_details["ujs"]["error"]))
-        print self.terminal.red("{0}".format(debug_details["ujs"]["results"]))
+        if not debug_details.has_key("ujs"):
+            raise Exception("Missing UJS debug output")
+        
+        if debug_details["ujs"].has_key("error"):
+            print self.terminal.red("{0}".format(debug_details["ujs"]["error"]))
+        else:
+            print "No UJS error message present"
+        
+        if debug_details["ujs"].has_key("results"):
+            print self.terminal.red("{0}".format(debug_details["ujs"]["results"]))
+        else:
+            print "No UJS results present"
 
         header = dict()
         header["Authorization"] = "Oauth {0}".format(self.token)
     
+        if not debug_details.has_key("awe") or not debug_details["awe"].has_key("details"):
+            raise Exception("Missing AWE debug output")
+        
         print self.terminal.bold("Additional AWE job details for debugging")
         print self.terminal.red(simplejson.dumps(debug_details["awe"]["details"], sort_keys=True, indent=4))
     
-        if debug_details["awe"]["stdout"] is not None:
+        if debug_details["awe"].has_key("stdout") and debug_details["awe"]["stdout"] is not None:
             stdout_lines = debug_details["awe"]["stdout"].split("\n")
             print self.terminal.red("STDOUT : ")
             for x in stdout_lines:
                 print self.terminal.red("\t" + x)
     
-        if debug_details["awe"]["stderr"] is not None:
+        if debug_details["awe"].has_key("stderr") and debug_details["awe"]["stderr"] is not None:
             stderr_lines = debug_details["awe"]["stderr"].split("\n")
             print self.terminal.red("STDERR : ")
             for x in stderr_lines:

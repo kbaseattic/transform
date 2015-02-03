@@ -4,6 +4,7 @@ import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
 import us.kbase.common.service.Tuple11;
+import us.kbase.genbank.ConvertGBK;
 import us.kbase.genbank.GenometoGbk;
 import us.kbase.workspace.ListObjectsParams;
 import us.kbase.workspace.WorkspaceClient;
@@ -19,11 +20,10 @@ import java.util.Map;
 /**
  * Created by Marcin Joachimiak
  * User: marcin
- * Date: 1/29/15
- * Time: 7:50 PM
+ * Date: 2/2/15
+ * Time: 11:38 PM
  */
-public class TestKBDownload {
-
+public class TestKBDownUp {
     boolean isTest;
 
     String[] argsPossible = {"-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
@@ -35,7 +35,7 @@ public class TestKBDownload {
     /**
      * @param args
      */
-    public TestKBDownload(String[] args) {
+    public TestKBDownUp(String[] args) {
 
         for (int i = 0; i < args.length; i++) {
             int index = Arrays.asList(argsPossible).indexOf(args[i]);
@@ -95,9 +95,9 @@ public class TestKBDownload {
                 System.out.println(count + "\t" + t.getE2() + "\t" + ((double) t.getE10() / (double) (1024 ^ 2)) + "M");
                 count++;
 
+                List<String> ar = new ArrayList();
+                List<String> ar2 = new ArrayList();
                 try {
-
-                    List<String> ar = new ArrayList();
 
                     ar.add("--workspace_name");
                     ar.add("KBasePublicGenomesV5");
@@ -106,7 +106,8 @@ public class TestKBDownload {
                     ar.add("--object_name");
                     ar.add(t.getE2());
                     ar.add("--working_directory");
-                    ar.add(workdir.getAbsolutePath() + "/" + t.getE2().replace('|', '_'));
+                    final String cleangenomeid = t.getE2().replace('|', '_');
+                    ar.add(workdir.getAbsolutePath() + "/" + cleangenomeid);
 
                     if (isTest) {
                         ar.add("--test");
@@ -122,8 +123,61 @@ public class TestKBDownload {
                     GenometoGbk gt = new GenometoGbk(wc);
                     gt.init(argsgt);
                     gt.run();
+
+                    //String[] argsPossible = {"-i", "--input_directory", "-o", "--object_name", "-oc", "--contigset_object_name",
+                    //"-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
+
+                    ar2.add("--workspace_name");
+                    ar2.add("KBasePublicGenomesV5");
+                    ar2.add("--workspace_service_url");
+                    ar2.add("https://kbase.us/services/ws");
+                    ar2.add("--input_directory");
+                    ar2.add(workdir.getAbsolutePath() + "/" + cleangenomeid);
+                    ar2.add("--working_directory");
+                    ar2.add(workdir.getAbsolutePath() + "/" + cleangenomeid);
+
+                    if (isTest) {
+                        ar2.add("--test");
+                        ar2.add("T");
+                    }
+                    String[] argsgt2 = new String[ar2.size()];
+                    int count22 = 0;
+                    for (Object obj : ar2) {
+                        argsgt2[count22] = obj.toString();
+                        count2++;
+                    }
+
+                    ConvertGBK cg = new ConvertGBK(wc);
+                    cg.init(argsgt2);
+                    cg.run();
+
+
+                    File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
+                    rmdir(tobermed);
+
                 } catch (Exception e) {
                     System.out.println("Error for genome " + t.getE2());
+
+                    String cmd1 = "";
+                    int count4 = 0;
+                    for (String s : ar) {
+                        cmd1 += s;
+                        if (count4 < ar.size() - 1)
+                            cmd1 += ",";
+                        count4++;
+                    }
+
+                    String cmd2 = "";
+                    int count5 = 0;
+                    for (String s : ar2) {
+                        cmd2 += s;
+                        if (count4 < ar2.size() - 1)
+                            cmd2 += ",";
+                        count4++;
+                    }
+
+                    System.out.println("Error down " + cmd1);
+                    System.out.println("Error up " + cmd2);
                     e.printStackTrace();
                 }
 
@@ -135,6 +189,24 @@ public class TestKBDownload {
 
     }
 
+    /**
+     * @param dir
+     * @return
+     */
+    public static boolean rmdir(File dir) {
+        if (dir.isDirectory()) {
+            String[] child = dir.list();
+            for (int i = 0; i < child.length; i++) {
+                boolean success = rmdir(new File(dir, child[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+
+        return dir.delete(); // The directory is empty now and can be deleted.
+    }
+
 
     /**
      * @param args
@@ -142,12 +214,12 @@ public class TestKBDownload {
     public final static void main(String[] args) {
         if (args.length >= 4 || args.length <= 10) {
             try {
-                TestKBDownload clt = new TestKBDownload(args);
+                TestKBDownUp clt = new TestKBDownUp(args);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("usage: java us.kbase.genbank.test.ConvertGBK " +
+            System.out.println("usage: java us.kbase.genbank.test.TestKBDownUp " +
                     "<-w or --workspace_name ws name> " +
                     "<-wu or --workspace_service_url ws url> " +
                     "<-su or --shock_url shock url> " +

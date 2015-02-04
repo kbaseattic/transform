@@ -297,7 +297,7 @@ public class ConvertGBK {
         //System.out.println("parseGenome "+wsname);
         //ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
         String name = gbkFiles.get(0).getName();
-        final int endIndex = name.indexOf(".");
+        final int endIndex = name.lastIndexOf(".");
         name = name.substring(0, endIndex != -1 ? endIndex : name.length());
         System.out.println("parseGenome " + name);
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, name, true);

@@ -11,6 +11,8 @@ import json
 import sys
 from deep_eq import deep_eq
 
+KEEP_CURRENT_VENV = True
+
 FILE_LOC = os.path.split(__file__)[0]
 sys.path.append(os.path.join(FILE_LOC, '../'))  # to import script framework
 from script_checking_framework import ScriptCheckFramework, TestException
@@ -220,7 +222,8 @@ def main():
     # use nosetests to run these tests, this is a hack to get them to run
     # while testing the tests
     testclass = get_runner_class()
-#     testclass.keep_current_venv()  # for testing
+    if KEEP_CURRENT_VENV:
+        testclass.keep_current_venv()  # for testing
     testclass.setup_class()
     test = testclass()
     methods = inspect.getmembers(test, predicate=inspect.ismethod)

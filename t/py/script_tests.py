@@ -292,14 +292,25 @@ class Test_Scripts(object):
         self.fail_convert(args, error)
 
     def fail_convert(self, args, expected_error):
-        stdo, stde, code = self.run_convert_taskrunner(args)
-        if stdo:
+        self.run_and_check('convert', args, None, expected_error, 1)
+
+    @classmethod
+    def run_and_check(cls, method, args, expec_out, expec_err, ret_code=0):
+        stdo, stde, code = cls.run_taskrunner(method, args)
+        if not expec_out and stdo:
             raise TestException('Got unexpected data in standard out:\n' +
                                 stdo)
-        if expected_error not in stde:
-            raise TestException('Did not get expected error in stderr:\n' +
+        if stdo and expec_out not in stdo:
+            raise TestException('Did not get expected data in stdout:\n' +
+                                stdo)
+
+        if not expec_err and stde:
+            raise TestException('Got unexpected data in standard err:\n' +
                                 stde)
-        if code != 1:
+        if stde and expec_err not in stde:
+            raise TestException('Did not get expected data in stderr:\n' +
+                                stde)
+        if ret_code != code:
             raise TestException('Got unexpected return code from script:' +
                                 str(code))
 

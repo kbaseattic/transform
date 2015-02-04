@@ -11,13 +11,11 @@ import sys
 from deep_eq import deep_eq
 
 FILE_LOC = os.path.split(__file__)[0]
-sys.path.append(os.path.join(FILE_LOC, '../'))  # to import script_tests
+sys.path.append(os.path.join(FILE_LOC, '../'))  # to import script framework
 from script_checking_framework import ScriptCheckFramework
 
 
 class Test_AssyFileToContigSet(ScriptCheckFramework):
-
-    _keep_venv = False
 
     @classmethod
     def stage_data(cls):

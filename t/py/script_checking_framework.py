@@ -33,7 +33,7 @@ PLUGIN_CFG_LOC = os.path.join(TRANSFORM_LOC, 'plugins/configs')
 TEST_CFG_LOC = os.path.join(FILE_LOC, TEST_CFG_FILE)
 
 
-class Test_Scripts(object):
+class ScriptCheckFramework(object):
 
     _keep_venv = False
 

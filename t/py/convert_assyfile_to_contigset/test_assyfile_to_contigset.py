@@ -12,10 +12,10 @@ from deep_eq import deep_eq
 
 FILE_LOC = os.path.split(__file__)[0]
 sys.path.append(os.path.join(FILE_LOC, '../'))  # to import script_tests
-from script_tests import Test_Scripts
+from script_checking_framework import ScriptCheckFramework
 
 
-class Test_AssyFileToContigSet(Test_Scripts):
+class Test_AssyFileToContigSet(ScriptCheckFramework):
 
     _keep_venv = False
 
@@ -207,9 +207,10 @@ class Test_AssyFileToContigSet(Test_Scripts):
 def main():
     # use nosetests to run these tests, this is a hack to get them to run
     # while testing the tests
-    Test_Scripts.setup_class()
-    ts = Test_Scripts()
-    methods = inspect.getmembers(ts, predicate=inspect.ismethod)
+    # Test_AssyFileToContigSet.keep_current_venv()  # for testing
+    Test_AssyFileToContigSet.setup_class()
+    test = Test_AssyFileToContigSet()
+    methods = inspect.getmembers(test, predicate=inspect.ismethod)
     for meth in methods:
         if meth[0].startswith('test_'):
             print("\nRunning " + meth[0])

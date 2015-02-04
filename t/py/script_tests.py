@@ -9,7 +9,6 @@ from bzrlib.config import ConfigObj
 import random
 import sys
 from biokbase.Transform.drivers import TransformTaskRunnerDriver
-from __builtin__ import classmethod
 
 
 CLIENT_SHORTCUTS = {drivers.WS_CLIENT: 'ws',

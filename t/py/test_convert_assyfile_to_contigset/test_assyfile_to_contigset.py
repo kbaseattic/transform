@@ -206,7 +206,7 @@ class TestAssyFileToContigSet(ScriptCheckFramework):
         self.run_and_check('convert', args, None, expected_error, ret_code=1)
 
 
-def get_test_class():
+def get_runner_class():
     classes = inspect.getmembers(
         sys.modules[__name__],
         lambda member: inspect.isclass(member) and
@@ -220,7 +220,7 @@ def get_test_class():
 def main():
     # use nosetests to run these tests, this is a hack to get them to run
     # while testing the tests
-    testclass = get_test_class()
+    testclass = get_runner_class()
 #     testclass.keep_current_venv()  # for testing
     testclass.setup_class()
     test = testclass()

@@ -128,7 +128,7 @@ public class TestKBDownUp {
                     //"-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
 
                     ar2.add("--workspace_name");
-                    ar2.add("KBasePublicGenomesV5");
+                    ar2.add("upload_testing");
                     ar2.add("--workspace_service_url");
                     ar2.add("https://kbase.us/services/ws");
                     ar2.add("--input_directory");

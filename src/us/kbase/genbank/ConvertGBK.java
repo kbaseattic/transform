@@ -1,4 +1,4 @@
-package us.kbase.genbank;
+ package us.kbase.genbank;
 
 import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
@@ -38,7 +38,8 @@ public class ConvertGBK {
 
     //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
     String[] argsPossible = {"-i", "--input_directory", "-o", "--object_name", "-oc", "--contigset_object_name",
-            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
+            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory",
+            "--test"};
     String[] argsPossibleMap = {"input", "input", "outputg", "outputg", "outputc", "outputc",
             "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "t"};
 
@@ -129,7 +130,8 @@ public class ConvertGBK {
                 } else if (argsPossibleMap[index].equals("wd")) {
                     workdir = new File(args[i + 1]);
                 } else if (argsPossibleMap[index].equals("t")) {
-                    if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
+                    if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") ||
+                            args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
                         isTest = true;
                 }
             }

@@ -10,6 +10,7 @@ import random
 import sys
 from biokbase.Transform.drivers import TransformTaskRunnerDriver
 
+KEEP_VENV = 'KB_KEEP_TEST_VENV'
 
 CLIENT_SHORTCUTS = {drivers.WS_CLIENT: 'ws',
                     drivers.HANDLE_CLIENT: 'handle',
@@ -53,8 +54,11 @@ class ScriptCheckFramework(object):
         for cli in CLIENT_SHORTCUTS:
             setattr(cls, CLIENT_SHORTCUTS[cli], getattr(cls.runner, cli))
 
+        keep_venv = cls._keep_venv
+        if os.environ.get(KEEP_VENV):
+            keep_venv = True
         tve = TransformVirtualEnv(FILE_LOC, 'venv', TRANSFORM_LOC,
-                                  keep_current_venv=cls._keep_venv)
+                                  keep_current_venv=keep_venv)
         tve.activate_for_current_py_process()
 
         cls.staged = {}

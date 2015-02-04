@@ -122,7 +122,8 @@ setup-py-test-env:
 	fi
 
 test-py-scripts: setup-py-test-env
-	PYTHONPATH=$(DIR)/lib/ nosetests t/py
+	t/py/setup_test_env.py
+	PYTHONPATH=$(DIR)/lib/ KB_KEEP_TEST_VENV=1 nosetests -v t/py
 
 # What does it mean to test a server. A server test should not
 # rely on the client libraries or scripts in so far as you should

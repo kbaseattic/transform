@@ -12,10 +12,13 @@ from deep_eq import deep_eq
 
 FILE_LOC = os.path.split(__file__)[0]
 sys.path.append(os.path.join(FILE_LOC, '../'))  # to import script framework
-from script_checking_framework import ScriptCheckFramework
+from script_checking_framework import ScriptCheckFramework, TestException
+
+# TODO setup env once
+# TODO test template with instructions
 
 
-class Test_AssyFileToContigSet(ScriptCheckFramework):
+class TestAssyFileToContigSet(ScriptCheckFramework):
 
     @classmethod
     def stage_data(cls):
@@ -202,12 +205,24 @@ class Test_AssyFileToContigSet(ScriptCheckFramework):
         self.run_and_check('convert', args, None, expected_error, ret_code=1)
 
 
+def get_test_class():
+    classes = inspect.getmembers(
+        sys.modules[__name__],
+        lambda member: inspect.isclass(member) and
+        member.__module__ == __name__)
+    for c in classes:
+        if c[0].startswith('Test'):
+            return c[1]
+    raise TestException('No class starting with Test found')
+
+
 def main():
     # use nosetests to run these tests, this is a hack to get them to run
     # while testing the tests
-    # Test_AssyFileToContigSet.keep_current_venv()  # for testing
-    Test_AssyFileToContigSet.setup_class()
-    test = Test_AssyFileToContigSet()
+    testclass = get_test_class()
+#     testclass.keep_current_venv()  # for testing
+    testclass.setup_class()
+    test = testclass()
     methods = inspect.getmembers(test, predicate=inspect.ismethod)
     for meth in methods:
         if meth[0].startswith('test_'):

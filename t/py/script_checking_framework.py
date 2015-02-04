@@ -9,6 +9,7 @@ from bzrlib.config import ConfigObj
 import random
 import sys
 from biokbase.Transform.drivers import TransformTaskRunnerDriver
+import inspect
 
 KEEP_VENV = 'KB_KEEP_TEST_VENV'
 
@@ -156,6 +157,30 @@ class ScriptCheckFramework(object):
         if ret_code != code:
             raise TestException('Got unexpected return code from script:' +
                                 str(code))
+
+
+def get_runner_class(modulename):
+    classes = inspect.getmembers(
+        sys.modules[modulename],
+        lambda member: inspect.isclass(member) and
+        member.__module__ == modulename)
+    for c in classes:
+        if c[0].startswith('Test'):
+            return c[1]
+    raise TestException('No class starting with Test found')
+
+
+def run_methods(modulename, keep_venv=False):
+    testclass = get_runner_class(modulename)
+    if keep_venv:
+        testclass.keep_current_venv()  # for testing
+    testclass.setup_class()
+    test = testclass()
+    methods = inspect.getmembers(test, predicate=inspect.ismethod)
+    for meth in methods:
+        if meth[0].startswith('test_'):
+            print("\nRunning " + meth[0])
+            meth[1]()
 
 
 class TestException(Exception):

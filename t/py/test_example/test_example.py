@@ -17,7 +17,6 @@ Created on Feb 4, 2015
 '''
 from __future__ import print_function
 import os
-import inspect
 import sys
 
 '''
@@ -31,11 +30,13 @@ This code imports the superclass the tests inherit from. Don't change it.
 '''
 FILE_LOC = os.path.split(__file__)[0]
 sys.path.append(os.path.join(FILE_LOC, '../'))
+import script_checking_framework
 from script_checking_framework import ScriptCheckFramework, TestException
 
 
 class TestExample(ScriptCheckFramework):
     '''
+    You can name this class anything you want as long as it starts with Test.
     This class comes with a number of useful things already set up. All of
     these helpers can be accessed in class methods via cls or instance methods
     via self.
@@ -81,7 +82,7 @@ class TestExample(ScriptCheckFramework):
         '''
         This method is called once per test run. You can use this method
         to stage data that can be used in multiple tests.
-        Of course, you can always stage data in the test code itself.
+        Of course, you can always stage data in the test method itself.
         '''
         print('shock url in the stage_data method: ' + cls.shock_url)
 
@@ -102,35 +103,17 @@ class TestExample(ScriptCheckFramework):
         with open(os.path.join(FILE_LOC, 'test_files/some_data')) as f:
             data = f.read()
         assert data == 'data'
+        # or you can do
+        if (data != 'data'):
+            raise TestException('unexpected data')
 
-# don't make any changs beyond this point
-
-
-def get_runner_class():
-    classes = inspect.getmembers(
-        sys.modules[__name__],
-        lambda member: inspect.isclass(member) and
-        member.__module__ == __name__)
-    for c in classes:
-        if c[0].startswith('Test'):
-            return c[1]
-    raise TestException('No class starting with Test found')
+# don't make any changes beyond this point
 
 
 def main():
-    # use nosetests to run these tests, this is a hack to get them to run
+    # generally use nosetests to run these tests, this gets them to run
     # while testing the tests
-    testclass = get_runner_class()
-    if KEEP_CURRENT_VENV:
-        testclass.keep_current_venv()  # for testing
-    testclass.setup_class()
-    test = testclass()
-    methods = inspect.getmembers(test, predicate=inspect.ismethod)
-    for meth in methods:
-        if meth[0].startswith('test_'):
-            print("\nRunning " + meth[0])
-            meth[1]()
-
+    script_checking_framework.run_methods(__name__, KEEP_CURRENT_VENV)
 
 if __name__ == '__main__':
     main()

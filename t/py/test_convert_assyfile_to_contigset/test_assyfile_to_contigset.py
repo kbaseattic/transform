@@ -6,16 +6,16 @@ Created on Jan 30, 2015
 '''
 from __future__ import print_function
 import os
-import inspect
 import json
 import sys
 from deep_eq import deep_eq
 
-KEEP_CURRENT_VENV = True
+KEEP_CURRENT_VENV = False
 
 FILE_LOC = os.path.split(__file__)[0]
 sys.path.append(os.path.join(FILE_LOC, '../'))  # to import script framework
-from script_checking_framework import ScriptCheckFramework, TestException
+import script_checking_framework
+from script_checking_framework import ScriptCheckFramework
 
 # TODO test template with instructions
 
@@ -207,31 +207,10 @@ class TestAssyFileToContigSet(ScriptCheckFramework):
         self.run_and_check('convert', args, None, expected_error, ret_code=1)
 
 
-def get_runner_class():
-    classes = inspect.getmembers(
-        sys.modules[__name__],
-        lambda member: inspect.isclass(member) and
-        member.__module__ == __name__)
-    for c in classes:
-        if c[0].startswith('Test'):
-            return c[1]
-    raise TestException('No class starting with Test found')
-
-
 def main():
-    # use nosetests to run these tests, this is a hack to get them to run
+    # generally use nosetests to run these tests, this gets them to run
     # while testing the tests
-    testclass = get_runner_class()
-    if KEEP_CURRENT_VENV:
-        testclass.keep_current_venv()  # for testing
-    testclass.setup_class()
-    test = testclass()
-    methods = inspect.getmembers(test, predicate=inspect.ismethod)
-    for meth in methods:
-        if meth[0].startswith('test_'):
-            print("\nRunning " + meth[0])
-            meth[1]()
-
+    script_checking_framework.run_methods(__name__, KEEP_CURRENT_VENV)
 
 if __name__ == '__main__':
     main()

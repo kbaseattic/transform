@@ -49,10 +49,11 @@ def get_token():
     
     if token is None:
         try:
-            stdout, stderr = subprocess.call(["kbase-whoami", "-t"])
+            task = subprocess.Popen(["kbase-whoami", "-t"], stdout=subprocess.PIPE, shell=True)
+            stdout, stderr = task.communicate()
             
             if stdout is not None:
-                return stdout
+                return stdout.strip()
             else:
                 raise None
         except:
@@ -138,7 +139,7 @@ def parse_docs(docstring=None):
     return script_details
 
 
-def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
+def extract_data(logger = stderrlogger(__file__), filePath = None, chunkSize = 2**30):
     """
     Unpack a data file that may be compressed or an archive.
     """
@@ -253,7 +254,7 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
 
 
 
-def download_file_from_shock(logger = None,
+def download_file_from_shock(logger = stderrlogger(__file__),
                              shock_service_url = None,
                              shock_id = None,
                              filename = None,
@@ -333,19 +334,19 @@ def upload_file_to_shock(logger = stderrlogger(__file__),
     try:
         response = requests.post(shock_service_url + "/node", headers=header, data=m, allow_redirects=True, verify=ssl_verify)
         dataFile.close()
-
-        if not response.ok:
-            response.raise_for_status()
-
-        result = response.json()
-
-        if result['error']:            
-            raise Exception(result['error'][0])
-        else:
-            return result["data"]    
     except:
         dataFile.close()
         raise    
+
+    if not response.ok:
+        response.raise_for_status()
+
+    result = response.json()
+
+    if result['error']:            
+        raise Exception(result['error'][0])
+    else:
+        return result["data"]    
 
 
 def getHandles(logger = None,
@@ -438,12 +439,12 @@ def getHandles(logger = None,
     return handles
 
 
-def download_from_urls(logger = None,
+def download_from_urls(logger = stderrlogger(__file__),
                        working_directory = os.getcwd(),
                        urls = None,
                        ssl_verify = True,
                        token = None, 
-                       chunkSize = 10 * 2**20):
+                       chunkSize = 2**30):
     """
     Downloads urls defined by key names in a dictionary, with each key name getting
     its own subdirectory and the contents of the url for that key deposited in the

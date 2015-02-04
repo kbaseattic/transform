@@ -54,8 +54,7 @@ def get_token():
             stdout, _ = task.communicate()
 
             if stdout is not None:
-                stdout = stdout.strip()
-                if stdout == 'You are not logged in':
+                if 'You are not logged in' in stdout:
                     raise Exception("Unable to retrieve user token, " +
                                     "login with CLI or export KB_AUTH_TOKEN")
                 return stdout.strip()

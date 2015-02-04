@@ -6,21 +6,24 @@ Created on Jan 30, 2015
 from __future__ import print_function
 import os
 import inspect
-from biokbase.Transform import script_utils
-from biokbase.AbstractHandle.Client import AbstractHandle
+from biokbase.Transform import script_utils, drivers
 from bzrlib.config import ConfigObj
 import json
-from biokbase.workspace.client import Workspace
 import random
 import sys
 from deep_eq import deep_eq
 from biokbase.Transform.drivers import TransformTaskRunnerDriver
+from __builtin__ import classmethod
 
-# TODO run this with makefile
 
-KEEP_CURRENT_VENV = False
+CLIENT_SHORTCUTS = {drivers.WS_CLIENT: 'ws',
+                    drivers.HANDLE_CLIENT: 'handle',
+                    drivers.UJS_CLIENT: 'ujs'}
 
-KB_TOKEN = 'KB_AUTH_TOKEN'
+URL_SHORTCUTS = {drivers.WS_URL: 'ws_url',
+                 drivers.UJS_URL: 'ujs_url',
+                 drivers.SHOCK_URL: 'shock_url'}
+
 TEST_CFG_FILE = 'test.cfg'
 
 FILE_LOC = os.path.split(__file__)[0]
@@ -34,29 +37,33 @@ TRANSFORM_LOC = os.path.join(FILE_LOC, '../../')
 PLUGIN_CFG_LOC = os.path.join(TRANSFORM_LOC, 'plugins/configs')
 TEST_CFG_LOC = os.path.join(FILE_LOC, TEST_CFG_FILE)
 
-URL_SHORTCUTS = {'workspace_service_url': 'ws_url',
-                 'shock_service_url': 'shock_url',
-                 'handle_service_url': 'handle_url',
-                 'ujs_service_url': 'ujs_url'}
-
 
 class Test_Scripts(object):
 
+    _keep_venv = False
+
     @classmethod
     def setup_class(cls):
-        cls.token = os.environ.get(KB_TOKEN)
-        if not cls.token:
-            raise ValueError('No token found in environment variable ' +
-                             KB_TOKEN)
+        cls.token = script_utils.get_token()
+
         cfg = ConfigObj(TEST_CFG_LOC)
         for url in URL_SHORTCUTS:
             setattr(cls, URL_SHORTCUTS[url], cfg.get(url))
+
         cls.runner = TransformTaskRunnerDriver(cfg, PLUGIN_CFG_LOC)
+        for cli in CLIENT_SHORTCUTS:
+            setattr(cls, CLIENT_SHORTCUTS[cli], getattr(cls.runner, cli))
+
         tve = TransformVirtualEnv(FILE_LOC, 'venv', TRANSFORM_LOC,
-                                  keep_current_venv=KEEP_CURRENT_VENV)
+                                  keep_current_venv=cls._keep_venv)
         tve.activate_for_current_py_process()
+
         cls.staged = {}
         cls.stage_data()
+
+    @classmethod
+    def keep_current_venv(cls, keep=True):
+        cls._keep_venv = keep
 
     @classmethod
     def stage_data(cls):
@@ -70,8 +77,7 @@ class Test_Scripts(object):
         src_type = 'Empty.AType'
 
         src_ws = cls.create_random_workspace(this_function_name)
-        ws = Workspace(cls.ws_url, token=cls.token)
-        objdata = ws.save_objects(
+        objdata = cls.ws.save_objects(
             {'workspace': src_ws,
              'objects': [{'name': src_obj_name,
                           'type': src_type,
@@ -123,8 +129,7 @@ class Test_Scripts(object):
         assyjson['assembly_file']['file']['id'] = node_id
         assyjson['assembly_file']['file']['hid'] = handle
 
-        ws = Workspace(cls.ws_url, token=cls.token)
-        objdata = ws.save_objects(
+        objdata = cls.ws.save_objects(
             {'workspace': src_ws,
              'objects': [{'name': src_obj_name,
                           'type': src_type,
@@ -143,24 +148,34 @@ class Test_Scripts(object):
             ssl_verify=False,
             token=cls.token)['id']
 
-        handle = AbstractHandle(cls.handle_url, token=cls.token)
-        handle_id = handle.persist_handle({'id': node_id,
-                                           'type': 'shock',
-                                           'url': cls.shock_url
-                                           })
+        handle_id = cls.handle.persist_handle({'id': node_id,
+                                               'type': 'shock',
+                                               'url': cls.shock_url
+                                               })
         return node_id, handle_id
 
     @classmethod
     def create_random_workspace(cls, prefix):
-        ws = Workspace(cls.ws_url, token=cls.token)
         ws_name = prefix + '_' + str(random.random())[2:]
-        wsinfo = ws.create_workspace({'workspace': ws_name})
+        wsinfo = cls.ws.create_workspace({'workspace': ws_name})
         return wsinfo[1]
 
     @classmethod
-    def run_convert_taskrunner(cls, args):
-        _, results = cls.runner.run_job('convert', args)
+    def run_taskrunner(cls, method, args):
+        _, results = cls.runner.run_job(method, args)
         return results['stdout'], results['stderr'], results['exit_code']
+
+    @classmethod
+    def run_convert_taskrunner(cls, args):
+        return cls.run_taskrunner('convert', args)
+
+    @classmethod
+    def run_upload_taskrunner(cls, args):
+        return cls.run_taskrunner('upload', args)
+
+    @classmethod
+    def run_download_taskrunner(cls, args):
+        return cls.run_taskrunner('download', args)
 
     def test_assyfile_to_cs_basic_ops(self):
         this_function_name = sys._getframe().f_code.co_name
@@ -191,9 +206,8 @@ class Test_Scripts(object):
             raise TestException('Got non zero return code from script:' +
                                 str(code))
 
-        ws = Workspace(self.ws_url, token=self.token)
-        newobj = ws.get_objects([{'workspace': dest_ws,
-                                  'name': dest_obj_name}])[0]
+        newobj = self.ws.get_objects([{'workspace': dest_ws,
+                                       'name': dest_obj_name}])[0]
         prov = newobj['provenance'][0]
         ref = staged['ref']
         assert prov['input_ws_objects'] == [ref]

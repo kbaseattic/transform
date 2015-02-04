@@ -22,11 +22,12 @@ import magic
 import ftputil
 import requests
 from requests_toolbelt import MultipartEncoder
+import subprocess
 
 try:
-    from biokbase.HandleService.Client import HandleService 
+    from biokbase.HandleService.Client import HandleService
 except:
-    from biokbase.AbstractHandle.Client import AbstractHandle as HandleService 
+    from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
 
 import biokbase.workspace.client
 

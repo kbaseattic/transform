@@ -165,18 +165,6 @@ class Test_Scripts(object):
         _, results = cls.runner.run_job(method, args)
         return results['stdout'], results['stderr'], results['exit_code']
 
-    @classmethod
-    def run_convert_taskrunner(cls, args):
-        return cls.run_taskrunner('convert', args)
-
-    @classmethod
-    def run_upload_taskrunner(cls, args):
-        return cls.run_taskrunner('upload', args)
-
-    @classmethod
-    def run_download_taskrunner(cls, args):
-        return cls.run_taskrunner('download', args)
-
     def test_assyfile_to_cs_basic_ops(self):
         this_function_name = sys._getframe().f_code.co_name
         staged = self.staged['assy_file']
@@ -194,17 +182,9 @@ class Test_Scripts(object):
                 'ujs_service_url': self.ujs_url,
                 'working_directory': dest_ws}
 
-        stdo, stde, code = self.run_convert_taskrunner(args)
-        if stdo:
-            raise TestException('Got unexpected data in standard out:\n' +
-                                stdo)
-        if 'ERROR' in stde:
-            raise TestException('Error reported in stderr:\n' + stde)
-        if 'INFO - Conversion completed.' not in stde:
-            raise TestException('Script did not report as completed:\n' + stde)
-        if code != 0:
-            raise TestException('Got non zero return code from script:' +
-                                str(code))
+        expect_err = 'INFO - Conversion completed.'
+        self.run_and_check('convert', args, None, expect_err,
+                           not_expect_err='ERROR')
 
         newobj = self.ws.get_objects([{'workspace': dest_ws,
                                        'name': dest_obj_name}])[0]
@@ -292,24 +272,33 @@ class Test_Scripts(object):
         self.fail_convert(args, error)
 
     def fail_convert(self, args, expected_error):
-        self.run_and_check('convert', args, None, expected_error, 1)
+        self.run_and_check('convert', args, None, expected_error, ret_code=1)
 
     @classmethod
-    def run_and_check(cls, method, args, expec_out, expec_err, ret_code=0):
+    def run_and_check(cls, method, args, expect_out, expect_err,
+                      not_expect_out=None, not_expect_err=None,
+                      ret_code=0):
         stdo, stde, code = cls.run_taskrunner(method, args)
-        if not expec_out and stdo:
+        if not expect_out and stdo:
             raise TestException('Got unexpected data in standard out:\n' +
                                 stdo)
-        if stdo and expec_out not in stdo:
+        if stdo and expect_out not in stdo:
             raise TestException('Did not get expected data in stdout:\n' +
                                 stdo)
+        if stdo and not_expect_out and not_expect_out in stdo:
+            raise TestException('Got unexpected data in standard out:\n' +
+                                stdo)
 
-        if not expec_err and stde:
+        if not expect_err and stde:
             raise TestException('Got unexpected data in standard err:\n' +
                                 stde)
-        if stde and expec_err not in stde:
+        if stde and expect_err not in stde:
             raise TestException('Did not get expected data in stderr:\n' +
                                 stde)
+        if stde and not_expect_err and not_expect_err in stde:
+            raise TestException('Got unexpected data in standard out:\n' +
+                                stdo)
+
         if ret_code != code:
             raise TestException('Got unexpected return code from script:' +
                                 str(code))

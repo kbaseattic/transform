@@ -144,7 +144,7 @@ public class TestKBDownUp {
                     int count22 = 0;
                     for (Object obj : ar2) {
                         argsgt2[count22] = obj.toString();
-                        count2++;
+                        count22++;
                     }
 
                     ConvertGBK cg = new ConvertGBK(wc);

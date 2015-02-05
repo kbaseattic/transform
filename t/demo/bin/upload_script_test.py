@@ -20,7 +20,7 @@ if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
 
 # make sure the 3rd party and kbase modules are in the path for importing
-sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
+#sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
 
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import requests
@@ -31,8 +31,9 @@ import dateutil.tz
 import simplejson
 
 import biokbase.Transform.Client
-import biokbase.Transform.script_utils
+import biokbase.Transform.script_utils as script_utils
 import biokbase.Transform.handler_utils
+import biokbase.Transform.drivers
 import biokbase.userandjobstate.client
 import biokbase.workspace.client
 
@@ -54,11 +55,27 @@ def validate_files(input_directory, external_type):
 
 def show_workspace_object_list(workspace_url, workspace_name, object_name, token):
     print term.blue("\tYour KBase data objects:")
+    print "\tobject_list-->"
     
     c = biokbase.workspace.client.Workspace(workspace_url, token=token)
     object_list = c.list_objects({"workspaces": [workspace_name]})
     
-    object_list = [x for x in object_list if object_name in x[1]]
+    object_list = [x for x in object_list if object_name == x[1]]
+    
+    print "\tobject_list-->"
+    print object_list
+    print "\t<--"
+    print "\t<--"
+    print "\t<--"
+    print "\t<--"
+    print "\t<--"
+    print "\t<--"
+    print "\t<--"
+    print "\t<--"
+    print "\t<--"
+    print "\t<--"
+    print "\t<--"
+
 
     for x in sorted(object_list):
         elapsed_time = datetime.datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc()) - dateutil.parser.parse(x[3])
@@ -219,55 +236,59 @@ if __name__ == "__main__":
     parser.add_argument('--awe_service_url', nargs='?', help='AWE service for additional job monitoring', const="", default="http://140.221.67.242:7080")
     parser.add_argument('--transform_service_url', nargs='?', help='Transform service that handles the data conversion to KBase', const="", default="http://140.221.67.242:7778/")
     parser.add_argument('--handle_service_url', nargs='?', help='Handle service for KBase handle', const="", default="https://kbase.us/services/handle_service")
+    parser.add_argument('--fba_service_url', nargs='?', help='FBA service for Model data', const="", default="https://kbase.us/services/handle_service")
 
     parser.add_argument('--external_type', nargs='?', help='the external type of the data', const="", default="")
     parser.add_argument('--kbase_type', nargs='?', help='the kbase object type to create', const="", default="")
     parser.add_argument('--workspace', nargs='?', help='name of the workspace where your objects should be created', const="", default="upload_testing")
     parser.add_argument('--object_name', nargs='?', help='name of the workspace object to create', const="", default="")
-    parser.add_argument('--file_path', nargs='?', help='path to file for upload', const="", default="")
-    parser.add_argument('--url_mapping', nargs='?', help='input url maps', const="", default="{}")
-    parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
-
-    parser.add_argument('--plugin_directory', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
+    parser.add_argument('--url_mapping', nargs='?', help='input url mapping', const="", default="{}")
     parser.add_argument('--optional_arguments', nargs='?', help='optional arguments', const="", default='{"validate" : {}, "transform" : {}}')
+    parser.add_argument('--plugin_directory', nargs='?', help='path to the plugins directory', const="", default="/kb/dev_container/modules/transform/plugins/configs")
+
+    parser.add_argument('--file_path', nargs='?', help='path to file for upload', const="", default="")
+    parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
+    parser.add_argument('--config_file', nargs='?', help='path to config file with parameters', const="", default="")
+    #parser.add_argument('--create_log', help='create pass/fail log file', action='store_true')
 
     args = parser.parse_args()
 
-    #args.optional_arguments = base64.urlsafe_b64decode(args.optional_arguments)
-    #args.optional_arguments = (args.optional_arguments)
-    args.optional_arguments = simplejson.loads(args.optional_arguments)
-    args.url_mapping = simplejson.loads(args.url_mapping)
-
-    print "--opt arg--"
-    print args.optional_arguments
-
-    token = os.environ.get("KB_AUTH_TOKEN")
-    if token is None:
-        if os.path.exists(os.path.expanduser("~/.kbase_config")):
-            f = open(os.path.expanduser("~/.kbase_config"), 'r')
-            config = f.read()
-            if "token=" in config:
-                token = config.split("token=")[1].split("\n",1)[0]            
-            else:
-                raise Exception("Unable to find KBase token!")
-        else:
-            raise Exception("Unable to find KBase token!")
+    token = script_utils.get_token()
 
     plugin = None
     plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory, logger)
 
     inputs = list()
     if not args.demo:
-        user_inputs = {"external_type": args.external_type,
-                       "kbase_type": args.kbase_type,
-                       "object_name": args.object_name,
-                       "downloadPath": args.download_path,
-                       "url_mapping" : args.url_mapping}
-        if args.file_path != "": 
-            user_inputs["filePath"] =  args.file_path
+        if args.config_file:
+            f = open(args.config_file, 'r')
+            config = simplejson.loads(f.read())
+            f.close()
+        
+            services = config["services"]
+            inputs = config["upload"]
+        else:
+            inputs = {"user": 
+                {"external_type": args.external_type,
+                 "kbase_type": args.kbase_type,
+                 "object_name": args.object_name,
+                 "workspace_name" : args.workspace,
+                 "filePath": args.file_path,
+                 "downloadPath": args.download_path,
+                 "optional_arguments": simplejson.loads(args.optional_arguments),
+                 "url_mapping" : simplejson.loads(args.url_mapping)
+                }
+            }
+
+            services = {"shock_service_url": args.shock_service_url,
+                        "ujs_service_url": args.ujs_service_url,
+                        "workspace_service_url": args.workspace_service_url,
+                        "awe_service_url": args.awe_service_url,
+                        "fba_service_url": args.awe_service_url,
+                        "transform_service_url": args.transform_service_url,
+                        "handle_service_url": args.handle_service_url}
 
         workspace = args.workspace    
-        inputs = [user_inputs]
     else:
         if "kbasetest" not in token and len(args.workspace.strip()) == 0:
             print "If you are running the demo as a different user than kbasetest, you need to provide the name of your workspace with --workspace."
@@ -275,49 +296,16 @@ if __name__ == "__main__":
         else:
             if args.workspace is not None:
                 workspace = args.workspace
+            else :
+                workspace = "upload_testing"
 
-        fasta_to_contigset = {"external_type": "FASTA.DNA.Assembly",
-                              "kbase_type": "KBaseGenomes.ContigSet",
-                              "object_name": "fasciculatum_supercontig",
-                              "filePath": "data/fasciculatum_supercontig.fasta.zip",
-                              "downloadPath": "fasciculatum_supercontig.fasta.zip",
-                              "url_mapping": {"FASTA.DNA.Assembly": "file://./data/fasciculatum_supercontig.fasta.zip"}}
+        
+        f = open("conf/upload_demo.cfg")
+        config = simplejson.loads(f.read())
+        f.close()
 
-        fastq_to_singleend = {"external_type": "FASTQ.DNA.Reads",
-                              "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                              "object_name": "fastq_single_end_library_test",
-                              "filePath": None,
-                              "downloadPath": None,
-                              "url_mapping": {"FASTQ.DNA.Reads": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"},
-                              "optional_arguments": {'validate': {}, 'transform': {'output_file_name': 'fastq.json'}}
-                              }
-
-        fastq_to_pairedend = {"external_type": "FASTQ.DNA.Reads",
-                              "kbase_type": "KBaseAssembly.PairedEndLibrary",
-                              "object_name": "fastq_paired_end_library_test",
-                              "filePath": None,
-                              "downloadPath": None,
-                              "url_mapping": {"FASTQ.DNA.Reads": "https://kbase.us/services/shock-api/node/f01f3832-0dc4-455a-8d9b-4780fdb646c0"},
-                              "optional_arguments": {'validate': {}, 'transform': {'output_file_name': 'fastq.json'}}
-                              }
-
-        genbank_to_genome = {"external_type": "Genbank.Genome",
-                             "kbase_type": "KBaseGenomes.Genome",
-                             "object_name": "NC_005213",
-                             "filePath": None,
-                             "downloadPath": None,
-                             "url_mapping": {"Genbank.Genome": "file://./data/NC_005213.gbk.bz2"}}
-
-        inputs = [genbank_to_genome]
-    
-
-
-    services = {"shock": args.shock_service_url,
-                "ujs": args.ujs_service_url,
-                "workspace": args.workspace_service_url,
-                "awe": args.awe_service_url,
-                "transform": args.transform_service_url,
-                "handle": args.handle_service_url}
+        services = config["services"]
+        inputs = config["upload"]
 
     uc = biokbase.userandjobstate.client.UserAndJobState(url=args.ujs_service_url, token=token)
     status = 'Initializing'
@@ -333,180 +321,126 @@ if __name__ == "__main__":
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)
     
+    #task_driver = biokbase.Transform.drivers.TransformTaskRunnerDriver(services, args.plugin_directory)
+    plugins = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory)
+    
     term = blessings.Terminal()
-    for x in inputs:
-        print x
-        external_type = x["external_type"]
-        kbase_type = x["kbase_type"]
-        object_name = x["object_name"]
-
-        if x["downloadPath"] is None:
-            x["downloadPath"] = "."
+    for x in sorted(inputs):
+        external_type = inputs[x]["external_type"]
+        kbase_type = inputs[x]["kbase_type"]
+        object_name = inputs[x]["object_name"]
 
         optional_arguments = None
-        if x.has_key("optional_arguments"):
-            optional_arguments = x["optional_arguments"]
+        if inputs[x].has_key("optional_arguments"):
+            optional_arguments = inputs[x]["optional_arguments"]
         
-        filePath = None
-        if x.has_key("filePath") and x["filePath"] is not None and os.path.exists(x["filePath"]):
-            filePath = x["filePath"]
-        
-        url_mapping = x["url_mapping"]
-
         print "\n\n"
         print term.bold("#"*80)
         print term.white_on_black("Converting {0} => {1}".format(external_type,kbase_type))
         print term.bold("#"*80)
 
-        if len([k for k in x["url_mapping"] if not x["url_mapping"][k].startswith("file://")]) > 0:
-            #conversionDownloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
-            #try:
-            #    os.mkdir(conversionDownloadPath)
-            #except:
-            #    pass
-            #downloadPath = os.path.join(conversionDownloadPath, x["downloadPath"])
+        files_to_upload = [k for k in inputs[x]["url_mapping"] if inputs[x]["url_mapping"][k].startswith("file://")]
 
-            try:
-                print term.bright_blue("Uploading from remote http or ftp url")
-                print term.bold("Step 1: Make KBase upload request with url")
-                for k,v in url_mapping.items():
-                    print term.bold("Using data from : {0} -> {1}".format(k,v))
-                biokbase.Transform.script_utils.download_from_urls(logger, urls=url_mapping, working_directory = stamp, token=token)
-                
-                input_object = dict()
-                input_object["external_type"] = external_type
-                input_object["kbase_type"] = kbase_type
-                #input_object["url_mapping"] = dict()
-                #input_object["url_mapping"][url_mapping] =  url
-                input_object["url_mapping"]=url_mapping
-                input_object["workspace_name"] = workspace
-                input_object["object_name"] = object_name
-                input_object["optional_arguments"] =args.optional_arguments
+        SIZE_MB = float(1024*1024)
 
-                print term.blue("\tTransform handler upload started:")
-                for attr, value in args.__dict__.iteritems():
-                    if attr.endswith("_service_url"):
-                        input_object[attr] = value
-                
-                input_object["working_directory"] = stamp
-                input_args = plugin.get_handler_args("upload",input_object)
-                command_list = ["trns_upload_taskrunner", "--ujs_job_id", ujs_job_id]
-
-                if "user_options" in input_args: del input_args["user_options"]
-                
-                for k in input_args:
-                   command_list.append("--{0}".format(k))
-                   command_list.append("{0}".format(input_args[k]))
-
-                print command_list
-
-                task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
-                sub_stdout, sub_stderr = task.communicate()
-            
-                if sub_stdout is not None:
-                    print sub_stdout
-                if sub_stderr is not None:
-                    print >> sys.stderr, sub_stderr
-            
-                if task.returncode != 0:
-                    raise Exception(sub_stderr)
-
-                print term.bold("Step 2: View or use workspace objects")
-                show_workspace_object_list(services["workspace"], workspace, object_name, token)
-
-                #show_workspace_object_contents(services["workspace"], workspace, object_name, token)
-            except Exception, e:
-                print e.message
-                print e
-        else:
-            conversionDownloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
-            
-            try:
-                os.mkdir(conversionDownloadPath)
-            except:
-                pass
-            
-            downloadPath = os.path.join(conversionDownloadPath, x["downloadPath"])
-
+        upload_step = 1
+        # check to see if we need to put any files in shock
+        if len(files_to_upload) > 0:
             print term.bright_blue("Uploading local files")
-            print term.bold("Step 1: Place local files in SHOCK")
-
-            url_mapping = dict()
+            print term.bold("Step {0:d}: Place local files in SHOCK".format(upload_step))
+            upload_step += 1
 
             try: 
-                for k in x["url_mapping"]:                
-                    filename = x["url_mapping"][k].split("file://")[1]
+                for n in files_to_upload:
+                    filePath = inputs[x]["url_mapping"][n].split("file://")[1]
+                    fileName = os.path.split(filePath)[-1]
+                    print term.blue("\tPreparing to upload {0}".format(filePath))
+                    print "\tFile size : {0:f} MB".format(int(os.path.getsize(filePath))/SIZE_MB)
 
-                    print term.blue("\tPreparing to upload {0}".format(filename))
-                    print "\tFile size : {0:f} MB".format(int(os.path.getsize(filename))/float(1024*1024))
-
-                    shock_response = post_to_shock(services["shock"], filename, token)
-                    print term.green("\tShock upload of {0} successful.".format(filename))
+                    shock_response = task_driver.post_to_shock(services["shock_service_url"], filePath)
+                    print term.green("\tShock upload of {0} successful.".format(filePath))
                     print "\tShock id : {0}\n\n".format(shock_response['id'])
-            
-                    url_mapping[k] = "{0}/node/{1}".format(services["shock"],shock_response["id"])
-            
-                    print term.bold("Optional Step: Verify files uploaded to SHOCK\n")
-                    download_from_shock(services["shock"], shock_response["id"], os.path.split(filename)[-1], token)
-                    print term.green("\tShock download of {0} successful.\n\n".format(os.path.split(downloadPath)[-1]))
-            except Exception, e:
-                print e.message
-                raise
-
-            print term.bold("Step 2: Make KBase upload request")
-
-            try:
-                input_object = dict()
-                input_object["external_type"] = external_type
-                input_object["kbase_type"] = kbase_type
-                input_object["workspace_name"] = workspace
-                input_object["object_name"] = object_name
-                input_object["url_mapping"] = url_mapping
-                
-                if optional_arguments is not None:
-                    input_object["optional_arguments"] = optional_arguments
-                else:
-                    input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
-
-                print term.blue("\tTransform handler upload started:")
-                
-                for attr, value in args.__dict__.iteritems():
-                    if attr.endswith("_service_url"):
-                        input_object[attr] = value
-                
-                print conversionDownloadPath
-                
-                input_object["working_directory"] = conversionDownloadPath
-                input_object["input_directory"] = conversionDownloadPath
-                input_args = plugin.get_handler_args("upload",input_object)
-                #command_list = ["{0} {1}".format("venv/bin/python", "trns_upload_taskrunner.py")]
-                command_list = ["trns_upload_taskrunner", "--ujs_job_id", ujs_job_id]
-                
-                print command_list
-                
-                if "user_options" in input_args: del input_args["user_options"]
-
-                for k in input_args:
-                   command_list.append("--{0}".format(k))
-                   command_list.append("{0}".format(input_args[k]))
-                
-                print "\n\nHandler invocation {0}".format(" ".join(command_list))
-
-                task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
-                sub_stdout, sub_stderr = task.communicate()
-            
-                if sub_stdout is not None:
-                    print sub_stdout
-                if sub_stderr is not None:
-                    print >> sys.stderr, sub_stderr
-            
-                if task.returncode != 0:
-                    raise Exception(sub_stderr)
-
-                print term.bold("Step 3: View or use workspace objects")
-                show_workspace_object_list(services["workspace"], workspace, object_name, token)
     
-                #show_workspace_object_contents(services["workspace"], workspace, object_name, token)
+                    inputs[x]["url_mapping"][n] = "{0}/node/{1}".format(services["shock_service_url"],shock_response["id"])
+            
+                    if args.verify:
+                        downloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
+        
+                        try:
+                            os.mkdir(downloadPath)
+                        except:
+                            pass
+                        
+                        downloadFilePath = os.path.join(downloadPath, fileName)
+                        print term.bold("Optional Step: Verify files uploaded to SHOCK\n")
+                        task_driver.download_from_shock(services["shock_service_url"], shock_response["id"], downloadFilePath)
+                        print term.green("\tShock download of {0} successful.\n\n".format(downloadFilePath))
             except Exception, e:
+                passed = False
                 print e.message
                 raise
+
+        try:
+            print term.bright_blue("Uploading from remote http or ftp urls")
+            print term.bold("Step {0}: Make KBase upload request with urls of data".format(upload_step))
+            print term.bold("Using data from : {0}".format(inputs[x]["url_mapping"].values()))
+            upload_step += 1
+            
+            input_object = dict()
+            input_object["external_type"] = external_type
+            input_object["kbase_type"] = kbase_type
+            input_object["job_details"] = plugins.get_job_details('upload', input_object)
+            input_object["workspace_name"] = workspace
+            input_object["object_name"] = object_name
+            input_object["url_mapping"] = inputs[x]["url_mapping"]
+            input_object["working_directory"] = stamp
+            input_object.update(services)
+            if input_object.has_key("awe_service_url"): del input_object["awe_service_url"] 
+            if input_object.has_key("handle_service_url"): del input_object["handle_service_url"] 
+            if input_object.has_key("transform_service_url"): del input_object["transform_service_url"] 
+
+            print term.blue("\tTransform handler upload started:")
+            
+            if optional_arguments is not None:
+                input_object["optional_arguments"] = optional_arguments
+            else:
+                input_object["optional_arguments"] = {'validate': {}, 'transform': {}}
+
+            for x in input_object:
+                if type(input_object[x]) == type(dict()):
+                    input_object[x] = base64.urlsafe_b64encode(simplejson.dumps(input_object[x]))
+
+            command_list = ["trns_upload_taskrunner", "--ujs_job_id", ujs_job_id]
+            
+            for k in input_object:
+               command_list.append("--{0}".format(k))
+               command_list.append("{0}".format(input_object[k]))
+
+            print "\n\nHandler invocation {0}".format(" ".join(command_list))
+
+            task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+            sub_stdout, sub_stderr = task.communicate()
+            
+            if sub_stdout is not None:
+                print sub_stdout
+            if sub_stderr is not None:
+                print >> sys.stderr, sub_stderr
+            
+            if task.returncode != 0:
+                raise Exception(sub_stderr)
+
+            print term.bold("Step 3: View or use workspace objects : {0}/{1}".format(workspace, object_name))
+            show_workspace_object_list(services["workspace"], workspace, object_name, token)
+            print term.bold("Step 4: DONE")
+
+            #job_exit_status = task_driver.run_job("upload", input_object, "{0} => {1}".format(external_type,kbase_type))
+            #if not job_exit_status[0]:                
+            #    print job_exit_status[1]
+            #    raise# Exception("KBase Upload exited with an error")
+
+            #print term.bold("Step {0}: View or use workspace objects".format(upload_step))
+            #task_driver.show_workspace_object_list(workspace, object_name)
+
+        except Exception, e:
+            print e.message
+            print e

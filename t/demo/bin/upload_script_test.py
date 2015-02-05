@@ -55,27 +55,11 @@ def validate_files(input_directory, external_type):
 
 def show_workspace_object_list(workspace_url, workspace_name, object_name, token):
     print term.blue("\tYour KBase data objects:")
-    print "\tobject_list-->"
     
     c = biokbase.workspace.client.Workspace(workspace_url, token=token)
     object_list = c.list_objects({"workspaces": [workspace_name]})
     
     object_list = [x for x in object_list if object_name == x[1]]
-    
-    print "\tobject_list-->"
-    print object_list
-    print "\t<--"
-    print "\t<--"
-    print "\t<--"
-    print "\t<--"
-    print "\t<--"
-    print "\t<--"
-    print "\t<--"
-    print "\t<--"
-    print "\t<--"
-    print "\t<--"
-    print "\t<--"
-
 
     for x in sorted(object_list):
         elapsed_time = datetime.datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc()) - dateutil.parser.parse(x[3])
@@ -322,6 +306,7 @@ if __name__ == "__main__":
     os.mkdir(stamp)
     
     #task_driver = biokbase.Transform.drivers.TransformTaskRunnerDriver(services, args.plugin_directory)
+    task_driver = biokbase.Transform.drivers.TransformClientTerminalDriver(services)
     plugins = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory)
     
     term = blessings.Terminal()
@@ -430,7 +415,8 @@ if __name__ == "__main__":
                 raise Exception(sub_stderr)
 
             print term.bold("Step 3: View or use workspace objects : {0}/{1}".format(workspace, object_name))
-            show_workspace_object_list(services["workspace"], workspace, object_name, token)
+            #show_workspace_object_list(services["workspace"], workspace, object_name, token)
+            task_driver.show_workspace_object_list(workspace, object_name)
             print term.bold("Step 4: DONE")
 
             #job_exit_status = task_driver.run_job("upload", input_object, "{0} => {1}".format(external_type,kbase_type))

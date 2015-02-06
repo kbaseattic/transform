@@ -7,8 +7,6 @@
     
     "handler_options": {
         "max_runtime": 360,
-        "must_own_validation": false,
-        "must_own_saving_to_workspace": false,
         "custom_options": [],
 	"required_fields":
 	[

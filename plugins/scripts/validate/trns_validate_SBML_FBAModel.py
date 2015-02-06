@@ -67,7 +67,7 @@ def usage():
 def main(argv):
    inputfile = ''
    ret = None
-   logger = script_utils.getStderrLogger(__file__)
+   logger = script_utils.stderrlogger(__file__)
 
    logger.info("Validation of SBML")
 

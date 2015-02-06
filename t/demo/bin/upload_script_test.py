@@ -233,6 +233,7 @@ if __name__ == "__main__":
     parser.add_argument('--file_path', nargs='?', help='path to file for upload', const="", default="")
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
     parser.add_argument('--config_file', nargs='?', help='path to config file with parameters', const="", default="")
+    parser.add_argument('--verify', help='verify uploaded files', action="store_true")
     #parser.add_argument('--create_log', help='create pass/fail log file', action='store_true')
 
     args = parser.parse_args()
@@ -292,12 +293,6 @@ if __name__ == "__main__":
         inputs = config["upload"]
 
     uc = biokbase.userandjobstate.client.UserAndJobState(url=args.ujs_service_url, token=token)
-    status = 'Initializing'
-    description = 'Mock handler testing' #method_hash["ujs_description"]
-    #progress = { 'ptype' : method_hash["ujs_ptype"], 'max' : method_hash["ujs_mstep"] };
-    progress = { 'ptype' : 'task', 'max' : 100 };
-    est = datetime.datetime.utcnow() + datetime.timedelta(minutes=int(3000))
-    ujs_job_id = uc.create_and_start_job(token, status, description, progress, est.strftime('%Y-%m-%dT%H:%M:%S+0000'));
 
 
 
@@ -371,6 +366,12 @@ if __name__ == "__main__":
             print term.bold("Using data from : {0}".format(inputs[x]["url_mapping"].values()))
             upload_step += 1
             
+            status = 'Initializing'
+            description = 'Mock handler testing' #method_hash["ujs_description"]
+            #progress = { 'ptype' : method_hash["ujs_ptype"], 'max' : method_hash["ujs_mstep"] };
+            progress = { 'ptype' : 'task', 'max' : 100 };
+            est = datetime.datetime.utcnow() + datetime.timedelta(minutes=int(3000))
+            ujs_job_id = uc.create_and_start_job(token, status, description, progress, est.strftime('%Y-%m-%dT%H:%M:%S+0000'));
             input_object = dict()
             input_object["external_type"] = external_type
             input_object["kbase_type"] = kbase_type
@@ -381,8 +382,8 @@ if __name__ == "__main__":
             input_object["working_directory"] = stamp
             input_object.update(services)
             if input_object.has_key("awe_service_url"): del input_object["awe_service_url"] 
-            if input_object.has_key("handle_service_url"): del input_object["handle_service_url"] 
             if input_object.has_key("transform_service_url"): del input_object["transform_service_url"] 
+            #if input_object.has_key("handle_service_url"): del input_object["handle_service_url"] 
 
             print term.blue("\tTransform handler upload started:")
             

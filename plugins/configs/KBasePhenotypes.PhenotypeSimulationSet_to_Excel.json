@@ -1,10 +1,10 @@
 { 
-    "script_name": "trns_transform_KBasePhenotypes.PhenotypeSimulationSet-to-CSV.pl", 
+    "script_name": "trns_transform_KBasePhenotypes_PhenotypeSimulationSet_to_Excel_PhenotypeSimulationSet.pl", 
     "script_type": "download", 
-    "external_type": "CSV.PhenotypeSimulationSet", 
+    "external_type": "Excel.PhenotypeSimulationSet", 
     "kbase_type": "KBasePhenotypes.PhenotypeSimulationSet", 
-    "user_description": "Download phenotype simulation set in CSV format", 
-    "developer_description": "Download phenotype simulation set in CSV format", 
+    "user_description": "Download phenotype simulation set in Excel format", 
+    "developer_description": "Download phenotype simulation set in Excel format", 
     "handler_options": { 
         "max_runtime": 600, 
         "required_fields": [ 

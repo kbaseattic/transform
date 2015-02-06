@@ -1,8 +1,8 @@
 {
-    "script_name": "trns_validate_CSV_FBAModel.pl",
+    "script_name": "trns_validate_TSV_FBAModel.pl",
     "script_type": "validate",
-    "external_type": "CSV.FBAModel",
-    "user_description": "Validate Reaction or Compound CSV file for use in importing FBA Model",
+    "external_type": "TSV.FBAModel",
+    "user_description": "Validate Reaction or Compound TSV file for use in importing FBA Model",
     "developer_description": "",
     
     "handler_options": {        
@@ -15,7 +15,7 @@
 	    "input_file_name"
 	],
 	"optional_fields":[],
-	"input_mapping": [{"input_file_name": "CSV.FBAModel"}]
+	"input_mapping": [{"input_file_name": "TSV.FBAModel"}]
     },
     "user_options": [],
     "user_option_groups": []

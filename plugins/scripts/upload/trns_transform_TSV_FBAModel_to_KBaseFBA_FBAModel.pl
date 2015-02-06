@@ -9,7 +9,7 @@ use Getopt::Long;
 use Bio::KBase::Transform::ScriptHelpers qw( parse_input_table getStderrLogger );
 use Bio::KBase::fbaModelServices::ScriptHelpers qw(fbaws get_fba_client runFBACommand universalFBAScriptCode );
 
-my $script = "trns_transform_CSV_FBAModel-to-KBaseFBA.FBAModel.pl";
+my $script = "trns_transform_TSV_FBAModel_to_KBaseFBA_FBAModel.pl";
 
 =head1 NAME
 
@@ -17,16 +17,16 @@ $script
 
 =head1 SYNOPSIS
 
-$script --input_file_name/-i <Input CSV Reaction File> --compounds/-c <Input CSV Compound File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
+$script --input_file_name/-i <Input TSV Reaction File> --compounds/-c <Input TSV Compound File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
 
 =head1 DESCRIPTION
 
-Transform a CSV file into an object in the workspace.
+Transform a TSV file into an object in the workspace.
 
 =head1 COMMAND-LINE OPTIONS
 $script
 	-i --input_file_name   name of reactions file with model data
-	-c --compounds         csv file with compound data
+	-c --compounds         tsv file with compound data
 	-o --object_name       id under which KBaseBiochem.Media is to be saved
 	-w --workspace_name    workspace where KBaseBiochem.Media is to be saved
 	-g --genome	       genome for which model was constructed
@@ -65,8 +65,8 @@ if (length($wsurl) == 0) {
 }
 
 if($Help || !$In_RxnFile || !$In_CpdFile || !$Out_Object || !$Out_WS){
-    print($0." --input_file_name/-i <Input Reaction CSV File> --compounds/-c <Input Compound CSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
-    $logger->warn($0." --input_file_name/-i <Input Reaction CSV File> --compounds/-c <Input Compound CSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+    print($0." --input_file_name/-i <Input Reaction TSV File> --compounds/-c <Input Compound TSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+    $logger->warn($0." --input_file_name/-i <Input Reaction TSV File> --compounds/-c <Input Compound TSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
     exit();
 }
 

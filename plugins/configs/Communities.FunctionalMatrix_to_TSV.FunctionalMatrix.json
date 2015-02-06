@@ -1,9 +1,9 @@
 {
-    "script_name": "trns_transform_WSBiomType-to-TabDelimited.pl", 
+    "script_name": "trns_transform_Communities_to_TSV_Communities.pl", 
     "script_type": "download",
-    "external_type": "TSV.TaxonomicMatrix",
-    "kbase_type": "Communities.TaxonomicMatrix",
-    "user_description": "Download transformation from Communities.TaxonomicMatrix to Tab-Delimited text file.",
+    "external_type": "TSV.FunctionalMatrix",
+    "kbase_type": "Communities.FunctionalMatrix",
+    "user_description": "Download transformation from Communities.FunctionalMatrix to Tab-Delimited text file.",
     "developer_description": "",    
 
     "handler_options": {

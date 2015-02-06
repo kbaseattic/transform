@@ -2,14 +2,14 @@ use strict;
 
 #
 # BEGIN spec
-# "KBaseGenomes.Pangenome-to-CSV": {
+# "KBaseGenomes_Pangenome_to_TSV_Pangenome": {
 #   "cmd_args": {
 #     "input": "-i",
 #	  "workspace": "-w",
 #     "output": "-o",
 #     },
-#     "cmd_description": "KBaseGenomes.Pangenome to CSV",
-#     "cmd_name": "trns_transform_KBaseGenomes.Pangenome-to-CSV.pl",
+#     "cmd_description": "KBaseGenomes.Pangenome to TSV",
+#     "cmd_name": "trns_transform_KBaseGenomes_Pangenome_to_TSV_Pangenome.pl",
 #     "max_runtime": 3600,
 #     "opt_args": {
 # 	 }

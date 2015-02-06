@@ -1,10 +1,10 @@
 { 
-    "script_name": "trns_transform_KBasePhenotypes_PhenotypeSet_to_CSV_PhenotypeSet.pl", 
+    "script_name": "trns_transform_KBasePhenotypes_PhenotypeSet_to_TSV_PhenotypeSet.pl", 
     "script_type": "download", 
-    "external_type": "CSV.PhenotypeSet", 
+    "external_type": "TSV.PhenotypeSet", 
     "kbase_type": "KBasePhenotypes.PhenotypeSet", 
-    "user_description": "Download phenotype set in CSV format", 
-    "developer_description": "Download phenotype set in CSV format", 
+    "user_description": "Download phenotype set in TSV format", 
+    "developer_description": "Download phenotype set in TSV format", 
     "handler_options": { 
         "max_runtime": 3000, 
         "required_fields": [ 

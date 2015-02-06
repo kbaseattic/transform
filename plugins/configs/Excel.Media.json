@@ -1,7 +1,7 @@
 {
     "script_name": "trns_validate_Excel_Media.pl",
     "script_type": "validate",
-    "external_type": "Excel",
+    "external_type": "Excel.Media",
     "user_description": "Validate Excel file for use in importing Media",
     "developer_description": "",
     

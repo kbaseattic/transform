@@ -16,8 +16,8 @@ GetOptions("input_file_name|i=s"  => \$In_File,
 	   "help|h"     => \$Help);
 
 if($Help || !$In_File){
-    print($0." --input_file_name/-i <Input CSV File>");
-    $logger->warn($0." --input_file_name|-i <Input CSV File>");
+    print($0." --input_file_name/-i <Input TSV File>");
+    $logger->warn($0." --input_file_name|-i <Input TSV File>");
     exit(0);
 }
 
@@ -26,9 +26,9 @@ if(!-f $In_File){
     die("Cannot find $In_File");
 }
 
-if($In_File !~ /\.([ct]sv|txt)$/){
-    $logger->warn("$In_File does not have correct suffix (.txt or .csv or .tsv)");
-    die("$In_File does not have correct suffix (.txt or .csv or .tsv)");
+if($In_File !~ /\.(tsv|txt)$/){
+    $logger->warn("$In_File does not have correct suffix (.txt or .tsv)");
+    die("$In_File does not have correct suffix (.txt or .tsv)");
 }
 
 #Open File, making sure to be able to read DOS/WINDOWS/MAC files

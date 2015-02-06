@@ -113,10 +113,11 @@ class TaskRunner(object):
             command_name = os.path.splitext(arguments["script_name"])[0]
         
         command_list = [command_name]
-        del arguments["script_name"]
+        #del arguments["script_name"]
         #del arguments["optional_arguments"]
 
         for k in arguments:
+            if k == "script_name": continue
             if type(arguments[k]) == type(list()):
                 for n in arguments[k]:
                     command_list.append("--{0}".format(k))

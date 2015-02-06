@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''
 Created on Jan 30, 2015
 
@@ -5,55 +6,21 @@ Created on Jan 30, 2015
 '''
 from __future__ import print_function
 import os
-import inspect
-from biokbase.Transform import script_utils
-from biokbase.Transform.handler_utils import PlugIns
-from biokbase.AbstractHandle.Client import AbstractHandle
-from bzrlib.config import ConfigObj
 import json
-from biokbase.workspace.client import Workspace
-import random
 import sys
-import subprocess
 from deep_eq import deep_eq
-import base64
-
-# TODO run this with makefile
 
 KEEP_CURRENT_VENV = False
 
-KB_TOKEN = 'KB_AUTH_TOKEN'
-TEST_CFG_FILE = 'test.cfg'
-
 FILE_LOC = os.path.split(__file__)[0]
+sys.path.append(os.path.join(FILE_LOC, '../'))  # to import script framework
+import script_checking_framework
+from script_checking_framework import ScriptCheckFramework
 
-sys.path.append(os.path.join(FILE_LOC, '../'))  # to import demo/setup
-# this import is both resolved and used
-from demo.setup import TransformVirtualEnv  # @UnresolvedImport @UnusedImport
-
-TRANSFORM_LOC = os.path.join(FILE_LOC, '../../')
-# maybe this should be configurable...?
-PLUGIN_CFG_LOC = os.path.join(TRANSFORM_LOC, 'plugins/configs')
-TEST_CFG_LOC = os.path.join(FILE_LOC, TEST_CFG_FILE)
+# TODO test template with instructions
 
 
-class Test_Scripts(object):
-
-    @classmethod
-    def setup_class(cls):
-        cls.token = os.environ.get(KB_TOKEN)
-        if not cls.token:
-            raise ValueError('No token found in environment variable ' +
-                             KB_TOKEN)
-        cls.plugins_cfg = PlugIns(PLUGIN_CFG_LOC)
-        cfg = ConfigObj(TEST_CFG_LOC)
-        for url in ['ws_url', 'shock_url', 'handle_url', 'ujs_url']:
-            setattr(cls, url, cfg.get(url))
-        tve = TransformVirtualEnv(FILE_LOC, 'venv', TRANSFORM_LOC,
-                                  keep_current_venv=KEEP_CURRENT_VENV)
-        tve.activate_for_current_py_process()
-        cls.staged = {}
-        cls.stage_data()
+class TestAssyFileToContigSet(ScriptCheckFramework):
 
     @classmethod
     def stage_data(cls):
@@ -67,8 +34,7 @@ class Test_Scripts(object):
         src_type = 'Empty.AType'
 
         src_ws = cls.create_random_workspace(this_function_name)
-        ws = Workspace(cls.ws_url, token=cls.token)
-        objdata = ws.save_objects(
+        objdata = cls.ws.save_objects(
             {'workspace': src_ws,
              'objects': [{'name': src_obj_name,
                           'type': src_type,
@@ -120,8 +86,7 @@ class Test_Scripts(object):
         assyjson['assembly_file']['file']['id'] = node_id
         assyjson['assembly_file']['file']['hid'] = handle
 
-        ws = Workspace(cls.ws_url, token=cls.token)
-        objdata = ws.save_objects(
+        objdata = cls.ws.save_objects(
             {'workspace': src_ws,
              'objects': [{'name': src_obj_name,
                           'type': src_type,
@@ -131,46 +96,6 @@ class Test_Scripts(object):
         cls.staged[key] = {'obj_info': objdata,
                            'node': node_id,
                            'ref': ref}
-
-    @classmethod
-    def upload_file_to_shock_and_get_handle(cls, test_file):
-        node_id = script_utils.upload_file_to_shock(
-            shock_service_url=cls.shock_url,
-            filePath=test_file,
-            ssl_verify=False,
-            token=cls.token)['id']
-
-        handle = AbstractHandle(cls.handle_url, token=cls.token)
-        handle_id = handle.persist_handle({'id': node_id,
-                                           'type': 'shock',
-                                           'url': cls.shock_url
-                                           })
-        return node_id, handle_id
-
-    @classmethod
-    def create_random_workspace(cls, prefix):
-        ws = Workspace(cls.ws_url, token=cls.token)
-        ws_name = prefix + '_' + str(random.random())[2:]
-        wsinfo = ws.create_workspace({'workspace': ws_name})
-        return wsinfo[1]
-
-    @classmethod
-    def run_convert_taskrunner(cls, args):
-        job_details = cls.plugins_cfg.get_job_details("convert", args)
-        args['optional_arguments'] = base64.urlsafe_b64encode(
-            json.dumps(args['optional_arguments']))
-        args['job_details'] = base64.urlsafe_b64encode(
-            json.dumps(job_details))
-
-        command_list = ['trns_convert_taskrunner.py']
-        for k in args:
-            command_list.append("--{0}".format(k))
-            command_list.append("{0}".format(args[k]))
-
-        task = subprocess.Popen(command_list, stderr=subprocess.PIPE,
-                                stdout=subprocess.PIPE)
-        so, se = task.communicate()
-        return so, se, task.returncode
 
     def test_assyfile_to_cs_basic_ops(self):
         this_function_name = sys._getframe().f_code.co_name
@@ -189,21 +114,12 @@ class Test_Scripts(object):
                 'ujs_service_url': self.ujs_url,
                 'working_directory': dest_ws}
 
-        stdo, stde, code = self.run_convert_taskrunner(args)
-        if stdo:
-            raise TestException('Got unexpected data in standard out:\n' +
-                                stdo)
-        if 'ERROR' in stde:
-            raise TestException('Error reported in stderr:\n' + stde)
-        if 'INFO - Conversion completed.' not in stde:
-            raise TestException('Script did not report as completed:\n' + stde)
-        if code != 0:
-            raise TestException('Got non zero return code from script:' +
-                                str(code))
+        expect_err = 'INFO - Conversion completed.'
+        self.run_and_check('convert', args, None, expect_err,
+                           not_expect_err='ERROR')
 
-        ws = Workspace(self.ws_url, token=self.token)
-        newobj = ws.get_objects([{'workspace': dest_ws,
-                                  'name': dest_obj_name}])[0]
+        newobj = self.ws.get_objects([{'workspace': dest_ws,
+                                       'name': dest_obj_name}])[0]
         prov = newobj['provenance'][0]
         ref = staged['ref']
         assert prov['input_ws_objects'] == [ref]
@@ -288,33 +204,13 @@ class Test_Scripts(object):
         self.fail_convert(args, error)
 
     def fail_convert(self, args, expected_error):
-        stdo, stde, code = self.run_convert_taskrunner(args)
-        if stdo:
-            raise TestException('Got unexpected data in standard out:\n' +
-                                stdo)
-        if expected_error not in stde:
-            raise TestException('Did not get expected error in stderr:\n' +
-                                stde)
-        if code != 1:
-            raise TestException('Got unexpected return code from script:' +
-                                str(code))
-
-
-class TestException(Exception):
-    pass
+        self.run_and_check('convert', args, None, expected_error, ret_code=1)
 
 
 def main():
-    # use nosetests to run these tests, this is a hack to get them to run
+    # generally use nosetests to run these tests, this gets them to run
     # while testing the tests
-    Test_Scripts.setup_class()
-    ts = Test_Scripts()
-    methods = inspect.getmembers(ts, predicate=inspect.ismethod)
-    for meth in methods:
-        if meth[0].startswith('test_'):
-            print("\nRunning " + meth[0])
-            meth[1]()
-
+    script_checking_framework.run_methods(__name__, KEEP_CURRENT_VENV)
 
 if __name__ == '__main__':
     main()

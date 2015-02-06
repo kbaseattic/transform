@@ -192,10 +192,7 @@ if __name__ == "__main__":
  
             job_exit_status = upload_driver.monitor_job(awe_job_id, ujs_job_id)
             
-            print job_exit_status
-            
             if not job_exit_status[0]:
-                print upload_driver.get_job_debug(awe_job_id, ujs_job_id)                
                 upload_driver.show_job_debug(awe_job_id, ujs_job_id)
                 raise Exception("KBase Upload exited with an error")
 

@@ -88,7 +88,9 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
 
     kb_token = None
     try:            
-        kb_token = os.environ.get('KB_AUTH_TOKEN')
+        kb_token = script_utils.get_token()
+        
+        assert type(kb_token) == type(str())
     except Exception, e:
         logger.debug("Exception getting token!")
         raise

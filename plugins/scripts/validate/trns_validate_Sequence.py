@@ -13,7 +13,7 @@ import biokbase.Transform.script_utils as script_utils
 
 def validate(input_directory, working_directory, level=logging.INFO, logger=None):
     """
-    Validates a FASTA file of nucleotide sequences.
+    Validates any file containing sequence data.
 
     Args:
         input_directory: A directory containing one or more SequenceRead files.
@@ -52,7 +52,11 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
         
         # TODO This needs to be changed, this is really just a demo program for this library and not a serious tool
         java_classpath = os.path.join(os.environ.get("KB_TOP"), "lib/jars/FastaValidator/FastaValidator-1.0.jar")
-        arguments = ["java", "-classpath", java_classpath, "FVTester", filePath]
+        
+        if os.path.splitext(input_file_name)[-1] in fasta_extensions:
+            arguments = ["java", "-classpath", java_classpath, "FVTester", filePath]            
+        elif os.path.split()[-1] in fastq_extensions:
+            arguments = ["java", "-classpath", java_classpath, "fastQValidator", "--disableSeqIDCheck", "--file", filePath]        
             
         tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)
         stdout, stderr = tool_process.communicate()

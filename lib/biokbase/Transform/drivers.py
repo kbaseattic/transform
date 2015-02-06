@@ -49,7 +49,12 @@ class TransformDriver(object):
             self.logger = logger
         else:
             self.logger = biokbase.Transform.script_utils.stdoutlogger("TransformDriver")
-        
+
+        if self.logger is None:
+            raise Exception("The logger instance you provided appears to be None.")
+
+        self.logger.info("Instantiating Transform Client Driver")
+
         self.token = biokbase.Transform.script_utils.get_token()
 
         # create all service clients

@@ -125,7 +125,7 @@ public class GenometoGbk {
             Contig curcontig = contigs.get(j);
             StringBuffer out = new StringBuffer("");
             //out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
-            out.append("LOCUS       " + curcontig.getName() + "             " + curcontig.getLength() + " bp    " +
+            out.append("LOCUS       " + curcontig.getId() + "             " + curcontig.getLength() + " bp    " +
                     molecule_type_short + "\n");// + "     circular CON 10-JUN-2013\n");
             out.append("DEFINITION  " + genome.getScientificName() + " genome.\n");
             //out.append("ACCESSION   NC_005213\n");

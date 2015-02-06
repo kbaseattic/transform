@@ -128,7 +128,7 @@ public class TestKBDownUp {
                     //"-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
 
                     ar2.add("--workspace_name");
-                    ar2.add("KBasePublicGenomesV5");
+                    ar2.add("upload_testing");
                     ar2.add("--workspace_service_url");
                     ar2.add("https://kbase.us/services/ws");
                     ar2.add("--input_directory");
@@ -144,13 +144,12 @@ public class TestKBDownUp {
                     int count22 = 0;
                     for (Object obj : ar2) {
                         argsgt2[count22] = obj.toString();
-                        count2++;
+                        count22++;
                     }
 
                     ConvertGBK cg = new ConvertGBK(wc);
                     cg.init(argsgt2);
                     cg.run();
-
 
                     File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
                     rmdir(tobermed);
@@ -171,9 +170,9 @@ public class TestKBDownUp {
                     int count5 = 0;
                     for (String s : ar2) {
                         cmd2 += s;
-                        if (count4 < ar2.size() - 1)
+                        if (count5 < ar2.size() - 1)
                             cmd2 += ",";
-                        count4++;
+                        count5++;
                     }
 
                     System.out.println("Error down " + cmd1);

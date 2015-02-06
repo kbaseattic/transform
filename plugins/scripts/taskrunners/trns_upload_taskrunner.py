@@ -181,7 +181,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
         logger.debug(job_details)
 
         # Step 2 : Validate the data files, if there is a separate validation script
-        if job_details["transform"]["handler_options"].has_key("must_own_validation") or \
+        if job_details["transform"]["handler_options"].has_key("must_own_validation") and \
            job_details["transform"]["handler_options"]["must_own_validation"]:        
             try:
                 if ujs_job_id is not None:

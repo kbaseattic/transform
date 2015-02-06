@@ -171,7 +171,7 @@ def extract_data(logger = stderrlogger(__file__), filePath = None, chunkSize = 2
 
     logger.info("Extracting {0} as {1}".format(filePath, mimeType))
 
-    if mimeType == "application/x-gzip":
+    if mimeType == "application/x-gzip" or mimeType == "application/gzip":
         outFile = os.path.splitext(filePath)[0]
         with gzip.GzipFile(filePath, 'rb') as gzipDataFile, io.open(outFile, 'wb') as f:
             for chunk in gzipDataFile:

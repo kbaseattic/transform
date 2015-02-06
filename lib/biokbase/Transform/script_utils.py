@@ -22,11 +22,12 @@ import magic
 import ftputil
 import requests
 from requests_toolbelt import MultipartEncoder
+import subprocess
 
 try:
-    from biokbase.HandleService.Client import HandleService 
+    from biokbase.HandleService.Client import HandleService
 except:
-    from biokbase.AbstractHandle.Client import AbstractHandle as HandleService 
+    from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
 
 import biokbase.workspace.client
 
@@ -45,13 +46,17 @@ def get_token():
     """
 
     token = os.environ.get("KB_AUTH_TOKEN")
-    
+
     if token is None:
         try:
-            task = subprocess.Popen(["kbase-whoami", "-t"], stdout=subprocess.PIPE, shell=True)
-            stdout, stderr = task.communicate()
-            
+            task = subprocess.Popen(["kbase-whoami", "-t"],
+                                    stdout=subprocess.PIPE, shell=True)
+            stdout, _ = task.communicate()
+
             if stdout is not None:
+                if 'You are not logged in' in stdout:
+                    raise Exception("Unable to retrieve user token, " +
+                                    "login with CLI or export KB_AUTH_TOKEN")
                 return stdout.strip()
             else:
                 raise None
@@ -166,7 +171,7 @@ def extract_data(logger = stderrlogger(__file__), filePath = None, chunkSize = 2
 
     logger.info("Extracting {0} as {1}".format(filePath, mimeType))
 
-    if mimeType == "application/x-gzip":
+    if mimeType == "application/x-gzip" or mimeType == "application/gzip":
         outFile = os.path.splitext(filePath)[0]
         with gzip.GzipFile(filePath, 'rb') as gzipDataFile, io.open(outFile, 'wb') as f:
             for chunk in gzipDataFile:

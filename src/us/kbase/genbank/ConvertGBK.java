@@ -1,10 +1,9 @@
- package us.kbase.genbank;
+package us.kbase.genbank;
 
 import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
 import us.kbase.auth.TokenFormatException;
-import us.kbase.common.service.JsonClientException;
 import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
@@ -62,7 +61,6 @@ public class ConvertGBK {
 
 
     /**
-     *
      * @param workc
      * @throws Exception
      */
@@ -428,19 +426,22 @@ public class ConvertGBK {
                     cname = out_object_c;
                 }
                 cname = sanitizeObjectName(cname);
+
+                boolean saved2 = false;
+                int retry2 = 0;
                 try {
                     System.out.println("saving ContigSet " + cname);
                     wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                             .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
                                     .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
+                    saved2 = true;
                     System.out.println("successfully saved object");
                 /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
-                } catch (IOException e) {
-                    System.err.println("Error saving ContigSet to workspace, data may be too large (IOException)).");
-                    e.printStackTrace();
-                } catch (JsonClientException e) {
-                    System.err.println("Error saving ContigSet to workspace, data may be too large (JsonClientException).");
+                } catch (Exception e) {
+                    retry2++;
+                    Thread.sleep(2000);
+                    System.err.println("Error saving ContigSet to workspace.");
                     e.printStackTrace();
                 }
 
@@ -452,9 +453,23 @@ public class ConvertGBK {
                 }
                 gname = sanitizeObjectName(gname);
                 System.out.println("saving Genome " + gname + "\t:" + genome.getContigsetRef() + ":");
-                wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                        .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
-                                .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+
+                boolean saved = false;
+                int retry = 0;
+                while (!saved && retry < 10) {
+                    try {
+                        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                                .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
+                                        .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+                        saved = true;
+                    } catch (IOException e) {
+                        retry++;
+                        Thread.sleep(2000);
+                        System.err.println("Error saving object " + outpath2);
+                        System.err.println("IOException: " + e.getMessage());
+                    }
+                }
+
                 System.out.println("successfully saved object");
 
 /*

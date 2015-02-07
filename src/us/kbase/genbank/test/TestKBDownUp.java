@@ -62,7 +62,6 @@ public class TestKBDownUp {
             workdir.mkdirs();
         }
 
-
         try {
             WorkspaceClient wc = null;
 
@@ -89,6 +88,8 @@ public class TestKBDownUp {
 
             List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> getobj =
                     wc.listObjects(lop);
+
+            System.out.println("got data for " + getobj.size() + " objects");
 
             int count = 0;
             for (Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>> t : getobj) {

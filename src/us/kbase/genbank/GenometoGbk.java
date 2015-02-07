@@ -237,7 +237,9 @@ public class GenometoGbk {
                     }
 
                     String function = cur.getFunction();
-                    String[] allfunction = function.split(" ");
+                    String[] allfunction = {""};
+                    if (function != null)
+                        allfunction = function.split(" ");
 
 
                     boolean test = false;
@@ -377,7 +379,7 @@ public class GenometoGbk {
                 } else if (argsPossibleMap[index].equals("shocku")) {
                     shockurl = args[i + 1];
                 } else if (argsPossibleMap[index].equals("wd")) {
-                    workdir = new File( args[i + 1]);
+                    workdir = new File(args[i + 1]);
                 } else if (argsPossibleMap[index].equals("t")) {
                     if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
                         isTest = true;
@@ -395,7 +397,7 @@ public class GenometoGbk {
             workdir = new File("./");
             System.out.println("set work dir to default " + workdir);
         }
-        if(!workdir.exists())
+        if (!workdir.exists())
             workdir.mkdirs();
 
         mapper = UObject.getMapper();//new ObjectMapper();

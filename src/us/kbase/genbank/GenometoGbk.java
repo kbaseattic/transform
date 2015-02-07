@@ -240,6 +240,8 @@ public class GenometoGbk {
                     String[] allfunction = {""};
                     if (function != null)
                         allfunction = function.split(" ");
+                    else
+                    function = "";
 
 
                     boolean test = false;

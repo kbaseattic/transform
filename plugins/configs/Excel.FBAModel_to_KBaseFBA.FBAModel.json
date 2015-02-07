@@ -1,12 +1,12 @@
 {
     "script_name": "trns_transform_Excel_FBAModel_to_KBaseFBA_FBAModel.pl",
     "script_type": "upload",
-    "external_type": "Excel",
+    "external_type": "Excel.FBAModel",
     "kbase_type": "KBaseFBA.FBAModel",
     "user_description": "Converts Excel file to FBAModel object in workspace.",
-    
+    "url_mapping": ["Excel.FBAModel"],    
     "handler_options": {        
-        "must_own_validation": false,
+        "must_own_validation": true,
         "must_own_saving_to_workspace": true,
         "max_runtime": 360,
         "custom_options": [],
@@ -14,14 +14,24 @@
 	[
 	    "input_file_name",
 	    "object_name",
+<<<<<<< HEAD
 	    "workspace_name"
+=======
+	    "workspace_name",
+	    "workspace_service_url",
+	    "fba_service_url"
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d
 	],
 	"optional_fields":
 	[
 	    "genome",
 	    "biomass"
 	],
+<<<<<<< HEAD
 	"input_mapping": [{"input_file_name": "Excel.FBAModel"}]		
+=======
+	"input_mapping": {"Excel.FBAModel": "input_file_name"}		
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d
     },
     "user_options": [
         {

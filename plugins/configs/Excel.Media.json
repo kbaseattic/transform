@@ -1,14 +1,12 @@
 {
     "script_name": "trns_validate_Excel_Media.pl",
     "script_type": "validate",
-    "external_type": "Excel",
+    "external_type": "Excel.Media",
     "user_description": "Validate Excel file for use in importing Media",
     "developer_description": "",
     
     "handler_options": {
         "max_runtime": 360,
-        "must_own_validation": false,
-        "must_own_saving_to_workspace": false,
         "custom_options": [],
 	"required_fields":
 	[

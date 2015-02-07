@@ -1,15 +1,17 @@
 #BEGIN_HEADER
 import sys
 import os
-import base64
+import time
 import logging
-
-import simplejson
+import logging.handlers
+import base64
 
 #import pymemcache.client
+import simplejson
 
 from biokbase.workflow.KBW import run_async
-import biokbase.log
+import biokbase.Transform.handler_utils as handler_utils
+
 #END_HEADER
 
 
@@ -61,7 +63,12 @@ type but different versions.
         # read local configuration
         #memcacheClient = self._get_memcache_client()
 
-        args = self.pluginManager.get_handler_args(method, args)
+        # filter the config information for this request so that the script arguments are proper
+        args["job_details"] = self.pluginManager.get_job_details(method, args)
+
+        for x in args:
+            if type(args[x]) == type(dict()):
+                args[x] = base64.urlsafe_b64encode(simplejson.dumps(args[x]))
         
         return run_async(self.config, ctx, args)
 
@@ -72,14 +79,43 @@ type but different versions.
     def __init__(self, config):
         #BEGIN_CONSTRUCTOR
         self.config = config
-        self.kbaseLogger = logging.getLogger('transform')
-        #self.kbaseLogger.set_log_file('transform_service.log')
 
+        formatter = logging.Formatter("%(asctime)s - %(filename)s - %(lineno)d - %(levelname)s - %(message)s")
+        formatter.converter = time.gmtime
+        
+        self.logger = logging.getLogger('transform')
+        
+        if self.config.has_key('log_syslog') and self.config['log_syslog'] == 'true':
+            syslog_handler = logging.handlers.SysLogHandler(facility = logging.handlers.SysLogHandler.LOG_DAEMON, 
+                                                            address = "/dev/log")
+            syslog_handler.setFormatter(formatter)
+            self.logger.addHandler(syslog_handler)
+
+        if self.config.has_key('log_file'):
+            file_handler = logging.FileHandler(self.config['log_file'])
+            file_handler.setFormatter(formatter)
+            self.logger.addHandler(file_handler)
+    
+        if self.config.has_key('log_level'):
+            configLevel = self.config['log_level']
+
+            if configLevel in logging._levelNames:
+                level = logging._levelNames[configLevel]
+            else:
+                level = logging.INFO
+        else:
+            level = logging.WARNING
+
+        self.logger.setLevel(level)
+
+        # where to read in the script configs from
         pluginsDir = self.config["plugins_directory"]
         
-        self.kbaseLogger.info("PLUGINS : " + str(plugins))
-        
-        self.pluginManager = handler_utils.Plugins(pluginsDir, logger=self.kbaseLogger)
+        self.logger.debug("plugins directory : {0}".format(pluginsDir))
+        self.logger.debug(config)
+                
+        # read in the plugin configs and later filter them appropriately per request in _run_job()
+        self.pluginManager = handler_utils.PluginManager(pluginsDir, logger=self.logger)
         
         #END_CONSTRUCTOR
         pass
@@ -120,7 +156,7 @@ type but different versions.
         # ctx is the context object
         # return variables are: result
         #BEGIN upload
-        self.kbaseLogger.log_message("DEBUG", "Calling upload")
+        self.logger.debug("Calling upload")
         result = self._run_job("upload", ctx, args)
         #END upload
 
@@ -135,6 +171,7 @@ type but different versions.
         # ctx is the context object
         # return variables are: result
         #BEGIN download
+        self.logger.debug("Calling download")
         result = self._run_job("download", ctx, args)
         #END download
 
@@ -149,6 +186,7 @@ type but different versions.
         # ctx is the context object
         # return variables are: result
         #BEGIN convert
+        self.logger.debug("Calling convert")
         result = self._run_job("convert", ctx, args)
         #END convert
 

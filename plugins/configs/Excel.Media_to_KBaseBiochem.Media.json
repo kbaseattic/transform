@@ -1,0 +1,56 @@
+{
+    "script_name": "trns_transform_Excel_Media_to_KBaseBiochem_Media.pl",
+    "script_type": "upload",
+    "external_type": "Excel.Media",
+    "kbase_type": "KBaseBiochem.Media",
+    "user_description": "Converts Excel file to Media object in workspace.",
+<<<<<<< HEAD:plugins/configs/Excel.Media_to_KBaseFBA.Media.json
+    
+=======
+    "url_mapping": ["Excel.Media"],    
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/Excel.Media_to_KBaseBiochem.Media.json
+    "handler_options": {        
+        "must_own_validation": true,
+        "must_own_saving_to_workspace": true,
+        "max_runtime": 360,
+        "custom_options": [],
+	"required_fields":
+	[
+	    "input_file_name",
+	    "object_name",
+<<<<<<< HEAD:plugins/configs/Excel.Media_to_KBaseFBA.Media.json
+	    "workspace_name"
+	],
+	"optional_fields":[],
+	"input_mapping": [{"input_file_name": "Excel.Media"}]
+=======
+	    "workspace_name",
+	    "workspace_service_url",
+	    "fba_service_url"
+	],
+	"optional_fields":[],
+	"input_mapping": {"Excel.Media": "input_file_name"}
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/Excel.Media_to_KBaseBiochem.Media.json
+    },
+    "user_options": [
+        {
+            "name": "input_file_name",
+            "type": "string",
+            "required": true,
+            "help": "Input Excel File"
+        },
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "ID for output Media in workspace."
+        },
+        {
+            "name": "workspace_name",
+            "type": "string",
+            "required": true,
+            "help": "Workspace ID for saving output Media."
+        }
+    ],
+    "user_option_groups": []
+}

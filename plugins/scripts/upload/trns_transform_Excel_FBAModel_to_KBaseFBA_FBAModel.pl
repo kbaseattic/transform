@@ -39,13 +39,24 @@ my $Out_WS    = "";
 my $Genome    = "Empty";
 my $Biomass   = "";
 my $Help      = 0;
+my $fbaurl = "";
+my $wsurl = "";
 
 GetOptions("input_file_name|i=s"     => \$In_File,
 	   "object_name|o=s"    => \$Out_Object,
 	   "workspace_name|w=s"    => \$Out_WS,
 	   "genome|g=s"    => \$Genome,
 	   "biomass|b=s"   => \$Biomass,
+	   "workspace_service_url=s" => $wsurl,
+	   "fba_service_url=s" => $fbaurl,
 	   "help|h"        => \$Help);
+
+if (length($fbaurl) == 0) {
+	$fbaurl = undef;
+}
+if (length($wsurl) == 0) {
+	$wsurl = undef;
+}
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
     print($0." --input_file_name/-i <Input Excel File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
@@ -102,7 +113,10 @@ $logger->info("Loading FBAModel WS Object");
 
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
-    my $fba = get_fba_client();
+    my $fba = get_fba_client($fbaurl);
+    if (defined($wsurl)) {
+    	$input->{wsurl} = $wsurl;
+    }
     $fba->import_fbamodel($input);
 };
 

@@ -2,7 +2,7 @@
     "script_name": "trns_transform_seqs_to_KBaseAssembly_type.pl",
     "script_type": "upload",
     "external_type": "FASTA.DNA.Assembly",
-    "kbase_type": "KBaseGenomes.ReferenceAssembly",
+    "kbase_type": "KBaseAssembly.ReferenceAssembly",
     "user_description": "Converts a FASTA contig set file into a KBaseAssembly.ReferenceAssembly typed object.",
     "developer_description": "Converts a FASTA contig set file into a KBaseAssembly.ReferenceAssembly typed object.",
     "url_mapping": ["FASTA.DNA.Assembly"],

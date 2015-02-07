@@ -15,7 +15,7 @@ use Spreadsheet::ParseExcel;
 use Spreadsheet::ParseXLSX;
 use Log::Log4perl;
 use parent qw(Exporter);
-our @EXPORT_OK = qw(write_csv_tables parse_input_table get_input_fh get_output_fh
+our @EXPORT_OK = qw(write_excel_tables write_csv_tables parse_input_table get_input_fh get_output_fh
 		    load_input write_output write_text_output
 		    genome_to_gto contigs_to_gto
                     parse_excel getStderrLogger);
@@ -159,6 +159,22 @@ sub write_csv_tables {
 		}
 		close(OUT);
 	}	
+}
+
+sub write_excel_tables {
+	my($tables,$filename) = @_;
+	require "Spreadsheet/WriteExcel.pm";
+	my $wkbk = Spreadsheet::WriteExcel->new($filename);
+	foreach my $tbl (keys(%{$tables})) {
+		my $sheet = $wkbk->add_worksheet($tbl);
+		my $data = $tables->{$tbl};
+		for (my $i=0; $i < @{$data}; $i++) {
+			for (my $j=0; $j < @{$data->[$i]}; $j++) {
+				$data->[$i]->[$j] =~ s/=/-/g;
+			}
+			$sheet->write_row($i,0,$data->[$i]);
+		}
+	}
 }
 
 sub write_output

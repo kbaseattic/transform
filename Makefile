@@ -4,8 +4,11 @@ TARGET ?= /kb/deployment
 include $(TOP_DIR)/tools/Makefile.common
 SERVICE_SPEC = Transform.spec
 SERVICE_NAME = Transform
+SERVICE_DIR_NAME = transform
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
 SERVICE_PORT = 7778
+
+DIR = $(shell pwd)
 
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
 TPAGE_ARGS = --define kb_top=$(TARGET) --define kb_runtime=$(DEPLOY_RUNTIME) --define kb_service_name=$(SERVICE_NAME) \
@@ -94,7 +97,7 @@ test-client:
 # start-server dependancy to the test-scripts target if it makes
 # sense to you. Future versions of the make files for services
 # will move in this direction.
-test-scripts:
+test-scripts: test-py-scripts
 	# run each test
 	for t in $(SCRIPT_TESTS) ; do \
 		if [ -f $$t ] ; then \
@@ -104,6 +107,23 @@ test-scripts:
 			fi \
 		fi \
 	done
+
+setup-py-test-env:
+	if [ $$KB_TOP = '/kb/dev_container' ] ; then \
+		for P in `ls ..` ; do \
+			if [ $$P != $(SERVICE_DIR_NAME) ] ; then \
+				for F in `ls ../$$P/lib/biokbase/` ; do \
+					if [ -d ../$$P/lib/biokbase/$$F ] ; then \
+						ln -sf -t lib/biokbase/ $(KB_TOP)/modules/$$P/lib/biokbase/$$F ; \
+					fi \
+				done \
+			fi \
+		done \
+	fi
+
+test-py-scripts: setup-py-test-env
+	t/py/setup_test_env.py
+	PYTHONPATH=$(DIR)/lib/ KB_KEEP_TEST_VENV=1 nosetests -v t/py
 
 # What does it mean to test a server. A server test should not
 # rely on the client libraries or scripts in so far as you should
@@ -126,12 +146,15 @@ include $(TOP_DIR)/tools/Makefile.common.rules
 
 # here are the standard KBase deployment targets (deploy,deploy-client, deploy-scripts, & deploy-service)
 
-deploy: deploy-libs deploy-scripts deploy-service deploy-r-scripts deploy-bins
+deploy: deploy-libs deploy-scripts deploy-service deploy-r-scripts deploy-bins deploy-jars
 
 deploy-bins:
 	rsync --exclude '*.bak*' -arv bin/. $(TARGET)/bin/.
 	bash deps/pylib.sh
 	bash deps/pllib.sh
+
+deploy-jars:
+	cp lib/jars/kbase/transform/* $(TARGET)/lib/jars/kbase/transform/
 
 # Deploy client artifacts, including the application programming interface
 # libraries, command line scripts, and associated reference documentation.

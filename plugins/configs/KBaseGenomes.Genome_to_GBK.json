@@ -13,7 +13,7 @@
             "workspace_name",
 	    "working_directory",
             "object_name",
-            "output_file_name"        
+            "output_file"        
         ],
         "optional_fields": ["object_version"],
         "custom_options": []
@@ -31,8 +31,14 @@
             "required": true,
             "help": "Name of the workspace object."
         },
+	{
+            "name": "object_id",
+            "type": "string",
+            "required": false,
+            "help": "Name of the workspace object."
+        },
         {
-            "name": "output_file_name",
+            "name": "output_file",
             "type": "string",
             "required": false,
             "help": "If not supplied, the name will be derived from the object_name."

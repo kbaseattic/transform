@@ -35,7 +35,7 @@ AUTHORS
 Srividya Ramakrishnan; Sam Seaver
 '''
 
-impt = "../bin/validateSBML"
+impt = "validateSBML"
 
 def to_JSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -67,7 +67,7 @@ def usage():
 def main(argv):
    inputfile = ''
    ret = None
-   logger = script_utils.getStderrLogger(__file__)
+   logger = script_utils.stderrlogger(__file__)
 
    logger.info("Validation of SBML")
 

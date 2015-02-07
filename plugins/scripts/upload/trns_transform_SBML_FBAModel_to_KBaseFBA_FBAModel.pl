@@ -44,6 +44,8 @@ my $Out_WS     = "";
 my $Genome     = "Empty";
 my $Biomass    = "";
 my $Help       = 0;
+my $fbaurl = "";
+my $wsurl = "";
 
 GetOptions("input_file_name=s"  => \$In_RxnFile,
 	   "compounds|c=s"      => \$In_CpdFile,
@@ -51,7 +53,16 @@ GetOptions("input_file_name=s"  => \$In_RxnFile,
 	   "workspace_name|w=s" => \$Out_WS,
 	   "genome|g=s"         => \$Genome,
 	   "biomass|b=s"        => \$Biomass,
+	   "workspace_service_url=s" => \$wsurl,
+	   "fba_service_url=s" => \$fbaurl,
 	   "help|h"             => \$Help);
+
+if (length($fbaurl) == 0) {
+	$fbaurl = undef;
+}
+if (length($wsurl) == 0) {
+	$wsurl = undef;
+}
 
 if($Help || !$In_RxnFile || !$Out_Object || !$Out_WS){
     print($0." --input_file_name/-s <Input SBML File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --compounds/-c <Input Compound CSV File> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
@@ -59,7 +70,7 @@ if($Help || !$In_RxnFile || !$Out_Object || !$Out_WS){
     exit();
 }
 
-$logger->info("Mandatory Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
+$logger->info("Mandatory Data passed = ".join(" | ", ($In_RxnFile,$Out_Object,$Out_WS)));
 $logger->info("Optional Data passed = ".join(" | ", ("Compounds:".$In_CpdFile,"Genome:".$Genome,"Biomass:".$Biomass)));
 
 my $input = {
@@ -97,7 +108,10 @@ $logger->info("Loading FBAModel WS Object");
 
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
-    my $fba = get_fba_client();
+    my $fba = get_fba_client($fbaurl);
+    if (defined($wsurl)) {
+    	$input->{wsurl} = $wsurl;
+    }
     $fba->import_fbamodel($input);
 };
 

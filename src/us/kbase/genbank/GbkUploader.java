@@ -306,7 +306,8 @@ public class GbkUploader {
                 if (taxonomy != null) {
                     if (genome.getTaxonomy() != null && !genome.getTaxonomy().equals(taxonomy)) {
                         System.err.println("Taxonomy path is wrong in file [" + files.get(0).getParent() + ":" +
-                                key + "]: " + taxonomy + " (it's different from '" + genome.getTaxonomy() + "')");
+                                key + "]: " + taxonomy);
+                        System.err.println("is different from '" + genome.getTaxonomy() + "')");
                         nameProblems = true;
                     }
                     //System.out.println("nonplasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);

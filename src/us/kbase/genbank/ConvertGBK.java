@@ -167,7 +167,7 @@ public class ConvertGBK {
                     System.err.println("Multiple multi-record Genbank files currently not supported.");
                 } else if (wasSplit) {
                     System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
-                    indir = new File(workdir.getAbsolutePath() + "/split");
+                    indir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
                 } else {
                     System.out.println("Single input file was not split");
                 }
@@ -176,7 +176,7 @@ public class ConvertGBK {
             boolean wasSplit = splitRecord(start, indir, null);
             System.out.println("Split single input file into multiple records? " + wasSplit);
             if (wasSplit) {
-                indir = new File(workdir.getAbsolutePath() + "/split");
+                indir = new File(workdir.getAbsolutePath() + "/split_" + indir.getName());
                 System.out.println("workdir 2 " + workdir.getAbsolutePath());
             }
         }
@@ -208,7 +208,7 @@ public class ConvertGBK {
         System.out.println("locitest " + locitest.size());
         if (locitest.size() > 1) {
             if (outpath == null)
-                outpath = workdir.getAbsolutePath() + "/split";
+                outpath = workdir.getAbsolutePath() + "/split_" + path.getName();
             System.out.println("split outpath " + outpath);
             File splitdir = new File(outpath);
             if (!splitdir.isDirectory()) {

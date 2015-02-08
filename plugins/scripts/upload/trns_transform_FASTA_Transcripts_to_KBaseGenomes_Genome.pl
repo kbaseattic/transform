@@ -151,6 +151,8 @@ foreach my $Seq (@seqs){
 	$GCs++ if $na =~ /[GgCc]/;
     }
 
+    $Seq->[0] =~ s/\|/_/g if($Seq->[0] =~ /\|/);
+
     my $CDSHash={id=>$Seq->[0],
 		 type=>'CDS',
 		 protein_translation=>$ProtSeq,
@@ -158,6 +160,7 @@ foreach my $Seq (@seqs){
 		 md5=>Digest::MD5::md5_hex($ProtSeq),
 		 dna_sequence => $DNASeq,
 		 dna_sequence_length => length($DNASeq)};
+
     push(@{$GenomeHash->{features}},$CDSHash);
 }
 
@@ -168,7 +171,7 @@ $GenomeHash->{dna_size} = $DNA_Size;
 $logger->info("Writing Genome WS Object");
 
 use JSON;
-my $json_text = encode_json($GenomeHash);
+my $json_text = to_json($GenomeHash,{pretty=>1});
 open(OUT, "> $Out_File");
 print OUT $json_text;
 close(OUT);

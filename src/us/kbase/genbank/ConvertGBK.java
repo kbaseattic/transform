@@ -1,10 +1,9 @@
- package us.kbase.genbank;
+package us.kbase.genbank;
 
 import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
 import us.kbase.auth.TokenFormatException;
-import us.kbase.common.service.JsonClientException;
 import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
@@ -52,6 +51,7 @@ public class ConvertGBK {
     String out_object_g = null;
     String out_object_c = null;
     File indir;
+    File splitdir;
 
     String allowed_objname_chars = "|._-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -62,7 +62,6 @@ public class ConvertGBK {
 
 
     /**
-     *
      * @param workc
      * @throws Exception
      */
@@ -169,7 +168,8 @@ public class ConvertGBK {
                     System.err.println("Multiple multi-record Genbank files currently not supported.");
                 } else if (wasSplit) {
                     System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
-                    indir = new File(workdir.getAbsolutePath() + "/split");
+                    splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
+                    indir = splitdir;
                 } else {
                     System.out.println("Single input file was not split");
                 }
@@ -178,7 +178,8 @@ public class ConvertGBK {
             boolean wasSplit = splitRecord(start, indir, null);
             System.out.println("Split single input file into multiple records? " + wasSplit);
             if (wasSplit) {
-                indir = new File(workdir.getAbsolutePath() + "/split");
+                splitdir = new File(workdir.getAbsolutePath() + "/split_" + indir.getName());
+                indir = splitdir;
                 System.out.println("workdir 2 " + workdir.getAbsolutePath());
             }
         }
@@ -210,7 +211,7 @@ public class ConvertGBK {
         System.out.println("locitest " + locitest.size());
         if (locitest.size() > 1) {
             if (outpath == null)
-                outpath = workdir.getAbsolutePath() + "/split";
+                outpath = workdir.getAbsolutePath() + "/split_" + path.getName();
             System.out.println("split outpath " + outpath);
             File splitdir = new File(outpath);
             if (!splitdir.isDirectory()) {
@@ -428,19 +429,22 @@ public class ConvertGBK {
                     cname = out_object_c;
                 }
                 cname = sanitizeObjectName(cname);
+
+                boolean saved2 = false;
+                int retry2 = 0;
                 try {
                     System.out.println("saving ContigSet " + cname);
                     wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                             .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
                                     .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
+                    saved2 = true;
                     System.out.println("successfully saved object");
                 /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
-                } catch (IOException e) {
-                    System.err.println("Error saving ContigSet to workspace, data may be too large (IOException)).");
-                    e.printStackTrace();
-                } catch (JsonClientException e) {
-                    System.err.println("Error saving ContigSet to workspace, data may be too large (JsonClientException).");
+                } catch (Exception e) {
+                    retry2++;
+                    Thread.sleep(2000);
+                    System.err.println("Error saving ContigSet to workspace.");
                     e.printStackTrace();
                 }
 
@@ -452,9 +456,23 @@ public class ConvertGBK {
                 }
                 gname = sanitizeObjectName(gname);
                 System.out.println("saving Genome " + gname + "\t:" + genome.getContigsetRef() + ":");
-                wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                        .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
-                                .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+
+                boolean saved = false;
+                int retry = 0;
+                while (!saved && retry < 10) {
+                    try {
+                        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                                .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
+                                        .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+                        saved = true;
+                    } catch (IOException e) {
+                        retry++;
+                        Thread.sleep(2000);
+                        System.err.println("Error saving object " + outpath2);
+                        System.err.println("IOException: " + e.getMessage());
+                    }
+                }
+
                 System.out.println("successfully saved object");
 
 /*

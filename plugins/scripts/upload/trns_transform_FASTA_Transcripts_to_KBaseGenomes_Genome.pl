@@ -151,7 +151,10 @@ foreach my $Seq (@seqs){
 	$GCs++ if $na =~ /[GgCc]/;
     }
 
-    $Seq->[0] =~ s/\|/_/g if($Seq->[0] =~ /\|/);
+
+    if( $Seq->[0] !~ /^([\w\.\|\-]+)$/){
+	$Seq->[0] =~ s/[\s:,-]/_/g;
+    }
 
     my $CDSHash={id=>$Seq->[0],
 		 type=>'CDS',

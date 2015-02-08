@@ -51,6 +51,7 @@ public class ConvertGBK {
     String out_object_g = null;
     String out_object_c = null;
     File indir;
+    File splitdir;
 
     String allowed_objname_chars = "|._-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -167,7 +168,8 @@ public class ConvertGBK {
                     System.err.println("Multiple multi-record Genbank files currently not supported.");
                 } else if (wasSplit) {
                     System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
-                    indir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
+                    splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
+                    indir = splitdir;
                 } else {
                     System.out.println("Single input file was not split");
                 }
@@ -176,7 +178,8 @@ public class ConvertGBK {
             boolean wasSplit = splitRecord(start, indir, null);
             System.out.println("Split single input file into multiple records? " + wasSplit);
             if (wasSplit) {
-                indir = new File(workdir.getAbsolutePath() + "/split_" + indir.getName());
+                splitdir = new File(workdir.getAbsolutePath() + "/split_" + indir.getName());
+                indir = splitdir;
                 System.out.println("workdir 2 " + workdir.getAbsolutePath());
             }
         }

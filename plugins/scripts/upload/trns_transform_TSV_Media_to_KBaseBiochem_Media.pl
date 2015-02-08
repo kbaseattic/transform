@@ -11,19 +11,19 @@ use Bio::KBase::fbaModelServices::ScriptHelpers qw(fbaws get_fba_client runFBACo
 
 =head1 NAME
 
-trns_transform_CSV_Media-to-KBaseBiochem.Media.pl
+trns_transform_TSV_Media-to-KBaseBiochem.Media.pl
 
 =head1 SYNOPSIS
 
-trns_transform_CSV_Media-to-KBaseBiochem.Media.pl --input_file_name csv-file --object_name media-id --workspace_name workspace-id
+trns_transform_TSV_Media-to-KBaseBiochem.Media.pl --input_file_name tsv-file --object_name media-id --workspace_name workspace-id
 
 =head1 DESCRIPTION
 
-Transform a CSV file into an object in the workspace.
+Transform a TSV file into an object in the workspace.
 
 =head1 COMMAND-LINE OPTIONS
-trns_transform_KBaseBiochem.CSV-to-KBaseBiochem.Media.pl --input_file_name --object_name --workspace_name
-	-i --input_file_name      csv file
+trns_transform_KBaseBiochem.TSV-to-KBaseBiochem.Media.pl --input_file_name --object_name --workspace_name
+	-i --input_file_name      tsv file
 	-o --object_name     id under which KBaseBiochem.Media is to be saved
 	-w --workspace_name     workspace where KBaseBiochem.Media is to be saved
 	--help          print usage message and exit
@@ -54,8 +54,8 @@ if (length($wsurl) == 0) {
 }
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
-    print($0." --input_file_name/-i <Input CSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in>\n");
-    $logger->warn($0." --input_file_name/-i <Input CSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in>\n");
+    print($0." --input_file_name/-i <Input TSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in>\n");
+    $logger->warn($0." --input_file_name/-i <Input TSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in>\n");
     exit();
 }
 

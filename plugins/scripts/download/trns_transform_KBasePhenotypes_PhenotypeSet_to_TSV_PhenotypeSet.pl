@@ -1,13 +1,13 @@
 use strict;
 
 # BEGIN spec
-# "KBaseBiochem.Media-to-CSV": {
+# "KBaseBiochem_Media_to_TSV_Media": {
 #   "cmd_args": {
 #     "input": "-i",
 #     "output": "-o",
 #     },
-#     "cmd_description": "KBaseBiochem.Media to CSV",
-#     "cmd_name": "trns_transform_KBaseBiochem.Media-to-CSV.pl",
+#     "cmd_description": "KBaseBiochem.Media to TSV",
+#     "cmd_name": "trns_transform_KBaseBiochem_Media_to_TSV.pl",
 #     "max_runtime": 3600,
 #     "opt_args": {
 # 	 }

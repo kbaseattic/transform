@@ -1,26 +1,26 @@
 { 
-    "script_name": "trns_transform_KBaseFBA.FBA-to-CSV.pl", 
+    "script_name": "trns_transform_KBaseGenomes_Pangenome_to_TSV_Pangenome.pl", 
     "script_type": "download", 
-    "external_type": "CSV.FBA", 
-    "kbase_type": "KBaseFBA.FBA", 
-    "user_description": "Download FBA in CSV format", 
-    "developer_description": "Download FBA in CSV format", 
+    "external_type": "TSV.Pangenome", 
+    "kbase_type": "KBaseGenomes.Pangenome", 
+    "user_description": "Download pangenome in TSV format", 
+    "developer_description": "Download pangenome in TSV format", 
     "handler_options": { 
         "max_runtime": 600, 
         "required_fields": [ 
             "object_name",
             "workspace_name",
-	    	"workspace_service_url"
+            "workspace_service_url"  
         ], 
         "optional_fields": ["version"], 
-        "custom_options": []
+        "custom_options": [] 
     },  
     "user_options": [ 
         { 
             "name": "object_name", 
             "type": "string", 
             "required": true, 
-            "help": "Name of the fba object." 
+            "help": "Name of the pangenome object." 
         }, 
         { 
             "name": "workspace_name",
@@ -32,7 +32,7 @@
             "name": "version", 
             "type": "int", 
             "required": false,
-            "help": "Version of the fba object, if not given we assume the latest."
+            "help": "Version of the pangenome object, if not given we assume the latest."
         } 
     ], 
     "user_option_groups": [] 

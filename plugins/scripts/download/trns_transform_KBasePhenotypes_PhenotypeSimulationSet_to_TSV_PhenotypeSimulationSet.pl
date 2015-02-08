@@ -1,14 +1,14 @@
 use strict;
 
 # BEGIN spec
-# "KBasePhenotype.PhenotypeSimulationSet-to-CSV": {
+# "KBasePhenotype_PhenotypeSimulationSet_to_TSV_PhenotypeSimulationSet": {
 #   "cmd_args": {
 #     "input": "-i",
 #	  "workspace": "-w",
 #     "output": "-o",
 #     },
-#     "cmd_description": "KBasePhenotype.PhenotypeSimulationSet to CSV",
-#     "cmd_name": "trns_transform_KBasePhenotype.PhenotypeSimulationSet-to-CSV.pl",
+#     "cmd_description": "KBasePhenotype.PhenotypeSimulationSet to TSV",
+#     "cmd_name": "trns_transform_KBasePhenotype_PhenotypeSimulationSet_to_TSV_PhenotypeSimulationSet.pl",
 #     "max_runtime": 3600,
 #     "opt_args": {
 # 	 }

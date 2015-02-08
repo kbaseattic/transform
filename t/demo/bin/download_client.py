@@ -87,7 +87,7 @@ if __name__ == "__main__":
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)
 
-    download_driver = biokbase.Transform.drivers.TransformClientTerminalDriver(services)
+    download_driver = biokbase.Transform.drivers.TransformClientTerminalDriver(service_urls=services)
     
     term = blessings.Terminal()
     for x in inputs:

@@ -11,21 +11,21 @@ use Bio::KBase::fbaModelServices::ScriptHelpers qw(fbaws get_fba_client runFBACo
 
 =head1 NAME
 
-trns_transform_CSV_Phenotypes_to_KBasePhenotypes.PhenotypeSet.pl
+trns_transform_TSV_Phenotypes_to_KBasePhenotypes_PhenotypeSet.pl
 
 =head1 SYNOPSIS
 
-trns_transform_CSV_Phenotypes_to_KBasePhenotypes.PhenotypeSet.pl --input_file_name csv-file --object_name model-id --workspace_name workspace-id [--genome genome-id]
+trns_transform_TSV_Phenotypes_to_KBasePhenotypes_PhenotypeSet.pl --input_file_name tsv-file --object_name model-id --workspace_name workspace-id [--genome genome-id]
 
 =head1 DESCRIPTION
 
-Transform a CSV file into a KBasePhenotypes.PhenotypeSet object in the
+Transform a TSV file into a KBasePhenotypes.PhenotypeSet object in the
 workspace. A genome object in the same workspace is needed if one
 wishes to include phenotypes with gene knockouts.
 
 =head1 COMMAND-LINE OPTIONS
-trns_transform_CSV_Phenotypes_to_KBasePhenotypes.PhenotypeSet.pl --input_file_name --object_name --workspace_name [--genome]
-	-i --input_file_name      csv file
+trns_transform_TSV_Phenotypes_to_KBasePhenotypes.PhenotypeSet.pl --input_file_name --object_name --workspace_name [--genome]
+	-i --input_file_name      tsv file
 	-o --object_name     id under which KBasePhenotypes.PhenotypeSet is to be saved
         -w --workspace_name     workspace where KBasePhenotypes.PhenotypeSet is to be saved
         -g --genome     id of KBaseGenomes.Genome object to associate with KBasePhenotypes.PhenotypeSet. The object must be in the same workspace designated with workspace_name
@@ -59,8 +59,8 @@ if (length($wsurl) == 0) {
 }
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
-    print($0." --input_file_name/-i <Input CSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID>");
-    $logger->warn($0." --input_file_name/-i <Input CSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID>");
+    print($0." --input_file_name/-i <Input TSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID>");
+    $logger->warn($0." --input_file_name/-i <Input TSV File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID>");
     exit();
 }
 

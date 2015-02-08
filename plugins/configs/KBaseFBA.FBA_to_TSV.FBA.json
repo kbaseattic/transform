@@ -1,17 +1,16 @@
 { 
-    "script_name": "trns_transform_KBaseFBA.FBAModel-to-SBML.pl", 
+    "script_name": "trns_transform_KBaseFBA_FBA_to_TSV_FBA.pl", 
     "script_type": "download", 
-    "external_type": "SBML.FBAModel", 
-    "kbase_type": "KBaseFBA.FBAModel", 
-    "user_description": "Download model in SBML format", 
-    "developer_description": "Download model in SBML format", 
+    "external_type": "TSV.FBA", 
+    "kbase_type": "KBaseFBA.FBA", 
+    "user_description": "Download FBA in TSV format", 
+    "developer_description": "Download FBA in TSV format", 
     "handler_options": { 
         "max_runtime": 600, 
         "required_fields": [ 
             "object_name",
             "workspace_name",
-            "workspace_service_url",
-            "fba_service_url" 
+	    	"workspace_service_url"
         ], 
         "optional_fields": ["version"], 
         "custom_options": []
@@ -21,7 +20,7 @@
             "name": "object_name", 
             "type": "string", 
             "required": true, 
-            "help": "Name of the model object." 
+            "help": "Name of the fba object." 
         }, 
         { 
             "name": "workspace_name",
@@ -33,7 +32,7 @@
             "name": "version", 
             "type": "int", 
             "required": false,
-            "help": "Version of the model object, if not given we assume the latest."
+            "help": "Version of the fba object, if not given we assume the latest."
         } 
     ], 
     "user_option_groups": [] 

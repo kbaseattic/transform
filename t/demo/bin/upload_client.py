@@ -102,7 +102,7 @@ if __name__ == "__main__":
         status_logger.setLevel(logging.INFO)
         status_logger.info("KBase Upload testing began at {0}".format(datetime.datetime.utcnow().isoformat()))
     
-    upload_driver = biokbase.Transform.drivers.TransformClientTerminalDriver(services)
+    upload_driver = biokbase.Transform.drivers.TransformClientTerminalDriver(services, logger=logger)
     
     term = blessings.Terminal()
     for x in sorted(inputs):

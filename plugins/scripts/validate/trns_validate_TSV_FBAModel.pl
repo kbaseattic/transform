@@ -16,8 +16,8 @@ GetOptions("input_file_name|i=s"  => \$In_File,
 	   "help|h"     => \$Help);
 
 if($Help || !$In_File){
-    print($0." --input_file_name/-i <Input CSV File>");
-    $logger->warn($0." --input_file_name|-i <Input CSV File>");
+    print($0." --input_file_name/-i <Input TSV File>");
+    $logger->warn($0." --input_file_name|-i <Input TSV File>");
     exit(0);
 }
 
@@ -26,9 +26,9 @@ if(!-f $In_File){
     die("Cannot find $In_File");
 }
 
-if($In_File !~ /\.([ct]sv|txt)$/){
-    $logger->warn("$In_File does not have correct suffix (.txt or .csv or .tsv)");
-    die("$In_File does not have correct suffix (.txt or .csv or .tsv)");
+if($In_File !~ /\.(tsv|txt)$/){
+    $logger->warn("$In_File does not have correct suffix (.txt or .tsv)");
+    die("$In_File does not have correct suffix (.txt or .tsv)");
 }
 
 #Open File, making sure to be able to read DOS/WINDOWS/MAC files
@@ -49,7 +49,19 @@ if(scalar(keys %Headers) < 2){
 }
 
 #Check Obligatory Headers
-if(!exists($Headers{ID}) || !exists($Headers{NAME})){
+#For now, id, direction, gpr, equation for reactions and id, name, charge, formula for compounds
+my ($reactions,$compounds) = (1,1);
+if(!exists($Headers{ID}) || !exists($Headers{DIRECTION}) || !exists($Headers{GPR}) || !exists($Headers{EQUATION})){
+    $reactions=0;
+}
+
+if(!exists($Headers{ID}) || !exists($Headers{NAME}) || !exists($Headers{CHARGE}) || !exists($Headers{FORMULA})){
+    $compounds=0;
+}
+
+if(!$reactions && !$compounds){
     $logger->warn("$In_File does not contain the obligatory headers for either reactions (ID,DIRECTION,GPR,EQUATION) or compounds (ID,NAME,CHARGE,FORMULA) or media (ID, NAME)\n");
     die("$In_File does not contain the obligatory headers for either reactions (ID,DIRECTION,GPR,EQUATION) or compounds (ID,NAME,CHARGE,FORMULA) or media (ID, NAME)\n");
+}elsif($reactions && $compounds){
+    #Possible problem with mixing column headers, but wouldn't affect ModelSEED code if proper arguments used
 }

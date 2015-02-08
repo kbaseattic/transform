@@ -37,7 +37,7 @@
             "name": "compounds",
             "type": "string",
             "required": false,
-            "help": "Input Compound CSV File"
+            "help": "Input Compound TSV File"
         },
         {
             "name": "genome",

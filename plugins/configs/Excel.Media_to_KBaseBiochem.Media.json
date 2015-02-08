@@ -1,10 +1,10 @@
 {
-    "script_name": "trns_transform_CSV_Media_to_KBaseBiochem_Media.pl",
+    "script_name": "trns_transform_Excel_Media_to_KBaseBiochem_Media.pl",
     "script_type": "upload",
-    "external_type": "CSV.Media",
+    "external_type": "Excel.Media",
     "kbase_type": "KBaseBiochem.Media",
-    "user_description": "Converts CSV file to Media object in workspace.",
-    "url_mapping": ["CSV.Media"],    
+    "user_description": "Converts Excel file to Media object in workspace.",
+    "url_mapping": ["Excel.Media"],    
     "handler_options": {        
         "must_own_validation": true,
         "must_own_saving_to_workspace": true,
@@ -19,14 +19,14 @@
 	    "fba_service_url"
 	],
 	"optional_fields":[],
-	"input_mapping": {"CSV.Media":"input_file_name"}		
+	"input_mapping": {"Excel.Media": "input_file_name"}
     },
     "user_options": [
         {
             "name": "input_file_name",
             "type": "string",
             "required": true,
-            "help": "Input CSV File"
+            "help": "Input Excel File"
         },
         {
             "name": "object_name",

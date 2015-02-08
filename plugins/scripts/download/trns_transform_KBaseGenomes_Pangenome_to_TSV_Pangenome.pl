@@ -2,14 +2,14 @@ use strict;
 
 #
 # BEGIN spec
-# "KBaseGenomes.Pangenome-to-CSV": {
+# "KBaseGenomes_Pangenome_to_TSV_Pangenome": {
 #   "cmd_args": {
 #     "input": "-i",
 #	  "workspace": "-w",
 #     "output": "-o",
 #     },
-#     "cmd_description": "KBaseGenomes.Pangenome to CSV",
-#     "cmd_name": "trns_transform_KBaseGenomes.Pangenome-to-CSV.pl",
+#     "cmd_description": "KBaseGenomes.Pangenome to TSV",
+#     "cmd_name": "trns_transform_KBaseGenomes_Pangenome_to_TSV_Pangenome.pl",
 #     "max_runtime": 3600,
 #     "opt_args": {
 # 	 }
@@ -19,7 +19,7 @@ use strict;
 use JSON::XS;
 use Getopt::Long::Descriptive;
 use Bio::KBase::workspace::Client;
-use Bio::KBase::Transform::ScriptHelpers qw(write_excel_tables write_csv_tables get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
+use Bio::KBase::Transform::ScriptHelpers qw(write_csv_tables get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
 
 my($opt, $usage) = describe_options("%c %o",
 				    ['object_name=s', 'workspace object name from which the input is to be read'],
@@ -54,8 +54,8 @@ else
 my $genomeHeaders = ["genome"];
 my $familyHeaders = ["representative id","representative function","type","protein sequence"];
 my $tables = {
-	Genomes => [$genomeHeaders],
-	Orthologs => [$familyHeaders]
+	$opt->workspace_name."_".$opt->object_name."_Genomes" => [$genomeHeaders],
+	$opt->workspace_name."_".$opt->object_name."_Orthologs" => [$familyHeaders]
 };
 my $wsinput = [];
 my $wshash = {};
@@ -71,7 +71,7 @@ for (my $i=0; $i < @{$output}; $i++) {
 	for (my $i=0; $i < @{$output}; $i++) {
 		push(@{$row},0);	
 	}
-	push(@{$tables->{Genomes}},$row);
+	push(@{$tables->{$opt->workspace_name."_".$opt->object_name."_Genomes"}},$row);
 }
 for (my $i=0; $i < @{$obj->{orthologs}}; $i++) {
 	my $orthfam = $obj->{orthologs}->[$i];
@@ -85,7 +85,7 @@ for (my $i=0; $i < @{$obj->{orthologs}}; $i++) {
 	for (my $j=0; $j < @{$orthfam->{orthologs}}; $j++) {
 		$genomehash->{$orthfam->{orthologs}->[$j]->[2]} = $orthfam->{orthologs}->[$j]->[0].":".$orthfam->{orthologs}->[$j]->[1];
 		for (my $k=0; $k < @{$orthfam->{orthologs}}; $k++) {
-			$tables->{Genomes}->[1+$wshash->{$orthfam->{orthologs}->[$j]->[2]}]->[1+$wshash->{$orthfam->{orthologs}->[$k]->[2]}]++;
+			$tables->{$opt->workspace_name."_".$opt->object_name."_Genomes"}->[1+$wshash->{$orthfam->{orthologs}->[$j]->[2]}]->[1+$wshash->{$orthfam->{orthologs}->[$k]->[2]}]++;
 		}
 	}
 	for (my $j=0; $j < @{$obj->{genome_refs}}; $j++) {
@@ -95,6 +95,6 @@ for (my $i=0; $i < @{$obj->{orthologs}}; $i++) {
 			push(@{$row},$genomehash->{$obj->{genome_refs}->[$j]});
 		}
 	}
-	push(@{$tables->{Orthologs}},$row);
+	push(@{$tables->{$opt->workspace_name."_".$opt->object_name."_Orthologs"}},$row);
 }
-write_excel_tables($tables,$opt->workspace_name."_".$opt->object_name.".xls");
+write_csv_tables($tables);

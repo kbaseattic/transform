@@ -17,7 +17,7 @@ import base64
 
 # patch for handling unverified certificates
 import ssl
-if hasattr(ssl, '_create_unverified_context'):
+if hasattr(ssl, "_create_unverified_context"):
     ssl._create_default_https_context = ssl._create_unverified_context
 
 try:
@@ -42,51 +42,51 @@ try:
 except ImportError, e:
     raise ImportError("Your environment is not setup correctly : {0}".format(e.message))
 
-WS_URL = 'workspace_service_url'
-SHOCK_URL = 'shock_service_url'
-UJS_URL = 'ujs_service_url'
-HANDLE_URL = 'handle_service_url'
-XFORM_URL = 'transform_service_url'
-AWE_URL = 'awe_service_url'
-
-WS_CLIENT = 'workspace_client'
-UJS_CLIENT = 'ujs_client'
-HANDLE_CLIENT = 'handle_client'
-TRANSFORM_CLIENT = 'transform_client'
-
-CLIENT_MAP = {
-    WS_URL: (WS_CLIENT, biokbase.workspace.client.Workspace),
-    SHOCK_URL: (SHOCK_URL, None),
-    UJS_URL: (UJS_CLIENT, biokbase.userandjobstate.client.UserAndJobState),
-    HANDLE_URL: (HANDLE_CLIENT, HandleClient),
-    XFORM_URL: (TRANSFORM_CLIENT, biokbase.Transform.Client.Transform),
-    AWE_URL: (AWE_URL, None)
-}
-
 
 class TransformDriver(object):
-    def __init__(self, service_urls,
-                 logger=biokbase.Transform.script_utils.stdoutlogger(
-                     __file__)):
-        self.logger = logger
+    def __init__(self, service_urls=dict(), logger=None):
+        if logger is not None:
+            self.logger = logger
+        else:
+            self.logger = biokbase.Transform.script_utils.stdoutlogger("TransformDriver")
 
         if self.logger is None:
-            raise Exception(
-                "The logger instance you provided appears to be None.")
+            raise Exception("The logger instance you provided appears to be None.")
+
+        self.logger.info("Instantiating Transform Client Driver")
 
         self.token = biokbase.Transform.script_utils.get_token()
 
         # create all service clients
-        for service in CLIENT_MAP:
-            if service not in service_urls:
-                raise ValueError(
-                    "Missing url in service url configuration: " + service)
-            attrib, client = CLIENT_MAP[service]
-            if not client:
-                setattr(self, attrib, service_urls[service])
-            else:
-                url = service_urls[service]
-                setattr(self, attrib, client(url, token=self.token))
+        if service_urls.has_key("transform_service_url"):
+            self.transform_client = biokbase.Transform.Client.Transform(url=service_urls["transform_service_url"], token=self.token)
+        else:
+            raise Exception("Missing transform_service_url")
+
+        if service_urls.has_key("ujs_service_url"):
+            self.ujs_client = biokbase.userandjobstate.client.UserAndJobState(url=service_urls["ujs_service_url"], token=self.token)
+        else:
+            raise Exception("Missing ujs_service_url")
+
+        if service_urls.has_key("awe_service_url"):
+            self.awe_service_url = service_urls["awe_service_url"]
+        else:
+            raise Exception("Missing awe_service_url")
+
+        if service_urls.has_key("shock_service_url"):
+            self.shock_service_url = service_urls["shock_service_url"]
+        else:
+            raise Exception("Missing shock_service_url")
+
+        if service_urls.has_key("workspace_service_url"):
+            self.workspace_client = biokbase.workspace.client.Workspace(url=service_urls["workspace_service_url"], token=self.token)
+        else:
+            raise Exception("Missing workspace_service_url")
+
+        if service_urls.has_key("handle_service_url"):
+            self.handle_client = HandleClient(url=service_urls["handle_service_url"], token=self.token)
+        else:
+            raise Exception("Missing handle_service_url")
 
 
 class TransformClientDriver(TransformDriver):
@@ -177,10 +177,9 @@ class TransformClientDriver(TransformDriver):
 
 class TransformTaskRunnerDriver(TransformDriver):
 
-    def __init__(self, service_urls, plugin_directory,
-                 logger=script_utils.stderrlogger(__file__)):
+    def __init__(self, service_urls, plugin_directory, logger=None):
         if not service_urls:
-            raise ValueError('Must provide a dictionary of service urls')
+            raise ValueError("Must provide a dictionary of service urls")
         super(TransformTaskRunnerDriver, self).__init__(service_urls, logger)
 
         if not plugin_directory or not os.path.exists(plugin_directory):
@@ -188,13 +187,14 @@ class TransformTaskRunnerDriver(TransformDriver):
         self._plugin_dir = plugin_directory
         self.load_plugins()
 
-    '''
-    Load plugins from the directory configured in __init__. If
-    plugin_directory is provided, it overrides the configured directory
-    temporarily.
-    '''
     def load_plugins(self, plugin_directory=None):
+        """
+        Load plugins from the directory configured in __init__. If
+        plugin_directory is provided, it overrides the configured directory
+        temporarily.
+        """
         plugins = self._plugin_dir
+        
         if (plugin_directory):
             plugins = plugin_directory
 
@@ -209,19 +209,16 @@ class TransformTaskRunnerDriver(TransformDriver):
         elif method == "convert":
             command_list = ["trns_convert_taskrunner"]
         else:
-            raise Exception("Unrecognized method {0}.  Unable to begin."
-                            .format(method))
+            raise Exception("Unrecognized method {0}.  Unable to begin.".format(method))
 
         if arguments is None:
             raise Exception("Missing arguments")
 
-        arguments["job_details"] = self.pluginManager.get_job_details(
-            method, arguments)
+        arguments["job_details"] = self.pluginManager.get_job_details(method, arguments)
 
         for k in arguments:
             if type(arguments[k]) == type(dict()):
-                arguments[k] = base64.urlsafe_b64encode(
-                    simplejson.dumps(arguments[k]))
+                arguments[k] = base64.urlsafe_b64encode(simplejson.dumps(arguments[k]))
 
             command_list.append("--{0}".format(k))
             command_list.append("{0}".format(arguments[k]))
@@ -230,17 +227,17 @@ class TransformTaskRunnerDriver(TransformDriver):
                                   datetime.timedelta(minutes=int(3000)))
         ujs_job_id = self.ujs_client.create_and_start_job(
             self.token, "Starting", description, {"ptype": "task", "max": 100},
-            estimated_running_time.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+            estimated_running_time.strftime("%Y-%m-%dT%H:%M:%S+0000"))
 
         taskrunner = subprocess.Popen(command_list, stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE)
         stdout, stderr = taskrunner.communicate()
 
         task_output = dict()
-        task_output['stdout'] = stdout
-        task_output['stderr'] = stderr
-        task_output['ujs_id'] = ujs_job_id
-        task_output['exit_code'] = taskrunner.returncode
+        task_output["stdout"] = stdout
+        task_output["stderr"] = stderr
+        task_output["ujs_id"] = ujs_job_id
+        task_output["exit_code"] = taskrunner.returncode
 
         if taskrunner.returncode != 0:
             return (False, task_output)
@@ -249,8 +246,8 @@ class TransformTaskRunnerDriver(TransformDriver):
 
 
 class TransformClientTerminalDriver(TransformClientDriver):
-    def __init__(self, service_urls=dict(), logger=biokbase.Transform.script_utils.stdoutlogger(__file__)):
-        super(TransformClientDriver, self).__init__(service_urls)
+    def __init__(self, service_urls=dict(), logger=None):
+        super(TransformClientDriver, self).__init__(service_urls, logger)
 
         if service_urls.has_key("fba_service_url"):        
             self.fba_service_url = service_urls["fba_service_url"]
@@ -351,13 +348,13 @@ class TransformClientTerminalDriver(TransformClientDriver):
         header["Authorization"] = "Oauth {0}".format(self.token)
 
         metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(shock_service_url, shock_id), headers=header, stream=True, verify=True)
-        shock_metadata = metadata_response.json()['data']
-        shockFileName = shock_metadata['file']['name']
-        shockFileSize = shock_metadata['file']['size']
+        shock_metadata = metadata_response.json()["data"]
+        shockFileName = shock_metadata["file"]["name"]
+        shockFileSize = shock_metadata["file"]["size"]
         metadata_response.close()
     
-        data = requests.get(shock_service_url + '/node/' + shock_id + "?download_raw", headers=header, stream=True)
-        size = int(data.headers['content-length'])
+        data = requests.get(shock_service_url + "/node/" + shock_id + "?download_raw", headers=header, stream=True)
+        size = int(data.headers["content-length"])
 
         if directory is not None:
             filePath = os.path.join(directory, shockFileName)
@@ -372,7 +369,7 @@ class TransformClientTerminalDriver(TransformClientDriver):
             chunkSize = maxChunkSize
     
         term = blessings.Terminal()
-        f = open(filePath, 'wb')
+        f = open(filePath, "wb")
 
         downloaded = 0
         try:
@@ -414,20 +411,21 @@ class TransformClientTerminalDriver(TransformClientDriver):
         header["Authorization"] = "Oauth {0}".format(self.token)
 
         dataFile = open(os.path.abspath(filePath))
-        encoder = MultipartEncoder(fields={'upload': (os.path.split(filePath)[-1], dataFile)})
-        header['Content-Type'] = encoder.content_type
+        encoder = MultipartEncoder(fields={"upload": (os.path.split(filePath)[-1], dataFile)})
+        header["Content-Type"] = encoder.content_type
     
         m = MultipartEncoderMonitor(encoder, progress_indicator)
 
-        response = requests.post(shock_service_url + "/node", headers=header, data=m, allow_redirects=True, verify=True)
+        response = requests.post(shock_service_url + "/node", headers=header, 
+                                 data=m, allow_redirects=True, verify=True)
     
         if not response.ok:
             print response.raise_for_status()
 
         result = response.json()
 
-        if result['error']:
-            raise Exception(result['error'][0])
+        if result["error"]:
+            raise Exception(result["error"][0])
         else:
             return result["data"]    
 

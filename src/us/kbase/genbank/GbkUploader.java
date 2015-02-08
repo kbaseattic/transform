@@ -87,7 +87,7 @@ public class GbkUploader {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
-                .withNumContigs(1L).withSource("KBase user upload").withSourceId("noid");
+                .withSource("KBase user upload").withSourceId("noid");
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
         final Map<String, Integer> generatedFeatureIds = new HashMap<String, Integer>();

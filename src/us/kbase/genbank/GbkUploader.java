@@ -87,7 +87,7 @@ public class GbkUploader {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
-                .withNumContigs(1L).withSource("NCBI").withSourceId("NCBI");
+                .withSource("KBase user upload").withSourceId("noid");
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
         final Map<String, Integer> generatedFeatureIds = new HashMap<String, Integer>();
@@ -306,7 +306,8 @@ public class GbkUploader {
                 if (taxonomy != null) {
                     if (genome.getTaxonomy() != null && !genome.getTaxonomy().equals(taxonomy)) {
                         System.err.println("Taxonomy path is wrong in file [" + files.get(0).getParent() + ":" +
-                                key + "]: " + taxonomy + " (it's different from '" + genome.getTaxonomy() + "')");
+                                key + "]: " + taxonomy);
+                        System.err.println("is different from '" + genome.getTaxonomy() + "')");
                         nameProblems = true;
                     }
                     //System.out.println("nonplasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
@@ -363,13 +364,19 @@ public class GbkUploader {
                     .withId(contigSetId).withMd5("md5").withName(id)
                     .withSource("User uploaded data").withSourceId("noid").withType("Organism");
 
+            long numcontig = 0;
+            if (contigMap != null) {
+                if (contigMap.keySet() != null && contigMap.keySet().size() > 0) {
+                    numcontig = (long) contigMap.keySet().size();
+                }
+            }
             if (ws != null) {
                 String ctgRef = ws + "/" + contigSetId;
-                genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLengths)
+                genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withNumContigs(numcontig).withContigLengths(contigLengths)
                         .withDnaSize(dnaLen).withContigsetRef(ctgRef).withFeatures(features)
                         .withGcContent(calculateGcContent(contigSet));
             } else {
-                genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLengths)
+                genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withNumContigs(numcontig).withContigLengths(contigLengths)
                         .withDnaSize(dnaLen).withFeatures(features)
                         .withGcContent(calculateGcContent(contigSet));
             }
@@ -410,7 +417,7 @@ public class GbkUploader {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
-                .withNumContigs(1L).withSource("NCBI").withSourceId("NCBI");
+                .withSource("KBase user upload").withSourceId("noid");
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
         final Map<String, Integer> generatedFeatureIds = new HashMap<String, Integer>();
@@ -587,9 +594,17 @@ public class GbkUploader {
                     .withObjects(Arrays.asList(new ObjectSaveData().withName(contigId)
                             .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));*/
         String ctgRef = ws + "/" + contigId;
-        genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLengths)
+
+        int numcontig = 0;
+        if (contigMap != null)
+            if (contigMap.keySet() != null)
+                numcontig = contigMap.keySet().size();
+
+        genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withNumContigs((long) numcontig).withContigLengths(contigLengths)
                 .withDnaSize(dnaLen).withContigsetRef(ctgRef).withFeatures(features)
                 .withGcContent(calculateGcContent(contigSet));
+        genome.withSourceId(genome.getId());
+
         Map<String, String> meta = new LinkedHashMap<String, String>();
         meta.put("Scientific name", genome.getScientificName());
             /*wc.saveObjects(token, new SaveObjectsParams().withWorkspace(ws)

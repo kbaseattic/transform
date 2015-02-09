@@ -21,7 +21,7 @@ use Getopt::Long::Descriptive;
 
 #KBASE USE
 use Bio::KBase::workspace::Client;
-use Bio::KBase::Transform::ScriptHelpers qw(write_csv_tables get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
+use Bio::KBase::Transform::ScriptHelpers qw(write_tsv_tables get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
 
 my($opt, $usage) = describe_options("%c %o",
 				    ['object_name=s', 'workspace object name from which the input is to be read'],
@@ -58,4 +58,4 @@ for (my $i=0; $i < @{$obj->{mediacompounds}}; $i++) {
 		push(@{$tables->{$opt->workspace_name."_".$opt->object_name."_MediaCompounds"}},[$1,$obj->{mediacompounds}->[$i]->{concentration},$obj->{mediacompounds}->[$i]->{minFlux},$obj->{mediacompounds}->[$i]->{maxFlux}]);
 	}
 }
-write_csv_tables($tables);
+write_tsv_tables($tables);

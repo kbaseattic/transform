@@ -147,7 +147,7 @@ for (my $i=0; $i < @{$obj->{FBACompoundVariables}}; $i++) {
 		$cpd->{name},
 		$cpd->{formula},
 		$cpd->{charge},
-		$cpd->{compartmnet},
+		$cpd->{compartment},
 		$var->{value},
 		$var->{min},
 		$var->{lowerBound},

@@ -34,7 +34,8 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
     fastq_extensions = [".fq",".fastq",".fnq"]
         
     extensions = fasta_extensions + fastq_extensions
-    
+
+    checked = False
     validated = True
     for input_file_name in os.listdir(input_directory):
         logger.info("Checking for SequenceReads file : {0}".format(input_file_name))
@@ -47,7 +48,7 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
         elif os.path.splitext(input_file_name)[-1] not in extensions:
             logger.warning("Unrecognized file type, skipping.")
             continue
-    
+                
         logger.info("Starting SequenceReads validation of {0}".format(input_file_name))
         
         if os.path.splitext(input_file_name)[-1] in fasta_extensions:
@@ -67,9 +68,12 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
             break
         else:
             logger.info("Validation passed on {0}".format(input_file_name))
+            checked = True
         
     if not validated:
         raise Exception("Validation failed!")
+    elif not checked:
+        raise Exception("No files were found that had a valid fasta or fastq extension.")
     else:
         logger.info("Validation passed.")
         

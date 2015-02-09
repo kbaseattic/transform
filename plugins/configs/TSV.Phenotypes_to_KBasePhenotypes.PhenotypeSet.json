@@ -3,8 +3,13 @@
     "script_type": "upload",
     "external_type": "TSV.PhenotypeSet",
     "kbase_type": "KBasePhenotypes.PhenotypeSet",
+<<<<<<< HEAD:plugins/configs/CSV.Phenotypes_to_KBasePhenotypes.PhenotypeSet.json
+    "user_description": "Converts CSV file to PhenotypeSet object in workspace.",
+    
+=======
     "user_description": "Converts TSV file to PhenotypeSet object in workspace.",
     "url_mapping": ["TSV.PhenotypeSet"],    
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/TSV.Phenotypes_to_KBasePhenotypes.PhenotypeSet.json
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": true,
@@ -14,15 +19,23 @@
 	[
 	    "input_file_name",
 	    "object_name",
+<<<<<<< HEAD:plugins/configs/CSV.Phenotypes_to_KBasePhenotypes.PhenotypeSet.json
+	    "workspace_name"
+=======
 	    "workspace_name",
 	    "workspace_service_url",
 	    "fba_service_url"
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/TSV.Phenotypes_to_KBasePhenotypes.PhenotypeSet.json
 	],
 	"optional_fields":
 	[
 	    "genome"
 	],
+<<<<<<< HEAD:plugins/configs/CSV.Phenotypes_to_KBasePhenotypes.PhenotypeSet.json
+	"input_mapping": [{"input_file_name": "CSV.Phenotypes"}]
+=======
 	"input_mapping": {"TSV.PhenotypeSet": "input_file_name"}
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/TSV.Phenotypes_to_KBasePhenotypes.PhenotypeSet.json
     },
     "user_options": [
         {

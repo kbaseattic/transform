@@ -3,8 +3,13 @@
     "script_type": "upload",
     "external_type": "TSV.Media",
     "kbase_type": "KBaseBiochem.Media",
+<<<<<<< HEAD:plugins/configs/CSV.Media_to_KBaseFBA.Media.json
+    "user_description": "Converts CSV file to Media object in workspace.",
+    
+=======
     "user_description": "Converts TSV file to Media object in workspace.",
     "url_mapping": ["TSV.Media"],    
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/TSV.Media_to_KBaseFBA.Media.json
     "handler_options": {        
         "must_own_validation": false,
         "must_own_saving_to_workspace": true,
@@ -14,12 +19,19 @@
 	[
 	    "input_file_name",
 	    "object_name",
+<<<<<<< HEAD:plugins/configs/CSV.Media_to_KBaseFBA.Media.json
+	    "workspace_name"
+	],
+	"optional_fields":[],
+	"input_mapping": [{"input_file_name": "CSV.Media"}]		
+=======
 	    "workspace_name",
 	    "workspace_service_url",
 	    "fba_service_url"
 	],
 	"optional_fields":[],
 	"input_mapping": {"TSV.Media":"input_file_name"}		
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/TSV.Media_to_KBaseFBA.Media.json
     },
     "user_options": [
         {

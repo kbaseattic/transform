@@ -14,16 +14,24 @@
 	[
 	    "input_file_name",
 	    "object_name",
+<<<<<<< HEAD
+	    "workspace_name"
+=======
 	    "workspace_name",
 	    "workspace_service_url",
 	    "fba_service_url"
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d
 	],
 	"optional_fields":
 	[
 	    "genome",
 	    "biomass"
 	],
+<<<<<<< HEAD
+	"input_mapping": [{"input_file_name": "Excel.FBAModel"}]		
+=======
 	"input_mapping": {"Excel.FBAModel": "input_file_name"}		
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d
     },
     "user_options": [
         {

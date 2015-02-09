@@ -21,7 +21,11 @@
 	[
 	    "dna"
 	],
+<<<<<<< HEAD
+	"input_mapping": [{"input_file_name": "FASTA.Transcripts"}]
+=======
 	"input_mapping": {"FASTA.Transcripts":"input_file_name"}
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d
     },
     "user_options": [
         {

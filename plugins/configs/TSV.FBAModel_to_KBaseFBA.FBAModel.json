@@ -3,8 +3,13 @@
     "script_type": "upload",
     "external_type": "TSV.FBAModel",
     "kbase_type": "KBaseFBA.FBAModel",
+<<<<<<< HEAD:plugins/configs/CSV.FBAModel_to_KBaseFBA.FBAModel.json
+    "user_description": "Converts Reaction and Compound CSV files to FBAModel object in workspace.",
+    
+=======
     "user_description": "Converts Reaction and Compound TSV files to FBAModel object in workspace.",
     "url_mapping":["TSV.FBAModel", "TSV.Compounds"],    
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/TSV.FBAModel_to_KBaseFBA.FBAModel.json
     "handler_options": {        
         "must_own_validation": true,
         "must_own_saving_to_workspace": true,
@@ -15,16 +20,24 @@
 	    "input_file_name",
 	    "object_name",
 	    "workspace_name",
+<<<<<<< HEAD:plugins/configs/CSV.FBAModel_to_KBaseFBA.FBAModel.json
+	    "compounds"
+=======
 	    "compounds",
 	    "workspace_service_url",
 	    "fba_service_url"
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/TSV.FBAModel_to_KBaseFBA.FBAModel.json
 	],
 	"optional_fields":
 	[
 	    "genome",
 	    "biomass"
 	],
+<<<<<<< HEAD:plugins/configs/CSV.FBAModel_to_KBaseFBA.FBAModel.json
+	"input_mapping": [{"input_file_name": "CSV.FBAModel"}]
+=======
 	"input_mapping": {"TSV.FBAModel":"input_file_name", "TSV.Compounds" : "compounds"}
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/TSV.FBAModel_to_KBaseFBA.FBAModel.json
     },
     "user_options": [
         {

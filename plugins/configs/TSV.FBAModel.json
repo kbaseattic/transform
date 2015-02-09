@@ -15,7 +15,11 @@
 	    "input_file_name"
 	],
 	"optional_fields":[],
+<<<<<<< HEAD:plugins/configs/CSV.FBAModel.json
+	"input_mapping": [{"input_file_name": "CSV.FBAModel"}]
+=======
 	"input_mapping": [{"input_file_name": "TSV.FBAModel"}]
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/TSV.FBAModel.json
     },
     "user_options": [],
     "user_option_groups": []

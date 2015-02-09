@@ -25,9 +25,16 @@ use Bio::KBase::workspace::Client;
 use Bio::KBase::Transform::ScriptHelpers qw(write_csv_tables get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
 
 my($opt, $usage) = describe_options("%c %o",
+<<<<<<< HEAD:plugins/scripts/download/trns_transform_KBaseFBA.FBAModel-to-CSV.pl
+				    ['input_file_name|i=s', 'workspace object id from which the input is to be read'],
+				    ['workspace_name|w=s', 'workspace id from which the input is to be read'],
+				    ['from_file', 'specifies to use the local filesystem instead of workspace'],
+				    ['url=s', 'URL for the genome annotation service'],
+=======
 				    ['object_name=s', 'workspace object name from which the input is to be read'],
 				    ['workspace_name=s', 'workspace name from which the input is to be read'],
 				    ['workspace_service_url=s', 'workspace service url to pull from'],
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/scripts/download/trns_transform_KBaseFBA_FBAModel_to_TSV_FBAModel.pl
 				    ['help|h', 'show this help message'],
 );
 
@@ -50,12 +57,33 @@ if ($ret->{data})
 }
 else
 {
+<<<<<<< HEAD:plugins/scripts/download/trns_transform_KBaseFBA.FBAModel-to-CSV.pl
+    if (!$opt->workspace)
+    {
+	die "A workspace name must be provided";
+    }
+    my $ret = $wsclient->get_object({ id => $opt->input_file_name, workspace => $opt->workspace_name });
+    if ($ret->{data})
+    {
+	$obj = $ret->{data};
+    }
+    else
+    {
+	die "Invalid return from get_object for ws=" . $opt->workspace_name . " input=" . $opt->input_file_name;
+    }
+=======
     die "Invalid return from get_object for ws=" . $opt->workspace_name . " input=" . $opt->object_name;
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/scripts/download/trns_transform_KBaseFBA_FBAModel_to_TSV_FBAModel.pl
 }
 
 my $tables = {
+<<<<<<< HEAD:plugins/scripts/download/trns_transform_KBaseFBA.FBAModel-to-CSV.pl
+	$opt->workspace_name."_".$opt->input_file_name."_FBAModelCompounds" => [["id","name","formula","charge","aliases"]],
+	$opt->workspace_name."_".$opt->input_file_name."_FBAModelReactions" => [["id","direction","compartment","gpr","name","enzyme","pathway","reference","equation"]]
+=======
 	$opt->workspace_name."_".$opt->object_name."_FBAModelCompounds" => [["id","name","formula","charge","aliases"]],
 	$opt->workspace_name."_".$opt->object_name."_FBAModelReactions" => [["id","direction","compartment","gpr","name","enzyme","pathway","reference","equation"]]
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/scripts/download/trns_transform_KBaseFBA_FBAModel_to_TSV_FBAModel.pl
 };
 my $cpdhash;
 for (my $i=0; $i < @{$obj->{modelcompounds}}; $i++) {
@@ -68,7 +96,11 @@ for (my $i=0; $i < @{$obj->{modelcompounds}}; $i++) {
 		}
 		if (!defined($cpdhash->{$id})) {
 			$cpdhash->{$id} = $cpd;
+<<<<<<< HEAD:plugins/scripts/download/trns_transform_KBaseFBA.FBAModel-to-CSV.pl
+			push(@{$tables->{$opt->workspace_name."_".$opt->input_file_name."_FBAModelCompounds"}},[
+=======
 			push(@{$tables->{$opt->workspace_name."_".$opt->object_name."_FBAModelCompounds"}},[
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/scripts/download/trns_transform_KBaseFBA_FBAModel_to_TSV_FBAModel.pl
 				$id,
 				$cpd->{name},
 				$cpd->{formula},
@@ -151,7 +183,11 @@ for (my $i=0; $i < @{$obj->{modelreactions}}; $i++) {
 		}
 	}
 	my $equation = $reactants." ".$dirtrans->{$rxn->{direction}}." ".$products;
+<<<<<<< HEAD:plugins/scripts/download/trns_transform_KBaseFBA.FBAModel-to-CSV.pl
+	push(@{$tables->{$opt->workspace_name."_".$opt->input_file_name."_FBAModelReactions"}},[
+=======
 	push(@{$tables->{$opt->workspace_name."_".$opt->object_name."_FBAModelReactions"}},[
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/scripts/download/trns_transform_KBaseFBA_FBAModel_to_TSV_FBAModel.pl
 		$rxn->{id},
 		$dirtrans->{$rxn->{direction}},
 		$cmp,
@@ -189,7 +225,11 @@ for (my $i=0; $i < @{$obj->{biomasses}}; $i++) {
 		}
 	}
 	my $equation = $reactants." => ".$products;
+<<<<<<< HEAD:plugins/scripts/download/trns_transform_KBaseFBA.FBAModel-to-CSV.pl
+	push(@{$tables->{$opt->workspace_name."_".$opt->input_file_name."_FBAModelReactions"}},[
+=======
 	push(@{$tables->{$opt->workspace_name."_".$opt->object_name."_FBAModelReactions"}},[
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/scripts/download/trns_transform_KBaseFBA_FBAModel_to_TSV_FBAModel.pl
 		$bio->{id},
 		"=>",
 		"c0",

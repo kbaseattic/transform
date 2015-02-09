@@ -13,7 +13,11 @@
             "workspace_service_url",
             "fba_service_url" 
         ], 
+<<<<<<< HEAD:plugins/configs/KBaseFBA.FBAModel_to_SBML.json
+        "optional_fields": ["version","url"], 
+=======
         "optional_fields": ["version"], 
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d:plugins/configs/KBaseFBA.FBAModel_to_SBML.FBAModel.json
         "custom_options": []
     },  
     "user_options": [ 

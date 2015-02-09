@@ -14,9 +14,13 @@
         [
             "input_directory",
             "workspace_name",
+<<<<<<< HEAD
+            "workspace_url"
+=======
             "workspace_service_url",
             "working_directory",
             "object_name"
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d
         ], 
         "optional_fields": 
         [

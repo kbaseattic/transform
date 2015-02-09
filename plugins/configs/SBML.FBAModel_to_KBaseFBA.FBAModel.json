@@ -4,7 +4,11 @@
     "external_type": "SBML.FBAModel",
     "kbase_type": "KBaseFBA.FBAModel",
     "user_description": "Converts SBML file to FBAModel object in workspace.",
+<<<<<<< HEAD
+    
+=======
     "url_mapping": ["SBML.FBAModel"],    
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d
     "handler_options": {        
         "must_own_validation": true,
         "must_own_saving_to_workspace": true,
@@ -14,9 +18,13 @@
 	[
 	    "input_file_name",
 	    "object_name",
+<<<<<<< HEAD
+	    "workspace_name"
+=======
 	    "workspace_name",
         "workspace_service_url",
         "fba_service_url"
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d
 	],
 	"optional_fields":
 	[
@@ -24,7 +32,11 @@
 	    "biomass",
 	    "compounds"
 	],
+<<<<<<< HEAD
+	"input_mapping": [{"input_file_name": "SBML.FBAModel"}]
+=======
 	"input_mapping": {"SBML.FBAModel" : "input_file_name"}
+>>>>>>> 9d40e96dfcc4734be6bfd3ad79d9958b60233f3d
     },
     "user_options": [
         {

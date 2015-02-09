@@ -50,14 +50,14 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
     
         logger.info("Starting SequenceReads validation of {0}".format(input_file_name))
         
-        # TODO This needs to be changed, this is really just a demo program for this library and not a serious tool
-        java_classpath = os.path.join(os.environ.get("KB_TOP"), "lib/jars/FastaValidator/FastaValidator-1.0.jar")
-        
         if os.path.splitext(input_file_name)[-1] in fasta_extensions:
-            arguments = ["java", "-classpath", java_classpath, "FVTester", filePath]            
-        elif os.path.split()[-1] in fastq_extensions:
-            arguments = ["java", "-classpath", java_classpath, "fastQValidator", "--disableSeqIDCheck", "--file", filePath]        
-            
+            # TODO This needs to be changed, this is really just a demo program for this library and not a serious tool
+            java_classpath = os.path.join(os.environ.get("KB_TOP"), "lib/jars/FastaValidator/FastaValidator-1.0.jar")
+            arguments = ["java", "-classpath", java_classpath, "FVTester", filePath]
+
+        elif os.path.splitext(input_file_name)[-1] in fastq_extensions:            
+            arguments = ["fastQValidator", "--file", filePath, "--maxErrors", "10"]
+
         tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)
         stdout, stderr = tool_process.communicate()
     

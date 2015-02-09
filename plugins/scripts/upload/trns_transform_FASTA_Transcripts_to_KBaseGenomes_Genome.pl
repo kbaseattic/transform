@@ -121,7 +121,10 @@ my $GenomeHash = {id => $Genome_ID,
 		  gc_content => 0.5,
 		  dna_size => 0,
 		  features => [],
-                  contigs => []};
+                  contigs => [],
+		  num_contigs => 0,
+		  contig_lengths => [],
+		  contig_ids => []};
 
 #Test first sequence for NAs
 if(!$IsDNA){
@@ -132,6 +135,9 @@ if(!$IsDNA){
     my $sum = $entities{'A'}+$entities{'G'}+$entities{'C'}+$entities{'T'};
     $IsDNA = 1 if ( $sum/length($seqs[0][2]) > 0.75 );
 }
+
+my $Contig = "1";
+my $Contig_Location = "0";
 
 my $GCs=0;
 my $DNA_Size=0;
@@ -162,7 +168,11 @@ foreach my $Seq (@seqs){
 		 protein_translation_length=>length($ProtSeq),
 		 md5=>Digest::MD5::md5_hex($ProtSeq),
 		 dna_sequence => $DNASeq,
-		 dna_sequence_length => length($DNASeq)};
+		 dna_sequence_length => length($DNASeq),
+		 location => []};
+
+    push @{$CDSHash->{location}}, [$Contig,$Contig_Location+0,'>',length($DNASeq)];
+    $Contig_Location+=length($DNASeq)+1;
 
     push(@{$GenomeHash->{features}},$CDSHash);
 }

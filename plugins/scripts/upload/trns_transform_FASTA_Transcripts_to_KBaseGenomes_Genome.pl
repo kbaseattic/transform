@@ -83,16 +83,22 @@ GetOptions("input_file_name|i=s"   => \$In_File,
 	   "dna|d"         => \$IsDNA,
            "help|h"        => \$Help);
 
-if($Help || !$In_File || !$Out_File ||!$Genome_ID){
+if($Help || !$In_File || !$Out_File){
     print($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (input_file_name used by default)> --dna|d");
     $logger->warn($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (input_file_name used by default)> --dna|d");
     exit();
 }
 
-if($Genome_ID ne "" && $Genome_ID !~ /^[\w\|.-]+$/){
-    $logger->warn("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
-    die("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
+if ($Genome_ID eq "" || !defined($Genome_ID)) {
+    my(@names) = split(m%/%, $In_File);
+    $Genome_ID = $names[-1];
 }
+
+#if($Genome_ID ne "" && $Genome_ID !~ /^[\w\|.-]+$/){
+#    $logger->warn("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
+#    die("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
+#}
+
 
 if(!-f $In_File){
     $logger->warn("Cannot find file ".$In_File);
@@ -110,6 +116,7 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
 my $fh = getFileHandle($In_File);
 my @seqs = read_fasta($fh,1);
+
 
 my $GenomeHash = {id => $Genome_ID,
 		  scientific_name => '',
@@ -167,13 +174,19 @@ $GenomeHash->{dna_size} = $DNA_Size;
 
 $logger->info("Writing Genome WS Object");
 
-use JSON;
-my $json_text = encode_json($GenomeHash);
-open(OUT, "> $Out_File");
-print OUT $json_text;
-close(OUT);
+eval {
+    use JSON;
+    my $json_text = encode_json($GenomeHash);
+    open(OUT, "> $Out_File");
+    print OUT $json_text;
+    close(OUT);
 
-$logger->info("Writing Genome WS Object Complete");
+    $logger->info("Writing Genome WS Object Complete");
+};
+
+if ($@) {
+    die("Unable to create JSON :: ".$@);
+}
 
 sub getFileHandle{
     my $file=shift;

@@ -57,8 +57,8 @@ type but different versions.
 
 
     def _run_job(self, method, ctx, args):
-        if "optional_arguments" not in args:
-            args["optional_arguments"] = '{}'
+        #if "optional_arguments" not in args:
+        #    args["optional_arguments"] = '{}'
 
         # read local configuration
         #memcacheClient = self._get_memcache_client()

@@ -51,10 +51,12 @@ def get_token():
         try:
             task = subprocess.Popen(["kbase-whoami", "-t"],
                                     stdout=subprocess.PIPE, shell=True)
-            stdout, _ = task.communicate()
+            stdout, stderr = task.communicate()
 
-            if stdout is not None:
-                if 'You are not logged in' in stdout:
+            if stderr is not None:
+                raise Exception("Unable to retrieve user token : {0}".format(stderr))
+            elif stdout is not None:
+                if 'You are not logged in' in stdout or 'command not found' in stdout:
                     raise Exception("Unable to retrieve user token, " +
                                     "login with CLI or export KB_AUTH_TOKEN")
                 return stdout.strip()

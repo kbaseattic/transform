@@ -450,6 +450,8 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
             try:    
                 files = os.listdir(transform_directory)
         
+                assert len(files) != 0
+        
                 for f in files:
                     path = os.path.join(transform_directory, f)
             

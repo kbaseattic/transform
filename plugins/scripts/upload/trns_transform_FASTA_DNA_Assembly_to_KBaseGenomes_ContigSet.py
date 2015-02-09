@@ -114,6 +114,9 @@ def transform(shock_service_url=None, handle_service_url=None,
     pattern = re.compile(r'\s+')
     sequence_exists = False
     
+    valid_chars = "-AaCcGgTtUuWwSsMmKkRrYyBbDdHhVvNn"
+    amino_acid_specific_characters = "PpLlIiFfQqEe" 
+
     for current_line in input_file_handle:
         if (current_line[0] == ">"):
             # found a header line
@@ -121,13 +124,20 @@ def transform(shock_service_url=None, handle_service_url=None,
             if (not sequence_exists) and first_header_found:
                 logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header))        
                 raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header))
-                    
             if not first_header_found:
                 first_header_found = True
             else:
                 # build up sequence and remove all white space
                 total_sequence = ''.join(sequence_list)
                 total_sequence = re.sub(pattern, '', total_sequence)
+                if not total_sequence :
+                    logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
+                    raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header))
+                for character in total_sequence:
+                    if character not in valid_chars:
+                        if character in amino_acid_specific_characters:
+                            raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
+                        raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
                 fasta_key = fasta_header.strip()
                 contig_dict = dict() 
                 contig_dict["id"] = fasta_key 
@@ -160,10 +170,23 @@ def transform(shock_service_url=None, handle_service_url=None,
     if (not sequence_exists) and first_header_found: 
         logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header))        
         raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
+    elif not first_header_found :
+        logger.error("There are no contigs in this file") 
+        raise Exception("There are no contigs in this file") 
     else: 
         # build up sequence and remove all white space      
         total_sequence = ''.join(sequence_list)
         total_sequence = re.sub(pattern, '', total_sequence)
+        if not total_sequence :
+            logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
+            raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
+
+        for character in total_sequence: 
+            if character not in valid_chars: 
+                if character in amino_acid_specific_characters:
+                    raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
+                raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
+
         fasta_key = fasta_header.strip()
         contig_dict = dict()
         contig_dict["id"] = fasta_key 

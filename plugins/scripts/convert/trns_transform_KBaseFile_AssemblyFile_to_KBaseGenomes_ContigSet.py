@@ -4,7 +4,6 @@
 from __future__ import print_function
 import os
 import sys
-import traceback
 import logging
 import re
 import hashlib
@@ -13,6 +12,7 @@ import hashlib
 import biokbase.Transform.script_utils as script_utils
 from biokbase.workspace.client import Workspace
 import requests
+import json
 
 __VERSION__ = '0.0.1'
 
@@ -25,6 +25,9 @@ TOKEN = os.environ.get('KB_AUTH_TOKEN')
 
 
 # TODO this is almost entirely duplicated in Jason's fasta->CS script. Move?
+# copied from Jason's fasta-CS script. Some unnecessary parts were cut out,
+# but the core code is the same.
+
 # conversion method that can be called if this module is imported
 # Note the logger has different levels it could be run.
 #  See: https://docs.python.org/2/library/logging.html#logging-levels
@@ -69,11 +72,6 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
         raise Exception("The input file name {0} is not a file!".format(
             input_file_name))
 
-#     if not os.path.isdir(working_directory):
-#         raise Exception(
-#             "The working directory does not exist {0} does not exist".format(
-#                 working_directory))
-
     # default if not too large
     contig_set_has_sequences = True
     if fasta_reference_only:
@@ -96,16 +94,13 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
     contig_set_md5_list = []
     # Pattern for replacing white space
     pattern = re.compile(r'\s+')
-    sequence_exists = False
     for current_line in input_file_handle:
         if (current_line[0] == ">"):
             # found a header line
             # Wrap up previous fasta sequence
-            if (not sequence_exists) and first_header_found:
-                logger.error("There is no sequence related to fasta record: " +
-                             fasta_header)
+            if (not sequence_list) and first_header_found:
                 raise Exception(
-                    "There is no sequence related to fasta record: {0}".format(
+                    "There is no sequence related to FASTA record: {0}".format(
                         fasta_header))
             if not first_header_found:
                 first_header_found = True
@@ -113,11 +108,14 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
                 # build up sequence and remove all white space
                 total_sequence = ''.join(sequence_list)
                 total_sequence = re.sub(pattern, '', total_sequence)
-                fasta_key = fasta_header.strip()
+                if not total_sequence:
+                    raise Exception(
+                        "There is no sequence related to FASTA record: " +
+                        fasta_header)
                 contig_dict = dict()
-                contig_dict["id"] = fasta_key
+                contig_dict["id"] = fasta_header
                 contig_dict["length"] = len(total_sequence)
-                contig_dict["name"] = fasta_key
+                contig_dict["name"] = fasta_header
                 contig_dict["description"] = "Note MD5 is generated from " +\
                     "uppercasing the sequence"
                 contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest()
@@ -127,35 +125,35 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
                     contig_dict["sequence"] = total_sequence
                 else:
                     contig_dict["sequence"] = ""
-                fasta_dict[fasta_key] = contig_dict
+                fasta_dict[fasta_header] = contig_dict
 
                 # get set up for next fasta sequence
                 sequence_list = []
-                sequence_exists = False
-            fasta_header = current_line.replace('>', '')
+            fasta_header = current_line.replace('>', '').strip()
         else:
             sequence_list.append(current_line)
-            sequence_exists = True
 
     input_file_handle.close()
 
     # wrap up last fasta sequence
-    if (not sequence_exists) and first_header_found:
-        logger.error(
-            "There is no sequence related to FASTA record : {0}".format(
-                fasta_header))
+    if (not sequence_list) and first_header_found:
         raise Exception(
-            "There is no sequence related to FASTA record : {0}".format(
+            "There is no sequence related to FASTA record: {0}".format(
                 fasta_header))
+    elif not first_header_found:
+        raise Exception("There are no contigs in this file")
     else:
         # build up sequence and remove all white space
         total_sequence = ''.join(sequence_list)
         total_sequence = re.sub(pattern, '', total_sequence)
-        fasta_key = fasta_header.strip()
+        if not total_sequence:
+            raise Exception(
+                "There is no sequence related to FASTA record: " +
+                fasta_header)
         contig_dict = dict()
-        contig_dict["id"] = fasta_key
+        contig_dict["id"] = fasta_header
         contig_dict["length"] = len(total_sequence)
-        contig_dict["name"] = fasta_key
+        contig_dict["name"] = fasta_header
         contig_dict["description"] = "Note MD5 is generated from " +\
             "uppercasing the sequence"
         contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest()
@@ -165,7 +163,7 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
             contig_dict["sequence"] = total_sequence
         else:
             contig_dict["sequence"] = ""
-        fasta_dict[fasta_key] = contig_dict
+        fasta_dict[fasta_header] = contig_dict
 
     contig_set_dict = dict()
     contig_set_dict["md5"] = hashlib.md5(",".join(sorted(
@@ -185,23 +183,12 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
 
     contig_set_dict["fasta_ref"] = shock_id
 
-    # For future development if the type is updated to the handle_reference
-    # instead of a shock_reference
-
-    # This generates the json for the object
-#     objectString = json.dumps(contig_set_dict, sort_keys=True, indent=4)
-#
-#     logger.info("ContigSet data structure creation completed." +
-#                 " Writing out JSON.")
-#     output_file = os.path.join(working_directory, contigset_id)
-#     with open(output_file, "w") as outFile:
-#         outFile.write(objectString)
-#
     logger.info("Conversion completed.")
     return contig_set_dict
 
 
-def download_workspace_data(ws_url, source_ws, source_obj, working_dir):
+def download_workspace_data(ws_url, source_ws, source_obj, working_dir,
+                            logger):
     ws = Workspace(ws_url, token=TOKEN)
     objdata = ws.get_objects([{'ref': source_ws + '/' + source_obj}])[0]
     info = objdata['info']
@@ -219,7 +206,13 @@ def download_workspace_data(ws_url, source_ws, source_obj, working_dir):
     with open(outfile, 'w') as f:
         response = requests.get(shock_node, stream=True, headers=headers)
         if not response.ok:
-            response.raise_for_status()
+            try:
+                err = json.loads(response.content)['error'][0]
+            except:
+                logger.error("Couldn't parse response error content: " +
+                             response.content)
+                response.raise_for_status()
+            raise Exception(str(err))
         for block in response.iter_content(1024):
             if not block:
                 break
@@ -297,7 +290,8 @@ def main():
             args.workspace_service_url,
             args.source_workspace_name,
             args.source_object_name,
-            args.working_directory)
+            args.working_directory,
+            logger)
 
         inputfile = os.path.join(args.working_directory,
                                  args.source_object_name)
@@ -312,7 +306,6 @@ def main():
             args.destination_workspace_name, args.destination_object_name)
     except Exception, e:
         logger.exception(e)
-        print("".join(traceback.format_exc()))
         sys.exit(1)
 
     sys.exit(0)

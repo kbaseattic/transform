@@ -113,18 +113,28 @@ class TaskRunner(object):
             command_name = os.path.splitext(arguments["script_name"])[0]
         
         command_list = [command_name]
-        del arguments["script_name"]
+        #del arguments["script_name"]
         #del arguments["optional_arguments"]
 
         for k in arguments:
-            command_list.append("--{0}".format(k))
-            command_list.append("{0}".format(arguments[k]))
+            if k == "script_name": continue
+            if type(arguments[k]) == type(list()):
+                for n in arguments[k]:
+                    command_list.append("--{0}".format(k))
+                    command_list.append("{0}".format(n))
+            else:            
+                command_list.append("--{0}".format(k))
+                command_list.append("{0}".format(arguments[k]))
         
         return command_list
 
 
     def run(self, arguments=None, debug=False):
-        task = subprocess.Popen(self._build_command_list(arguments,debug), stderr=subprocess.PIPE)
+        command_list = self._build_command_list(arguments,debug)
+    
+        self.logger.info("Executing {0}".format(" ".join(command_list)))
+    
+        task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
         sub_stdout, sub_stderr = task.communicate()
 
         task_output = dict()
@@ -176,7 +186,7 @@ class PlugIns(object):
                     id = pconfig["external_type"]
                 elif pconfig["script_type"] == "upload":
                     if pconfig["external_type"] not in self.scripts_config["external_types"]:
-		                self.scripts_config["external_types"].append(pconfig["external_type"])
+                        self.scripts_config["external_types"].append(pconfig["external_type"])
                     
                     if pconfig["kbase_type"] not in self.scripts_config["kbase_types"]:
                         self.scripts_config["kbase_types"].append(pconfig["kbase_type"])

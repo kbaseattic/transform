@@ -209,11 +209,12 @@ def main():
                          {"keep_working_directory": args.keep_working_directory,
                           "working_directory": args.working_directory})
 
-        ujs.complete_job(args.ujs_job_id, 
-                         kb_token, 
-                         "Convert to {0} failed.".format(args.destination_workspace_name), 
-                         e, 
-                         None)                                  
+        ujs.complete_job(args.ujs_job_id,
+                         kb_token,
+                         "Convert to {0} failed.".format(
+                             args.destination_workspace_name), 
+                         str(e),
+                         None)
 
     
     # Report progress on the overall task being completed

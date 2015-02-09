@@ -55,7 +55,6 @@
         {
             "name": "outward",
             "type": "int",
-	        "value": 0,
             "required": false,
             "help": "Whether reads in the pair point outward.  1 is true, 0 is false."
         }

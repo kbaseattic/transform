@@ -4,7 +4,6 @@ import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
 import us.kbase.auth.TokenFormatException;
-import us.kbase.common.service.JsonClientException;
 import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
@@ -38,7 +37,8 @@ public class ConvertGBK {
 
     //--workspace_service_url {0}--workspace_name {1} --object_name {2} --contigset_object_name {3} "
     String[] argsPossible = {"-i", "--input_directory", "-o", "--object_name", "-oc", "--contigset_object_name",
-            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
+            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory",
+            "--test"};
     String[] argsPossibleMap = {"input", "input", "outputg", "outputg", "outputc", "outputc",
             "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "t"};
 
@@ -51,11 +51,23 @@ public class ConvertGBK {
     String out_object_g = null;
     String out_object_c = null;
     File indir;
+    File splitdir;
 
     String allowed_objname_chars = "|._-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
+    WorkspaceClient wc = null;
+
 
     boolean isTest = false;
+
+
+    /**
+     * @param workc
+     * @throws Exception
+     */
+    public ConvertGBK(WorkspaceClient workc) throws Exception {
+        wc = workc;
+    }
 
     /**
      * @param args
@@ -63,6 +75,39 @@ public class ConvertGBK {
      */
     public ConvertGBK(String[] args) throws Exception {
 
+        init(args);
+
+        run();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public void run() throws Exception {
+        System.out.println("indir " + indir);
+
+        parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
+            @Override
+            public List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> saveObjects(
+                    String authToken, SaveObjectsParams params) throws Exception {
+                //validateObject(validator, params.getObjects().get(0).getName(),
+                //			params.getObjects().get(0).getData(), params.getObjects().get(0).getType());
+                return null;
+            }
+
+            @Override
+            public List<ObjectData> getObjects(String authToken,
+                                               List<ObjectIdentity> objectIds) throws Exception {
+                throw new IllegalStateException("Unsupported method");
+            }
+        }, wsname, wsurl, isTest);
+    }
+
+    /**
+     * @param args
+     * @throws FileNotFoundException
+     */
+    public void init(String[] args) throws FileNotFoundException {
         for (int i = 0; i < args.length; i++) {
             int index = Arrays.asList(argsPossible).indexOf(args[i]);
             if (index > -1) {
@@ -84,7 +129,8 @@ public class ConvertGBK {
                 } else if (argsPossibleMap[index].equals("wd")) {
                     workdir = new File(args[i + 1]);
                 } else if (argsPossibleMap[index].equals("t")) {
-                    if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
+                    if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes") ||
+                            args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
                         isTest = true;
                 }
             }
@@ -98,7 +144,7 @@ public class ConvertGBK {
         if (workdir == null) {
             workdir = new File(Paths.get(".").toAbsolutePath().normalize().toString());
         }
-        else if(!workdir.exists()) {
+        if (!workdir.exists()) {
             workdir.mkdirs();
         }
 
@@ -122,7 +168,8 @@ public class ConvertGBK {
                     System.err.println("Multiple multi-record Genbank files currently not supported.");
                 } else if (wasSplit) {
                     System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
-                    indir = new File(workdir.getAbsolutePath() + "/split");
+                    splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
+                    indir = splitdir;
                 } else {
                     System.out.println("Single input file was not split");
                 }
@@ -131,29 +178,11 @@ public class ConvertGBK {
             boolean wasSplit = splitRecord(start, indir, null);
             System.out.println("Split single input file into multiple records? " + wasSplit);
             if (wasSplit) {
-                indir = new File(workdir.getAbsolutePath() + "/split");
+                splitdir = new File(workdir.getAbsolutePath() + "/split_" + indir.getName());
+                indir = splitdir;
                 System.out.println("workdir 2 " + workdir.getAbsolutePath());
             }
         }
-
-
-        System.out.println("indir " + indir);
-
-        parseAllInDir(new int[]{1}, indir, new ObjectStorage() {
-            @Override
-            public List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> saveObjects(
-                    String authToken, SaveObjectsParams params) throws Exception {
-                //validateObject(validator, params.getObjects().get(0).getName(),
-                //			params.getObjects().get(0).getData(), params.getObjects().get(0).getType());
-                return null;
-            }
-
-            @Override
-            public List<ObjectData> getObjects(String authToken,
-                                               List<ObjectIdentity> objectIds) throws Exception {
-                throw new IllegalStateException("Unsupported method");
-            }
-        }, wsname, wsurl, isTest);
     }
 
     /**
@@ -182,7 +211,7 @@ public class ConvertGBK {
         System.out.println("locitest " + locitest.size());
         if (locitest.size() > 1) {
             if (outpath == null)
-                outpath = workdir.getAbsolutePath() + "/split";
+                outpath = workdir.getAbsolutePath() + "/split_" + path.getName();
             System.out.println("split outpath " + outpath);
             File splitdir = new File(outpath);
             if (!splitdir.isDirectory()) {
@@ -269,7 +298,7 @@ public class ConvertGBK {
         //System.out.println("parseGenome "+wsname);
         //ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
         String name = gbkFiles.get(0).getName();
-        final int endIndex = name.indexOf(".");
+        final int endIndex = name.lastIndexOf(".");
         name = name.substring(0, endIndex != -1 ? endIndex : name.length());
         System.out.println("parseGenome " + name);
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, name, true);
@@ -382,7 +411,7 @@ public class ConvertGBK {
             //System.out.println(http);
 
             try {
-                WorkspaceClient wc = null;
+
 
                 if (isTestThis) {
                     System.out.println("using test mode");
@@ -400,19 +429,22 @@ public class ConvertGBK {
                     cname = out_object_c;
                 }
                 cname = sanitizeObjectName(cname);
+
+                boolean saved2 = false;
+                int retry2 = 0;
                 try {
                     System.out.println("saving ContigSet " + cname);
                     wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
                             .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
                                     .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
+                    saved2 = true;
                     System.out.println("successfully saved object");
                 /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
-                } catch (IOException e) {
-                    System.err.println("Error saving ContigSet to workspace, data may be too large (IOException)).");
-                    e.printStackTrace();
-                } catch (JsonClientException e) {
-                    System.err.println("Error saving ContigSet to workspace, data may be too large (JsonClientException).");
+                } catch (Exception e) {
+                    retry2++;
+                    Thread.sleep(2000);
+                    System.err.println("Error saving ContigSet to workspace.");
                     e.printStackTrace();
                 }
 
@@ -424,9 +456,23 @@ public class ConvertGBK {
                 }
                 gname = sanitizeObjectName(gname);
                 System.out.println("saving Genome " + gname + "\t:" + genome.getContigsetRef() + ":");
-                wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                        .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
-                                .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+
+                boolean saved = false;
+                int retry = 0;
+                while (!saved && retry < 10) {
+                    try {
+                        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                                .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
+                                        .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+                        saved = true;
+                    } catch (IOException e) {
+                        retry++;
+                        Thread.sleep(2000);
+                        System.err.println("Error saving object " + outpath2);
+                        System.err.println("IOException: " + e.getMessage());
+                    }
+                }
+
                 System.out.println("successfully saved object");
 
 /*
@@ -521,7 +567,6 @@ public class ConvertGBK {
                 e.printStackTrace();
             }
         } else {
-            /*TODO add ws url, output Genome object name, output ContigSet object name to arguments*/
             System.out.println("usage: java us.kbase.genbank.ConvertGBK " +
                     "<-i or --input_directory file or dir or files of GenBank .gbk files> " +
                     "<-o or --object_name> " +

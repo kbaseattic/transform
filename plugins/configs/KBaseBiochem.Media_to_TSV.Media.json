@@ -1,0 +1,39 @@
+{ 
+    "script_name": "trns_transform_KBaseBiochem_Media_to_TSV_Media.pl", 
+    "script_type": "download", 
+    "external_type": "TSV.Media", 
+    "kbase_type": "KBaseBiochem.Media", 
+    "user_description": "Download media in TSV format", 
+    "developer_description": "Download media in TSV format", 
+    "handler_options": { 
+        "max_runtime": 600, 
+        "required_fields": [ 
+            "object_name",
+            "workspace_name",
+	    	"workspace_service_url"
+        ], 
+        "optional_fields": ["version"], 
+        "custom_options": []
+    },  
+    "user_options": [ 
+        { 
+            "name": "object_name", 
+            "type": "string", 
+            "required": true, 
+            "help": "Name of the media object." 
+        }, 
+        { 
+            "name": "workspace_name",
+            "type": "string", 
+            "required": false,
+            "help": "Workspace containing object."
+        }, 
+        { 
+            "name": "version", 
+            "type": "int", 
+            "required": false,
+            "help": "Version of the media object, if not given we assume the latest."
+        } 
+    ], 
+    "user_option_groups": [] 
+}

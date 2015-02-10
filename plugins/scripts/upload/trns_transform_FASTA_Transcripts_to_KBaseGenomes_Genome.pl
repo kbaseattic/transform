@@ -121,7 +121,7 @@ my @seqs = read_fasta($fh,1);
 my $GenomeHash = {id => $Genome_ID,
 		  scientific_name => '',
 		  domain => "Plant",
-		  genetic_code => 11,
+		  genetic_code => 1,
 		  source => "User",
 		  source_id => "User",
 		  taxonomy => "viridiplantae",

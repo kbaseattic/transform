@@ -9,7 +9,7 @@
     "handler_options":
     {
         "max_runtime": 3600,
-        "must_own_validation": true,
+        "must_own_validation": false,
         "must_own_saving_to_workspace": false,
         "required_fields":
         [

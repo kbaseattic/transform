@@ -32,7 +32,7 @@ public class TestKBDownUp {
     String wsname, shockurl, wsurl;
     File workdir;
 
-    int skip =10000;
+    int skip =0;
 
     /**
      * @param args

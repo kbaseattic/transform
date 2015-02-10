@@ -122,35 +122,36 @@ public class GenometoGbk {
         List<Contig> contigs = contigSet.getContigs();
 
         StringBuffer out = createHeader(genome.getId(), 0, 0, "");
-        for (int j = 0; j < contigs.size(); j++) {
+        if (contigs != null) {
+            for (int j = 0; j < contigs.size(); j++) {
 
-            Contig curcontig = contigs.get(j);
-            //if (j > 0)
-            out = createHeader(curcontig.getId(), 1,curcontig.getLength(),curcontig.getName());
+                Contig curcontig = contigs.get(j);
+                //if (j > 0)
+                out = createHeader(curcontig.getId(), 1, curcontig.getLength(), curcontig.getName());
 
-            out.append("ORIGIN\n");
-            if (contigs.size() > 0) {
+                out.append("ORIGIN\n");
+                if (contigs.size() > 0) {
 
-                out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
-                //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
-            }
-
-            String numfile = "";
-            if (contigs.size() > 0)
-                numfile = "_" + j;
-            String outname = "";
-            if (outfile != null) {
-                if (!outfile.endsWith(".gbk") && !outfile.endsWith(".gb") &&
-                        !outfile.endsWith(".genbank") && !outfile.endsWith(".gbff") && !outfile.endsWith(".gbf")) {
-                    outname = outfile + numfile + ".gbk";
+                    out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
+                    //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
                 }
-            } /*else if (curcontig.getName() != null && ) {
+
+                String numfile = "";
+                if (contigs.size() > 0)
+                    numfile = "_" + j;
+                String outname = "";
+                if (outfile != null) {
+                    if (!outfile.endsWith(".gbk") && !outfile.endsWith(".gb") &&
+                            !outfile.endsWith(".genbank") && !outfile.endsWith(".gbff") && !outfile.endsWith(".gbf")) {
+                        outname = outfile + numfile + ".gbk";
+                    }
+                } /*else if (curcontig.getName() != null && ) {
                 outname = curcontig.getName() + ".gbk";
             }*/ else if (curcontig.getId() != null) {
-                outname = curcontig.getId() + ".gbk";
-            } else if (genome.getId() != null && curcontig.getId() != null) {
-                outname = genome.getId() + "_" + curcontig.getId();
-            }
+                    outname = curcontig.getId() + ".gbk";
+                } else if (genome.getId() != null && curcontig.getId() != null) {
+                    outname = genome.getId() + "_" + curcontig.getId();
+                }
             /*else if (objectname != null) {
                 outname = objectname + numfile + ".gbk";
             } else if (objectid != null) {
@@ -160,23 +161,23 @@ public class GenometoGbk {
                 int end = genomefile.lastIndexOf(".");
                 outname = genomefile.substring(start, end) + numfile + ".gbk";
             }*/
-            outname = outname.replace("|", "_");
-            final String outpath = (workdir != null ? workdir + "/" : "") + outname;
-            System.out.println("writing " + outpath);
-            try {
-                File outf = new File(outpath);
-                PrintWriter pw = new PrintWriter(outf);
-                pw.print(out);
-                pw.close();
-            } catch (FileNotFoundException e) {
-                System.err.println("failed to write output " + outpath);
-                e.printStackTrace();
+                outname = outname.replace("|", "_");
+                final String outpath = (workdir != null ? workdir + "/" : "") + outname;
+                System.out.println("writing " + outpath);
+                try {
+                    File outf = new File(outpath);
+                    PrintWriter pw = new PrintWriter(outf);
+                    pw.print(out);
+                    pw.close();
+                } catch (FileNotFoundException e) {
+                    System.err.println("failed to write output " + outpath);
+                    e.printStackTrace();
+                }
             }
         }
     }
 
     /**
-     *
      * @param contig_id
      * @param contigssize
      * @param contiglen

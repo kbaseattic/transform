@@ -42,51 +42,50 @@ try:
 except ImportError, e:
     raise ImportError("Your environment is not setup correctly : {0}".format(e.message))
 
+WS_URL = 'workspace_service_url'
+SHOCK_URL = 'shock_service_url'
+UJS_URL = 'ujs_service_url'
+HANDLE_URL = 'handle_service_url'
+XFORM_URL = 'transform_service_url'
+AWE_URL = 'awe_service_url'
+
+WS_CLIENT = 'workspace_client'
+UJS_CLIENT = 'ujs_client'
+HANDLE_CLIENT = 'handle_client'
+TRANSFORM_CLIENT = 'transform_client'
+
+CLIENT_MAP = {
+    WS_URL: (WS_CLIENT, biokbase.workspace.client.Workspace),
+    SHOCK_URL: (SHOCK_URL, None),
+    UJS_URL: (UJS_CLIENT, biokbase.userandjobstate.client.UserAndJobState),
+    HANDLE_URL: (HANDLE_CLIENT, HandleClient),
+    XFORM_URL: (TRANSFORM_CLIENT, biokbase.Transform.Client.Transform),
+    AWE_URL: (AWE_URL, None)
+}
+
 
 class TransformDriver(object):
-    def __init__(self, service_urls=dict(), logger=None):
-        if logger is not None:
+    def __init__(self, service_urls, logger=None):
+        if logger:
             self.logger = logger
         else:
             self.logger = biokbase.Transform.script_utils.stdoutlogger("TransformDriver")
-
-        if self.logger is None:
-            raise Exception("The logger instance you provided appears to be None.")
 
         self.logger.info("Instantiating Transform Client Driver")
 
         self.token = biokbase.Transform.script_utils.get_token()
 
         # create all service clients
-        if service_urls.has_key("transform_service_url"):
-            self.transform_client = biokbase.Transform.Client.Transform(url=service_urls["transform_service_url"], token=self.token)
-        else:
-            raise Exception("Missing transform_service_url")
-
-        if service_urls.has_key("ujs_service_url"):
-            self.ujs_client = biokbase.userandjobstate.client.UserAndJobState(url=service_urls["ujs_service_url"], token=self.token)
-        else:
-            raise Exception("Missing ujs_service_url")
-
-        if service_urls.has_key("awe_service_url"):
-            self.awe_service_url = service_urls["awe_service_url"]
-        else:
-            raise Exception("Missing awe_service_url")
-
-        if service_urls.has_key("shock_service_url"):
-            self.shock_service_url = service_urls["shock_service_url"]
-        else:
-            raise Exception("Missing shock_service_url")
-
-        if service_urls.has_key("workspace_service_url"):
-            self.workspace_client = biokbase.workspace.client.Workspace(url=service_urls["workspace_service_url"], token=self.token)
-        else:
-            raise Exception("Missing workspace_service_url")
-
-        if service_urls.has_key("handle_service_url"):
-            self.handle_client = HandleClient(url=service_urls["handle_service_url"], token=self.token)
-        else:
-            raise Exception("Missing handle_service_url")
+        for service in CLIENT_MAP:
+            if service not in service_urls:
+                raise ValueError(
+                    "Missing url in service url configuration: " + service)
+            attrib, client = CLIENT_MAP[service]
+            if not client:
+                setattr(self, attrib, service_urls[service])
+            else:
+                url = service_urls[service]
+                setattr(self, attrib, client(url, token=self.token))
 
 
 class TransformClientDriver(TransformDriver):

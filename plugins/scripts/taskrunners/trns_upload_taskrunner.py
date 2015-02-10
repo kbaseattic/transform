@@ -114,8 +114,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                        "working_directory": working_directory}
 
     # used for reporting a fatal condition
-    error_object = {"status": "error",
-                    "ujs_client": ujs,
+    error_object = {"ujs_client": ujs,
                     "ujs_job_id": ujs_job_id,
                     "token": kb_token}
 
@@ -154,7 +153,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
             logger.debug("Caught exception while downloading the data files!")
             
             if ujs_job_id is not None:
-                #error_object["status"] = "ERROR : Input data download - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
+                error_object["status"] = "ERROR : Input data download - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
                 error_object["error_message"] = traceback.format_exc()
                 
                 handler_utils.report_exception(logger, error_object, cleanup_details)
@@ -179,10 +178,11 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
             logger.info("Input data download completed")            
 
         logger.debug(job_details)
-
+        
         # Step 2 : Validate the data files, if there is a separate validation script
-        if job_details["transform"]["handler_options"].has_key("must_own_validation") and \
-           job_details["transform"]["handler_options"]["must_own_validation"]:        
+        if job_details.has_key("validate") and \
+           job_details["transform"]["handler_options"].has_key("must_own_validation") and \
+           not job_details["transform"]["handler_options"]["must_own_validation"]:        
             try:
                 if ujs_job_id is not None:
                     ujs.update_job_progress(ujs_job_id, kb_token, "Validation started", 
@@ -260,6 +260,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
 
                     if ujs_job_id is not None:
                         # Update on validation steps
+                        logger.info("UJS message : " + "Attempting to validate {0}".format(filename)[:handler_utils.UJS_STATUS_MAX])
                         ujs.update_job_progress(ujs_job_id, kb_token, "Attempting to validate {0}".format(filename)[:handler_utils.UJS_STATUS_MAX], 
                                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
                     else:
@@ -274,6 +275,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                         logger.debug("STDERR : " + str(task_output["stderr"]))        
 
                     if ujs_job_id is not None:
+                        logger.info("UJS message : " + "Validation completed on {0}".format(filename)[:handler_utils.UJS_STATUS_MAX])
                         # Update on validation steps
                         ujs.update_job_progress(ujs_job_id, kb_token, "Validation completed on {0}".format(filename)[:handler_utils.UJS_STATUS_MAX], 
                                                 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
@@ -283,7 +285,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                 logger.debug("Caught exception while validating!")
 
                 if ujs_job_id is not None:
-                    #error_object["status"] = "ERROR : Validation of input data - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
+                    error_object["status"] = "ERROR : Validation of input data - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
                     error_object["error_message"] = traceback.format_exc()
                 
                     handler_utils.report_exception(logger, error_object, cleanup_details)
@@ -416,7 +418,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
             logger.debug("Caught exception while saving the object!")
         
             if ujs_job_id is not None:
-                #error_object["status"] = "ERROR : Creating objects - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
+                error_object["status"] = "ERROR : Creating objects - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
                 error_object["error_message"] = traceback.format_exc()
             
                 handler_utils.report_exception(logger, error_object, cleanup_details)
@@ -496,7 +498,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                 logger.debug("Caught exception while trying to save objects!")
                 
                 if ujs_job_id is not None:
-                    #error_object["status"] = "ERROR : Saving object {0} to {1} - {2}".format(object_name, workspace_name, e.message)[:handler_utils.UJS_STATUS_MAX]
+                    error_object["status"] = "ERROR : Saving object {0} to {1} - {2}".format(object_name, workspace_name, e.message)[:handler_utils.UJS_STATUS_MAX]
                     error_object["error_message"] = traceback.format_exc()
             
                     handler_utils.report_exception(logger, error_object, cleanup_details)

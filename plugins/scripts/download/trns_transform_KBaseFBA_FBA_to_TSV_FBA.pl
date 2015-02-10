@@ -22,7 +22,7 @@ use Getopt::Long::Descriptive;
 
 #KBASE USE
 use Bio::KBase::workspace::Client;
-use Bio::KBase::Transform::ScriptHelpers qw(write_csv_tables get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
+use Bio::KBase::Transform::ScriptHelpers qw(write_tsv_tables get_input_fh get_output_fh load_input write_output write_text_output genome_to_gto);
 
 my($opt, $usage) = describe_options("%c %o",
 				    ['object_name=s', 'workspace object name from which the input is to be read'],
@@ -147,7 +147,7 @@ for (my $i=0; $i < @{$obj->{FBACompoundVariables}}; $i++) {
 		$cpd->{name},
 		$cpd->{formula},
 		$cpd->{charge},
-		$cpd->{compartmnet},
+		$cpd->{compartment},
 		$var->{value},
 		$var->{min},
 		$var->{lowerBound},
@@ -175,4 +175,4 @@ for (my $i=0; $i < @{$obj->{FBAReactionVariables}}; $i++) {
 		$var->{upperBound}
 	]);
 }
-write_csv_tables($tables);
+write_tsv_tables($tables);

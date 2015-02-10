@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
         workspace = args.workspace_name    
     else:
-        if "kbasetest" not in token and len(args.workspace.strip()) == 0:
+        if "kbasetest" not in token and len(args.workspace_name.strip()) == 0:
             print "If you are running the demo as a different user than kbasetest, you need to provide the name of your workspace with --workspace."
             sys.exit(0)
         else:

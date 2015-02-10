@@ -32,6 +32,8 @@ public class TestKBDownUp {
     String wsname, shockurl, wsurl;
     File workdir;
 
+    int skip =10000;
+
     /**
      * @param args
      */
@@ -82,13 +84,13 @@ public class TestKBDownUp {
 
 
             int MAX = 30000;
-            for (int m = 0; m < MAX; m += 1000) {
+            for (int m = skip; m < MAX; m += 1000) {
                 ListObjectsParams lop = new ListObjectsParams();
 
                 List<String> lw = new ArrayList();
                 lw.add("KBasePublicGenomesV5");
                 lop.withType("KBaseGenomes.Genome").withWorkspaces(lw);
-                lop.withSkip((long) 0);
+                lop.withSkip((long) m);
 
                 List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> getobj =
                         wc.listObjects(lop);
@@ -154,10 +156,13 @@ public class TestKBDownUp {
 
                         ConvertGBK cg = new ConvertGBK(wc);
                         cg.init(argsgt2);
-                        cg.run();
-
-                        File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
-                        rmdir(tobermed);
+                        try {
+                            cg.run();
+                            File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
+                            rmdir(tobermed);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
 
                     } catch (Exception e) {
                         System.out.println("Error for genome " + t.getE2());

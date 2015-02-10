@@ -56,7 +56,15 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
             java_classpath = os.path.join(os.environ.get("KB_TOP"), "lib/jars/FastaValidator/FastaValidator-1.0.jar")
             arguments = ["java", "-classpath", java_classpath, "FVTester", filePath]
 
-        elif os.path.splitext(input_file_name)[-1] in fastq_extensions:            
+        elif os.path.splitext(input_file_name)[-1] in fastq_extensions:
+            line_count = int(subprocess.check_output(["wc", "-l", filePath]).split()[0])
+            
+            if line_count % 4 > 0:
+                logger.error("Validation failed on {0}, line count is not a multiple of 4!".format(input_file_name) +  
+                             "  Often this is due to a new line character at the end of the file.")
+                validated = False
+                break
+                
             arguments = ["fastQValidator", "--file", filePath, "--maxErrors", "10"]
 
         tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)

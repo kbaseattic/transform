@@ -10,7 +10,7 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['workspace_name=s', 'workspace name from which the workspace object is to be retrieved', { required => 1 } ],
 				    ['object_name=s', 'workspace object name to retrieve', { required => 1 } ],
 				    ['working_directory=s', 'directory where output should be saved', { required => 1 } ],
-				    ['output_file_name=s', 'file name where output should be saved', { required => 1 } ],
+				    ['output_file_name=s', 'file name where output should be saved'],
 				    ['object_version=i', 'version of workspace object to retrieve (default => most recent)' ],
 				    ['help|h', 'show this help message'],
 				    );
@@ -19,6 +19,15 @@ if ($opt->help) {
     print $usage->text;
     exit;
 }
+
+if ($opt->output_file_name) {
+    if(!( $opt->output_file_name =~ m/\.tsv$/)) {
+        $opt->{output_file_name} = $opt->output_file_name.".tsv";
+    }
+} else {
+    $opt->{output_file_name} = $opt->object_name.".tsv";
+}
+
 
 my $wsclient = Bio::KBase::workspace::Client->new($opt->workspace_service_url);
 my $ret;

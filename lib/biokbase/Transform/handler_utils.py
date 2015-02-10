@@ -98,7 +98,9 @@ class TaskRunner(object):
             self.logger = logger
             
         if callback is None:
-            callback = lambda x: self.logger.info(x)
+            self.callback = lambda x: self.logger.info(x)
+        else:
+            self.callback = callback
 
 
     def _build_command_list(self, arguments=None, debug=False):
@@ -141,7 +143,7 @@ class TaskRunner(object):
         
         lines_iterator = iter(task.stdout.readline, b"")
         for line in lines_iterator:
-            callback(line)
+            self.callback(line)
 
         sub_stdout, sub_stderr = task.communicate()
 
@@ -224,18 +226,9 @@ class PlugIns(object):
 
 
     def get_job_details(self, method, args):
-        if "optional_arguments" not in args:
-            args["optional_arguments"] = dict()
-            
-        if not args["optional_arguments"].has_key("transform"):
-            args["optional_arguments"]["transform"] = dict()
-
         job_details = dict()        
 
         if method == "upload":
-            if not args["optional_arguments"].has_key("validate"):
-                args["optional_arguments"]["validate"] = dict()
-            
             if self.scripts_config["validate"].has_key(args["external_type"]):
                 plugin_key = args["external_type"]
                 

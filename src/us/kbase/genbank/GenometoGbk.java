@@ -122,7 +122,7 @@ public class GenometoGbk {
         List<Contig> contigs = contigSet.getContigs();
 
         StringBuffer out = createHeader(genome.getId(), 0, 0, "");
-        if (contigs != null) {
+        if (contigs != null && contigs.size() > 0) {
             for (int j = 0; j < contigs.size(); j++) {
 
                 Contig curcontig = contigs.get(j);
@@ -135,45 +135,53 @@ public class GenometoGbk {
                     out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
                     //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
                 }
-
-                String numfile = "";
-                if (contigs.size() > 0)
-                    numfile = "_" + j;
-                String outname = "";
-                if (outfile != null) {
-                    if (!outfile.endsWith(".gbk") && !outfile.endsWith(".gb") &&
-                            !outfile.endsWith(".genbank") && !outfile.endsWith(".gbff") && !outfile.endsWith(".gbf")) {
-                        outname = outfile + numfile + ".gbk";
-                    }
-                } /*else if (curcontig.getName() != null && ) {
-                outname = curcontig.getName() + ".gbk";
-            }*/ else if (curcontig.getId() != null) {
-                    outname = curcontig.getId() + ".gbk";
-                } else if (genome.getId() != null && curcontig.getId() != null) {
-                    outname = genome.getId() + "_" + curcontig.getId();
-                }
-            /*else if (objectname != null) {
-                outname = objectname + numfile + ".gbk";
-            } else if (objectid != null) {
-                outname = objectid + numfile + ".gbk";
-            } else if (genomefile != null) {
-                int start = Math.max(0, genomefile.lastIndexOf("/"));
-                int end = genomefile.lastIndexOf(".");
-                outname = genomefile.substring(start, end) + numfile + ".gbk";
-            }*/
-                outname = outname.replace("|", "_");
-                final String outpath = (workdir != null ? workdir + "/" : "") + outname;
-                System.out.println("writing " + outpath);
-                try {
-                    File outf = new File(outpath);
-                    PrintWriter pw = new PrintWriter(outf);
-                    pw.print(out);
-                    pw.close();
-                } catch (FileNotFoundException e) {
-                    System.err.println("failed to write output " + outpath);
-                    e.printStackTrace();
-                }
+                out.append("//\n");
+                outputGenbank(contigs, out, j, curcontig);
             }
+        } else {
+
+            out.append("ORIGIN\n");
+            out.append("//\n");
+
+            outputGenbank(null, out, -1, null);
+        }
+    }
+
+    /**
+     * @param contigs
+     * @param out
+     * @param j
+     * @param curcontig
+     */
+    private void outputGenbank(List<Contig> contigs, StringBuffer out, int j, Contig curcontig) {
+        String numfile = "";
+        if (contigs != null && contigs.size() > 0)
+            numfile = "_" + j;
+        String outname = "";
+        if (outfile != null) {
+            if (!outfile.endsWith(".gbk") && !outfile.endsWith(".gb") &&
+                    !outfile.endsWith(".genbank") && !outfile.endsWith(".gbff") && !outfile.endsWith(".gbf")) {
+                outname = outfile + numfile + ".gbk";
+            }
+        } else if (curcontig != null && curcontig.getId() != null) {
+            outname = curcontig.getId() + ".gbk";
+        } else if (genome.getId() != null && curcontig != null && curcontig.getId() != null) {
+            outname = genome.getId() + "_" + curcontig.getId() + ".gbk";
+        } else if (genome.getId() != null) {
+            outname = genome.getId() + ".gbk";
+        }
+
+        outname = outname.replace("|", "_");
+        final String outpath = (workdir != null ? workdir + "/" : "") + outname;
+        System.out.println("writing " + outpath);
+        try {
+            File outf = new File(outpath);
+            PrintWriter pw = new PrintWriter(outf);
+            pw.print(out);
+            pw.close();
+        } catch (FileNotFoundException e) {
+            System.err.println("failed to write output " + outpath);
+            e.printStackTrace();
         }
     }
 
@@ -250,7 +258,7 @@ public class GenometoGbk {
 
 
         out.append("FEATURES             Location/Qualifiers\n");
-        out.append("     source          1.." + contiglen + "\n");
+        out.append("     source          1.." + (contiglen == 0 ? 1 : contiglen) + "\n");
         out.append("                     /organism=\"" + genome.getScientificName() + "\"\n");
         out.append("                     /mol_type=\"" + molecule_type_long + "\"\n");
         //out += "                     /strain=\"\"\n";
@@ -270,10 +278,12 @@ public class GenometoGbk {
 
         List<Feature> features = genome.getFeatures();
 
-
+        System.out.println("features " + features.size());
         for (int i = 0; i < features.size(); i++) {
             Feature cur = features.get(i);
             List<Tuple4<String, Long, String, Long>> location = cur.getLocation();
+
+            //System.out.println(location);
 
             //match features to their contig
             if (location.get(0).getE1().equals(contig_name) || location.get(0).getE1().equals(contig_id)) {

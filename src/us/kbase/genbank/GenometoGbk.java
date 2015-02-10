@@ -120,200 +120,20 @@ public class GenometoGbk {
         System.out.println(genome.getTaxonomy());
 
         List<Contig> contigs = contigSet.getContigs();
+
+        StringBuffer out = createHeader(genome.getId(), 0, 0, "");
         for (int j = 0; j < contigs.size(); j++) {
 
             Contig curcontig = contigs.get(j);
-            StringBuffer out = new StringBuffer("");
-            //out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
-            out.append("LOCUS       " + curcontig.getId() + "             " + curcontig.getLength() + " bp    " +
-                    molecule_type_short + "\n");// + "     circular CON 10-JUN-2013\n");
-            out.append("DEFINITION  " + genome.getScientificName() + " genome.\n");
-            //out.append("ACCESSION   NC_005213\n");
-            //out.append("VERSION     NC_005213.1  GI:38349555\n");
-            //out += "DBLINK      Project: 58009\n";
-            //out += "            BioProject: PRJNA58009\n";
-            //out.append("KEYWORDS    .\n");
-            out.append("SOURCE      " + genome.getScientificName() + "\n");
-            out.append("  ORGANISM  " + genome.getScientificName() + "\n");
-            final String rawTaxonomy = genome.getTaxonomy();
-
-            String[] alltax = rawTaxonomy.split(" ");
-
-            StringBuffer formatTax = new StringBuffer("");
-
-            int counter = 0;
-            int index = 0;
-            while (index < alltax.length) {
-                formatTax.append(alltax[index]);
-                if (index < alltax.length - 1)
-                    formatTax.append(" ");
-                counter += alltax[index].length() + 1;
-                index++;
-                if (counter >= 65 || rawTaxonomy.length() < 80) {
-                    formatTax.append("\n");
-                    formatTax.append("            ");
-                    counter = 0;
-                }
-            }
-
-            out.append("            " + formatTax + ".\n");
-
-            /*TODO populate references in Genome objects */
-            /*
-             //typedef tuple<int id, string source_db, string article_title, string link, string pubdate, string authors, string journal_name> publication;
-            List<Tuple7<Long, String, String, String, String, String, String>> pubs = genome.getPublications();
-            for (int k = 0; k < pubs.size(); k++) {
-                Tuple7<Long, String, String, String, String, String, String> curpub = pubs.get(k);
-                System.out.println(genome.getTaxonomy());
-                System.out.println(curpub.getE6());
-                out += "REFERENCE   1  (bases " + 1 + " to " + curcontig.getLength() + ")\n";
-                out += "  AUTHORS   ";//Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,\n";
-                for(int m=0;m<(curpub.getE6()).length();m++) {
-                out+=
-                //out += "            Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,\n";//59
-                }
-                out += "  TITLE     "+curpub.getE3()+"\n";//64
-                out += "  JOURNAL   "+curpub.getE7()+"\n";
-                //TODO Genome object missing JOURNAL volume issue pages etc.
-                //+" 100 (22), 12984-12988 (2003)\n";
-                if (curpub.getE2().equalsIgnoreCase("PUBMED"))
-                    out += "   PUBMED   " + curpub.getE1() + "\n";
-            }
-        */
-
-            //out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
-            //out += "            NCBI review. The reference sequence was derived from AE017199.\n";
-            out.append(" COMMENT            COMPLETENESS: " + (genome.getComplete() == 1 ? "full length" : "incomplete") + ".\n");
-            out.append("                    Exported from the DOE KnowledgeBase.\n");
-
-
-            out.append("FEATURES             Location/Qualifiers\n");
-            out.append("     source          1.." + curcontig.getLength() + "\n");
-            out.append("                     /organism=\"" + genome.getScientificName() + "\"\n");
-            out.append("                     /mol_type=\"" + molecule_type_long + "\"\n");
-            //out += "                     /strain=\"\"\n";
-
-            String taxId = null;
-            Map<String, Object> addprops = genome.getAdditionalProperties();
-            for (String k : addprops.keySet()) {
-                //System.out.println("addprops " + k + "\t" + addprops.get(k));
-                if (k.equals("tax_id"))
-                    taxId = "" + (Integer) addprops.get(k);
-
-            }
-
-
-            if (taxId != null)
-                out.append("                     /db_xref=\"taxon:" + taxId + "\"\n");
-
-            List<Feature> features = genome.getFeatures();
-
-
-            for (int i = 0; i < features.size(); i++) {
-                Feature cur = features.get(i);
-                List<Tuple4<String, Long, String, Long>> location = cur.getLocation();
-
-                //match features to their contig
-                if (location.get(0).getE1().equals(curcontig.getName()) || location.get(0).getE1().equals(curcontig.getId())) {
-                    //"location":[["kb|g.0.c.1",3378378,"+",1368]]
-                    //if (curcontig.getName().equals("NC_009926")) {
-                        /*System.out.println("match feature to contig " + j + "\t" + location.get(0).getE1() + "\t" +
-                                location.get(0).getE2() + "\t" + location.get(0).getE3() + "\t" + location.get(0).getE4() + "\t"
-                                + curcontig.getName());*/
-                    String id = null;
-                    try {
-                        final List<String> aliases = cur.getAliases();
-                        if (aliases != null) {
-                            try {
-                                id = aliases.get(0);
-                            } catch (Exception e) {
-                                //e.printStackTrace();
-                            }
-                        }
-                        if (id == null)
-                            id = cur.getId();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    String function = cur.getFunction();
-                    String[] allfunction = {""};
-                    if (function != null)
-                        allfunction = function.split(" ");
-                    else
-                    function = "";
-
-
-                    boolean test = false;
-
-                /*if (id.equals("NP_963295.1")) {
-                    test = true;
-                    System.out.println("allfunction " + allfunction.length + "\t" + function.length());
-                }*/
-
-                    StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
-                    StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
-
-                /*TODO add operons and promoteres and terminators as gene features ? */
-                    if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
-
-                        if (cur.getType().equals("CDS")) //id.indexOf(".rna.") == -1)
-                            out.append("     gene            ");
-                        else {
-                            if (function.indexOf("tRNA") != -1) {
-                                out.append("     tRNA            ");
-                            } else {
-                                out.append("     misc_RNA        ");
-                            }
-                        }
-                        out = getCDS(out, location);
-                        out.append("                     /gene=\"" + id + "\"\n");
-                        //out += "                     /db_xref=\"GeneID:2732620\"\n";
-                        if (cur.getType().equals("CDS")) {
-                            out.append("     CDS             ");
-                            out = getCDS(out, location);
-                            out.append("                     /gene=\"" + id + "\"\n");
-                        }
-
-                        out.append("                     /note=\"" + formatNote);
-                        //out += "                     /codon_start=1\n";
-                        //out += "                     /transl_table=11\n";
-                        out.append("                     /product=\"" + id + "\"\n");
-                        out.append("                     /function=\"" + formatFunction);
-
-                        if (cur.getType().equals("CDS"))
-                            out.append("                     /protein_id=\"" + id + "\"\n");
-
-                        List<String> aliases = cur.getAliases();
-                        if (aliases != null) {
-                            for (String s : aliases) {
-                                //System.out.println("adding alias " + s);
-                                out.append("                     /db_xref=\"id:" + s + "\"\n");
-                            }
-                        }
-                        //out += "                     /db_xref=\"GeneID:2732620\"\n";
-
-                        //gene
-
-                        final String proteinTranslation = cur.getProteinTranslation();
-                        //System.out.println(proteinTranslation);
-                        if (proteinTranslation != null)
-                            out.append("                     /translation=\"" + formatString(proteinTranslation, 44, 58));
-                        //else
-                        //    System.out.println("op? " + id);
-                    }
-
-                    //if (test)
-                    //    System.exit(0);
-                    //}
-                }
-            }
-
+            //if (j > 0)
+            out = createHeader(curcontig.getId(), 1,curcontig.getLength(),curcontig.getName());
 
             out.append("ORIGIN\n");
-            out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
-            //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
+            if (contigs.size() > 0) {
 
+                out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
+                //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
+            }
 
             String numfile = "";
             if (contigs.size() > 0)
@@ -353,6 +173,203 @@ public class GenometoGbk {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     *
+     * @param contig_id
+     * @param contigssize
+     * @param contiglen
+     * @param contig_name
+     * @return
+     */
+    private StringBuffer createHeader(String contig_id, int contigssize, long contiglen, String contig_name) {
+        StringBuffer out = new StringBuffer("");
+        //out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
+        out.append("LOCUS       " + contig_id + "             " + contigssize + " bp    " +
+                molecule_type_short + "\n");// + "     circular CON 10-JUN-2013\n");
+        out.append("DEFINITION  " + genome.getScientificName() + " genome.\n");
+        //out.append("ACCESSION   NC_005213\n");
+        //out.append("VERSION     NC_005213.1  GI:38349555\n");
+        //out += "DBLINK      Project: 58009\n";
+        //out += "            BioProject: PRJNA58009\n";
+        //out.append("KEYWORDS    .\n");
+        out.append("SOURCE      " + genome.getScientificName() + "\n");
+        out.append("  ORGANISM  " + genome.getScientificName() + "\n");
+        final String rawTaxonomy = genome.getTaxonomy();
+
+        String[] alltax = rawTaxonomy.split(" ");
+
+        StringBuffer formatTax = new StringBuffer("");
+
+        int counter = 0;
+        int index = 0;
+        while (index < alltax.length) {
+            formatTax.append(alltax[index]);
+            if (index < alltax.length - 1)
+                formatTax.append(" ");
+            counter += alltax[index].length() + 1;
+            index++;
+            if (counter >= 65 || rawTaxonomy.length() < 80) {
+                formatTax.append("\n");
+                formatTax.append("            ");
+                counter = 0;
+            }
+        }
+
+        out.append("            " + formatTax + ".\n");
+
+            /*TODO populate references in Genome objects */
+            /*
+             //typedef tuple<int id, string source_db, string article_title, string link, string pubdate, string authors, string journal_name> publication;
+            List<Tuple7<Long, String, String, String, String, String, String>> pubs = genome.getPublications();
+            for (int k = 0; k < pubs.size(); k++) {
+                Tuple7<Long, String, String, String, String, String, String> curpub = pubs.get(k);
+                System.out.println(genome.getTaxonomy());
+                System.out.println(curpub.getE6());
+                out += "REFERENCE   1  (bases " + 1 + " to " + curcontig.getLength() + ")\n";
+                out += "  AUTHORS   ";//Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,\n";
+                for(int m=0;m<(curpub.getE6()).length();m++) {
+                out+=
+                //out += "            Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,\n";//59
+                }
+                out += "  TITLE     "+curpub.getE3()+"\n";//64
+                out += "  JOURNAL   "+curpub.getE7()+"\n";
+                //TODO Genome object missing JOURNAL volume issue pages etc.
+                //+" 100 (22), 12984-12988 (2003)\n";
+                if (curpub.getE2().equalsIgnoreCase("PUBMED"))
+                    out += "   PUBMED   " + curpub.getE1() + "\n";
+            }
+        */
+
+        //out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
+        //out += "            NCBI review. The reference sequence was derived from AE017199.\n";
+        out.append(" COMMENT            COMPLETENESS: " + (genome.getComplete() == 1 ? "full length" : "incomplete") + ".\n");
+        out.append("                    Exported from the DOE KnowledgeBase.\n");
+
+
+        out.append("FEATURES             Location/Qualifiers\n");
+        out.append("     source          1.." + contiglen + "\n");
+        out.append("                     /organism=\"" + genome.getScientificName() + "\"\n");
+        out.append("                     /mol_type=\"" + molecule_type_long + "\"\n");
+        //out += "                     /strain=\"\"\n";
+
+        String taxId = null;
+        Map<String, Object> addprops = genome.getAdditionalProperties();
+        for (String k : addprops.keySet()) {
+            //System.out.println("addprops " + k + "\t" + addprops.get(k));
+            if (k.equals("tax_id"))
+                taxId = "" + (Integer) addprops.get(k);
+
+        }
+
+
+        if (taxId != null)
+            out.append("                     /db_xref=\"taxon:" + taxId + "\"\n");
+
+        List<Feature> features = genome.getFeatures();
+
+
+        for (int i = 0; i < features.size(); i++) {
+            Feature cur = features.get(i);
+            List<Tuple4<String, Long, String, Long>> location = cur.getLocation();
+
+            //match features to their contig
+            if (location.get(0).getE1().equals(contig_name) || location.get(0).getE1().equals(contig_id)) {
+                //"location":[["kb|g.0.c.1",3378378,"+",1368]]
+                //if (curcontig.getName().equals("NC_009926")) {
+                    /*System.out.println("match feature to contig " + j + "\t" + location.get(0).getE1() + "\t" +
+                            location.get(0).getE2() + "\t" + location.get(0).getE3() + "\t" + location.get(0).getE4() + "\t"
+                            + curcontig.getName());*/
+                String id = null;
+                try {
+                    final List<String> aliases = cur.getAliases();
+                    if (aliases != null) {
+                        try {
+                            id = aliases.get(0);
+                        } catch (Exception e) {
+                            //e.printStackTrace();
+                        }
+                    }
+                    if (id == null)
+                        id = cur.getId();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                String function = cur.getFunction();
+                String[] allfunction = {""};
+                if (function != null)
+                    allfunction = function.split(" ");
+                else
+                    function = "";
+
+
+                boolean test = false;
+
+            /*if (id.equals("NP_963295.1")) {
+                test = true;
+                System.out.println("allfunction " + allfunction.length + "\t" + function.length());
+            }*/
+
+                StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
+                StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
+
+            /*TODO add operons and promoteres and terminators as gene features ? */
+                if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
+
+                    if (cur.getType().equals("CDS")) //id.indexOf(".rna.") == -1)
+                        out.append("     gene            ");
+                    else {
+                        if (function.indexOf("tRNA") != -1) {
+                            out.append("     tRNA            ");
+                        } else {
+                            out.append("     misc_RNA        ");
+                        }
+                    }
+                    out = getCDS(out, location);
+                    out.append("                     /gene=\"" + id + "\"\n");
+                    //out += "                     /db_xref=\"GeneID:2732620\"\n";
+                    if (cur.getType().equals("CDS")) {
+                        out.append("     CDS             ");
+                        out = getCDS(out, location);
+                        out.append("                     /gene=\"" + id + "\"\n");
+                    }
+
+                    out.append("                     /note=\"" + formatNote);
+                    //out += "                     /codon_start=1\n";
+                    //out += "                     /transl_table=11\n";
+                    out.append("                     /product=\"" + id + "\"\n");
+                    out.append("                     /function=\"" + formatFunction);
+
+                    if (cur.getType().equals("CDS"))
+                        out.append("                     /protein_id=\"" + id + "\"\n");
+
+                    List<String> aliases = cur.getAliases();
+                    if (aliases != null) {
+                        for (String s : aliases) {
+                            //System.out.println("adding alias " + s);
+                            out.append("                     /db_xref=\"id:" + s + "\"\n");
+                        }
+                    }
+                    //out += "                     /db_xref=\"GeneID:2732620\"\n";
+
+                    //gene
+
+                    final String proteinTranslation = cur.getProteinTranslation();
+                    //System.out.println(proteinTranslation);
+                    if (proteinTranslation != null)
+                        out.append("                     /translation=\"" + formatString(proteinTranslation, 44, 58));
+                    //else
+                    //    System.out.println("op? " + id);
+                }
+
+                //if (test)
+                //    System.exit(0);
+                //}
+            }
+        }
+        return out;
     }
 
     /**

@@ -78,6 +78,8 @@ public class ConvertGBK {
         init(args);
 
         run();
+
+        System.out.println("finished");
     }
 
     /**

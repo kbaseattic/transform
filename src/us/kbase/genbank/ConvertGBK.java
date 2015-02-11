@@ -168,7 +168,7 @@ public class ConvertGBK {
 
             String outpath = workdir.getAbsolutePath();
 
-            int maxfiles = Math.max(files.length, MAX_ALLOWED_FILES);
+            int maxfiles = Math.min(files.length, MAX_ALLOWED_FILES);
             if (maxfiles < files.length) {
                 final String outpath2 = (workdir != null ? workdir + "/" : "") + "README.txt";
                 System.out.println("writing " + outpath2);

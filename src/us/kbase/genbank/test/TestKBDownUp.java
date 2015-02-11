@@ -155,8 +155,8 @@ public class TestKBDownUp {
                         }
 
                         ConvertGBK cg = new ConvertGBK(wc);
-                        cg.init(argsgt2);
                         try {
+                            cg.init(argsgt2);
                             cg.run();
                             File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
                             rmdir(tobermed);

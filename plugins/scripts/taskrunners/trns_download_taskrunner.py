@@ -7,6 +7,7 @@ import logging
 import argparse
 import base64
 import traceback
+import tarfile
 import zipfile
 import shutil
 import struct

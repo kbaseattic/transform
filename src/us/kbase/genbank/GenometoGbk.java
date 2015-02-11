@@ -84,7 +84,7 @@ public class GenometoGbk {
 
     WorkspaceClient wc;
 
-    int MAX_ALLOWED_CONTIGS = 1000;
+    int MAX_ALLOWED_CONTIGS = 10000;
 
 
     public GenometoGbk() {

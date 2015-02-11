@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
         workspace = args.workspace_name    
     else:
-        if "kbasetest" not in token and len(args.workspace.strip()) == 0:
+        if "kbasetest" not in token and len(args.workspace_name.strip()) == 0:
             print "If you are running the demo as a different user than kbasetest, you need to provide the name of your workspace with --workspace."
             sys.exit(0)
         else:
@@ -105,9 +105,10 @@ if __name__ == "__main__":
             optional_arguments = inputs[x]["optional_arguments"]
 
         print "\n\n"
-        print term.bold("#"*80)
-        print term.white_on_black("Converting {0} => {1}".format(kbase_type,external_type))
-        print term.bold("#"*80)
+        print "\t", term.bold_underline_bright_magenta("{0}").format(x.upper())
+        print "\t", term.bold("#"*80)
+        print "\t", term.bold_white_on_black("Converting {0} => {1}".format(kbase_type,external_type))
+        print "\t", term.bold("#"*80)
 
         conversionDownloadPath = os.path.join(stamp, kbase_type + "_to_" + external_type)
         try:
@@ -118,7 +119,7 @@ if __name__ == "__main__":
         downloadPath = os.path.join(conversionDownloadPath)
 
         try:
-            print term.bold("Step 1: Make KBase download request")
+            print term.bold("\tStep 1: Make KBase download request")
 
             input_object = dict()
             input_object["external_type"] = external_type
@@ -147,7 +148,7 @@ if __name__ == "__main__":
             
             results = download_driver.get_job_results(ujs_job_id)
             
-            print term.bold("Step 2: Grab data from SHOCK\n")
+            print "\t", term.bold("Step 2: Grab data from SHOCK\n")
             download_driver.download_from_shock(results["shockurl"], results["results"][0]["id"], downloadPath)
         
             print term.green("\tShock download of {0} successful.\n\n".format(downloadPath))

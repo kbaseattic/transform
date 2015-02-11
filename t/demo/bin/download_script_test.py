@@ -13,6 +13,7 @@ import tarfile
 import json
 import pprint
 import subprocess
+import base64
 
 # patch for handling unverified certificates
 import ssl
@@ -20,7 +21,7 @@ if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
 
 # make sure the 3rd party and kbase modules are in the path for importing
-sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
+#sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
 
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import requests
@@ -28,15 +29,18 @@ import magic
 import blessings
 import dateutil.parser
 import dateutil.tz
+import simplejson
 
 import biokbase.Transform.Client
-import biokbase.Transform.script_utils
+import biokbase.Transform.script_utils as script_utils
 import biokbase.Transform.handler_utils
+import biokbase.Transform.drivers
 import biokbase.userandjobstate.client
 import biokbase.workspace.client
 
 logger = biokbase.Transform.script_utils.stdoutlogger(__file__)
 
+configs = dict()
 
 def show_workspace_object_list(workspace_url, workspace_name, object_name, token):
     print term.blue("\tYour KBase data objects:")
@@ -164,45 +168,58 @@ if __name__ == "__main__":
     parser.add_argument('--workspace_service_url', nargs='?', help='Workspace service for KBase objects', const="", default="https://kbase.us/services/ws/")
     parser.add_argument('--awe_service_url', nargs='?', help='AWE service for additional job monitoring', const="", default="http://140.221.67.3:7080")
     parser.add_argument('--transform_service_url', nargs='?', help='Transform service that handles the data conversion to KBase', const="", default="http://140.221.67.3:7778/")
+    parser.add_argument('--handle_service_url', nargs='?', help='Handle service for KBase handle', const="", default="https://kbase.us/services/handle_service")
 
     parser.add_argument('--external_type', nargs='?', help='the external type of the data', const="", default="")
     parser.add_argument('--kbase_type', nargs='?', help='the kbase object type to create', const="", default="")
     parser.add_argument('--workspace', nargs='?', help='name of the workspace where your objects should be created', const="", default="upload_testing")
     parser.add_argument('--object_name', nargs='?', help='name of the workspace object to create', const="", default="")
     parser.add_argument('--download_path', nargs='?', help='path to place downloaded files for validation', const=".", default=".")
-    parser.add_argument('--handler', help='Client bypass test', dest="handler_mode", action='store_true')
-    parser.add_argument('--client', help='Client mode test', dest="handler_mode", action='store_false')
-    parser.set_defaults(handler_mode=False)
+    #parser.add_argument('--handler', help='Client bypass test', dest="handler_mode", action='store_true')
+    #parser.add_argument('--client', help='Client mode test', dest="handler_mode", action='store_false')
+    #parser.set_defaults(handler_mode=False)
     ## TODO: change the default path to be relative to __FILE__
+    parser.add_argument('--config_file', nargs='?', help='path to config file with parameters', const="", default="")
+    #parser.add_argument('--verify', help='verify uploaded files', action="store_true")
     parser.add_argument('--plugin_directory', nargs='?', help='path to the plugin dir', const="", default="/kb/dev_container/modules/transform/plugins/configs")
 
     args = parser.parse_args()
 
     print args
 
-    token = os.environ.get("KB_AUTH_TOKEN")
-    if token is None:
-        if os.path.exists(os.path.expanduser("~/.kbase_config")):
-            f = open(os.path.expanduser("~/.kbase_config", 'r'))
-            config = f.read()
-            if "token=" in config:
-                token = config.split("token=")[1].split("\n",1)[0]            
-            else:
-                raise Exception("Unable to find KBase token!")
-        else:
-            raise Exception("Unable to find KBase token!")
+    token = script_utils.get_token()
 
+    plugin = None
     plugin = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory, logger)
 
+    inputs = list()
     if not args.demo:
-        user_inputs = {"external_type": args.external_type,
-                       "kbase_type": args.kbase_type,
-                       "object_name": args.object_name,
-                       "downloadPath": args.download_path,
-                       "workspace_name": args.workspace}
+        if args.config_file:
+            f = open(args.config_file, 'r')
+            config = simplejson.loads(f.read())
+            f.close()
+        
+            services = config["services"]
+            inputs = config["download"]
+        else:
+            inputs = {"user": 
+                {"external_type": args.external_type,
+                 "kbase_type": args.kbase_type,
+                 "object_name": args.object_name,
+                 "workspace_name" : args.workspace,
+                 "downloadPath": args.download_path,
+                 "optional_arguments": simplejson.loads(args.optional_arguments)
+                }
+            }
+
+            services = {"shock_service_url": args.shock_service_url,
+                        "ujs_service_url": args.ujs_service_url,
+                        "workspace_service_url": args.workspace_service_url,
+                        "awe_service_url": args.awe_service_url,
+                        "transform_service_url": args.transform_service_url,
+                        "handle_service_url": args.handle_service_url}
 
         workspace = args.workspace    
-        demos = [user_inputs]
     else:
         if "kbasetest" not in token and len(args.workspace.strip()) == 0:
             print "If you are running the demo as a different user than kbasetest, you need to provide the name of your workspace with --workspace."
@@ -210,40 +227,47 @@ if __name__ == "__main__":
         else:
             if args.workspace is not None:
                 workspace = args.workspace
+            else :
+                workspace = "upload_testing"
+                
 
-        genome_to_genbank = {"external_type": "Genbank.Genome",
-                             "kbase_type": "KBaseGenomes.Genome",
-                             "object_name": "NC_005213"}
+        f = open("conf/download/download_demo.cfg")
+        config = simplejson.loads(f.read())
+        f.close()
 
-        single_reads_to_fasta = {"external_type": "FASTA.DNA.Reads",
-                                 "kbase_type": "KBaseAssembly.SingleEndLibrary",
-                                 "object_name": "ERR670568"}
-
-        demos = [genome_to_genbank,
-                 single_reads_to_fasta]
+        services = config["services"]
+        inputs = config["download"]
     
 
-    services = {"ujs": args.ujs_service_url,
-                "workspace": args.workspace_service_url,
-                "awe": args.awe_service_url,
-                "transform": args.transform_service_url}
-
+    uc = biokbase.userandjobstate.client.UserAndJobState(url=args.ujs_service_url, token=token)
     
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)
     
+    download_driver = biokbase.Transform.drivers.TransformClientTerminalDriver(service_urls=services)
+    plugins = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory)
+
     term = blessings.Terminal()
-    for demo_inputs in demos:
-        external_type = demo_inputs["external_type"]
-        kbase_type = demo_inputs["kbase_type"]
-        object_name = demo_inputs["object_name"]
+    for x in sorted(inputs):
+        external_type = inputs[x]["external_type"]
+        kbase_type = inputs[x]["kbase_type"]
+        object_name = inputs[x]["object_name"]
+
+        if inputs[x].has_key("workspace_name") and inputs[x]["workspace_name"]:
+            ws_name = inputs[x]["workspace_name"]
+        else:
+            ws_name = workspace
+
+        optional_arguments = None
+        if inputs[x].has_key("optional_arguments"):
+            optional_arguments = inputs[x]["optional_arguments"]
 
         print "\n\n"
         print term.bold("#"*80)
         print term.white_on_black("Converting {0} => {1}".format(kbase_type,external_type))
         print term.bold("#"*80)
 
-        conversionDownloadPath = os.path.join(stamp, external_type + "_to_" + kbase_type)
+        conversionDownloadPath = os.path.join(stamp, kbase_type + "_to_" + external_type)
         try:
             os.mkdir(conversionDownloadPath)
         except:
@@ -254,21 +278,42 @@ if __name__ == "__main__":
         try:
             print term.bold("Step 1: Make KBase download request")
 
+            status = 'Initializing'
+            description = 'Mock handler testing' #method_hash["ujs_description"]
+            #progress = { 'ptype' : method_hash["ujs_ptype"], 'max' : method_hash["ujs_mstep"] };
+            progress = { 'ptype' : 'task', 'max' : 100 };
+            est = datetime.datetime.utcnow() + datetime.timedelta(minutes=int(3000))
+            ujs_job_id = uc.create_and_start_job(token, status, description, progress, est.strftime('%Y-%m-%dT%H:%M:%S+0000'));
+
+            input_object = dict()
+            input_object["external_type"] = external_type
+            input_object["kbase_type"] = kbase_type
+            input_object["job_details"] = plugins.get_job_details('download', input_object)
+            input_object["workspace_name"] = ws_name
+            input_object["object_name"] = object_name
+            input_object["working_directory"] = stamp
+            input_object.update(services)
+            if input_object.has_key("awe_service_url"): del input_object["awe_service_url"] 
+            if input_object.has_key("transform_service_url"): del input_object["transform_service_url"] 
+
+            if optional_arguments is not None:
+                input_object["optional_arguments"] = optional_arguments
+            else:
+                input_object["optional_arguments"] = {"transform": {}}
+
+            for x in input_object:
+                if type(input_object[x]) == type(dict()):
+                    input_object[x] = base64.urlsafe_b64encode(simplejson.dumps(input_object[x]))
+
+
             print term.blue("\tTransform handler download started:")
-            demo_inputs["working_directory"] = conversionDownloadPath
-            for attr, value in args.__dict__.iteritems():
-                if attr.endswith("_service_url"):
-                    print "arg : " + attr
-                    demo_inputs[attr] = value
-            
-            input_args = plugin.get_handler_args("download", demo_inputs)
-            command_list = ["trns_download_taskrunner"]
-            
-            for k in input_args:
-                command_list.append("--{0}".format(k))
-                command_list.append("{0}".format(input_args[k]))
-            
-            print command_list
+            command_list = ["trns_download_taskrunner", "--ujs_job_id", ujs_job_id]
+
+            for k in input_object:
+               command_list.append("--{0}".format(k))
+               command_list.append("{0}".format(input_object[k]))
+
+            print "\n\nHandler invocation {0}".format(" ".join(command_list))
 
             task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
             sub_stdout, sub_stderr = task.communicate()
@@ -282,8 +327,13 @@ if __name__ == "__main__":
             if task.returncode != 0:
                 raise Exception(sub_stderr)
 
+            results = download_driver.get_job_results(ujs_job_id)
+
+            print results
+
             print term.bold("Step 2: Grab data from SHOCK\n")
-            download_from_shock(services["shock"], shock_response, downloadPath, token)
+            download_driver.download_from_shock(results["shockurl"], results["results"][0]["id"], downloadPath)
+            #download_from_shock(services["shock"], shock_response, downloadPath, token)
             print term.green("\tShock download of {0} successful.\n\n".format(downloadPath))
         except Exception, e:
             print e.message

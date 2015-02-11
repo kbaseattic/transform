@@ -90,12 +90,17 @@ class TaskRunner(object):
     return code of the task.
     """
     
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, callback=None):
         #logger_stdout = script_utils.getStdoutLogger()
         if logger is None:
             self.logger = script_utils.stderrlogger(__file__)
         else:
             self.logger = logger
+            
+        if callback is None:
+            self.callback = lambda x: self.logger.info(x)
+        else:
+            self.callback = callback
 
 
     def _build_command_list(self, arguments=None, debug=False):
@@ -134,7 +139,12 @@ class TaskRunner(object):
     
         self.logger.info("Executing {0}".format(" ".join(command_list)))
     
-        task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+        task = subprocess.Popen(command_list, stdout=subprocess.PIPE)
+        
+        lines_iterator = iter(task.stdout.readline, b"")
+        for line in lines_iterator:
+            self.callback(line)
+
         sub_stdout, sub_stderr = task.communicate()
 
         task_output = dict()
@@ -145,7 +155,6 @@ class TaskRunner(object):
             raise Exception(task_output)
         else:
             return task_output
-
 
 
 def PluginManager(directory=None, logger=script_utils.stderrlogger(__file__)):
@@ -217,16 +226,13 @@ class PlugIns(object):
 
 
     def get_job_details(self, method, args):
-        if "optional_arguments" not in args:
-            args["optional_arguments"] = dict()
-
         job_details = dict()        
 
         if method == "upload":
             if self.scripts_config["validate"].has_key(args["external_type"]):
                 plugin_key = args["external_type"]
-                        
-                job_details["validate"] = self.scripts_config["validate"][plugin_key]                
+                
+                job_details["validate"] = self.scripts_config["validate"][plugin_key]
             else:
                 self.logger.warning("No validation available for {0}".format(args["external_type"]))
 

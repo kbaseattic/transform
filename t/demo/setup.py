@@ -50,7 +50,7 @@ class TransformVirtualEnv(object):
                              "install", "pip", "ftputil", "requests",
                              "httplib2", "requests_toolbelt", "gitpython",
                              "filemagic", "blessings", "python-dateutil",
-                             "simplejson", "configobj"])
+                             "simplejson", "bzr"])
 
         sys.path.append(os.path.join(self.venv_dir,
                                      "lib/python2.7/site-packages/"))

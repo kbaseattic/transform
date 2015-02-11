@@ -32,6 +32,8 @@ public class TestKBDownUp {
     String wsname, shockurl, wsurl;
     File workdir;
 
+    int skip =0;
+
     /**
      * @param args
      */
@@ -62,7 +64,6 @@ public class TestKBDownUp {
             workdir.mkdirs();
         }
 
-
         try {
             WorkspaceClient wc = null;
 
@@ -81,105 +82,115 @@ public class TestKBDownUp {
 
             wc.setAuthAllowedForHttp(true);
 
-            ListObjectsParams lop = new ListObjectsParams();
 
-            List<String> lw = new ArrayList();
-            lw.add("KBasePublicGenomesV5");
-            lop.withType("KBaseGenomes.Genome").withWorkspaces(lw);
+            int MAX = 30000;
+            for (int m = skip; m < MAX; m += 1000) {
+                ListObjectsParams lop = new ListObjectsParams();
 
-            List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> getobj =
-                    wc.listObjects(lop);
+                List<String> lw = new ArrayList();
+                lw.add("KBasePublicGenomesV5");
+                lop.withType("KBaseGenomes.Genome").withWorkspaces(lw);
+                lop.withSkip((long) m);
 
-            int count = 0;
-            for (Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>> t : getobj) {
-                System.out.println(count + "\t" + t.getE2() + "\t" + ((double) t.getE10() / (double) (1024 ^ 2)) + "M");
-                count++;
+                List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> getobj =
+                        wc.listObjects(lop);
 
-                List<String> ar = new ArrayList();
-                List<String> ar2 = new ArrayList();
-                try {
+                System.out.println("got data for " + getobj.size() + " objects, skip " + m);
 
-                    ar.add("--workspace_name");
-                    ar.add("KBasePublicGenomesV5");
-                    ar.add("--workspace_service_url");
-                    ar.add("https://kbase.us/services/ws");
-                    ar.add("--object_name");
-                    ar.add(t.getE2());
-                    ar.add("--working_directory");
-                    final String cleangenomeid = t.getE2().replace('|', '_');
-                    ar.add(workdir.getAbsolutePath() + "/" + cleangenomeid);
+                int count = 0;
+                for (Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>> t : getobj) {
+                    System.out.println(count + "\t" + t.getE2() + "\t" + ((double) t.getE10() / (double) (1024 ^ 2)) + "M");
+                    count++;
 
-                    if (isTest) {
-                        ar.add("--test");
-                        ar.add("T");
+                    List<String> ar = new ArrayList();
+                    List<String> ar2 = new ArrayList();
+                    try {
+
+                        ar.add("--workspace_name");
+                        ar.add("KBasePublicGenomesV5");
+                        ar.add("--workspace_service_url");
+                        ar.add("https://kbase.us/services/ws");
+                        ar.add("--object_name");
+                        ar.add(t.getE2());
+                        ar.add("--working_directory");
+                        final String cleangenomeid = t.getE2().replace('|', '_');
+                        ar.add(workdir.getAbsolutePath() + "/" + cleangenomeid);
+
+                        if (isTest) {
+                            ar.add("--test");
+                            ar.add("T");
+                        }
+                        String[] argsgt = new String[ar.size()];
+                        int count2 = 0;
+                        for (Object obj : ar) {
+                            argsgt[count2] = obj.toString();
+                            count2++;
+                        }
+
+                        GenometoGbk gt = new GenometoGbk(wc);
+                        gt.init(argsgt);
+                        gt.run();
+
+                        //String[] argsPossible = {"-i", "--input_directory", "-o", "--object_name", "-oc", "--contigset_object_name",
+                        //"-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
+
+                        ar2.add("--workspace_name");
+                        ar2.add("upload_testing");
+                        ar2.add("--workspace_service_url");
+                        ar2.add("https://kbase.us/services/ws");
+                        ar2.add("--input_directory");
+                        ar2.add(workdir.getAbsolutePath() + "/" + cleangenomeid);
+                        ar2.add("--working_directory");
+                        ar2.add(workdir.getAbsolutePath() + "/" + cleangenomeid);
+
+                        if (isTest) {
+                            ar2.add("--test");
+                            ar2.add("T");
+                        }
+                        String[] argsgt2 = new String[ar2.size()];
+                        int count22 = 0;
+                        for (Object obj : ar2) {
+                            argsgt2[count22] = obj.toString();
+                            count22++;
+                        }
+
+                        ConvertGBK cg = new ConvertGBK(wc);
+                        try {
+                            cg.init(argsgt2);
+                            cg.run();
+                            File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
+                            rmdir(tobermed);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    } catch (Exception e) {
+                        System.out.println("Error for genome " + t.getE2());
+
+                        String cmd1 = "";
+                        int count4 = 0;
+                        for (String s : ar) {
+                            cmd1 += s;
+                            if (count4 < ar.size() - 1)
+                                cmd1 += ",";
+                            count4++;
+                        }
+
+                        String cmd2 = "";
+                        int count5 = 0;
+                        for (String s : ar2) {
+                            cmd2 += s;
+                            if (count5 < ar2.size() - 1)
+                                cmd2 += ",";
+                            count5++;
+                        }
+
+                        System.out.println("Error down " + cmd1);
+                        System.out.println("Error up " + cmd2);
+                        e.printStackTrace();
                     }
-                    String[] argsgt = new String[ar.size()];
-                    int count2 = 0;
-                    for (Object obj : ar) {
-                        argsgt[count2] = obj.toString();
-                        count2++;
-                    }
 
-                    GenometoGbk gt = new GenometoGbk(wc);
-                    gt.init(argsgt);
-                    gt.run();
-
-                    //String[] argsPossible = {"-i", "--input_directory", "-o", "--object_name", "-oc", "--contigset_object_name",
-                    //"-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
-
-                    ar2.add("--workspace_name");
-                    ar2.add("upload_testing");
-                    ar2.add("--workspace_service_url");
-                    ar2.add("https://kbase.us/services/ws");
-                    ar2.add("--input_directory");
-                    ar2.add(workdir.getAbsolutePath() + "/" + cleangenomeid);
-                    ar2.add("--working_directory");
-                    ar2.add(workdir.getAbsolutePath() + "/" + cleangenomeid);
-
-                    if (isTest) {
-                        ar2.add("--test");
-                        ar2.add("T");
-                    }
-                    String[] argsgt2 = new String[ar2.size()];
-                    int count22 = 0;
-                    for (Object obj : ar2) {
-                        argsgt2[count22] = obj.toString();
-                        count22++;
-                    }
-
-                    ConvertGBK cg = new ConvertGBK(wc);
-                    cg.init(argsgt2);
-                    cg.run();
-
-                    File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
-                    rmdir(tobermed);
-
-                } catch (Exception e) {
-                    System.out.println("Error for genome " + t.getE2());
-
-                    String cmd1 = "";
-                    int count4 = 0;
-                    for (String s : ar) {
-                        cmd1 += s;
-                        if (count4 < ar.size() - 1)
-                            cmd1 += ",";
-                        count4++;
-                    }
-
-                    String cmd2 = "";
-                    int count5 = 0;
-                    for (String s : ar2) {
-                        cmd2 += s;
-                        if (count5 < ar2.size() - 1)
-                            cmd2 += ",";
-                        count5++;
-                    }
-
-                    System.out.println("Error down " + cmd1);
-                    System.out.println("Error up " + cmd2);
-                    e.printStackTrace();
                 }
-
             }
         } catch (Exception e) {
             e.printStackTrace();

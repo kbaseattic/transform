@@ -13,13 +13,13 @@ import inspect
 
 KEEP_VENV = 'KB_KEEP_TEST_VENV'
 
-CLIENT_SHORTCUTS = {drivers.WS_CLIENT: 'ws',
-                    drivers.HANDLE_CLIENT: 'handle',
-                    drivers.UJS_CLIENT: 'ujs'}
+#CLIENT_SHORTCUTS = {drivers.WS_CLIENT: 'ws',
+#                    drivers.HANDLE_CLIENT: 'handle',
+#                    drivers.UJS_CLIENT: 'ujs'}
 
-URL_SHORTCUTS = {drivers.WS_URL: 'ws_url',
-                 drivers.UJS_URL: 'ujs_url',
-                 drivers.SHOCK_URL: 'shock_url'}
+#URL_SHORTCUTS = {drivers.WS_URL: 'ws_url',
+#                 drivers.UJS_URL: 'ujs_url',
+#                 drivers.SHOCK_URL: 'shock_url'}
 
 TEST_CFG_FILE = 'test.cfg'
 
@@ -48,12 +48,20 @@ class ScriptCheckFramework(object):
         cls.token = script_utils.get_token()
 
         cfg = ConfigObj(TEST_CFG_LOC)
-        for url in URL_SHORTCUTS:
-            setattr(cls, URL_SHORTCUTS[url], cfg.get(url))
-
+                
         cls.runner = TransformTaskRunnerDriver(cfg, PLUGIN_CFG_LOC)
-        for cli in CLIENT_SHORTCUTS:
-            setattr(cls, CLIENT_SHORTCUTS[cli], getattr(cls.runner, cli))
+
+        mapping = cls.runner.get_service_mapping()
+
+        # TODO discuss why we would need different names here than what is used
+        # by the transform service, client code, and all scripts, why is this necessary at all?
+        cls.ws_url = mapping["workspace"]["url"]
+        cls.ujs_url = mapping["ujs"]["url"]
+        cls.shock_url = mapping["shock"]["url"]
+
+        cls.ws = mapping["workspace"]["client"]
+        cls.handle = mapping["handle"]["client"]
+        cls.ujs = mapping["ujs"]["client"]        
 
         keep_venv = cls._keep_venv
         if os.environ.get(KEEP_VENV):

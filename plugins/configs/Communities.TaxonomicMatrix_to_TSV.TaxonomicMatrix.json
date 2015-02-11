@@ -12,10 +12,9 @@
             "workspace_service_url",
             "workspace_name",
             "object_name",
-            "output_file_name",
-			"working_directory"
+	    "working_directory"
         ],
-        "optional_fields": ["object_version"],
+        "optional_fields": ["object_version", "output_file_name"],
         "custom_options": []
     },
     "user_options": [

@@ -11,17 +11,17 @@
         "must_own_saving_to_workspace": false,
         "max_runtime": 360,
         "custom_options": [],
-	"required_fields":
-	[
+        "required_fields":
+        [
             "input_file_name",
-	    "output_file_name",
-	    "genome_id"
-	],
-	"optional_fields":
-	[
-	    "dna"
-	],
-	"input_mapping": {"FASTA.Transcripts":"input_file_name"}
+            "output_file_name"
+        ],
+        "optional_fields":
+        [
+            "dna",
+            "genome_id"
+        ],
+        "input_mapping": {"FASTA.Transcripts":"input_file_name"}
     },
     "user_options": [
         {
@@ -39,7 +39,7 @@
         {
             "name": "genome_id",
             "type": "string",
-            "required": true,
+            "required": false,
             "help": "Genome Identifier"
         },
         {

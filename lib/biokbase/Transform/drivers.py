@@ -57,37 +57,77 @@ class TransformDriver(object):
 
         self.token = biokbase.Transform.script_utils.get_token()
 
+        self.service_urls = dict()
+
         # create all service clients
-        if service_urls.has_key("transform_service_url"):
+        if service_urls.has_key("transform_service_url"):            
+            self.service_urls["transform_service_url"] = service_urls["transform_service_url"]
             self.transform_client = biokbase.Transform.Client.Transform(url=service_urls["transform_service_url"], token=self.token)
         else:
             raise Exception("Missing transform_service_url")
 
         if service_urls.has_key("ujs_service_url"):
+            self.service_urls["ujs_service_url"] = service_urls["ujs_service_url"]
             self.ujs_client = biokbase.userandjobstate.client.UserAndJobState(url=service_urls["ujs_service_url"], token=self.token)
         else:
             raise Exception("Missing ujs_service_url")
 
         if service_urls.has_key("awe_service_url"):
+            self.service_urls["awe_service_url"] = service_urls["awe_service_url"]
             self.awe_service_url = service_urls["awe_service_url"]
         else:
             raise Exception("Missing awe_service_url")
 
         if service_urls.has_key("shock_service_url"):
+            self.service_urls["shock_service_url"] = service_urls["shock_service_url"]
             self.shock_service_url = service_urls["shock_service_url"]
         else:
             raise Exception("Missing shock_service_url")
 
         if service_urls.has_key("workspace_service_url"):
+            self.service_urls["workspace_service_url"] = service_urls["workspace_service_url"]
             self.workspace_client = biokbase.workspace.client.Workspace(url=service_urls["workspace_service_url"], token=self.token)
         else:
             raise Exception("Missing workspace_service_url")
 
         if service_urls.has_key("handle_service_url"):
+            self.service_urls["handle_service_url"] = service_urls["handle_service_url"]
             self.handle_client = HandleClient(url=service_urls["handle_service_url"], token=self.token)
         else:
             raise Exception("Missing handle_service_url")
 
+
+    def get_service_mapping(self):
+        mapping = dict()
+        
+        return {
+            "transform": {
+                "url": self.service_urls["transform_service_url"], 
+                "client": self.transform_client
+            }, 
+            "ujs": {
+                "url": self.service_urls["ujs_service_url"], 
+                "client": self.ujs_client
+            }, 
+            "awe": {
+                "url": self.service_urls["awe_service_url"], 
+                "client": None
+            }, 
+            "shock": {
+                "url": self.service_urls["shock_service_url"], 
+                "client": None
+            }, 
+            "workspace": {
+                "url": self.service_urls["workspace_service_url"], 
+                "client": self.workspace_client
+            }, 
+            "handle": {
+                "url": self.service_urls["handle_service_url"], 
+                "client": self.handle_client
+            }
+        }
+        
+        
 
 class TransformClientDriver(TransformDriver):
     def __init__(self, service_urls=dict(), logger=None):
@@ -180,12 +220,15 @@ class TransformTaskRunnerDriver(TransformDriver):
     def __init__(self, service_urls, plugin_directory, logger=None):
         if not service_urls:
             raise ValueError("Must provide a dictionary of service urls")
+        
         super(TransformTaskRunnerDriver, self).__init__(service_urls, logger)
 
         if not plugin_directory or not os.path.exists(plugin_directory):
             raise ValueError("No plugins directory found!")
+        
         self._plugin_dir = plugin_directory
         self.load_plugins()
+
 
     def load_plugins(self, plugin_directory=None):
         """
@@ -200,6 +243,7 @@ class TransformTaskRunnerDriver(TransformDriver):
 
         self.pluginManager = handler_utils.PluginManager(
             directory=plugins, logger=self.logger)
+
 
     def run_job(self, method, arguments, description=None):
         if method == "upload":
@@ -225,8 +269,8 @@ class TransformTaskRunnerDriver(TransformDriver):
 
         estimated_running_time = (datetime.datetime.utcnow() +
                                   datetime.timedelta(minutes=int(3000)))
-        ujs_job_id = self.ujs_client.create_and_start_job(
-            self.token, "Starting", description, {"ptype": "task", "max": 100},
+        ujs_job_id = self.ujs_client.create_and_start_job(self.token, 
+            "Starting", description, {"ptype": "task", "max": 100},
             estimated_running_time.strftime("%Y-%m-%dT%H:%M:%S+0000"))
 
         taskrunner = subprocess.Popen(command_list, stdout=subprocess.PIPE,

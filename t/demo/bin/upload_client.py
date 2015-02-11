@@ -74,8 +74,8 @@ if __name__ == "__main__":
 
         workspace = args.workspace_name    
     else:
-        if "kbasetest" not in token and len(args.workspace.strip()) == 0:
-            print "If you are running the demo as a different user than kbasetest, you need to provide the name of your workspace with --workspace."
+        if "kbasetest" not in token and args.workspace_name is None or len(args.workspace_name.strip()) == 0:
+            print "If you are running the demo as a different user than kbasetest, you need to provide the name of your workspace with --workspace_name."
             sys.exit(0)
         else:
             if args.workspace_name is not None:
@@ -117,9 +117,10 @@ if __name__ == "__main__":
         passed = True
 
         print "\n\n"
-        print term.bold("#"*80)
-        print term.white_on_black("Converting {0} => {1}".format(external_type,kbase_type))
-        print term.bold("#"*80)
+        print "\t", term.bold_underline_bright_magenta("{0}").format(x.upper())
+        print term.bold("\t{0}".format("#"*80))
+        print "\t", term.bold_white_on_black("Converting {0} => {1}".format(external_type,kbase_type))
+        print term.bold("\t{0}".format("#"*80))
 
         files_to_upload = [k for k in inputs[x]["url_mapping"] if inputs[x]["url_mapping"][k].startswith("file://")]
         
@@ -128,8 +129,8 @@ if __name__ == "__main__":
         upload_step = 1
         # check to see if we need to put any files in shock
         if len(files_to_upload) > 0:
-            print term.bright_blue("Uploading local files")
-            print term.bold("Step {0:d}: Place local files in SHOCK".format(upload_step))
+            print term.bright_blue("\tUploading local files")
+            print term.bold("\tStep {0:d}: Place local files in SHOCK".format(upload_step))
             upload_step += 1
 
             try: 
@@ -154,7 +155,7 @@ if __name__ == "__main__":
                             pass
                         
                         downloadFilePath = os.path.join(downloadPath, fileName)
-                        print term.bold("Optional Step: Verify files uploaded to SHOCK\n")
+                        print term.bold("\tOptional Step: Verify files uploaded to SHOCK\n")
                         upload_driver.download_from_shock(services["shock_service_url"], shock_response["id"], downloadFilePath)
                         print term.green("\tShock download of {0} successful.\n\n".format(downloadFilePath))
             except Exception, e:
@@ -163,9 +164,9 @@ if __name__ == "__main__":
                 raise
 
         try:
-            print term.bright_blue("Uploading from remote http or ftp urls")
-            print term.bold("Step {0}: Make KBase upload request with urls of data".format(upload_step))
-            print term.bold("Using data from : {0}".format(inputs[x]["url_mapping"].values()))
+            print term.bright_blue("\tUploading from remote http or ftp urls")
+            print term.bold("\tStep {0}: Make KBase upload request with urls of data".format(upload_step))
+            print term.bold("\tUsing data from : {0}".format(inputs[x]["url_mapping"].values()))
             upload_step += 1
             
             input_object = dict()
@@ -196,7 +197,7 @@ if __name__ == "__main__":
                 upload_driver.show_job_debug(awe_job_id, ujs_job_id)
                 raise Exception("KBase Upload exited with an error")
 
-            print term.bold("Step {0}: View or use workspace objects".format(upload_step))
+            print term.bold("\tStep {0}: View or use workspace objects".format(upload_step))
             upload_driver.show_workspace_object_list(workspace, object_name)
         except Exception, e:
             passed = False

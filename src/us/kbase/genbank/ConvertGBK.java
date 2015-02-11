@@ -152,6 +152,8 @@ public class ConvertGBK {
 
         int start = "LOCUS       ".length();
 
+        System.out.println("input " + indir);
+
         if (indir.isDirectory()) {
             File[] files = indir.listFiles(new FilenameFilter() {
                 @Override
@@ -163,6 +165,15 @@ public class ConvertGBK {
 
             String outpath = workdir.getAbsolutePath();
             for (int i = 0; i < files.length; i++) {
+
+                long size = files[i].length();
+                final int max = 2 * 1024 * 1024;
+                if (size > max) {
+                    final String x = "Input " + files[i] + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
+                    System.err.println(x);
+                    throw new OutOfMemoryError(x);
+                }
+
                 boolean wasSplit = splitRecord(start, files[i], null);
                 if (wasSplit && files.length > 1) {
                     System.err.println("Multiple multi-record Genbank files currently not supported.");
@@ -175,7 +186,19 @@ public class ConvertGBK {
                 }
             }
         } else {
+
+            long size = indir.length();
+            //System.out.println(size / (1024 * 1024));
+            //System.exit(0);
+            final int max = 2 * 1024 * 1024;
+            if (size > max) {
+                final String x = "Input file " + indir + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
+                System.err.println(x);
+                throw new OutOfMemoryError(x);
+            }
+
             boolean wasSplit = splitRecord(start, indir, null);
+
             System.out.println("Split single input file into multiple records? " + wasSplit);
             if (wasSplit) {
                 splitdir = new File(workdir.getAbsolutePath() + "/split_" + indir.getName());
@@ -269,6 +292,15 @@ public class ConvertGBK {
         System.out.println("parseAllInDir " + dir.getAbsolutePath());
         if (dir.isDirectory()) {
             for (File f : dir.listFiles()) {
+
+                long size = f.length();
+                final int max = 2 * 1024 * 1024;
+                if (size > max) {
+                    final String x = "Input file " + f + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
+                    System.err.println(x);
+                    throw new OutOfMemoryError(x);
+                }
+
                 //System.out.println("parseAllInDir file " + f.getAbsolutePath());
                 if (f.isDirectory()) {
                     parseAllInDir(pos, f, wc, wsname, http, isTestThis);

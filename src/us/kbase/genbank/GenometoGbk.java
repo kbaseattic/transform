@@ -278,7 +278,7 @@ public class GenometoGbk {
 
         List<Feature> features = genome.getFeatures();
 
-        System.out.println("features " + features.size());
+        System.out.println("all features " + features.size());
         for (int i = 0; i < features.size(); i++) {
             Feature cur = features.get(i);
             List<Tuple4<String, Long, String, Long>> location = cur.getLocation();
@@ -309,6 +309,12 @@ public class GenometoGbk {
                 }
 
                 String function = cur.getFunction();
+
+                final int ind1 = function.indexOf(" /protein_id=");
+                if (ind1 != -1) {
+                    function = function.substring(0, ind1);
+                }
+
                 String[] allfunction = {""};
                 if (function != null)
                     allfunction = function.split(" ");
@@ -322,6 +328,7 @@ public class GenometoGbk {
                 test = true;
                 System.out.println("allfunction " + allfunction.length + "\t" + function.length());
             }*/
+
 
                 StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
                 StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
@@ -351,10 +358,16 @@ public class GenometoGbk {
                     //out += "                     /codon_start=1\n";
                     //out += "                     /transl_table=11\n";
                     out.append("                     /product=\"" + id + "\"\n");
-                    out.append("                     /function=\"" + formatFunction);
+                    out.append("                     /function=\"" + new String(formatFunction));
 
-                    if (cur.getType().equals("CDS"))
-                        out.append("                     /protein_id=\"" + id + "\"\n");
+                    if (cur.getType().equals("CDS")) {
+                        final String str = "                     /protein_id=\"" + id + "\"\n";
+                        out.append(str);
+                        if (formatNote.indexOf("two component transcriptional regulator") != -1) {
+                            System.out.println("added :" + str + ":");
+                            System.out.println("added :" + function + ":");
+                        }
+                    }
 
                     List<String> aliases = cur.getAliases();
                     if (aliases != null) {
@@ -661,6 +674,9 @@ public class GenometoGbk {
         if (formatFunction.length() == 0) {
             formatFunction.append("\"\n");
         }
+
+        if (formatFunction.indexOf("\"\n") != formatFunction.length() - 2)
+            formatFunction.append("\"\n");
         return formatFunction;
     }
 

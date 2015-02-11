@@ -173,7 +173,7 @@ public class ConvertGBK {
                 if (size > max) {
                     final String x = "Input " + files[i] + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
                     System.err.println(x);
-                    throw new OutOfMemoryError(x);
+                    throw new IllegalStateException(x);
                 }
 
                 boolean wasSplit = splitRecord(start, files[i], null);
@@ -196,7 +196,7 @@ public class ConvertGBK {
             if (size > max) {
                 final String x = "Input file " + indir + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
                 System.err.println(x);
-                throw new OutOfMemoryError(x);
+                throw new IllegalStateException(x);
             }
 
             boolean wasSplit = splitRecord(start, indir, null);
@@ -300,7 +300,7 @@ public class ConvertGBK {
                 if (size > max) {
                     final String x = "Input file " + f + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
                     System.err.println(x);
-                    throw new OutOfMemoryError(x);
+                    throw new IllegalStateException(x);
                 }
 
                 //System.out.println("parseAllInDir file " + f.getAbsolutePath());

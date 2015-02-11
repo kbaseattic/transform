@@ -32,7 +32,7 @@ public class TestKBDownUp {
     String wsname, shockurl, wsurl;
     File workdir;
 
-    int skip =0;
+    int skip = 0;
 
     /**
      * @param args
@@ -158,11 +158,12 @@ public class TestKBDownUp {
                         try {
                             cg.init(argsgt2);
                             cg.run();
-                            File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
-                            rmdir(tobermed);
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                        File tobermed = new File(workdir.getAbsolutePath() + "/" + cleangenomeid);
+                        rmdir(tobermed);
 
                     } catch (Exception e) {
                         System.out.println("Error for genome " + t.getE2());

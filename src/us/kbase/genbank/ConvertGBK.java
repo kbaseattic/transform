@@ -192,9 +192,9 @@ public class ConvertGBK {
                 size += Math.abs(files[i].length());
             }
             final long max = Math.abs(2 * 1024 * 1024 * 1024);
-            if (size > max) {
+            if (size > Math.abs(max)) {
                 final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
-                System.err.println("input " + size + "\t" + max + "\t" + Math.abs(max) + "\t" + (-max));
+                System.err.println("input " + size + "\t" + Math.abs(max));// + "\t" + Math.abs(max) + "\t" + (-max));
                 System.err.println(x);
                 //System.exit(0);
                 throw new IllegalStateException(x);
@@ -217,9 +217,9 @@ public class ConvertGBK {
             //System.out.println(size / (1024 * 1024));
             //System.exit(0);
             final long max = Math.abs(2 * 1024 * 1024 * 1024);
-            if (size > max) {
+            if (size > Math.abs(max)) {
                 final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
-                System.err.println("input " + size + "\t" + max);
+                System.err.println("input " + size + "\t" + Math.abs(max));
                 System.err.println(x);
                 //System.exit(0);
                 throw new IllegalStateException(x);
@@ -345,9 +345,9 @@ public class ConvertGBK {
                 size += Math.abs(f.length());
             }
             final long max = Math.abs(2 * 1024 * 1024 * 1024);
-            if (size > max) {
+            if (size > Math.abs(max)) {
                 final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
-                System.err.println("input " + size + "\t" + max);
+                System.err.println("input " + size + "\t" + Math.abs(max));
                 System.err.println(x);
                 //System.exit(0);
                 throw new IllegalStateException(x);

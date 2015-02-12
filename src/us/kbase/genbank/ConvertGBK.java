@@ -57,6 +57,7 @@ public class ConvertGBK {
 
     WorkspaceClient wc = null;
 
+    int MAX_ALLOWED_FILES = 10000;
 
     boolean isTest = false;
 
@@ -166,36 +167,61 @@ public class ConvertGBK {
             System.out.println("testing name matches " + files.length + "\t" + files[0]);
 
             String outpath = workdir.getAbsolutePath();
-            for (int i = 0; i < files.length; i++) {
 
-                long size = files[i].length();
-                final int max = 2 * 1024 * 1024;
-                if (size > max) {
-                    final String x = "Input " + files[i] + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
-                    System.err.println(x);
-                    throw new IllegalStateException(x);
+            int maxfiles = Math.min(files.length, MAX_ALLOWED_FILES);
+            if (maxfiles < files.length) {
+                final String outpath2 = (workdir != null ? workdir + "/" : "") + "README.txt";
+                System.out.println("writing " + outpath2);
+                try {
+                    File outf = new File(outpath2);
+                    PrintWriter pw = new PrintWriter(outf);
+
+                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " files. This download had " + files.length
+                            + " files, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    pw.print(readmestr);
+                    pw.close();
+                } catch (FileNotFoundException e) {
+                    System.err.println("failed to write output " + outpath);
+                    e.printStackTrace();
                 }
+            }
 
-                boolean wasSplit = splitRecord(start, files[i], null);
-                if (wasSplit && files.length > 1) {
-                    System.err.println("Multiple multi-record Genbank files currently not supported.");
-                } else if (wasSplit) {
-                    System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
-                    splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
-                    indir = splitdir;
-                } else {
-                    System.out.println("Single input file was not split");
+
+            long size = 0;
+            for (int i = 0; i < maxfiles; i++) {
+                size += Math.abs(files[i].length());
+            }
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
+            if (size > Math.abs(max)) {
+                final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.err.println("input " + size + "\t" + Math.abs(max));// + "\t" + Math.abs(max) + "\t" + (-max));
+                System.err.println(x);
+                //System.exit(0);
+                throw new IllegalStateException(x);
+            } else {
+                for (int i = 0; i < maxfiles; i++) {
+                    boolean wasSplit = splitRecord(start, files[i], null);
+                    if (wasSplit && files.length > 1) {
+                        System.err.println("Multiple multi-record Genbank files currently not supported.");
+                    } else if (wasSplit) {
+                        System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
+                        splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
+                        indir = splitdir;
+                    } else {
+                        System.out.println("Single input file was not split");
+                    }
                 }
             }
         } else {
-
-            long size = indir.length();
+            long size = Math.abs(indir.length());
             //System.out.println(size / (1024 * 1024));
             //System.exit(0);
-            final int max = 2 * 1024 * 1024;
-            if (size > max) {
-                final String x = "Input file " + indir + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
+            if (size > Math.abs(max)) {
+                final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.err.println("input " + size + "\t" + Math.abs(max));
                 System.err.println(x);
+                //System.exit(0);
                 throw new IllegalStateException(x);
             }
 
@@ -216,6 +242,7 @@ public class ConvertGBK {
      */
     private boolean splitRecord(int start, File path, String outpath) throws FileNotFoundException {
 
+        int countfiles = 0;
         boolean split = false;
         Scanner fileScanner = new Scanner(path);
         List<String> locitest = new ArrayList<String>();
@@ -246,7 +273,7 @@ public class ConvertGBK {
             Scanner fileScanner2 = new Scanner(path);
             List<String> loci = new ArrayList<String>();
             StringBuilder sb = new StringBuilder("");
-            while (fileScanner2.hasNextLine()) {
+            while (fileScanner2.hasNextLine() && countfiles < MAX_ALLOWED_FILES) {
                 String cur = fileScanner2.nextLine();
                 if (!cur.startsWith(" "))
                     System.out.println(cur);
@@ -267,6 +294,7 @@ public class ConvertGBK {
                         out.close();
                         split = true;
                         System.out.println("    wrote: " + outpath);
+                        countfiles++;
                     } catch (IOException e) {
                         System.err.println("Error creating or writing file " + outpath);
                         System.err.println("IOException: " + e.getMessage());
@@ -277,6 +305,25 @@ public class ConvertGBK {
                     sb.append(cur).append("\n");
                 }
             }
+
+
+            if (countfiles == MAX_ALLOWED_FILES && fileScanner2.hasNextLine()) {
+                final String outpath2 = (workdir != null ? workdir + "/" : "") + "README.txt";
+                System.out.println("writing " + outpath2);
+                try {
+                    File outf = new File(outpath2);
+                    PrintWriter pw = new PrintWriter(outf);
+
+                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " contigs. This download had more than " + MAX_ALLOWED_FILES
+                            + " contigs, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    pw.print(readmestr);
+                    pw.close();
+                } catch (FileNotFoundException e) {
+                    System.err.println("failed to write output " + outpath);
+                    e.printStackTrace();
+                }
+            }
+
             fileScanner.close();
         }
         return split;
@@ -293,22 +340,26 @@ public class ConvertGBK {
         List<File> files = new ArrayList<File>();
         System.out.println("parseAllInDir " + dir.getAbsolutePath());
         if (dir.isDirectory()) {
+            long size = 0;
             for (File f : dir.listFiles()) {
-
-                long size = f.length();
-                final int max = 2 * 1024 * 1024;
-                if (size > max) {
-                    final String x = "Input file " + f + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
-                    System.err.println(x);
-                    throw new IllegalStateException(x);
-                }
-
-                //System.out.println("parseAllInDir file " + f.getAbsolutePath());
-                if (f.isDirectory()) {
-                    parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-                } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
-                    files.add(f);
-                    System.out.println("Added from dir " + f + "\ttotal " + files.size());
+                size += Math.abs(f.length());
+            }
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
+            if (size > Math.abs(max)) {
+                final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.err.println("input " + size + "\t" + Math.abs(max));
+                System.err.println(x);
+                //System.exit(0);
+                throw new IllegalStateException(x);
+            } else {
+                for (File f : dir.listFiles()) {
+                    //System.out.println("parseAllInDir file " + f.getAbsolutePath());
+                    if (f.isDirectory()) {
+                        parseAllInDir(pos, f, wc, wsname, http, isTestThis);
+                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
+                        files.add(f);
+                        System.out.println("Added from dir " + f + "\ttotal " + files.size());
+                    }
                 }
             }
         } else {

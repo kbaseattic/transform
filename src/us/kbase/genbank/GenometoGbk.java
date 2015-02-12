@@ -84,6 +84,9 @@ public class GenometoGbk {
 
     WorkspaceClient wc;
 
+    int MAX_ALLOWED_CONTIGS = 10000;
+
+
     public GenometoGbk() {
 
     }
@@ -122,12 +125,20 @@ public class GenometoGbk {
         List<Contig> contigs = contigSet.getContigs();
 
         StringBuffer out = createHeader(genome.getId(), 0, 0, "");
+
+        int donumcontigs = contigs.size();
+        if (contigs.size() > MAX_ALLOWED_CONTIGS)
+            donumcontigs = MAX_ALLOWED_CONTIGS;
+
+
         if (contigs != null && contigs.size() > 0) {
-            for (int j = 0; j < contigs.size(); j++) {
+            for (int j = 0; j < donumcontigs; j++) {
 
                 Contig curcontig = contigs.get(j);
                 //if (j > 0)
                 out = createHeader(curcontig.getId(), 1, curcontig.getLength(), curcontig.getName());
+
+                out = createFeatures(curcontig.getId(), curcontig.getName(), out);
 
                 out.append("ORIGIN\n");
                 if (contigs.size() > 0) {
@@ -137,6 +148,23 @@ public class GenometoGbk {
                 }
                 out.append("//\n");
                 outputGenbank(contigs, out, j, curcontig);
+            }
+
+            if (donumcontigs < contigs.size()) {
+                final String outpath = (workdir != null ? workdir + "/" : "") + "README.txt";
+                System.out.println("writing " + outpath);
+                try {
+                    File outf = new File(outpath);
+                    PrintWriter pw = new PrintWriter(outf);
+
+                    String readmestr = "The limit for downloading is 1000 contigs. This download had "+contigs.size()
+                            +" contigs, however only the first 1000 are available for downloaded.";
+                    pw.print(readmestr);
+                    pw.close();
+                } catch (FileNotFoundException e) {
+                    System.err.println("failed to write output " + outpath);
+                    e.printStackTrace();
+                }
             }
         } else {
 
@@ -272,10 +300,19 @@ public class GenometoGbk {
 
         }
 
-
         if (taxId != null)
             out.append("                     /db_xref=\"taxon:" + taxId + "\"\n");
 
+        return out;
+    }
+
+    /**
+     * @param contig_id
+     * @param contig_name
+     * @param out
+     * @return
+     */
+    private StringBuffer createFeatures(String contig_id, String contig_name, StringBuffer out) {
         List<Feature> features = genome.getFeatures();
 
         System.out.println("all features " + features.size());

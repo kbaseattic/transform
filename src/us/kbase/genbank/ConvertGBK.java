@@ -187,15 +187,11 @@ public class ConvertGBK {
             }
 
 
-            for (int i = 0; i < maxfiles; i++) {
-
-            }
-
             long size = 0;
             for (int i = 0; i < maxfiles; i++) {
                 size += Math.abs(files[i].length());
             }
-            final int max = 2 * 1024 * 1024*10244;
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
             if (size > max) {
                 final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
                 System.err.println("input " + size + "\t" + max);
@@ -220,7 +216,7 @@ public class ConvertGBK {
             long size = Math.abs(indir.length());
             //System.out.println(size / (1024 * 1024));
             //System.exit(0);
-            final int max = 2 * 1024 * 1024* 1024;
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
             if (size > max) {
                 final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
                 System.err.println("input " + size + "\t" + max);
@@ -348,7 +344,7 @@ public class ConvertGBK {
             for (File f : dir.listFiles()) {
                 size += Math.abs(f.length());
             }
-            final int max = 2 * 1024 * 1024* 1024;
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
             if (size > max) {
                 final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
                 System.err.println("input " + size + "\t" + max);

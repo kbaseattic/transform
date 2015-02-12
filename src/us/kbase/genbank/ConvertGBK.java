@@ -192,6 +192,7 @@ public class ConvertGBK {
                 final int max = 2 * 1024 * 1024 * 1024;
                 if (size > max) {
                     final String x = "Input " + files[i] + " is too large " + (size / (double) (1024 * 1024 * 1024) + "G. Max allowed size is 2G");
+                    System.err.println("input " + size + "\t" + max);
                     System.err.println(x);
                     System.exit(0);
                     throw new IllegalStateException(x);
@@ -215,6 +216,7 @@ public class ConvertGBK {
             final int max = 2 * 1024 * 1024;
             if (size > max) {
                 final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024 * 1024) + "G. Max allowed size is 2G");
+                System.err.println("input " + size + "\t" + max);
                 System.err.println(x);
                 System.exit(0);
                 throw new IllegalStateException(x);
@@ -341,6 +343,7 @@ public class ConvertGBK {
                 final int max = 2 * 1024 * 1024 * 1024;
                 if (size > max) {
                     final String x = "Input file " + f + " is too large " + (size / (double) (1024 * 1024 * 1024) + "G. Max allowed size is 2G");
+                    System.err.println("input " + size + "\t" + max);
                     System.err.println(x);
                     System.exit(0);
                     throw new IllegalStateException(x);

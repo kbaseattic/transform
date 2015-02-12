@@ -186,36 +186,43 @@ public class ConvertGBK {
                 }
             }
 
+
             for (int i = 0; i < maxfiles; i++) {
 
-                long size = Math.abs(files[i].length());
-                final int max =2 * 1024 * 1024;
-                if (size > max) {
-                    final String x = "Input " + files[i] + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G");
-                    System.err.println("input " + size + "\t" + max);
-                    System.err.println(x);
-                    System.exit(0);
-                    throw new IllegalStateException(x);
-                }
+            }
 
-                boolean wasSplit = splitRecord(start, files[i], null);
-                if (wasSplit && files.length > 1) {
-                    System.err.println("Multiple multi-record Genbank files currently not supported.");
-                } else if (wasSplit) {
-                    System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
-                    splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
-                    indir = splitdir;
-                } else {
-                    System.out.println("Single input file was not split");
+            long size = 0;
+            for (int i = 0; i < maxfiles; i++) {
+                size += Math.abs(files[i].length());
+            }
+            final int max = 2 * 1024 * 1024;
+            if (size > max) {
+                final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.err.println("input " + size + "\t" + max);
+                System.err.println(x);
+                System.exit(0);
+                throw new IllegalStateException(x);
+            } else {
+                for (int i = 0; i < maxfiles; i++) {
+                    boolean wasSplit = splitRecord(start, files[i], null);
+                    if (wasSplit && files.length > 1) {
+                        System.err.println("Multiple multi-record Genbank files currently not supported.");
+                    } else if (wasSplit) {
+                        System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
+                        splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
+                        indir = splitdir;
+                    } else {
+                        System.out.println("Single input file was not split");
+                    }
                 }
             }
         } else {
-            long size = Math.abs( indir.length());
+            long size = Math.abs(indir.length());
             //System.out.println(size / (1024 * 1024));
             //System.exit(0);
             final int max = 2 * 1024 * 1024;
             if (size > max) {
-                final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024 ) + "G. Max allowed size is 2G");
+                final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
                 System.err.println("input " + size + "\t" + max);
                 System.err.println(x);
                 System.exit(0);
@@ -337,24 +344,26 @@ public class ConvertGBK {
         List<File> files = new ArrayList<File>();
         System.out.println("parseAllInDir " + dir.getAbsolutePath());
         if (dir.isDirectory()) {
+            long size = 0;
             for (File f : dir.listFiles()) {
-
-                long size = Math.abs(f.length());
-                final int max = 2 * 1024 * 1024;
-                if (size > max) {
-                    final String x = "Input file " + f + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G");
-                    System.err.println("input " + size + "\t" + max);
-                    System.err.println(x);
-                    System.exit(0);
-                    throw new IllegalStateException(x);
-                }
-
-                //System.out.println("parseAllInDir file " + f.getAbsolutePath());
-                if (f.isDirectory()) {
-                    parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-                } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
-                    files.add(f);
-                    System.out.println("Added from dir " + f + "\ttotal " + files.size());
+                size += Math.abs(f.length());
+            }
+            final int max = 2 * 1024 * 1024;
+            if (size > max) {
+                final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.err.println("input " + size + "\t" + max);
+                System.err.println(x);
+                //System.exit(0);
+                throw new IllegalStateException(x);
+            } else {
+                for (File f : dir.listFiles()) {
+                    //System.out.println("parseAllInDir file " + f.getAbsolutePath());
+                    if (f.isDirectory()) {
+                        parseAllInDir(pos, f, wc, wsname, http, isTestThis);
+                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
+                        files.add(f);
+                        System.out.println("Added from dir " + f + "\ttotal " + files.size());
+                    }
                 }
             }
         } else {

@@ -188,10 +188,10 @@ public class ConvertGBK {
 
             for (int i = 0; i < maxfiles; i++) {
 
-                long size = files[i].length();
-                final int max = 2 * 1024 * 1024 * 1024;
+                long size = Math.abs(files[i].length());
+                final int max =2 * 1024 * 1024;
                 if (size > max) {
-                    final String x = "Input " + files[i] + " is too large " + (size / (double) (1024 * 1024 * 1024) + "G. Max allowed size is 2G");
+                    final String x = "Input " + files[i] + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G");
                     System.err.println("input " + size + "\t" + max);
                     System.err.println(x);
                     System.exit(0);
@@ -210,12 +210,12 @@ public class ConvertGBK {
                 }
             }
         } else {
-            long size = indir.length();
+            long size = Math.abs( indir.length());
             //System.out.println(size / (1024 * 1024));
             //System.exit(0);
             final int max = 2 * 1024 * 1024;
             if (size > max) {
-                final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024 * 1024) + "G. Max allowed size is 2G");
+                final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024 ) + "G. Max allowed size is 2G");
                 System.err.println("input " + size + "\t" + max);
                 System.err.println(x);
                 System.exit(0);
@@ -339,10 +339,10 @@ public class ConvertGBK {
         if (dir.isDirectory()) {
             for (File f : dir.listFiles()) {
 
-                long size = f.length();
-                final int max = 2 * 1024 * 1024 * 1024;
+                long size = Math.abs(f.length());
+                final int max = 2 * 1024 * 1024;
                 if (size > max) {
-                    final String x = "Input file " + f + " is too large " + (size / (double) (1024 * 1024 * 1024) + "G. Max allowed size is 2G");
+                    final String x = "Input file " + f + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G");
                     System.err.println("input " + size + "\t" + max);
                     System.err.println(x);
                     System.exit(0);

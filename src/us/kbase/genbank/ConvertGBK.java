@@ -194,7 +194,7 @@ public class ConvertGBK {
             final long max = Math.abs(2 * 1024 * 1024 * 1024);
             if (size > max) {
                 final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
-                System.err.println("input " + size + "\t" + max);
+                System.err.println("input " + size + "\t" + max + "\t" + Math.abs(max) + "\t" + (-max));
                 System.err.println(x);
                 //System.exit(0);
                 throw new IllegalStateException(x);

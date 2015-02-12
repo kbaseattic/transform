@@ -296,10 +296,15 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
             # Python 2.7.6, after which this workaround can be removed                    
             try:
                 archive_name = os.path.join(working_directory, name) + ".zip"
-                with zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as archive:
+                with zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED) as archive:
                     for n in files:
                         archive.write(n, arcname=os.path.join(name, n.split(transform_directory + os.sep)[1]))
-            except struct.error:
+            except Exception, e:
+                try:
+                    os.remove(archive_name)
+                except:
+                    pass
+                
                 archive_name = os.path.join(working_directory, name) + ".tar.bz2"
                 with tarfile.open(archive_name, 'w:bz2') as archive:
                     for n in files:

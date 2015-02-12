@@ -304,7 +304,9 @@ def download_file_from_shock(logger = stderrlogger(__file__),
     f = io.open(filePath, 'wb')
     try:
         for chunk in data.iter_content(chunkSize):
-            f.write(chunk)
+            if chunk:                
+                f.write(chunk)
+                f.flush()            
     finally:
         data.close()
         f.close()      
@@ -458,6 +460,12 @@ def download_from_urls(logger = stderrlogger(__file__),
     a config file per upload conversion.
     """
     
+    def _gen_ftp_file_list(root):
+        for root, directories, files in ftputil.walk(d):
+            for file in files:
+                yield os.path.join(root, file)
+            
+    
     if token is None:
         raise Exception("Unable to find token!")
     
@@ -507,6 +515,11 @@ def download_from_urls(logger = stderrlogger(__file__),
                 check = file_list[:]
                 while len(check) > 0:
                     x = check.pop()
+
+                    if ftp_connection.path.isdir(path):
+                        file_list = ftp_connection.listdir(path)
+                    elif ftp_connection.path.isfile(path):
+                        file_list = [path]
             
                     new_files = ftp_connection.listdir(x)
                 

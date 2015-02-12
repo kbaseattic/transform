@@ -418,14 +418,16 @@ class TransformClientTerminalDriver(TransformClientDriver):
         downloaded = 0
         try:
             for chunk in data.iter_content(chunkSize):
-                f.write(chunk)
-            
-                if downloaded + chunkSize > size:
-                    downloaded = size
-                else:
-                    downloaded += chunkSize
+                if chunk:                
+                    f.write(chunk)
+                    f.flush()            
+
+                    if downloaded + chunkSize > size:
+                        downloaded = size
+                    else:
+                        downloaded += chunkSize
         
-                print self.terminal.move_up + self.terminal.move_left + "\tDownloaded from shock {0:.2f}%".format(downloaded/float(size) * 100.0)
+                    print self.terminal.move_up + self.terminal.move_left + "\tDownloaded from shock {0:.2f}%".format(downloaded/float(size) * 100.0)
         except:
             raise        
         finally:

@@ -27,7 +27,7 @@ public class TestKBDownUp {
     boolean isTest;
 
     String[] argsPossible = {"-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--skip", "--test"};
-    String[] argsPossibleMap = {"wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "s""t"};
+    String[] argsPossibleMap = {"wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "s", "t"};
 
     String wsname, shockurl, wsurl;
     File workdir;

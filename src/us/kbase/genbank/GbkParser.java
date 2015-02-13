@@ -123,8 +123,18 @@ public class GbkParser {
                         if (qual_name != null) {
                             line = line.substring(equal_pos + 1).trim();
                             if (qual != null) qual.close();
-                            qual = new GbkQualifier(line_num, qual_name, line);
-                            feat.qualifiers.add(qual);
+                            System.out.println(":" + line + ":");
+                            if ((line.indexOf("/function=") != -1 || line.indexOf("/note=") != -1) && line.indexOf("/protein_id=") != -1) {
+                                //System.out.println(":" + line + ":");
+                                int chop = line.indexOf("/protein_id=");
+                                line = line.substring(0, chop);
+                            }
+                            if (!line.endsWith("\""))
+                                line += "\"";
+                            if (!line.equals("\"")) {
+                                qual = new GbkQualifier(line_num, qual_name, line);
+                                feat.qualifiers.add(qual);
+                            }
                         } else {
                             if (qual != null) {
                                 if (qual.type.equals(QUALIFIER_DB_XREF_TYPE) || qual.type.equals(QUALIFIER_TRANSLATION_TYPE)) {

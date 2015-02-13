@@ -441,11 +441,11 @@ public class ConvertGBK {
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));
 
-            try {
+            //try {
                 out.print(UObject.transformObjectToString(contigSet));
-            } catch (OutOfMemoryError E) {
-                System.err.println("out of memory error");
-            }
+            //} catch (OutOfMemoryError E) {
+            //    System.err.println("out of memory error");
+            //}
             out.close();
             System.out.println("    wrote: " + outpath2);
         } catch (IOException e) {

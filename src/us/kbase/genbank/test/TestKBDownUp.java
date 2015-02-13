@@ -26,8 +26,8 @@ import java.util.Map;
 public class TestKBDownUp {
     boolean isTest;
 
-    String[] argsPossible = {"-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--test"};
-    String[] argsPossibleMap = {"wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "t"};
+    String[] argsPossible = {"-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_url", "-wd", "--working_directory", "--skip", "--test"};
+    String[] argsPossibleMap = {"wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "s""t"};
 
     String wsname, shockurl, wsurl;
     File workdir;
@@ -50,6 +50,8 @@ public class TestKBDownUp {
                     shockurl = args[i + 1];
                 } else if (argsPossibleMap[index].equals("wd")) {
                     workdir = new File(args[i + 1]);
+                } else if (argsPossibleMap[index].equals("s")) {
+                    skip = Integer.parseInt(args[i + 1]);
                 } else if (argsPossibleMap[index].equals("t")) {
                     if (args[i + 1].equalsIgnoreCase("Y") || args[i + 1].equalsIgnoreCase("yes")
                             || args[i + 1].equalsIgnoreCase("T") || args[i + 1].equalsIgnoreCase("TRUE"))
@@ -214,8 +216,7 @@ public class TestKBDownUp {
                 }
             }
         }
-
-        return dir.delete(); // The directory is empty now and can be deleted.
+        return dir.delete();
     }
 
 
@@ -223,7 +224,7 @@ public class TestKBDownUp {
      * @param args
      */
     public final static void main(String[] args) {
-        if (args.length >= 4 || args.length <= 10) {
+        if (args.length >= 4 || args.length <= 12) {
             try {
                 TestKBDownUp clt = new TestKBDownUp(args);
             } catch (Exception e) {
@@ -235,6 +236,7 @@ public class TestKBDownUp {
                     "<-wu or --workspace_service_url ws url> " +
                     "<-su or --shock_url shock url> " +
                     "<-wd or --working_directory> " +
+                    "<--skip integer>" +
                     "<--test>");
         }
     }

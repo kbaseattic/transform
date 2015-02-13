@@ -89,8 +89,7 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
             
             if line_count % 4 > 0:
                 #cleans out lines that are empty.  SRA Tool box puts newline on the end.
-                #os.system("sed -i '/^$/d' " + filePath)
-                cmd_list = ["sed","-i", r"'/^$/d'",filePath]
+                cmd_list = ["sed","-i", r"/^$/d",filePath]
                 filtering = subprocess.Popen(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdout, stderr = filtering.communicate()
                 if filtering.returncode != 0:

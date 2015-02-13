@@ -6,9 +6,37 @@ import os
 import subprocess
 import traceback
 import logging
+import re
 
 # KBase imports
 import biokbase.Transform.script_utils as script_utils
+
+
+sep_illumina = '/' 
+sep_casava_1 = ':Y:' 
+sep_casava_2 = ':N:' 
+
+def check_interleavedPE(filename): 
+    count  = 0 
+    
+    infile  = open(filename, 'r') 
+    first_line = infile.readline() 
+    if sep_illumina in first_line: 
+        header1 = re.split('/', first_line)[0] 
+    elif sep_casava_1 in first_line or sep_casava_2 in first_line : 
+        header1 = re.split('[1,2]:[Y,N]:',first_line)[0] 
+    else: 
+        header1 = first_line 
+    if header1: 
+        for line in infile: 
+            if re.match(header1,line): 
+                count = count + 1 
+    infile.close() 
+    if count == 1 : 
+        stat = 1 
+    else: 
+        stat = 0 
+    return stat 
 
 
 def validate(input_directory, working_directory, level=logging.INFO, logger=None):
@@ -60,12 +88,12 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
             line_count = int(subprocess.check_output(["wc", "-l", filePath]).split()[0])
             
             if line_count % 4 > 0:
-                logger.error("Validation failed on {0}, line count is not a multiple of 4!".format(input_file_name) +  
-                             "  Often this is due to a new line character at the end of the file.")
-                validated = False
-                break
-                
-            arguments = ["fastQValidator", "--file", filePath, "--maxErrors", "10"]
+                #cleans out lines that are empty.  SRA Tool box puts newline on the end.
+                os.system("sed -i '/^$/d' " + filePath)
+            if (check_interleavedPE(filePath) == 1):
+                arguments = ["fastQValidator", "--file", filePath, "--maxErrors", "10", "--disableSeqIDCheck"]      
+            else :
+                arguments = ["fastQValidator", "--file", filePath, "--maxErrors", "10"] 
 
         tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)
         stdout, stderr = tool_process.communicate()

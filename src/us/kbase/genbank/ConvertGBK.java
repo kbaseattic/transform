@@ -4,6 +4,7 @@ import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
 import us.kbase.auth.TokenFormatException;
+import us.kbase.common.service.ServerException;
 import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
@@ -18,6 +19,8 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /*
@@ -442,7 +445,7 @@ public class ConvertGBK {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));
 
             //try {
-                out.print(UObject.transformObjectToString(contigSet));
+            out.print(UObject.transformObjectToString(contigSet));
             //} catch (OutOfMemoryError E) {
             //    System.err.println("out of memory error");
             //}
@@ -531,10 +534,23 @@ public class ConvertGBK {
                     System.out.println("successfully saved object");
                 /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
+                } catch (ServerException e) {
+                    System.err.println(e.getData());
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    Date date = new Date();
+                    System.err.println(dateFormat.format(date));
+
+                    retry2++;
+                    Thread.sleep(2000);
+                    System.err.println("Error saving ContigSet to workspace.");
+                    e.printStackTrace();
                 } catch (Exception e) {
                     retry2++;
                     Thread.sleep(2000);
                     System.err.println("Error saving ContigSet to workspace.");
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    Date date = new Date();
+                    System.err.println(dateFormat.format(date));
                     e.printStackTrace();
                 }
 
@@ -555,11 +571,24 @@ public class ConvertGBK {
                                 .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
                                         .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
                         saved = true;
-                    } catch (IOException e) {
-                        retry++;
+                    } catch (ServerException e) {
+                        System.err.println(e.getData());
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        Date date = new Date();
+                        System.err.println(dateFormat.format(date));
+
+                        retry2++;
                         Thread.sleep(2000);
-                        System.err.println("Error saving object " + outpath2);
-                        System.err.println("IOException: " + e.getMessage());
+                        System.err.println("Error saving ContigSet to workspace.");
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        retry2++;
+                        Thread.sleep(2000);
+                        System.err.println("Error saving ContigSet to workspace.");
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        Date date = new Date();
+                        System.err.println(dateFormat.format(date));
+                        e.printStackTrace();
                     }
                 }
 

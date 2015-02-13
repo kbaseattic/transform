@@ -123,7 +123,7 @@ public class GbkParser {
                         if (qual_name != null) {
                             line = line.substring(equal_pos + 1).trim();
                             if (qual != null) qual.close();
-                            System.out.println(":" + line + ":");
+                            //System.out.println(":" + line + ":");
                             if ((line.indexOf("/function=") != -1 || line.indexOf("/note=") != -1) && line.indexOf("/protein_id=") != -1) {
                                 //System.out.println(":" + line + ":");
                                 int chop = line.indexOf("/protein_id=");

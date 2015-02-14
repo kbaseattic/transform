@@ -474,7 +474,8 @@ public class ConvertGBK {
             out.append(o.toString());
             out.append(",");
         }
-        out.deleteCharAt(out.length() - 1);
+        if (out.length() > 0)
+            out.deleteCharAt(out.length() - 1);
 
         String globalmd5 = out.toString();
 

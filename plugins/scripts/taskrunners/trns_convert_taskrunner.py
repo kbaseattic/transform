@@ -4,6 +4,7 @@ import sys
 import os
 import datetime
 import logging
+import traceback
 import argparse
 import base64
 
@@ -52,6 +53,7 @@ def main():
                            will be cleaned when the job ends with success or failure.
         keep_working_directory: A flag to tell the script not to delete the working
                                 directory, which is mainly for debugging purposes.
+        debug: Run the taskrunner in debug mode for local execution in a virtualenv.
     
     Returns:
         Literal return value is 0 for success and 1 for failure.
@@ -70,7 +72,7 @@ def main():
     logger.debug(script_details["Args"])
     
     parser = script_utils.ArgumentParser(description=script_details["Description"],
-                                     epilog=script_details["Authors"])
+                                         epilog=script_details["Authors"])
     # provided by service config
     parser.add_argument('--workspace_service_url', 
                         help=script_details["Args"]["workspace_service_url"], 
@@ -151,93 +153,152 @@ def main():
                         help=script_details["Args"]["keep_working_directory"], 
                         action='store_true')
 
-    # ignore any extra arguments
-    args, unknown = parser.parse_known_args()
-            
-    kb_token = os.environ.get('KB_AUTH_TOKEN')
-    ujs = UserAndJobState(url=args.ujs_service_url, token=kb_token)
+    # turn on debugging options for script developers running locally
+    parser.add_argument('--debug', 
+                        help=script_details["Args"]["debug"], 
+                        action='store_true')
 
-    est = datetime.datetime.utcnow() + datetime.timedelta(minutes=3)
-    if args.ujs_job_id is not None:
-        ujs.update_job_progress(args.ujs_job_id, kb_token, "KBase Data Convert started", 
-                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
-
-    # parse all the json strings from the argument list into dicts
-    # TODO had issues with json.loads and unicode strings, workaround was using simplejson and base64
-    
-    args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
-    args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
-    
-    if not os.path.exists(args.working_directory):
-        os.mkdir(args.working_directory)
-
-    if args.ujs_job_id is not None:
-        ujs.update_job_progress(args.ujs_job_id, kb_token, 
-                                "Converting from {0} to {1}".format(args.source_kbase_type,args.destination_kbase_type), 
-                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
-
-    # Step 1 : Convert the objects
+    args = None
     try:
-        logger.info(args)
-    
-        convert_args = args.job_details["transform"]
-        convert_args["optional_arguments"] = args.optional_arguments
-        convert_args["working_directory"] = args.working_directory
-        convert_args["workspace_service_url"] = args.workspace_service_url
-        convert_args["source_workspace_name"] = args.source_workspace_name
-        convert_args["source_object_name"] = args.source_object_name
-        convert_args["destination_workspace_name"] = args.destination_workspace_name
-        convert_args["destination_object_name"] = args.destination_object_name
-        
-        logger.info(convert_args)
-        
-        task_output = handler_utils.run_task(logger, convert_args)
-        
-        if task_output["stdout"] is not None:
-            logger.debug("STDOUT : " + str(task_output["stdout"]))
-        
-        if task_output["stderr"] is not None:
-            logger.debug("STDERR : " + str(task_output["stderr"]))        
+        args = parser.parse_args()
     except Exception, e:
-        handler_utils.report_exception(logger, 
-                         {"message": 'ERROR : Conversion from {0} to {1}'.format(args.source_kbase_type,args.destination_kbase_type),
-                          "exc": e,
-                          "ujs": ujs,
-                          "ujs_job_id": args.ujs_job_id,
-                          "token": kb_token,
-                         },
-                         {"keep_working_directory": args.keep_working_directory,
-                          "working_directory": args.working_directory})
+        logger.debug("Caught exception parsing arguments!")
+        logger.exception(e)
+        sys.exit(1)
+    
+    if not args.debug:
+        # parse all the json strings from the argument list into dicts
+        # TODO had issues with json.loads and unicode strings, workaround was using simplejson and base64
+        try:    
+            args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
+            args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
+        except Exception, e:
+            logger.debug("Exception while loading base64 json strings!")
+            sys.exit(1)
+    
+    kb_token = None
+    try:
+        kb_token = script_utils.get_token()
+    except Exception, e:
+        logger.debug("Exception getting token!")
+        raise
+    
+    ujs = None
+    try:
+        if args.ujs_job_id is not None:
+            ujs = UserAndJobState(url=args.ujs_service_url, token=kb_token)
+            ujs.get_job_status(args.ujs_job_id)
+    except Exception, e:
+        logger.debug("Exception talking to UJS!")
+        raise
+    
+    # used for cleaning up the job if an exception occurs
+    cleanup_details = {"keep_working_directory": args.keep_working_directory,
+                       "working_directory": args.working_directory}
 
-        ujs.complete_job(args.ujs_job_id,
-                         kb_token,
-                         "Convert to {0} failed.".format(
-                             args.destination_workspace_name), 
-                         str(e),
-                         None)
+    # used for reporting a fatal condition
+    error_object = {"ujs_client": ujs,
+                    "ujs_job_id": args.ujs_job_id,
+                    "token": kb_token}
+
+    est = datetime.datetime.utcnow() + datetime.timedelta(minutes=5)    
+    try:
+        if args.ujs_job_id is not None:
+            ujs.update_job_progress(args.ujs_job_id, kb_token, "KBase Object Conversion started", 
+                                    1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
+        else:
+            logger.info("KBase Object Conversion started")
+
+        logger.info("Executing KBase Conversion tasks")
+
+        if not os.path.exists(args.working_directory):
+            os.mkdir(args.working_directory)
+
+        if args.ujs_job_id is not None:
+            ujs.update_job_progress(args.ujs_job_id, kb_token, 
+                                    "Converting from {0} to {1}".format(args.source_kbase_type,args.destination_kbase_type), 
+                                    1, est.strftime('%Y-%m-%dT%H:%M:%S+0000') )
+
+        # Step 1 : Convert the objects
+        try:
+            logger.info(args)
+    
+            convert_args = args.job_details["transform"]
+            convert_args["optional_arguments"] = args.optional_arguments
+            convert_args["working_directory"] = args.working_directory
+            convert_args["workspace_service_url"] = args.workspace_service_url
+            convert_args["source_workspace_name"] = args.source_workspace_name
+            convert_args["source_object_name"] = args.source_object_name
+            convert_args["destination_workspace_name"] = args.destination_workspace_name
+            convert_args["destination_object_name"] = args.destination_object_name
+        
+            logger.info(convert_args)
+        
+            task_output = handler_utils.run_task(logger, convert_args)
+        
+            if task_output["stdout"] is not None:
+                logger.debug("STDOUT : " + str(task_output["stdout"]))
+        
+            if task_output["stderr"] is not None:
+                logger.debug("STDERR : " + str(task_output["stderr"]))        
+        except Exception, e:
+            if args.ujs_job_id is not None:
+                error_object["status"] = "ERROR : Conversion between KBase Types failed - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
+                error_object["error_message"] = traceback.format_exc()
+            
+                handler_utils.report_exception(logger, error_object, cleanup_details)
+
+                ujs.complete_job(args.ujs_job_id, 
+                                 kb_token, 
+                                 "Convert from {0} failed.".format(args.source_workspace_name), 
+                                 traceback.format_exc(), 
+                                 None)
+                sys.exit(1)
+            else:
+                logger.error("Conversion between workspace objects failed")
+                logger.error("Convert from {0} failed.".format(args.source_workspace_name))
+                raise
 
     
-    # Report progress on the overall task being completed
-    if args.ujs_job_id is not None:
+        # Report progress on the overall task being completed
+        if args.ujs_job_id is not None:
+            ujs.complete_job(args.ujs_job_id, 
+                             kb_token, 
+                             "Convert to {0} completed".format(args.destination_workspace_name), 
+                             None, 
+                             {"shocknodes" : [], 
+                              "shockurl" : args.shock_service_url, 
+                              "workspaceids" : [], 
+                              "workspaceurl" : args.workspace_service_url,
+                              "results" : [{"server_type" : "Workspace", 
+                                            "url" : args.workspace_service_url, 
+                                            "id" : "{}/{}".format(args.destination_workspace_name, 
+                                                                  args.destination_object_name), 
+                                            "description" : "Convert"}]})
+    
+        # Almost done, remove the working directory if possible
+        if not args.keep_working_directory:
+            handler_utils.cleanup(logger, args.working_directory)
+
+        sys.exit(0);
+    except Exception, e:
+        if ujs is None or args.ujs_job_id is None:
+            raise
+
+        logger.debug("Caught global exception!")
+        
+        # handle global exception
+        error_object["error_message"] = traceback.format_exc()
+
+        handler_utils.report_exception(logger, error_object, cleanup_details)
+
         ujs.complete_job(args.ujs_job_id, 
                          kb_token, 
-                         "Convert to {0} completed".format(args.destination_workspace_name), 
-                         None, 
-                         {"shocknodes" : [], 
-                          "shockurl" : args.shock_service_url, 
-                          "workspaceids" : [], 
-                          "workspaceurl" : args.workspace_service_url,
-                          "results" : [{"server_type" : "Workspace", 
-                                        "url" : args.workspace_service_url, 
-                                        "id" : "{}/{}".format(args.destination_workspace_name, 
-                                                              args.destination_object_name), 
-                                        "description" : ""}]})
-    
-    # Almost done, remove the working directory if possible
-    if not args.keep_working_directory:
-        handler_utils.cleanup(logger, args.working_directory)
-
-    sys.exit(0);
+                         "Convert from {0} failed.".format(args.source_workspace_name), 
+                         traceback.format_exc(), 
+                         None)
+        sys.exit(1)
+        
 
 if __name__ == "__main__":
     main()    

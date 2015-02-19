@@ -362,6 +362,7 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
         logger.debug("Caught global exception!")
         
         # handle global exception
+        error_object["status"] = "ERROR : {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
         error_object["error_message"] = traceback.format_exc()
 
         handler_utils.report_exception(logger, error_object, cleanup_details)
@@ -506,11 +507,16 @@ if __name__ == "__main__":
         logger.exception(e)
         
         ujs = UserAndJobState(url=args.ujs_service_url, token=os.environ.get("KB_AUTH_TOKEN"))
-        ujs.complete_job(args.ujs_job_id, 
-                         os.environ.get("KB_AUTH_TOKEN"), 
-                         e.message[:handler_utils.UJS_STATUS_MAX], 
-                         traceback.format_exc(), 
-                         None)
+        
+        try:
+            ujs.complete_job(args.ujs_job_id, 
+                             os.environ.get("KB_AUTH_TOKEN"), 
+                             e.message[:handler_utils.UJS_STATUS_MAX], 
+                             traceback.format_exc(), 
+                             None)
+        except Exception, e:
+            logger.exception(e)
+        
         sys.exit(1)
     
     logger.debug("Download taskrunner completed, exiting normally.")

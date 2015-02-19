@@ -289,22 +289,22 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
             # gather a list of all files downloaded
             files = list(handler_utils.gen_recursive_filelist(transform_directory))
 
+            # gather total size of all files
+            total = 0
+            for x in files:
+                total += os.path.getsize(x)
+
             # TODO
             # Workaround for Python 2.7.3 bug 9720, http://bugs.python.org/issue9720
             # The awe workers and KBase V26 are at Python 2.7.3 and we should migrate
             # to the same version of Python that Narrative uses, which is currently
             # Python 2.7.6, after which this workaround can be removed                    
-            try:
+            if total < 2**31:
                 archive_name = os.path.join(working_directory, name) + ".zip"
                 with zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED) as archive:
                     for n in files:
                         archive.write(n, arcname=os.path.join(name, n.split(transform_directory + os.sep)[1]))
-            except Exception, e:
-                try:
-                    os.remove(archive_name)
-                except:
-                    pass
-                
+            else:
                 archive_name = os.path.join(working_directory, name) + ".tar.bz2"
                 with tarfile.open(archive_name, 'w:bz2') as archive:
                     for n in files:

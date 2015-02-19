@@ -362,6 +362,7 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
         logger.debug("Caught global exception!")
         
         # handle global exception
+        error_object["status"] = "ERROR : {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
         error_object["error_message"] = traceback.format_exc()
 
         handler_utils.report_exception(logger, error_object, cleanup_details)

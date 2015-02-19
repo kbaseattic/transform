@@ -511,7 +511,7 @@ if __name__ == "__main__":
         try:
             ujs.complete_job(args.ujs_job_id, 
                              os.environ.get("KB_AUTH_TOKEN"), 
-                             e.message[:handler_utils.UJS_STATUS_MAX], 
+                             "ERROR: {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX], 
                              traceback.format_exc(), 
                              None)
         except Exception, e:

@@ -372,7 +372,7 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
                          "Download from {0} failed.".format(workspace_name), 
                          traceback.format_exc(), 
                          None)
-        raise                                  
+        sys.exit(1)                                  
 
 
 

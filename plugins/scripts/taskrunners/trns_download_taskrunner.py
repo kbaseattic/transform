@@ -287,7 +287,7 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
             name = "KBase_{0}_{1}_{2}".format(workspace_name, object_name, object_version)
 
             # gather a list of all files downloaded
-            files = list(handler_utils.gen_recursive_filelist(transform_directory))
+            files = [x for x in handler_utils.gen_recursive_filelist(transform_directory)]
 
             # gather total size of all files
             total = 0

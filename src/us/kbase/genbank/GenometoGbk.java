@@ -251,7 +251,15 @@ public class GenometoGbk {
             out2.append("ORIGIN\n");
             out2.append("//\n");
 
+
+            out2 = createFeatures(null, null, out2);
+
             outputGenbank(null, out2, -1, null);
+
+            String description = "This is non-standard GenBank file containing only genome meta-data.";
+            PrintWriter pw = new PrintWriter(new File(workdir, "readme.txt"));
+            pw.print(description);
+            pw.close();
         }
     }
 
@@ -408,7 +416,7 @@ public class GenometoGbk {
             //System.out.println(location);
 
             //match features to their contig
-            if (location.get(0).getE1().equals(contig_name) || location.get(0).getE1().equals(contig_id)) {
+            if ((contig_id == null && contig_name == null) || location.get(0).getE1().equals(contig_name) || location.get(0).getE1().equals(contig_id)) {
                 //"location":[["kb|g.0.c.1",3378378,"+",1368]]
                 //if (curcontig.getName().equals("NC_009926")) {
                     /*System.out.println("match feature to contig " + j + "\t" + location.get(0).getE1() + "\t" +
@@ -431,7 +439,7 @@ public class GenometoGbk {
                 }
 
                 String function = cur.getFunction();
-
+                function = function.replace('\"', ' ');
                 String[] allfunction = {""};
                 if (function != null) {
                     final int ind1 = function.indexOf(" /protein_id=");
@@ -483,10 +491,10 @@ public class GenometoGbk {
                     if (cur.getType().equals("CDS")) {
                         final String str = "                     /protein_id=\"" + id + "\"\n";
                         out.append(str);
-                        if (formatNote.indexOf("two component transcriptional regulator") != -1) {
+                        /*if (formatNote.indexOf("two component transcriptional regulator") != -1) {
                             System.out.println("added :" + str + ":");
                             System.out.println("added :" + function + ":");
-                        }
+                        }*/
                     }
 
                     List<String> aliases = cur.getAliases();
@@ -858,6 +866,7 @@ public class GenometoGbk {
      * @return
      */
     public StringBuffer formatString(String s, int one, int two) {
+        s = s.replace("\"", "");
         //StringBuilder out = new StringBuilder("");
         StringBuffer out = new StringBuffer("");
         boolean first = true;
@@ -939,7 +948,7 @@ public class GenometoGbk {
         }
         if (out.charAt(out.length() - 1) == (' '))
             out.deleteCharAt(out.length() - 1);
-
+        out.append("\n");
         return out;
     }
 
@@ -969,6 +978,7 @@ public class GenometoGbk {
                     out.append(" ");
             }
         }
+        out.append("\n");
     }
 
     /**

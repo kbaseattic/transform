@@ -37,6 +37,9 @@ public class TestKBDownload {
      */
     public TestKBDownload(String[] args) {
 
+        wsname = "KBasePublicGenomesV5";
+        wsurl = "https://kbase.us/services/ws";
+        
         for (int i = 0; i < args.length; i++) {
             int index = Arrays.asList(argsPossible).indexOf(args[i]);
             if (index > -1) {
@@ -84,7 +87,7 @@ public class TestKBDownload {
             ListObjectsParams lop = new ListObjectsParams();
 
             List<String> lw = new ArrayList();
-            lw.add("KBasePublicGenomesV5");
+            lw.add(wsname);
             lop.withType("KBaseGenomes.Genome").withWorkspaces(lw);
 
             List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> getobj =
@@ -100,9 +103,9 @@ public class TestKBDownload {
                     List<String> ar = new ArrayList();
 
                     ar.add("--workspace_name");
-                    ar.add("KBasePublicGenomesV5");
+                    ar.add(wsname);
                     ar.add("--workspace_service_url");
-                    ar.add("https://kbase.us/services/ws");
+                    ar.add(wsurl);
                     ar.add("--object_name");
                     ar.add(t.getE2());
                     ar.add("--working_directory");
@@ -140,7 +143,7 @@ public class TestKBDownload {
      * @param args
      */
     public final static void main(String[] args) {
-        if (args.length >= 4 || args.length <= 10) {
+        if (args.length > 0) {
             try {
                 TestKBDownload clt = new TestKBDownload(args);
             } catch (Exception e) {

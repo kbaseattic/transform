@@ -122,6 +122,63 @@ public class GenometoGbk {
 
         System.out.println(genome.getTaxonomy());
 
+        if (contigSet == null || contigSet.getContigs() == null || contigSet.getContigs().size() == 0) {  // Hack for plant transcriptomes
+            System.out.println("Correction for plant transcriptomes");
+            StringBuilder contigDna = new StringBuilder();
+            String contigId = "synthetic_contig_for_transcriptome";
+            for (Feature f : genome.getFeatures()) {
+                //System.out.println("Location: " + f.getLocation());
+                int len = 0;
+                char[] dnaChars = null;
+                if (f.getDnaSequence() != null) {
+                    len = f.getDnaSequence().length();
+                    if (len > 0)
+                        dnaChars = f.getDnaSequence().toCharArray();
+                } else if (f.getDnaSequenceLength() != null) {
+                    len = (int)(long)f.getDnaSequenceLength();
+                }
+                if (len == 0) {
+                    if (f.getProteinTranslation() != null) {
+                        len = f.getProteinTranslation().length() * 3;
+                    } else if (f.getProteinTranslationLength() != null) {
+                        len = (int)(long)f.getProteinTranslationLength() * 3;
+                    }
+                }
+                if (len == 0)
+                    len = 1;
+                String flank = "";
+                if (dnaChars == null) {
+                    dnaChars = new char[len];
+                    Arrays.fill(dnaChars, 'n');
+                } else {
+                    char[] flankChars = new char[50];
+                    Arrays.fill(flankChars, 'n');
+                    flank = new String(flankChars);
+                }
+                String dnaSeq = new String(dnaChars).toLowerCase();
+                Tuple4<String, Long, String, Long> loc = null;
+                if (f.getLocation() == null) {
+                    f.withLocation(new ArrayList<Tuple4<String, Long, String, Long>>(1));
+                }
+                if (f.getLocation().size() > 0) {
+                    loc = f.getLocation().get(0);
+                } else {
+                    loc = new Tuple4<String, Long, String, Long>();
+                    f.getLocation().add(loc);
+                }
+                loc.withE1(contigId).withE2((long)(contigDna.length() + flank.length() + 1)).withE3("+").withE4((long)len);
+                contigDna.append(flank).append(dnaSeq).append(flank);
+            }
+            String description = "This is synthetic genome constructed by concatenation of transcript sequences.";
+            contigSet = new ContigSet().withContigs(Arrays.asList(new Contig().withId(contigId)
+                    .withLength((long)contigDna.length()).withSequence(contigDna.toString())
+                    .withDescription(description)));
+            genome.withComplete(0L);
+            PrintWriter pw = new PrintWriter(new File(workdir, "readme.txt"));
+            pw.print(description);
+            pw.close();
+        }
+        
         List<Contig> contigs = contigSet.getContigs();
 
         StringBuffer out = createHeader(genome.getId(), 0, 0, "");
@@ -141,13 +198,10 @@ public class GenometoGbk {
                 out = createFeatures(curcontig.getId(), curcontig.getName(), out);
 
                 out.append("ORIGIN\n");
-                if (contigs.size() > 0) {
-
-                    out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
-                    //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
-                }
-                out.append("//\n");
-                outputGenbank(contigs, out, j, curcontig);
+                PrintWriter pw = outputGenbank(contigs, out, j, curcontig);
+                formatDNASequence(curcontig.getSequence(), 10, 60, pw);
+                pw.append("\n//\n");
+                pw.close();
             }
 
             if (donumcontigs < contigs.size()) {
@@ -166,13 +220,13 @@ public class GenometoGbk {
                     e.printStackTrace();
                 }
             }
-        } else {
+        } /*else {
 
             out.append("ORIGIN\n");
             out.append("//\n");
 
             outputGenbank(null, out, -1, null);
-        }
+        }*/
     }
 
     /**
@@ -181,7 +235,7 @@ public class GenometoGbk {
      * @param j
      * @param curcontig
      */
-    private void outputGenbank(List<Contig> contigs, StringBuffer out, int j, Contig curcontig) {
+    private PrintWriter outputGenbank(List<Contig> contigs, StringBuffer out, int j, Contig curcontig) {
         String numfile = "";
         if (contigs != null && contigs.size() > 0)
             numfile = "_" + j;
@@ -206,10 +260,13 @@ public class GenometoGbk {
             File outf = new File(outpath);
             PrintWriter pw = new PrintWriter(outf);
             pw.print(out);
-            pw.close();
+            //pw.close();
+            pw.flush();
+            return pw;
         } catch (FileNotFoundException e) {
             System.err.println("failed to write output " + outpath);
             e.printStackTrace();
+            return null;
         }
     }
 
@@ -347,17 +404,15 @@ public class GenometoGbk {
 
                 String function = cur.getFunction();
 
-                final int ind1 = function.indexOf(" /protein_id=");
-                if (ind1 != -1) {
-                    function = function.substring(0, ind1);
-                }
-
                 String[] allfunction = {""};
-                if (function != null)
+                if (function != null) {
+                    final int ind1 = function.indexOf(" /protein_id=");
+                    if (ind1 != -1)
+                        function = function.substring(0, ind1);
                     allfunction = function.split(" ");
-                else
+                } else {
                     function = "";
-
+                }
 
                 boolean test = false;
 
@@ -858,7 +913,33 @@ public class GenometoGbk {
         return out;
     }
 
-
+    public void formatDNASequence(String s, int charnum, int linenum, PrintWriter out) {
+        out.append("        1 ");
+        int index = 1;
+        int counter = 0;
+        for (int last = 0; last < s.length(); ) {
+            int end = Math.min(s.length(), last + charnum);
+            out.append(s.substring(last, end));
+            last += charnum;
+            counter++;
+            if (counter == 6 && s.length() > end) {
+                out.append("\n");
+                index += 60;
+                String indexStr = "" + index;
+                int len = indexStr.length();
+                char[] ch = new char[9 - len];
+                Arrays.fill(ch, ' ');
+                String padStr = new String(ch);
+                out.append(padStr + indexStr);
+                counter = 0;
+                if (last + 1 < s.length())
+                    out.append(" ");
+            } else {
+                if (last + 1 < s.length())
+                    out.append(" ");
+            }
+        }
+    }
     /**
      * @param args
      */

@@ -287,24 +287,24 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
             name = "KBase_{0}_{1}_{2}".format(workspace_name, object_name, object_version)
 
             # gather a list of all files downloaded
-            files = list(handler_utils.gen_recursive_filelist(transform_directory))
+            files = [x for x in handler_utils.gen_recursive_filelist(transform_directory)]
+
+            # gather total size of all files
+            total = 0
+            for x in files:
+                total += os.path.getsize(x)
 
             # TODO
             # Workaround for Python 2.7.3 bug 9720, http://bugs.python.org/issue9720
             # The awe workers and KBase V26 are at Python 2.7.3 and we should migrate
             # to the same version of Python that Narrative uses, which is currently
             # Python 2.7.6, after which this workaround can be removed                    
-            try:
+            if total < 2**31:
                 archive_name = os.path.join(working_directory, name) + ".zip"
                 with zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED) as archive:
                     for n in files:
                         archive.write(n, arcname=os.path.join(name, n.split(transform_directory + os.sep)[1]))
-            except Exception, e:
-                try:
-                    os.remove(archive_name)
-                except:
-                    pass
-                
+            else:
                 archive_name = os.path.join(working_directory, name) + ".tar.bz2"
                 with tarfile.open(archive_name, 'w:bz2') as archive:
                     for n in files:
@@ -362,6 +362,7 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
         logger.debug("Caught global exception!")
         
         # handle global exception
+        error_object["status"] = "ERROR : {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
         error_object["error_message"] = traceback.format_exc()
 
         handler_utils.report_exception(logger, error_object, cleanup_details)
@@ -371,7 +372,7 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
                          "Download from {0} failed.".format(workspace_name), 
                          traceback.format_exc(), 
                          None)
-        raise                                  
+        sys.exit(1)                                  
 
 
 
@@ -506,11 +507,16 @@ if __name__ == "__main__":
         logger.exception(e)
         
         ujs = UserAndJobState(url=args.ujs_service_url, token=os.environ.get("KB_AUTH_TOKEN"))
-        ujs.complete_job(args.ujs_job_id, 
-                         os.environ.get("KB_AUTH_TOKEN"), 
-                         e.message[:handler_utils.UJS_STATUS_MAX], 
-                         traceback.format_exc(), 
-                         None)
+        
+        try:
+            ujs.complete_job(args.ujs_job_id, 
+                             os.environ.get("KB_AUTH_TOKEN"), 
+                             "ERROR: {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX], 
+                             traceback.format_exc(), 
+                             None)
+        except Exception, e:
+            logger.exception(e)
+        
         sys.exit(1)
     
     logger.debug("Download taskrunner completed, exiting normally.")

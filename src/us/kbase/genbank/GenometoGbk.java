@@ -122,51 +122,61 @@ public class GenometoGbk {
 
         System.out.println(genome.getTaxonomy());
 
-        List<Contig> contigs = contigSet.getContigs();
 
         StringBuffer out = createHeader(genome.getId(), 0, 0, "");
 
-        int donumcontigs = contigs.size();
-        if (contigs.size() > MAX_ALLOWED_CONTIGS)
-            donumcontigs = MAX_ALLOWED_CONTIGS;
+        List<Contig> contigs = null;
+        try {
+            contigs = contigSet.getContigs();
+
+            if (contigs != null) {
+                int donumcontigs = contigs.size();
+                if (contigs.size() > MAX_ALLOWED_CONTIGS)
+                    donumcontigs = MAX_ALLOWED_CONTIGS;
 
 
-        if (contigs != null && contigs.size() > 0) {
-            for (int j = 0; j < donumcontigs; j++) {
+                if (contigs != null && contigs.size() > 0) {
+                    for (int j = 0; j < donumcontigs; j++) {
 
-                Contig curcontig = contigs.get(j);
-                //if (j > 0)
-                out = createHeader(curcontig.getId(), 1, curcontig.getLength(), curcontig.getName());
+                        Contig curcontig = contigs.get(j);
+                        //if (j > 0)
+                        out = createHeader(curcontig.getId(), 1, curcontig.getLength(), curcontig.getName());
 
-                out = createFeatures(curcontig.getId(), curcontig.getName(), out);
+                        out = createFeatures(curcontig.getId(), curcontig.getName(), out);
 
-                out.append("ORIGIN\n");
-                if (contigs.size() > 0) {
+                        out.append("ORIGIN\n");
+                        if (contigs.size() > 0) {
 
-                    out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
-                    //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
+                            out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
+                            //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
+                        }
+                        out.append("//\n");
+                        outputGenbank(contigs, out, j, curcontig);
+                    }
+
+                    if (donumcontigs < contigs.size()) {
+                        final String outpath = (workdir != null ? workdir + "/" : "") + "README.txt";
+                        System.out.println("writing " + outpath);
+                        try {
+                            File outf = new File(outpath);
+                            PrintWriter pw = new PrintWriter(outf);
+
+                            String readmestr = "The limit for downloading is 1000 contigs. This download had " + contigs.size()
+                                    + " contigs, however only the first 1000 are available for downloaded.";
+                            pw.print(readmestr);
+                            pw.close();
+                        } catch (FileNotFoundException e) {
+                            System.err.println("failed to write output " + outpath);
+                            e.printStackTrace();
+                        }
+                    }
                 }
-                out.append("//\n");
-                outputGenbank(contigs, out, j, curcontig);
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-            if (donumcontigs < contigs.size()) {
-                final String outpath = (workdir != null ? workdir + "/" : "") + "README.txt";
-                System.out.println("writing " + outpath);
-                try {
-                    File outf = new File(outpath);
-                    PrintWriter pw = new PrintWriter(outf);
-
-                    String readmestr = "The limit for downloading is 1000 contigs. This download had "+contigs.size()
-                            +" contigs, however only the first 1000 are available for downloaded.";
-                    pw.print(readmestr);
-                    pw.close();
-                } catch (FileNotFoundException e) {
-                    System.err.println("failed to write output " + outpath);
-                    e.printStackTrace();
-                }
-            }
-        } else {
+        if (contigs == null || contigs.size() == 0) {
 
             out.append("ORIGIN\n");
             out.append("//\n");

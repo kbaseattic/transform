@@ -228,6 +228,11 @@ def transform(shock_service_url=None, handle_service_url=None,
 
     # This generates the json for the object
     objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
+    if sys.getsizeof(objectString) > 1000000000 :
+        contig_set_dict["contigs"] = []
+        objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
+        logger.warning("The fasta file has a very large number of contigs thus resulting in an object being too large if " 
+                       "the contigs are to have metadata. The resulting contigset will not have individual metadata for the contigs.")
 
     logger.info("ContigSet data structure creation completed.  Writing out JSON.")
 

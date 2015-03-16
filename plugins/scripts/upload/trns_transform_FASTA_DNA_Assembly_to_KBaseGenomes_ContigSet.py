@@ -228,6 +228,8 @@ def transform(shock_service_url=None, handle_service_url=None,
 
     # This generates the json for the object
     objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
+    if len(contig_set_dict["contigs"]) == 0:
+        raise Exception("There appears to be no FASTA DNA Sequences in the input file.") 
     if sys.getsizeof(objectString) > 1000000000 :
         contig_set_dict["contigs"] = []
         objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)

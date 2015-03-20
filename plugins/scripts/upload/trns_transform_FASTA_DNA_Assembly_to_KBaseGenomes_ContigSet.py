@@ -62,7 +62,7 @@ def transform(shock_service_url=None, handle_service_url=None,
     if input_mapping is None:
         logger.info("Scanning for FASTA files.")
     
-        valid_extensions = [".fa",".fasta",".fna"]
+        valid_extensions = [".fa",".fasta",".fna",".fas"]
     
         files = os.listdir(input_directory)
         fasta_files = [x for x in files if os.path.splitext(x)[-1] in valid_extensions]

@@ -4,6 +4,7 @@ import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
 import us.kbase.auth.TokenFormatException;
+import us.kbase.common.service.ServerException;
 import us.kbase.common.service.Tuple11;
 import us.kbase.common.service.UObject;
 import us.kbase.common.service.UnauthorizedException;
@@ -18,6 +19,8 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /*
@@ -57,6 +60,7 @@ public class ConvertGBK {
 
     WorkspaceClient wc = null;
 
+    int MAX_ALLOWED_FILES = 10000;
 
     boolean isTest = false;
 
@@ -166,36 +170,61 @@ public class ConvertGBK {
             System.out.println("testing name matches " + files.length + "\t" + files[0]);
 
             String outpath = workdir.getAbsolutePath();
-            for (int i = 0; i < files.length; i++) {
 
-                long size = files[i].length();
-                final int max = 2 * 1024 * 1024;
-                if (size > max) {
-                    final String x = "Input " + files[i] + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
-                    System.err.println(x);
-                    throw new IllegalStateException(x);
+            int maxfiles = Math.min(files.length, MAX_ALLOWED_FILES);
+            if (maxfiles < files.length) {
+                final String outpath2 = (workdir != null ? workdir + "/" : "") + "README.txt";
+                System.out.println("writing " + outpath2);
+                try {
+                    File outf = new File(outpath2);
+                    PrintWriter pw = new PrintWriter(outf);
+
+                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " files. This download had " + files.length
+                            + " files, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    pw.print(readmestr);
+                    pw.close();
+                } catch (FileNotFoundException e) {
+                    System.err.println("failed to write output " + outpath);
+                    e.printStackTrace();
                 }
+            }
 
-                boolean wasSplit = splitRecord(start, files[i], null);
-                if (wasSplit && files.length > 1) {
-                    System.err.println("Multiple multi-record Genbank files currently not supported.");
-                } else if (wasSplit) {
-                    System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
-                    splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
-                    indir = splitdir;
-                } else {
-                    System.out.println("Single input file was not split");
+
+            long size = 0;
+            for (int i = 0; i < maxfiles; i++) {
+                size += Math.abs(files[i].length());
+            }
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
+            if (size > Math.abs(max)) {
+                final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.err.println("input " + size + "\t" + Math.abs(max));// + "\t" + Math.abs(max) + "\t" + (-max));
+                System.err.println(x);
+                //System.exit(0);
+                throw new IllegalStateException(x);
+            } else {
+                for (int i = 0; i < maxfiles; i++) {
+                    boolean wasSplit = splitRecord(start, files[i], null);
+                    if (wasSplit && files.length > 1) {
+                        System.err.println("Multiple multi-record Genbank files currently not supported.");
+                    } else if (wasSplit) {
+                        System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
+                        splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
+                        indir = splitdir;
+                    } else {
+                        System.out.println("Single input file was not split");
+                    }
                 }
             }
         } else {
-
-            long size = indir.length();
+            long size = Math.abs(indir.length());
             //System.out.println(size / (1024 * 1024));
             //System.exit(0);
-            final int max = 2 * 1024 * 1024;
-            if (size > max) {
-                final String x = "Input file " + indir + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
+            if (size > Math.abs(max)) {
+                final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.err.println("input " + size + "\t" + Math.abs(max));
                 System.err.println(x);
+                //System.exit(0);
                 throw new IllegalStateException(x);
             }
 
@@ -216,6 +245,7 @@ public class ConvertGBK {
      */
     private boolean splitRecord(int start, File path, String outpath) throws FileNotFoundException {
 
+        int countfiles = 0;
         boolean split = false;
         Scanner fileScanner = new Scanner(path);
         List<String> locitest = new ArrayList<String>();
@@ -246,7 +276,7 @@ public class ConvertGBK {
             Scanner fileScanner2 = new Scanner(path);
             List<String> loci = new ArrayList<String>();
             StringBuilder sb = new StringBuilder("");
-            while (fileScanner2.hasNextLine()) {
+            while (fileScanner2.hasNextLine() && countfiles < MAX_ALLOWED_FILES) {
                 String cur = fileScanner2.nextLine();
                 if (!cur.startsWith(" "))
                     System.out.println(cur);
@@ -267,6 +297,7 @@ public class ConvertGBK {
                         out.close();
                         split = true;
                         System.out.println("    wrote: " + outpath);
+                        countfiles++;
                     } catch (IOException e) {
                         System.err.println("Error creating or writing file " + outpath);
                         System.err.println("IOException: " + e.getMessage());
@@ -277,6 +308,25 @@ public class ConvertGBK {
                     sb.append(cur).append("\n");
                 }
             }
+
+
+            if (countfiles == MAX_ALLOWED_FILES && fileScanner2.hasNextLine()) {
+                final String outpath2 = (workdir != null ? workdir + "/" : "") + "README.txt";
+                System.out.println("writing " + outpath2);
+                try {
+                    File outf = new File(outpath2);
+                    PrintWriter pw = new PrintWriter(outf);
+
+                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " contigs. This download had more than " + MAX_ALLOWED_FILES
+                            + " contigs, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    pw.print(readmestr);
+                    pw.close();
+                } catch (FileNotFoundException e) {
+                    System.err.println("failed to write output " + outpath);
+                    e.printStackTrace();
+                }
+            }
+
             fileScanner.close();
         }
         return split;
@@ -293,22 +343,26 @@ public class ConvertGBK {
         List<File> files = new ArrayList<File>();
         System.out.println("parseAllInDir " + dir.getAbsolutePath());
         if (dir.isDirectory()) {
+            long size = 0;
             for (File f : dir.listFiles()) {
-
-                long size = f.length();
-                final int max = 2 * 1024 * 1024;
-                if (size > max) {
-                    final String x = "Input file " + f + " is too large " + (size / (1024 * 1024) + ". Max allowed size is 2G");
-                    System.err.println(x);
-                    throw new IllegalStateException(x);
-                }
-
-                //System.out.println("parseAllInDir file " + f.getAbsolutePath());
-                if (f.isDirectory()) {
-                    parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-                } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
-                    files.add(f);
-                    System.out.println("Added from dir " + f + "\ttotal " + files.size());
+                size += Math.abs(f.length());
+            }
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
+            if (size > Math.abs(max)) {
+                final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.err.println("input " + size + "\t" + Math.abs(max));
+                System.err.println(x);
+                //System.exit(0);
+                throw new IllegalStateException(x);
+            } else {
+                for (File f : dir.listFiles()) {
+                    //System.out.println("parseAllInDir file " + f.getAbsolutePath());
+                    if (f.isDirectory()) {
+                        parseAllInDir(pos, f, wc, wsname, http, isTestThis);
+                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
+                        files.add(f);
+                        System.out.println("Added from dir " + f + "\ttotal " + files.size());
+                    }
                 }
             }
         } else {
@@ -389,7 +443,12 @@ public class ConvertGBK {
 
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));
+
+            //try {
             out.print(UObject.transformObjectToString(contigSet));
+            //} catch (OutOfMemoryError E) {
+            //    System.err.println("out of memory error");
+            //}
             out.close();
             System.out.println("    wrote: " + outpath2);
         } catch (IOException e) {
@@ -415,7 +474,8 @@ public class ConvertGBK {
             out.append(o.toString());
             out.append(",");
         }
-        out.deleteCharAt(out.length() - 1);
+        if (out.length() > 0)
+            out.deleteCharAt(out.length() - 1);
 
         String globalmd5 = out.toString();
 
@@ -475,10 +535,23 @@ public class ConvertGBK {
                     System.out.println("successfully saved object");
                 /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
+                } catch (ServerException e) {
+                    System.err.println(e.getData());
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    Date date = new Date();
+                    System.err.println(dateFormat.format(date));
+
+                    retry2++;
+                    Thread.sleep(2000);
+                    System.err.println("Error saving ContigSet to workspace.");
+                    e.printStackTrace();
                 } catch (Exception e) {
                     retry2++;
                     Thread.sleep(2000);
                     System.err.println("Error saving ContigSet to workspace.");
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    Date date = new Date();
+                    System.err.println(dateFormat.format(date));
                     e.printStackTrace();
                 }
 
@@ -499,11 +572,24 @@ public class ConvertGBK {
                                 .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
                                         .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
                         saved = true;
-                    } catch (IOException e) {
-                        retry++;
+                    } catch (ServerException e) {
+                        System.err.println(e.getData());
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        Date date = new Date();
+                        System.err.println(dateFormat.format(date));
+
+                        retry2++;
                         Thread.sleep(2000);
-                        System.err.println("Error saving object " + outpath2);
-                        System.err.println("IOException: " + e.getMessage());
+                        System.err.println("Error saving ContigSet to workspace.");
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        retry2++;
+                        Thread.sleep(2000);
+                        System.err.println("Error saving ContigSet to workspace.");
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        Date date = new Date();
+                        System.err.println(dateFormat.format(date));
+                        e.printStackTrace();
                     }
                 }
 

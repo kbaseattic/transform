@@ -80,7 +80,7 @@ my $Help      = 0;
 GetOptions("input_file_name|i=s"   => \$In_File,
 	   "output_file_name|o=s"  => \$Out_File,
 	   "genome_id|g=s" => \$Genome_ID,
-	   "dna|d"         => \$IsDNA,
+	   "dna|d=i"         => \$IsDNA,
            "help|h"        => \$Help);
 
 if($Help || !$In_File || !$Out_File){

@@ -7,8 +7,10 @@ import logging
 import argparse
 import base64
 import traceback
+import tarfile
 import zipfile
 import shutil
+import struct
 
 import simplejson
 
@@ -109,8 +111,7 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
                        "working_directory": working_directory}
 
     # used for reporting a fatal condition
-    error_object = {"status": "error",
-                    "ujs_client": ujs,
+    error_object = {"ujs_client": ujs,
                     "ujs_job_id": ujs_job_id,
                     "token": kb_token}
 
@@ -207,6 +208,7 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
             os.chdir(current_directory)        
 
             if ujs_job_id is not None:
+                error_object["status"] = "ERROR : Transformation from KBase type to External type failed - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
                 error_object["error_message"] = traceback.format_exc()
             
                 handler_utils.report_exception(logger, error_object, cleanup_details)
@@ -233,7 +235,6 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
         # TODO validation of data files after transform
         #
 
-
         # Step 2: Extract provenance and metadata
         try:    
             workspaceClient = Workspace(url=workspace_service_url, token=kb_token)
@@ -244,19 +245,24 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
             object_details["provenance"] = workspaceClient.get_object_provenance([object_info])
             object_details["metadata"] = workspaceClient.get_object_info_new({"objects":[object_info], "includeMetadata":1})
             
+            #logger.debug(object_details["metadata"])
+            
             # redundant information
             #object_details["references"] = workspaceClient.list_referencing_objects([object_info])
 
             # seems like maybe too crazy per download
             #object_details["history"] = workspaceClient.get_object_history(object_info)
+
+            object_version = object_details["metadata"][0][4]
         
-            object_metadata_filename = "KBase_object_details_{0}_{1}.json".format(object_name, datetime.datetime.utcnow().isoformat())
+            object_metadata_filename = "KBase_object_details_{0}_{1}_v{2}.json".format(workspace_name, object_name, object_version)
             file_name = os.path.join(transform_directory, object_metadata_filename)
         
             with open(file_name, 'w') as f:
                 f.write(simplejson.dumps(object_details, sort_keys=True, indent=4))
         except Exception, e:
             if ujs_job_id is not None:
+                error_object["status"] = "ERROR : Extracting provenance and metadata failed - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
                 error_object["error_message"] = traceback.format_exc()
             
                 handler_utils.report_exception(logger, error_object, cleanup_details)
@@ -275,16 +281,35 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
         shock_id = None
         # Step 3: Package data files into a single compressed file and send to shock
         try:
-            name = "KBase_{0}_{1}_to_{2}_{3}".format(object_name, kbase_type, external_type, datetime.datetime.utcnow().isoformat())
+            workspace_id = object_details["metadata"][0][4]
+            object_version = object_details["metadata"][0][2]
+
+            name = "KBase_{0}_{1}_{2}".format(workspace_name, object_name, object_version)
 
             # gather a list of all files downloaded
-            files = list(handler_utils.gen_recursive_filelist(transform_directory))        
-        
-            archive_name = os.path.join(working_directory,name) + ".zip"
-            archive = zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED, allowZip64=True)
-            for n in files:
-                archive.write(n)
-            archive.close()
+            files = [x for x in handler_utils.gen_recursive_filelist(transform_directory)]
+
+            # gather total size of all files
+            total = 0
+            for x in files:
+                total += os.path.getsize(x)
+
+            # TODO
+            # Workaround for Python 2.7.3 bug 9720, http://bugs.python.org/issue9720
+            # The awe workers and KBase V26 are at Python 2.7.3 and we should migrate
+            # to the same version of Python that Narrative uses, which is currently
+            # Python 2.7.6, after which this workaround can be removed                    
+            if total < 2**31:
+                archive_name = os.path.join(working_directory, name) + ".zip"
+                with zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED) as archive:
+                    for n in files:
+                        archive.write(n, arcname=os.path.join(name, n.split(transform_directory + os.sep)[1]))
+            else:
+                archive_name = os.path.join(working_directory, name) + ".tar.bz2"
+                with tarfile.open(archive_name, 'w:bz2') as archive:
+                    for n in files:
+                        archive.add(n, arcname=os.path.join(name, n.split(transform_directory + os.sep)[1]))
+                
         
             shock_info = script_utils.upload_file_to_shock(logger = logger,
                                                            shock_service_url = shock_service_url,
@@ -295,6 +320,7 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
             logger.debug("Caught exception while creating archive and sending to SHOCK!")
 
             if ujs_job_id is not None:
+                error_object["status"] = "ERROR : Archive creation failed - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
                 error_object["error_message"] = traceback.format_exc()
             
                 handler_utils.report_exception(logger, error_object, cleanup_details)
@@ -336,16 +362,17 @@ def download_taskrunner(ujs_service_url = None, workspace_service_url = None,
         logger.debug("Caught global exception!")
         
         # handle global exception
+        error_object["status"] = "ERROR : {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
         error_object["error_message"] = traceback.format_exc()
 
         handler_utils.report_exception(logger, error_object, cleanup_details)
 
         ujs.complete_job(ujs_job_id, 
                          kb_token, 
-                         "Upload to {0} failed.".format(workspace_name), 
+                         "Download from {0} failed.".format(workspace_name), 
                          traceback.format_exc(), 
                          None)
-        raise                                  
+        sys.exit(1)                                  
 
 
 
@@ -476,16 +503,21 @@ if __name__ == "__main__":
                             debug = args.debug, 
                             logger = logger)
     except Exception, e:
-        logger.debug("Upload taskrunner threw an exception!")
+        logger.debug("Download taskrunner threw an exception!")
         logger.exception(e)
         
         ujs = UserAndJobState(url=args.ujs_service_url, token=os.environ.get("KB_AUTH_TOKEN"))
-        ujs.complete_job(args.ujs_job_id, 
-                         os.environ.get("KB_AUTH_TOKEN"), 
-                         e.message[:handler_utils.UJS_STATUS_MAX], 
-                         traceback.format_exc(), 
-                         None)
+        
+        try:
+            ujs.complete_job(args.ujs_job_id, 
+                             os.environ.get("KB_AUTH_TOKEN"), 
+                             "ERROR: {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX], 
+                             traceback.format_exc(), 
+                             None)
+        except Exception, e:
+            logger.exception(e)
+        
         sys.exit(1)
     
-    logger.debug("Upload taskrunner completed, exiting normally.")
+    logger.debug("Download taskrunner completed, exiting normally.")
     sys.exit(0)        

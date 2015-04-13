@@ -99,7 +99,11 @@ public class GbkParser {
                         qual = null;
                         loc.addFeature(feat, filename);
                     } else {
-                        if ((line.startsWith("/")) && (qual_tm.isType(line.substring(1)))) {
+                        if ((line.startsWith("/")) &&
+			    (!line.startsWith("/ ")) && // these are continued strings with slashes from previous line
+			    (line.indexOf("=")==-1)) {
+			    if (!qual_tm.isType(line.substring(1)))
+				System.err.println("Warning parsing GBK file: ignoring field ["+line.substring(1)+"]");
                             line += "=";
                         }
                         int slash_pos = line.indexOf("/");
@@ -150,8 +154,8 @@ public class GbkParser {
                 }
             }
         } catch (Throwable t) {
-            System.err.println("Error parsing GBK-file " + filename + " at line " + line_num);
-            throw new IllegalStateException("Error parsing GBK-file " + filename + " at line " + line_num + " (" + t.getMessage() + ")", t);
+            System.err.println("Error parsing GBK file " + filename + " at line " + line_num);
+            throw new IllegalStateException("Error parsing GBK file " + filename + " at line " + line_num + " (" + t.getMessage() + ")", t);
         }
         if ((loc != null) && (loc.isClosed())) loc.close(filename);
         if (seq != null) seq.close(filename);

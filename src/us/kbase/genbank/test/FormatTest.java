@@ -82,6 +82,8 @@ public class FormatTest {
 
 	for (String g : sampleGBKs) {
 	    if (!g.startsWith("nonstandard/")) {
+		System.err.println("Testing "+g);
+		
 		files = new ArrayList<File>();
 		f = new File(testPath+g);
 		files.add(f);
@@ -117,6 +119,61 @@ public class FormatTest {
 	}
     }
 
+    /**
+       Check that non-standard files all match their objects
+    */
+    @Test public void testNonStandard() throws Exception {
+	ObjectMapper mapper = new ObjectMapper();
+
+	Genome genome = null;
+	ContigSet cs = null;
+	File f = null;
+	List<File> files = null;
+
+	for (String g : sampleGBKs) {
+	    if (g.startsWith("nonstandard/")) {
+		System.err.println("Testing "+g);
+
+		try {
+		    files = new ArrayList<File>();
+		    f = new File(testPath+g);
+		    files.add(f);
+
+		    // null ws/id = don't really upload the results
+		    ArrayList ar = GbkUploader.uploadGbk(files,null,null,true);
+
+		    genome = (Genome)ar.get(2);
+		    cs = (ContigSet)ar.get(4);
+
+		    // compare to gold standards
+		    g = StringUtil.replace(g,".gbk",".genome");
+		    f = new File(testPath+g);
+		    Genome genomeGold = mapper.readValue(f, Genome.class);
+		
+		    // pretty print diffs
+		    File f2 = File.createTempFile("obj",null);
+		    mapper.writeValue(f2,genome);
+		    String diffs = prettyDiffs(f,f2);
+		    f2.delete();
+		    assertTrue(diffs, diffs.length() == 0);
+
+		    g = StringUtil.replace(g,".genome",".contigset");
+		    f = new File(testPath+g);
+		    ContigSet csGold = mapper.readValue(f, ContigSet.class);
+
+		    f2 = File.createTempFile("obj",null);
+		    mapper.writeValue(f2,cs);
+		    diffs = prettyDiffs(f,f2);
+		    f2.delete();
+		    assertTrue(diffs, diffs.length() == 0);
+		}
+		catch (Exception e) {
+		    System.err.println(e.getMessage());
+		}
+	    }
+	}
+    }
+    
     /**
        return a diff between the pretty-printed versions of two
        json objects.  Requires python -m json.tool and diff to

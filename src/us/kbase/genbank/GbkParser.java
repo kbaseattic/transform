@@ -100,10 +100,10 @@ public class GbkParser {
                         loc.addFeature(feat, filename);
                     } else {
                         if ((line.startsWith("/")) &&
-			    (!line.startsWith("/ ")) && // these are continued strings with slashes from previous line
-			    (line.indexOf("=")==-1)) {
-			    if (!qual_tm.isType(line.substring(1)))
-				System.err.println("Warning parsing GBK file: ignoring field ["+line.substring(1)+"]");
+							(!line.startsWith("/ ")) && // these are continued strings with slashes from previous line
+							(line.indexOf("=")==-1)) {
+							if (!qual_tm.isType(line.substring(1)))
+								System.err.println("Warning parsing GBK file: ignoring field ["+line.substring(1)+"]");
                             line += "=";
                         }
                         int slash_pos = line.indexOf("/");
@@ -117,7 +117,7 @@ public class GbkParser {
                                 for (int i = 0; i < qual_name.length(); i++) {
                                     char ch = qual_name.charAt(i);
                                     if ((!Character.isLetterOrDigit(ch)) &&
-					(ch != '_')) {
+										(ch != '_')) {
                                         qual_name = null;
                                         break;
                                     }
@@ -125,10 +125,10 @@ public class GbkParser {
                             }
                         }
                         if (qual_name != null) {
-			    line = line.substring(equal_pos+1).trim();
-			    if(qual!=null) qual.close();
-			    qual = new GbkQualifier(line_num,qual_name,line);
-			    feat.qualifiers.add(qual);
+							line = line.substring(equal_pos + 1).trim();
+							if (qual != null) qual.close();
+							qual = new GbkQualifier(line_num,qual_name,line);
+							feat.qualifiers.add(qual);
                         } else {
                             if (qual != null) {
                                 if (qual.type.equals(QUALIFIER_DB_XREF_TYPE) || qual.type.equals(QUALIFIER_TRANSLATION_TYPE)) {
@@ -166,28 +166,28 @@ public class GbkParser {
         final String filename = "Pseudomonas_stutzeri_DSM_10701.gb";
         BufferedReader br = new BufferedReader(new FileReader(new File("test/" + filename)));
         parse(br, new GbkParsingParams(false), filename, new GbkCallback() {
-		@Override
-		    public void setGenomeTrackFile(String contigName, String genomeName, int taxId, String plasmid, String filename) throws Exception {
-		    pw.println("setGenome: contigName=" + contigName + ", genomeName=" + genomeName + ", taxId=" + taxId + ", plasmid=" + plasmid);
-		}
+			@Override
+			public void setGenomeTrackFile(String contigName, String genomeName, int taxId, String plasmid, String filename) throws Exception {
+				pw.println("setGenome: contigName=" + contigName + ", genomeName=" + genomeName + ", taxId=" + taxId + ", plasmid=" + plasmid);
+			}
 
-		@Override
-		    public void addHeaderTrackFile(String contigName, String headerType, String value, List<GbkSubheader> items, String filename) throws Exception {
-		    pw.println("addHeader: contigName=" + contigName + ", type=" + headerType + ", value=" + value + ", subheader=" + items);
-		}
+			@Override
+			public void addHeaderTrackFile(String contigName, String headerType, String value, List<GbkSubheader> items, String filename) throws Exception {
+				pw.println("addHeader: contigName=" + contigName + ", type=" + headerType + ", value=" + value + ", subheader=" + items);
+			}
 
-		@Override
-		    public void addFeatureTrackFile(String contigName, String featureType, int strand, int start, int stop, List<GbkLocation> locations, List<GbkQualifier> props, String filename) throws Exception {
-		    pw.println("addFeature: contigName=" + contigName + ", type=" + featureType + ", " +
-			       "start=" + start + ", stop=" + stop + ", strand=" + strand + ", locations=" + locations + ", props=" + props);
-		}
+			@Override
+			public void addFeatureTrackFile(String contigName, String featureType, int strand, int start, int stop, List<GbkLocation> locations, List<GbkQualifier> props, String filename) throws Exception {
+				pw.println("addFeature: contigName=" + contigName + ", type=" + featureType + ", " +
+						   "start=" + start + ", stop=" + stop + ", strand=" + strand + ", locations=" + locations + ", props=" + props);
+			}
 
-		@Override
-		    public void addSeqPartTrackFile(String contigName, int seqPartIndex, String seqPart, int commonLen, String filename) {
-		    pw.println("addSeqPart: contigName=" + contigName + ", seqPartIndex=" + seqPartIndex +
-			       ", seqPart=" + seqPart.length());
-		}
-	    });
+			@Override
+			public void addSeqPartTrackFile(String contigName, int seqPartIndex, String seqPart, int commonLen, String filename) {
+				pw.println("addSeqPart: contigName=" + contigName + ", seqPartIndex=" + seqPartIndex +
+						   ", seqPart=" + seqPart.length());
+			}
+		});
         br.close();
         pw.close();
     }

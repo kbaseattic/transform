@@ -66,8 +66,11 @@ default: build-libs
 
 # Test Section
 
-test: test-client test-scripts 
-	echo "running client and script tests"
+test: test-java test-client test-scripts
+	echo "running java, client, and script tests"
+
+test-java:
+	$(ANT) test
 
 # test-all is deprecated. 
 # test-all: test-client test-scripts test-service

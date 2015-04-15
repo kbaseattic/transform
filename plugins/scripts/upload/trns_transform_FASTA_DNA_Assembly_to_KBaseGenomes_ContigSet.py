@@ -67,7 +67,9 @@ def transform(shock_service_url=None, handle_service_url=None,
         files = os.listdir(input_directory)
         fasta_files = [x for x in files if os.path.splitext(x)[-1] in valid_extensions]
             
-        assert len(fasta_files) != 0
+        if (len(fasta_files) == 0):
+            raise Exception("The input file does not have one of the following extensions .fa, .fasta, .fas or .fna")        
+
     
         logger.info("Found {0}".format(str(fasta_files)))
 
@@ -84,7 +86,7 @@ def transform(shock_service_url=None, handle_service_url=None,
     if not os.path.isfile(input_file_name):
         raise Exception("The input file name {0} is not a file!".format(input_file_name))        
 
-    if not os.path.isdir(args.working_directory):
+    if not os.path.isdir(working_directory):
         raise Exception("The working directory {0} is not a valid directory!".format(working_directory))        
 
     logger.debug(fasta_reference_only)

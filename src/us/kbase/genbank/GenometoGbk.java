@@ -439,9 +439,10 @@ public class GenometoGbk {
                 }
 
                 String function = cur.getFunction();
-                function = function.replace('\"', ' ');
                 String[] allfunction = {""};
                 if (function != null) {
+                    function = function.replace('\"', ' ');
+
                     final int ind1 = function.indexOf(" /protein_id=");
                     if (ind1 != -1)
                         function = function.substring(0, ind1);

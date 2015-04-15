@@ -46,14 +46,14 @@ public class GenometoGbk {
 
     //object_name, object_id, object_version_number,
     String[] argsPossible = {"-ig", "--in_file_genome", "-ic", "--in_file_contig",
-							 "-o", "--output_file", "-on", "--object_name", "-oi", "--object_id",
-							 "-ov", "--object_version",
-							 "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_service_url",
-							 "-wd", "--working_directory", "--test"};
+            "-o", "--output_file", "-on", "--object_name", "-oi", "--object_id",
+            "-ov", "--object_version",
+            "-w", "--workspace_name", "-wu", "--workspace_service_url", "-su", "--shock_service_url",
+            "-wd", "--working_directory", "--test"};
     String[] argsPossibleMap = {"inputg", "inputg", "inputc", "inputc",
-								"output", "output", "objectn", "objectn", "objecti", "objecti",
-								"objectv", "objectv",
-								"wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "t"};
+            "output", "output", "objectn", "objectn", "objecti", "objecti",
+            "objectv", "objectv",
+            "wsn", "wsn", "wsu", "wsu", "shocku", "shocku", "wd", "wd", "t"};
 
 
     boolean isTest = false;
@@ -171,8 +171,8 @@ public class GenometoGbk {
             }
             String description = "This is synthetic genome constructed by concatenation of transcript sequences.";
             contigSet = new ContigSet().withContigs(Arrays.asList(new Contig().withId(contigId)
-																  .withLength((long)contigDna.length()).withSequence(contigDna.toString())
-																  .withDescription(description)));
+                    .withLength((long)contigDna.length()).withSequence(contigDna.toString())
+                    .withDescription(description)));
             genome.withComplete(0L);
             PrintWriter pw = new PrintWriter(new File(workdir, "readme.txt"));
             pw.print(description);
@@ -212,7 +212,7 @@ public class GenometoGbk {
                     PrintWriter pw = new PrintWriter(outf);
 
                     String readmestr = "The limit for downloading is 1000 contigs. This download had "+contigs.size()
-						+" contigs, however only the first 1000 are available for downloaded.";
+                            +" contigs, however only the first 1000 are available for downloaded.";
                     pw.print(readmestr);
                     pw.close();
                 } catch (FileNotFoundException e) {
@@ -222,11 +222,11 @@ public class GenometoGbk {
             }
         } /*else {
 
-out.append("ORIGIN\n");
-out.append("//\n");
+            out.append("ORIGIN\n");
+            out.append("//\n");
 
-outputGenbank(null, out, -1, null);
-}*/
+            outputGenbank(null, out, -1, null);
+        }*/
     }
 
     /**
@@ -242,7 +242,7 @@ outputGenbank(null, out, -1, null);
         String outname = "";
         if (outfile != null) {
             if (!outfile.endsWith(".gbk") && !outfile.endsWith(".gb") &&
-				!outfile.endsWith(".genbank") && !outfile.endsWith(".gbff") && !outfile.endsWith(".gbf")) {
+                    !outfile.endsWith(".genbank") && !outfile.endsWith(".gbff") && !outfile.endsWith(".gbf")) {
                 outname = outfile + numfile + ".gbk";
             }
         } else if (curcontig != null && curcontig.getId() != null) {
@@ -281,7 +281,7 @@ outputGenbank(null, out, -1, null);
         StringBuffer out = new StringBuffer("");
         //out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
         out.append("LOCUS       " + contig_id + "             " + contigssize + " bp    " +
-				   molecule_type_short + "\n");// + "     circular CON 10-JUN-2013\n");
+                molecule_type_short + "\n");// + "     circular CON 10-JUN-2013\n");
         out.append("DEFINITION  " + genome.getScientificName() + " genome.\n");
         //out.append("ACCESSION   NC_005213\n");
         //out.append("VERSION     NC_005213.1  GI:38349555\n");
@@ -292,60 +292,57 @@ outputGenbank(null, out, -1, null);
         out.append("  ORGANISM  " + genome.getScientificName() + "\n");
         final String rawTaxonomy = genome.getTaxonomy();
 
-		if (rawTaxonomy != null) {
-			// format taxonomy string
-			String[] alltax = rawTaxonomy.split(" ");
+	if (rawTaxonomy != null) {
+	    String[] alltax = rawTaxonomy.split(" ");
 
-			StringBuffer formatTax = new StringBuffer("");
+	    StringBuffer formatTax = new StringBuffer("");
 
-			int counter = 0;
-			int index = 0;
-			while (index < alltax.length) {
-				formatTax.append(alltax[index]);
-				if (index < alltax.length - 1)
-					formatTax.append(" ");
-				counter += alltax[index].length() + 1;
-				index++;
-				// splits formatted taxonomy across multiple lines if
-				// at least 65 characters long
-				if (counter >= 65 || rawTaxonomy.length() < 80) {
-					formatTax.append("\n");
-					formatTax.append("            ");
-					counter = 0;
-				}
-			}
-
-			out.append("            " + formatTax + ".\n");
+	    int counter = 0;
+	    int index = 0;
+	    while (index < alltax.length) {
+		formatTax.append(alltax[index]);
+		if (index < alltax.length - 1)
+		    formatTax.append(" ");
+		counter += alltax[index].length() + 1;
+		index++;
+		if (counter >= 65 || rawTaxonomy.length() < 80) {
+		    formatTax.append("\n");
+		    formatTax.append("            ");
+		    counter = 0;
 		}
+	    }
 
-		/*TODO populate references in Genome objects */
-		/*
-		//typedef tuple<int id, string source_db, string article_title, string link, string pubdate, string authors, string journal_name> publication;
-		List<Tuple7<Long, String, String, String, String, String, String>> pubs = genome.getPublications();
-		for (int k = 0; k < pubs.size(); k++) {
-		Tuple7<Long, String, String, String, String, String, String> curpub = pubs.get(k);
-		System.out.println(genome.getTaxonomy());
-		System.out.println(curpub.getE6());
-		out += "REFERENCE   1  (bases " + 1 + " to " + curcontig.getLength() + ")\n";
-		out += "  AUTHORS   ";//Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,\n";
-		for(int m=0;m<(curpub.getE6()).length();m++) {
-		out+=
-		//out += "            Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,\n";//59
-		}
-		out += "  TITLE     "+curpub.getE3()+"\n";//64
-		out += "  JOURNAL   "+curpub.getE7()+"\n";
-		//TODO Genome object missing JOURNAL volume issue pages etc.
-		//+" 100 (22), 12984-12988 (2003)\n";
-		if (curpub.getE2().equalsIgnoreCase("PUBMED"))
-		out += "   PUBMED   " + curpub.getE1() + "\n";
-		}
+	    out.append("            " + formatTax + ".\n");
+	}
+
+            /*TODO populate references in Genome objects */
+            /*
+             //typedef tuple<int id, string source_db, string article_title, string link, string pubdate, string authors, string journal_name> publication;
+            List<Tuple7<Long, String, String, String, String, String, String>> pubs = genome.getPublications();
+            for (int k = 0; k < pubs.size(); k++) {
+                Tuple7<Long, String, String, String, String, String, String> curpub = pubs.get(k);
+                System.out.println(genome.getTaxonomy());
+                System.out.println(curpub.getE6());
+                out += "REFERENCE   1  (bases " + 1 + " to " + curcontig.getLength() + ")\n";
+                out += "  AUTHORS   ";//Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,\n";
+                for(int m=0;m<(curpub.getE6()).length();m++) {
+                out+=
+                //out += "            Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,\n";//59
+                }
+                out += "  TITLE     "+curpub.getE3()+"\n";//64
+                out += "  JOURNAL   "+curpub.getE7()+"\n";
+                //TODO Genome object missing JOURNAL volume issue pages etc.
+                //+" 100 (22), 12984-12988 (2003)\n";
+                if (curpub.getE2().equalsIgnoreCase("PUBMED"))
+                    out += "   PUBMED   " + curpub.getE1() + "\n";
+            }
         */
 
         //out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
         //out += "            NCBI review. The reference sequence was derived from AE017199.\n";
-		Long completeness = genome.getComplete();
-		if (completeness == null)
-			completeness = new Long(0);
+	Long completeness = genome.getComplete();
+	if (completeness == null)
+	    completeness = new Long(0);
         out.append(" COMMENT            COMPLETENESS: " + (completeness == 1 ? "full length" : "incomplete") + ".\n");
         out.append("                    Exported from the DOE KnowledgeBase.\n");
 
@@ -358,14 +355,14 @@ outputGenbank(null, out, -1, null);
 
         String taxId = null;
         Map<String, Object> addprops = genome.getAdditionalProperties();
-		if (addprops != null) {
-			for (String k : addprops.keySet()) {
-				//System.out.println("addprops " + k + "\t" + addprops.get(k));
-				if (k.equals("tax_id"))
-					taxId = "" + (Integer) addprops.get(k);
+	if (addprops != null) {
+	    for (String k : addprops.keySet()) {
+		//System.out.println("addprops " + k + "\t" + addprops.get(k));
+		if (k.equals("tax_id"))
+		    taxId = "" + (Integer) addprops.get(k);
 
-			}
-		}
+	    }
+	}
 
         if (taxId != null)
             out.append("                     /db_xref=\"taxon:" + taxId + "\"\n");
@@ -393,9 +390,9 @@ outputGenbank(null, out, -1, null);
             if (location.get(0).getE1().equals(contig_name) || location.get(0).getE1().equals(contig_id)) {
                 //"location":[["kb|g.0.c.1",3378378,"+",1368]]
                 //if (curcontig.getName().equals("NC_009926")) {
-				/*System.out.println("match feature to contig " + j + "\t" + location.get(0).getE1() + "\t" +
-				  location.get(0).getE2() + "\t" + location.get(0).getE3() + "\t" + location.get(0).getE4() + "\t"
-				  + curcontig.getName());*/
+                    /*System.out.println("match feature to contig " + j + "\t" + location.get(0).getE1() + "\t" +
+                            location.get(0).getE2() + "\t" + location.get(0).getE3() + "\t" + location.get(0).getE4() + "\t"
+                            + curcontig.getName());*/
                 String id = null;
                 try {
                     final List<String> aliases = cur.getAliases();
@@ -426,16 +423,16 @@ outputGenbank(null, out, -1, null);
 
                 boolean test = false;
 
-				/*if (id.equals("NP_963295.1")) {
-				  test = true;
-				  System.out.println("allfunction " + allfunction.length + "\t" + function.length());
-				  }*/
+            /*if (id.equals("NP_963295.1")) {
+                test = true;
+                System.out.println("allfunction " + allfunction.length + "\t" + function.length());
+            }*/
 
 
                 StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
                 StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
 
-				/*TODO add operons and promoteres and terminators as gene features ? */
+            /*TODO add operons and promoteres and terminators as gene features ? */
                 if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
 
                     if (cur.getType().equals("CDS")) //id.indexOf(".rna.") == -1)
@@ -676,28 +673,28 @@ outputGenbank(null, out, -1, null);
             System.err.println("ContigSet not found in workspace.");
 
             /*String outputfile = args[0] + "_ContigSet.json";
-			  try {
-			  BasicShockClient client = null;
-			  if (isTest) {
-			  AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
-			  client = new BasicShockClient(new URL(shockurl), at);
-			  } else {
-			  client = new BasicShockClient(new URL(shockurl), new AuthToken(kbtok));
-			  }
-			  OutputStream os = new FileOutputStream(new File(outputfile));
+            try {
+                BasicShockClient client = null;
+                if (isTest) {
+                    AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
+                    client = new BasicShockClient(new URL(shockurl), at);
+                } else {
+                    client = new BasicShockClient(new URL(shockurl), new AuthToken(kbtok));
+                }
+                OutputStream os = new FileOutputStream(new File(outputfile));
 
-			  client.getFile(new ShockNodeId(contigref), os);
+                client.getFile(new ShockNodeId(contigref), os);
 
-			  os.close();
-			  } catch (InvalidShockUrlException e1) {
-			  System.err.println("Invalid Shock url.");
-			  e1.printStackTrace();
-			  } catch (ShockHttpException e1) {
-			  System.err.println("Shock HTPP error.");
-			  e1.printStackTrace();
-			  }
-			  File loadContigs = new File(args[1]);
-			  contigSet = mapper.readValue(loadContigs, ContigSet.class);
+                os.close();
+            } catch (InvalidShockUrlException e1) {
+                System.err.println("Invalid Shock url.");
+                e1.printStackTrace();
+            } catch (ShockHttpException e1) {
+                System.err.println("Shock HTPP error.");
+                e1.printStackTrace();
+            }
+            File loadContigs = new File(args[1]);
+            contigSet = mapper.readValue(loadContigs, ContigSet.class);
             */
         }
 
@@ -727,18 +724,18 @@ outputGenbank(null, out, -1, null);
 
                 counter2 += allfunction[index2].length() + 1;
                 /*if (debug) {
-				  StringBuffer debugStr = new StringBuffer("");
-				  debugStr.append("index2 " + index2 + "\t");
-				  debugStr.append("counter2 " + counter2 + "\t");
-				  debugStr.append("index2 + 1 " +
-				  (index2 + 1 < allfunction.length ? (counter2 + allfunction[index2 + 1].length()) : "NaN") + "\t");
-				  debugStr.append("allfunction[index2].length() " + allfunction[index2].length() + "\t");
-				  debugStr.append("index2 + 1 < allfunction.length " +
-				  (index2 + 1 < allfunction.length ? allfunction[index2 + 1].length() : "NaN") + "\t");
-				  debugStr.append("allfunction[index2] " + allfunction[index2] + "\t");
-				  debugStr.append("index2 + 1 " + (index2 + 1 < allfunction.length ? allfunction[index2 + 1] : "NaN") + "\t");
-				  System.out.println("allfunction end " + debugStr);
-				  }*/
+                    StringBuffer debugStr = new StringBuffer("");
+                    debugStr.append("index2 " + index2 + "\t");
+                    debugStr.append("counter2 " + counter2 + "\t");
+                    debugStr.append("index2 + 1 " +
+                            (index2 + 1 < allfunction.length ? (counter2 + allfunction[index2 + 1].length()) : "NaN") + "\t");
+                    debugStr.append("allfunction[index2].length() " + allfunction[index2].length() + "\t");
+                    debugStr.append("index2 + 1 < allfunction.length " +
+                            (index2 + 1 < allfunction.length ? allfunction[index2 + 1].length() : "NaN") + "\t");
+                    debugStr.append("allfunction[index2] " + allfunction[index2] + "\t");
+                    debugStr.append("index2 + 1 " + (index2 + 1 < allfunction.length ? allfunction[index2 + 1] : "NaN") + "\t");
+                    System.out.println("allfunction end " + debugStr);
+                }*/
 
 
                 if (((isfirst && counter2 >= first) || counter2 >= next)) {
@@ -965,22 +962,22 @@ outputGenbank(null, out, -1, null);
         } else {
             System.out.println("usage: java us.kbase.genbank.GenometoGbk " +
 
-							   "<-ig or --in_file_genome Genome object json file> " +
-							   "<-ic or --in_file_contig ContigSet object json file> " +
-							   "<-o or --output_file> " +
-							   "<-on or --object_name> " +
-							   "<-oi or --object_id> " +
-							   "<-ov or --object_version> " +
-							   "<-w or --workspace_name ws name> " +
-							   "<-wu or --workspace_service_url ws url> " +
-							   "<-su or --shock_service_url shock url> " +
-							   "<-wd or --working_directory");
+                    "<-ig or --in_file_genome Genome object json file> " +
+                    "<-ic or --in_file_contig ContigSet object json file> " +
+                    "<-o or --output_file> " +
+                    "<-on or --object_name> " +
+                    "<-oi or --object_id> " +
+                    "<-ov or --object_version> " +
+                    "<-w or --workspace_name ws name> " +
+                    "<-wu or --workspace_service_url ws url> " +
+                    "<-su or --shock_service_url shock url> " +
+                    "<-wd or --working_directory");
 
 
-			/* String[] argsPossible = {"-ig", "--in_file_genome","-ic","--in_file_contig",
-			   "-o", "--out_file", "-on","--object_name","-oi","--object_id",
-			   "-ov","--object_version",
-			   "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url", "-wd", "--working_directory"};*/
+           /* String[] argsPossible = {"-ig", "--in_file_genome","-ic","--in_file_contig",
+                    "-o", "--out_file", "-on","--object_name","-oi","--object_id",
+                   "-ov","--object_version",
+                    "-w", "--workspace_name", "-wu", "--workspace_url", "-su", "--shock_url", "-wd", "--working_directory"};*/
 
             //"<Genome .json (XXXX.json) or Genome object name in workspace> " +
             // "<ContigSet .json (XXXX_ContigSet.json) or ContigSet object name in workspace> " +
@@ -991,70 +988,70 @@ outputGenbank(null, out, -1, null);
 }
 
 
-/*
-  LOCUS       NC_005213             490885 bp    DNA     circular CON 10-JUN-2013
-  DEFINITION  Nanoarchaeum equitans Kin4-M chromosome, complete genome.
-  ACCESSION   NC_005213
-  VERSION     NC_005213.1  GI:38349555
-  DBLINK      Project: 58009
-  BioProject: PRJNA58009
-  KEYWORDS    .
-  SOURCE      Nanoarchaeum equitans Kin4-M
-  ORGANISM  Nanoarchaeum equitans Kin4-M
-  Archaea; Nanoarchaeota; Nanoarchaeum.
-  REFERENCE   1  (bases 1 to 490885)
-  AUTHORS   Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,
-  Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,
-  Kretz,K., Lin,X., Mathur,E., Ni,J., Podar,M., Richardson,T.,
-  Sutton,G.G., Simon,M., Soll,D., Stetter,K.O., Short,J.M. and
-  Noordewier,M.
-  TITLE     The genome of Nanoarchaeum equitans: insights into early archaeal
-  evolution and derived parasitism
-  JOURNAL   Proc. Natl. Acad. Sci. U.S.A. 100 (22), 12984-12988 (2003)
-  PUBMED   14566062
-  REFERENCE   2  (bases 1 to 490885)
-  CONSRTM   NCBI Genome Project
-  TITLE     Direct Submission
-  JOURNAL   Submitted (17-NOV-2003) National Center for Biotechnology
-  Information, NIH, Bethesda, MD 20894, USA
-  REFERENCE   3  (bases 1 to 490885)
-  CONSRTM   NCBI Microbial Genomes Annotation Project
-  TITLE     Direct Submission
-  JOURNAL   Submitted (25-JUN-2001) National Center for Biotechnology
-  Information, NIH, Bethesda, MD 20894, USA
-  COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final
-  NCBI review. The reference sequence was derived from AE017199.
-  COMPLETENESS: full length.
-  FEATURES             Location/Qualifiers
-  source          1..490885
-  /organism="Nanoarchaeum equitans Kin4-M"
-  /mol_type="genomic DNA"
-  /strain="Kin4-M"
-  /db_xref="taxon:228908"
-  gene            complement(486423..486962)
-  /locus_tag="NEQ550"
-  /db_xref="GeneID:2732580"
-  CDS             complement(486423..486962)
-  /locus_tag="NEQ550"
-  /codon_start=1
-  /transl_table=11
-  /product="hypothetical protein"
-  /protein_id="NP_963830.1"
-  /db_xref="GI:41615332"
-  /db_xref="GeneID:2732580"
-  /translation="MLELLAGFKQSILYVLAQFKKPEYATSYTIKLVNPFYYISDSLN
-  VITSTKEDKVNYKVSLSDIAFDFPFKFPIVAIVEGKANREFTFIIDRQNKKLSYDLKK
-  GIIYIQDATIIPNGIKITVNGLAELKNIKINPNDPSITVQKVVGEQNTYIIKTSKDSV
-  KITISADFVVKAEKWLFIQ"
-  promoter        486983..486988
-  /note="archaeal RNA pol III promoter consensus box Aaaaaaa
-  motif"
-  misc_feature    487009..487022
-  /locus_tag="NEQ_t33"
-  /note="reverse complementary sequence cleaved during
-  processing of trans-spliced tRNAs"
-  ORIGIN
-  1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa
-  61 accgcaatcg tacaaaaatt tgtaaaattc tctttcttct ttgtctaatt ttctataaac
+ /*
+LOCUS       NC_005213             490885 bp    DNA     circular CON 10-JUN-2013
+ DEFINITION  Nanoarchaeum equitans Kin4-M chromosome, complete genome.
+ ACCESSION   NC_005213
+ VERSION     NC_005213.1  GI:38349555
+ DBLINK      Project: 58009
+             BioProject: PRJNA58009
+ KEYWORDS    .
+ SOURCE      Nanoarchaeum equitans Kin4-M
+   ORGANISM  Nanoarchaeum equitans Kin4-M
+             Archaea; Nanoarchaeota; Nanoarchaeum.
+ REFERENCE   1  (bases 1 to 490885)
+   AUTHORS   Waters,E., Hohn,M.J., Ahel,I., Graham,D.E., Adams,M.D.,
+             Barnstead,M., Beeson,K.Y., Bibbs,L., Bolanos,R., Keller,M.,
+             Kretz,K., Lin,X., Mathur,E., Ni,J., Podar,M., Richardson,T.,
+             Sutton,G.G., Simon,M., Soll,D., Stetter,K.O., Short,J.M. and
+             Noordewier,M.
+   TITLE     The genome of Nanoarchaeum equitans: insights into early archaeal
+             evolution and derived parasitism
+   JOURNAL   Proc. Natl. Acad. Sci. U.S.A. 100 (22), 12984-12988 (2003)
+    PUBMED   14566062
+ REFERENCE   2  (bases 1 to 490885)
+   CONSRTM   NCBI Genome Project
+   TITLE     Direct Submission
+   JOURNAL   Submitted (17-NOV-2003) National Center for Biotechnology
+             Information, NIH, Bethesda, MD 20894, USA
+ REFERENCE   3  (bases 1 to 490885)
+   CONSRTM   NCBI Microbial Genomes Annotation Project
+   TITLE     Direct Submission
+   JOURNAL   Submitted (25-JUN-2001) National Center for Biotechnology
+             Information, NIH, Bethesda, MD 20894, USA
+ COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final
+             NCBI review. The reference sequence was derived from AE017199.
+             COMPLETENESS: full length.
+ FEATURES             Location/Qualifiers
+      source          1..490885
+                      /organism="Nanoarchaeum equitans Kin4-M"
+                      /mol_type="genomic DNA"
+                      /strain="Kin4-M"
+                      /db_xref="taxon:228908"
+ gene            complement(486423..486962)
+                 /locus_tag="NEQ550"
+                 /db_xref="GeneID:2732580"
+ CDS             complement(486423..486962)
+                 /locus_tag="NEQ550"
+                 /codon_start=1
+                 /transl_table=11
+                 /product="hypothetical protein"
+                 /protein_id="NP_963830.1"
+                 /db_xref="GI:41615332"
+                 /db_xref="GeneID:2732580"
+                 /translation="MLELLAGFKQSILYVLAQFKKPEYATSYTIKLVNPFYYISDSLN
+                 VITSTKEDKVNYKVSLSDIAFDFPFKFPIVAIVEGKANREFTFIIDRQNKKLSYDLKK
+                 GIIYIQDATIIPNGIKITVNGLAELKNIKINPNDPSITVQKVVGEQNTYIIKTSKDSV
+                 KITISADFVVKAEKWLFIQ"
+ promoter        486983..486988
+                 /note="archaeal RNA pol III promoter consensus box Aaaaaaa
+                 motif"
+ misc_feature    487009..487022
+                 /locus_tag="NEQ_t33"
+                 /note="reverse complementary sequence cleaved during
+                 processing of trans-spliced tRNAs"
+ORIGIN
+    1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa
+   61 accgcaatcg tacaaaaatt tgtaaaattc tctttcttct ttgtctaatt ttctataaac
   121 atttaactct ttccataatg tgcctatata tactgcttcc cctctgttaa ttcttattct
-*/
+  */

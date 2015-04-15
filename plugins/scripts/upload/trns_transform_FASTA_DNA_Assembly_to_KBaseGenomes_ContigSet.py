@@ -141,6 +141,8 @@ def transform(shock_service_url=None, handle_service_url=None,
                             raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
                         raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
                 fasta_key = fasta_header.strip()
+                if fasta_key == '':
+                    raise Exception("One fasta header lines '>' does not have an identifier associated with it")
                 contig_dict = dict() 
                 contig_dict["id"] = fasta_key 
                 contig_dict["length"] = len(total_sequence) 
@@ -155,7 +157,10 @@ def transform(shock_service_url=None, handle_service_url=None,
                 else: 
                     contig_dict["sequence"]= ""
                 
-                fasta_dict[fasta_key] = contig_dict
+                if fasta_key in fasta_dict.keys():
+                    raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key)) 
+                else:
+                    fasta_dict[fasta_key] = contig_dict                 
                
                 # get set up for next fasta sequence
                 sequence_list = []
@@ -190,6 +195,8 @@ def transform(shock_service_url=None, handle_service_url=None,
                 raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
 
         fasta_key = fasta_header.strip()
+        if fasta_key == '':
+            raise Exception("One fasta header lines '>' does not have an identifier associated with it")
         contig_dict = dict()
         contig_dict["id"] = fasta_key 
         contig_dict["length"] = len(total_sequence)
@@ -203,8 +210,10 @@ def transform(shock_service_url=None, handle_service_url=None,
             contig_dict["sequence"] = total_sequence 
         else:
             contig_dict["sequence"]= ""
-         
-        fasta_dict[fasta_key] = contig_dict 
+        if fasta_key in fasta_dict.keys():
+            raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key)) 
+        else:
+            fasta_dict[fasta_key] = contig_dict 
 
 
     if output_file_name is None:

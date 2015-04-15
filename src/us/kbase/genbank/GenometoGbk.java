@@ -326,26 +326,32 @@ public class GenometoGbk {
         out.append("  ORGANISM  " + genome.getScientificName() + "\n");
         final String rawTaxonomy = genome.getTaxonomy();
 
-        String[] alltax = rawTaxonomy.split(" ");
+        if (rawTaxonomy != null) {
+            // format taxonomy string
+            String[] alltax = rawTaxonomy.split(" ");
 
-        StringBuffer formatTax = new StringBuffer("");
+            StringBuffer formatTax = new StringBuffer("");
 
-        int counter = 0;
-        int index = 0;
-        while (index < alltax.length) {
-            formatTax.append(alltax[index]);
-            if (index < alltax.length - 1)
-                formatTax.append(" ");
-            counter += alltax[index].length() + 1;
-            index++;
-            if (counter >= 65 || rawTaxonomy.length() < 80) {
-                formatTax.append("\n");
-                formatTax.append("            ");
-                counter = 0;
+            int counter = 0;
+            int index = 0;
+            while (index < alltax.length) {
+                formatTax.append(alltax[index]);
+                if (index < alltax.length - 1)
+                    formatTax.append(" ");
+                counter += alltax[index].length() + 1;
+                index++;
+
+                // split formatted taxonomy across multiple lines if
+                // at least 65 characters long
+                if (counter >= 65 || rawTaxonomy.length() < 80) {
+                    formatTax.append("\n");
+                    formatTax.append("            ");
+                    counter = 0;
+                }
             }
-        }
 
-        out.append("            " + formatTax + ".\n");
+            out.append("            " + formatTax + ".\n");
+        }
 
             /*TODO populate references in Genome objects */
             /*
@@ -372,9 +378,14 @@ public class GenometoGbk {
 
         //out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
         //out += "            NCBI review. The reference sequence was derived from AE017199.\n";
+
         System.out.println(genome.getNumContigs());
-        System.out.println(genome.getComplete());
-        out.append(" COMMENT            COMPLETENESS: " + (genome.getComplete() == 1 ? "full length" : "incomplete") + ".\n");
+
+        Long completeness = genome.getComplete();
+        if (completeness == null)
+            completeness = new Long(0);
+        out.append(" COMMENT            COMPLETENESS: " + (completeness == 1 ? "full length" : "incomplete") + ".\n");
+
         out.append("                    Exported from the DOE KnowledgeBase.\n");
 
 
@@ -386,11 +397,13 @@ public class GenometoGbk {
 
         String taxId = null;
         Map<String, Object> addprops = genome.getAdditionalProperties();
-        for (String k : addprops.keySet()) {
-            //System.out.println("addprops " + k + "\t" + addprops.get(k));
-            if (k.equals("tax_id"))
-                taxId = "" + (Integer) addprops.get(k);
+        if (addprops != null) {
+            for (String k : addprops.keySet()) {
+                //System.out.println("addprops " + k + "\t" + addprops.get(k));
+                if (k.equals("tax_id"))
+                    taxId = "" + (Integer) addprops.get(k);
 
+            }
         }
 
         if (taxId != null)

@@ -292,28 +292,32 @@ public class GenometoGbk {
         out.append("  ORGANISM  " + genome.getScientificName() + "\n");
         final String rawTaxonomy = genome.getTaxonomy();
 
-	if (rawTaxonomy != null) {
-	    String[] alltax = rawTaxonomy.split(" ");
+        if (rawTaxonomy != null) {
+            // format taxonomy string
+            String[] alltax = rawTaxonomy.split(" ");
 
-	    StringBuffer formatTax = new StringBuffer("");
+            StringBuffer formatTax = new StringBuffer("");
 
-	    int counter = 0;
-	    int index = 0;
-	    while (index < alltax.length) {
-		formatTax.append(alltax[index]);
-		if (index < alltax.length - 1)
-		    formatTax.append(" ");
-		counter += alltax[index].length() + 1;
-		index++;
-		if (counter >= 65 || rawTaxonomy.length() < 80) {
-		    formatTax.append("\n");
-		    formatTax.append("            ");
-		    counter = 0;
-		}
-	    }
+            int counter = 0;
+            int index = 0;
+            while (index < alltax.length) {
+                formatTax.append(alltax[index]);
+                if (index < alltax.length - 1)
+                    formatTax.append(" ");
+                counter += alltax[index].length() + 1;
+                index++;
 
-	    out.append("            " + formatTax + ".\n");
-	}
+                // split formatted taxonomy across multiple lines if
+                // at least 65 characters long
+                if (counter >= 65 || rawTaxonomy.length() < 80) {
+                    formatTax.append("\n");
+                    formatTax.append("            ");
+                    counter = 0;
+                }
+            }
+
+            out.append("            " + formatTax + ".\n");
+        }
 
             /*TODO populate references in Genome objects */
             /*

@@ -36,7 +36,7 @@ sub parse_input_table {
 	}
 	open(my $fh, "<", $filename) || return;
 	my $headingline = <$fh>;
-	chomp($headingline);
+	$headingline =~ tr/\r\n//d;#This line removes line endings from nix and windows files
 	my $delim = undef;
 	if ($headingline =~ m/\t/) {
 		$delim = "\\t";
@@ -49,7 +49,7 @@ sub parse_input_table {
 	my $headings = [split(/$delim/,$headingline)];
 	my $data = [];
 	while (my $line = <$fh>) {
-		chomp($line);
+		$line =~ tr/\r\n//d;#This line removes line endings from nix and windows files
 		push(@{$data},[split(/$delim/,$line)]);
 	}
 	close($fh);

@@ -80,7 +80,7 @@ my $Help      = 0;
 GetOptions("input_file_name|i=s"   => \$In_File,
 	   "output_file_name|o=s"  => \$Out_File,
 	   "genome_id|g=s" => \$Genome_ID,
-	   "dna|d"         => \$IsDNA,
+	   "dna|d=i"         => \$IsDNA,
            "help|h"        => \$Help);
 
 if($Help || !$In_File || !$Out_File){
@@ -121,7 +121,7 @@ my @seqs = read_fasta($fh,1);
 my $GenomeHash = {id => $Genome_ID,
 		  scientific_name => '',
 		  domain => "Plant",
-		  genetic_code => 11,
+		  genetic_code => 1,
 		  source => "User",
 		  source_id => "User",
 		  taxonomy => "viridiplantae",

@@ -29,7 +29,7 @@
             "group",
             "inclusion_order",
             "retention_correction",
-            "normalization_factor",
+            "normalization_factor"
         ],
         "custom_options": [],
 	"input_mapping": {"mzML.LCMS":"input_directory"}
@@ -77,7 +77,7 @@
             "type": "string",
             "required": false,
             "help": "Run normalization factor"
-        },
+        }
 
     ],
     "user_option_groups": []

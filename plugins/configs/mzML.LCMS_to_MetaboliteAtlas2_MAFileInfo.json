@@ -26,6 +26,7 @@
             "input_mapping",
             "name",
             "polarity",
+            "atlases",
             "group",
             "inclusion_order",
             "retention_correction",
@@ -49,8 +50,14 @@
             "help": "If not supplied, will default to the mzML file name."
         },
         {
+            "name": "atlases",
+            "type": "list",
+            "required": false,
+            "help": "List of atlas workspace IDs"
+        },
+        {
             "name": "polarity",
-            "type": "string",
+            "type": "int",
             "required": false,
             "help": "Run polarity"
         },
@@ -62,19 +69,19 @@
         },
         {
             "name": "inclusion_order",
-            "type": "string",
+            "type": "int",
             "required": false,
             "help": "Run inclusion order"
         },
         {
             "name": "retention_correction",
-            "type": "string",
+            "type": "float",
             "required": false,
             "help": "Run retention correction."
         },
         {
             "name": "normalization_factor",
-            "type": "string",
+            "type": "float",
             "required": false,
             "help": "Run normalization factor"
         }

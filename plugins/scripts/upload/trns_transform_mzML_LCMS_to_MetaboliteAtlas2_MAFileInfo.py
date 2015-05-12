@@ -123,7 +123,9 @@ def transform(shock_service_url=None, handle_service_url=None,
             run_info['retention_correction'] = retention_correction
 
         if shock_service_url:
-            run_info["run_file_id"] = shock_info["id"]
+            handle_id = script_utils.getHandles(logger, shock_service_url,
+                    handle_service_url, [shock_info["id"]], token=token)[0]
+            run_info["run_file_id"] = handle_id
         else:
             run_info['run_file_id'] = 'dummy_shock_id'
 

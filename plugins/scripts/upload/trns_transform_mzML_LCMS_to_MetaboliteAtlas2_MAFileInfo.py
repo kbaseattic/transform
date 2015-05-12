@@ -191,14 +191,14 @@ def main():
                         action='store', type=int, required=False)
     parser.add_argument('--retention_correction',
                         help=script_details["Args"]["retention_correction"],
-                        action='store', type=float, equired=False)
+                        action='store', type=float, required=False)
     parser.add_argument('--atlases',
                         help=script_details["Args"]["atlases"],
                         action='store', type=str, nargs='?',
                         required=False)
     parser.add_argument('--name',
                         help=script_details["Args"]["name"],
-                        action='store', type=str, equired=False)
+                        action='store', type=str, required=False)
     parser.add_argument('--normalization_factor',
                         help=script_details["Args"]["normalization_factor"],
                         action='store', type=float, required=False)

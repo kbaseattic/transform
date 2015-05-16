@@ -219,7 +219,7 @@ def main():
                   shock_id=args.shock_id,
                   handle_id=args.handle_id,
                   input_mapping=args.input_mapping,
-                  mzml_file_name=args.mzml_files,
+                  mzml_file_name=args.mzml_file_name,
                   polarity=args.polarity,
                   atlases=args.atlases,
                   group=args.group,

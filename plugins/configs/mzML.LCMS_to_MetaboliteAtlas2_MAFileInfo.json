@@ -24,7 +24,7 @@
             "handle_id",
             "output_file_name",
             "input_mapping",
-            "name",
+            "mzml_file_name",
             "polarity",
             "atlases",
             "group",
@@ -44,7 +44,7 @@
             "help": "If not supplied, will default the base input_file_name with '_MAFileInfo.json' appended to the end."
         },
         {
-            "name": "name",
+            "name": "mzml_file_name",
             "type": "string",
             "required": false,
             "help": "If not supplied, will default to the mzML file name."

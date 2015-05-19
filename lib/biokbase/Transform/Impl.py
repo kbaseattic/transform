@@ -133,6 +133,7 @@ type but different versions.
         #BEGIN version
 
         # get service config version        
+        result = '0.1.0'
 
         #END version
 

@@ -109,7 +109,8 @@ def transform(shock_service_url=None, handle_service_url=None,
                     shock_service_url, hdf_file, token=token)
 
         run_info = dict()
-        run_info['name'] = name or fname.replace('.mzML', '')
+        run_info['mzml_file_name'] = (mzml_file_name or
+                                      fname.replace('.mzML', ''))
         run_info['atlases'] = atlases or []
         if polarity is not None:
             run_info['polarity'] = polarity

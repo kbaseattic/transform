@@ -27,19 +27,23 @@ def transform(workspace_service_url=None, workspace_name=None,
     Converts Expression TSV file to json string of KBaseFeatureValues.ExpressionMatrix type.
 
     Args:
-        output_file_name: A file name where the output JSON string should be
-                          stored.
-                          If the output file name is not specified the name
-                          will default
-                          to the name of the input file appended with
-                           '_output.json'.
+        workspace_service_url: URL for a KBase Workspace service where KBase objects.
+                               are stored.
+        workspace_name: The name of the destination workspace.
+        object_name: The destination object name.
+        output_file_name: A file name where the output JSON string should be stored.
+                          If the output file name is not specified the name will
+                          default to the name of the input file appended with
+                          '_output.json'.
         input_directory: The directory where files will be read from.
         working_directory: The directory the resulting json file will be
                            written to.
         input_mapping: JSON string mapping of input files to expected types.
                        If you don't get this you need to scan the input
                        directory and look for your files.
-        normalization_factor: Run normalization factor.
+        format_type: Mannually defined type of TSV file format.
+        genome_object_name: Optional reference to a Genome object that will be used.
+                            for mapping feature IDs to.
 
     Returns:
         JSON files on disk that can be saved as a KBase workspace objects.
@@ -53,15 +57,6 @@ def transform(workspace_service_url=None, workspace_name=None,
 
     logger.info("Starting conversion of Expression TSV to KBaseFeatureValues.ExpressionMatrix")
     token = os.environ.get('KB_AUTH_TOKEN')
-    logger.info("workspace_service_url=" + str(workspace_service_url))
-    logger.info("workspace_name=" + str(workspace_name))
-    logger.info("object_name=" + str(object_name))
-    logger.info("output_file_name=" + str(output_file_name))
-    logger.info("input_directory=" + str(input_directory))
-    logger.info("working_directory=" + str(working_directory))
-    logger.info("input_mapping=" + str(input_mapping))
-    logger.info("format_type=" + str(format_type))
-    logger.info("genome_object_name=" + str(genome_object_name))
 
     if not working_directory or not os.path.isdir(working_directory):
         raise Exception("The working directory {0} is not a valid directory!"
@@ -132,7 +127,7 @@ def main():
     try:
         transform(workspace_service_url=args.workspace_service_url,
                   workspace_name=args.workspace_name,
-                  object_name=args.object_name.
+                  object_name=args.object_name,
                   output_file_name=args.output_file_name,
                   input_directory=args.input_directory,
                   working_directory=args.working_directory,

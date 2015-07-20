@@ -11,7 +11,6 @@
         "max_runtime": 360,
         "custom_options": [],
         "required_fields": [
-            "input_file_name",
             "input_directory",
             "workspace_name",
             "workspace_service_url",
@@ -19,9 +18,13 @@
             "object_name"
         ],
         "optional_fields": [
+            "input_file_name",
+            "output_file_name",
             "format_type",
             "genome_object_name",
-            "output_file_name"
+            "fill_missing_values",
+            "data_type",
+            "data_scale"
         ],
         "input_mapping": {"TSV.Expression": "input_directory"}
     },
@@ -36,13 +39,31 @@
             "name": "format_type",
             "type": "string",
             "required": false,
-            "help": "Mannually defined type of TSV file format."
+            "help": "Manually defined type of TSV file format."
         },
         {
             "name": "genome_object_name",
             "type": "string",
             "required": false,
             "help": "Optional reference to a Genome object that will be used for mapping feature IDs to."
+        },
+        {
+            "name": "fill_missing_values",
+            "type": "int",
+            "required": false,
+            "help": "Flag for filling in missing values in matrix (0-false, 1-true).
+        },
+        {
+            "name": "data_type",
+            "type": "string",
+            "required": false,
+            "help": "Data type (default value is 'log-ratio')."
+        },
+        {
+            "name": "data_scale",
+            "type": "string",
+            "required": false,
+            "help": "Data scale (default value is '1.0')."
         }
     ],
     "user_option_groups": []

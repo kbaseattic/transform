@@ -8,7 +8,6 @@ import argparse
 import subprocess
 
 # 3rd party imports
-import simplejson
 
 # KBase imports
 try:
@@ -93,7 +92,6 @@ def transform(workspace_service_url=None, workspace_name=None,
     if genome_object_name:
         argslist.append("--genome_object_name {0}".format(genome_object_name))
     if fill_missing_values:
-        logger.info("--fill_missing_values {0}".format(fill_missing_values))
         argslist.append("--fill_missing_values")
     if data_type:
         argslist.append("--data_type {0}".format(data_type))

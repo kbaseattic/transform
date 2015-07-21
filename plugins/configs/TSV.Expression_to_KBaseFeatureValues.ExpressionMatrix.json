@@ -51,7 +51,7 @@
             "name": "fill_missing_values",
             "type": "int",
             "required": false,
-            "help": "Flag for filling in missing values in matrix (0-false, 1-true).
+            "help": "Flag for filling in missing values in matrix (0-false, 1-true)."
         },
         {
             "name": "data_type",

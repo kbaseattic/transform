@@ -4,6 +4,8 @@
 import os
 import sys
 import logging
+import argparse
+import subprocess
 
 # 3rd party imports
 import simplejson
@@ -119,8 +121,6 @@ def transform(workspace_service_url=None, workspace_name=None,
 
 def main():
     script_details = script_utils.parse_docs(transform.__doc__)
-
-    import argparse
 
     parser = argparse.ArgumentParser(prog=__file__,
                                      description=script_details["Description"],

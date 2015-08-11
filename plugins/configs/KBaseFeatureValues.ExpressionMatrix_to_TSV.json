@@ -10,7 +10,8 @@
         "required_fields": [ 
             "object_name",
             "workspace_name",
-            "workspace_service_url"  
+            "workspace_service_url",
+            "working_directory"
         ], 
         "optional_fields": ["version"], 
         "custom_options": [] 

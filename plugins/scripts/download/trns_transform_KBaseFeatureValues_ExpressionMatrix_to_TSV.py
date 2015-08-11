@@ -6,6 +6,7 @@ import sys
 import argparse
 import logging
 import string
+import subprocess
 
 # 3rd party imports
 # None
@@ -47,17 +48,48 @@ def transform(workspace_service_url=None, workspace_name=None, object_name=None,
     logger.info("Starting conversion of KBaseFeatureValues.ExpressionMatrix to TSV")
     token = os.environ.get("KB_AUTH_TOKEN")
     
-    if not os.path.isdir(args.working_directory): 
-        raise Exception("The working directory does not exist {0} does not exist".format(working_directory)) 
+    if not working_directory or not os.path.isdir(args.working_directory): 
+        raise Exception("The working directory {0} does not exist".format(working_directory)) 
 
     logger.info("Grabbing Data.")
- 
-    if not output_file_name:
-        output_file_name = "test.tsv"
-    output_file = os.path.join(working_directory, output_file_name)
 
-    with open(output_file, "w") as outFile:
-        outFile.write("feature_ids\tfirst_condition\ntmp0001\t3.0\n")
+    classpath = ["$KB_TOP/lib/jars/kbase/feature_values/kbase-feature-values-0.3.jar",
+                 "$KB_TOP/lib/jars/kohsuke/args4j-2.0.21.jar",
+                 "$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.10.jar",
+                 "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",
+                 "$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar",
+                 "$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar",
+                 "$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar",
+                 "$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"]
+    
+    mc = "us.kbase.kbasefeaturevalues.transform.ExpressionDownloader"
+
+    argslist = ["--workspace_service_url {0}".format(workspace_service_url),
+                "--workspace_name {0}".format(workspace_name),
+                "--object_name {0}".format(object_name),
+                "--working_directory {0}".format(working_directory)]
+
+    if output_file_name:
+        argslist.append("--output_file_name {0}".format(output_file_name))
+
+    if version:
+        argslist.append("--version {0}".format(version))
+
+    arguments = ["java", "-classpath", ":".join(classpath), mc, " ".join(argslist)]
+
+    logger.debug(arguments)
+
+    # need shell in this case because the java code is depending on finding the KBase token in the environment
+    tool_process = subprocess.Popen(" ".join(arguments), stderr=subprocess.PIPE, shell=True)
+    stdout, stderr = tool_process.communicate()
+
+    if stdout is not None and len(stdout) > 0:
+        logger.info(stdout)
+
+    if stderr is not None and len(stderr) > 0:
+        logger.error("Transformation from KBaseFeatureValues.ExpressionMatrix to TSV failed on {0}".format(input_directory))
+        logger.error(stderr)
+        sys.exit(1)
     
     logger.info("Conversion completed.")
 

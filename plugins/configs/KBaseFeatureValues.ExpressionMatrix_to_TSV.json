@@ -1,0 +1,40 @@
+{ 
+    "script_name": "trns_transform_KBaseFeatureValues_ExpressionMatrix_to_TSV.py", 
+    "script_type": "download", 
+    "external_type": "TSV.Matrix", 
+    "kbase_type": "KBaseFeatureValues.ExpressionMatrix", 
+    "user_description": "Download expression matrix in TSV format", 
+    "developer_description": "Download expression matrix in TSV format", 
+    "handler_options": { 
+        "max_runtime": 600, 
+        "required_fields": [ 
+            "object_name",
+            "workspace_name",
+            "workspace_service_url",
+            "working_directory"
+        ], 
+        "optional_fields": ["version"], 
+        "custom_options": [] 
+    },  
+    "user_options": [ 
+        { 
+            "name": "object_name", 
+            "type": "string", 
+            "required": true, 
+            "help": "Name of the expression matrix object." 
+        }, 
+        { 
+            "name": "workspace_name",
+            "type": "string", 
+            "required": false,
+            "help": "Workspace containing object."
+        }, 
+        { 
+            "name": "version", 
+            "type": "int", 
+            "required": false,
+            "help": "Version of the expression matrix object, if not given we assume the latest."
+        } 
+    ], 
+    "user_option_groups": [] 
+}

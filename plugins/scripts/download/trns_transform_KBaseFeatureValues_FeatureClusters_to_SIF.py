@@ -22,7 +22,7 @@ def transform(workspace_service_url=None, workspace_name=None, object_name=None,
               version=None, working_directory=None, output_file_name=None, 
               level=logging.INFO, logger=None):  
     """
-    Converts KBaseFeatureValues.ClusterSet to SIF-formatted file.
+    Converts KBaseFeatureValues.FeatureClusters to SIF-formatted file.
     
     Args:
         workspace_service_url:  A url for the KBase Workspace service 
@@ -34,7 +34,7 @@ def transform(workspace_service_url=None, workspace_name=None, object_name=None,
         level: Logging level, defaults to logging.INFO.
     
     Returns:
-        SIF-formatted file containing data from ClusterSet object.
+        SIF-formatted file containing data from FeatureClusters object.
     
     Authors:
         Roman Sutormin
@@ -44,7 +44,7 @@ def transform(workspace_service_url=None, workspace_name=None, object_name=None,
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
     
-    logger.info("Starting conversion of KBaseFeatureValues.ClusterSet to SIF")
+    logger.info("Starting conversion of KBaseFeatureValues.FeatureClusters to SIF")
     token = os.environ.get("KB_AUTH_TOKEN")
     
     if not working_directory or not os.path.isdir(args.working_directory): 
@@ -52,7 +52,7 @@ def transform(workspace_service_url=None, workspace_name=None, object_name=None,
 
     logger.info("Grabbing Data.")
 
-    classpath = ["$KB_TOP/lib/jars/kbase/feature_values/kbase-feature-values-0.3.jar",
+    classpath = ["$KB_TOP/lib/jars/kbase/feature_values/kbase-feature-values-0.4.jar",
                  "$KB_TOP/lib/jars/kohsuke/args4j-2.0.21.jar",
                  "$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.10.jar",
                  "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",
@@ -61,7 +61,7 @@ def transform(workspace_service_url=None, workspace_name=None, object_name=None,
                  "$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar",
                  "$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"]
     
-    mc = "us.kbase.kbasefeaturevalues.transform.ClusterSetDownloader"
+    mc = "us.kbase.kbasefeaturevalues.transform.FeatureClustersDownloader"
 
     argslist = ["--workspace_service_url {0}".format(workspace_service_url),
                 "--workspace_name {0}".format(workspace_name),
@@ -87,7 +87,7 @@ def transform(workspace_service_url=None, workspace_name=None, object_name=None,
         logger.info(stdout)
 
     if stderr is not None and len(stderr) > 0:
-        logger.error("Transformation from KBaseFeatureValues.ClusterSet to SIF failed on {0}".format(input_directory))
+        logger.error("Transformation from KBaseFeatureValues.FeatureClusters to SIF failed on {0}".format(input_directory))
         logger.error(stderr)
         sys.exit(1)
     
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = script_utils.stderrlogger(__file__)
-    logger.info("Starting download of ClusterSet => SIF")
+    logger.info("Starting download of FeatureClusters => SIF")
     try:
         transform(workspace_service_url = args.workspace_service_url, 
                   workspace_name = args.workspace_name, 

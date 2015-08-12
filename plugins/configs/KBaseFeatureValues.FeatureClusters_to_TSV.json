@@ -1,8 +1,8 @@
 { 
-    "script_name": "trns_transform_KBaseFeatureValues_ClusterSet_to_TSV.py", 
+    "script_name": "trns_transform_KBaseFeatureValues_FeatureClusters_to_TSV.py", 
     "script_type": "download", 
-    "external_type": "TSV.ClusterSet", 
-    "kbase_type": "KBaseFeatureValues.ClusterSet", 
+    "external_type": "TSV.FeatureClusters", 
+    "kbase_type": "KBaseFeatureValues.FeatureClusters", 
     "user_description": "Download cluster set in TSV format", 
     "developer_description": "Download cluster set in TSV format", 
     "handler_options": { 

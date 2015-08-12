@@ -1,8 +1,8 @@
 { 
-    "script_name": "trns_transform_KBaseFeatureValues_ClusterSet_to_SIF.py", 
+    "script_name": "trns_transform_KBaseFeatureValues_FeatureClusters_to_SIF.py", 
     "script_type": "download", 
-    "external_type": "SIF.ClusterSet", 
-    "kbase_type": "KBaseFeatureValues.ClusterSet", 
+    "external_type": "SIF.FeatureClusters", 
+    "kbase_type": "KBaseFeatureValues.FeatureClusters", 
     "user_description": "Download cluster set in SIF format", 
     "developer_description": "Download cluster set in SIF format", 
     "handler_options": { 

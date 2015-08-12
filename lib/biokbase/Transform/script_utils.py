@@ -334,7 +334,7 @@ def upload_file_to_shock(logger = stderrlogger(__file__),
     if filePath is None:
         raise Exception("No file given for upload to SHOCK!")
 
-    dataFile = open(os.path.abspath(filePath), 'r')
+    dataFile = open(os.path.abspath(filePath), 'rb')
     m = MultipartEncoder(fields={'upload': (os.path.split(filePath)[-1], dataFile)})
     header['Content-Type'] = m.content_type
 

@@ -28,11 +28,15 @@ def report_exception(logger=None, report_details=None, cleanup_details=None):
 
     if report_details["ujs_job_id"] is not None:
         ujs = report_details["ujs_client"]
-        ujs.complete_job(report_details["ujs_job_id"], 
-                         report_details["token"], 
-                         report_details["status"][:UJS_STATUS_MAX], 
-                         report_details["error_message"], 
-                         None)
+        
+        job_status = ujs.get_job_status(report_details["ujs_job_id"])
+
+        if job_status[-2] == 0:
+            ujs.complete_job(report_details["ujs_job_id"], 
+                             report_details["token"], 
+                             report_details["status"][:UJS_STATUS_MAX], 
+                             report_details["error_message"], 
+                             None)
     else:
         raise Exception("No report details included!") 
     
@@ -69,7 +73,7 @@ def gen_recursive_filelist(d):
             yield os.path.join(root, file)
 
 
-def run_task(logger, arguments, debug=False):
+def run_task(logger, arguments, debug=False, callback=None):
     """
     A factory function to abstract the implementation details of how tasks are run.
     """
@@ -77,7 +81,7 @@ def run_task(logger, arguments, debug=False):
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
 
-    h = TaskRunner(logger)
+    h = TaskRunner(logger, callback=callback)
     out = h.run(arguments, debug)
     return out
 
@@ -135,11 +139,18 @@ class TaskRunner(object):
 
 
     def run(self, arguments=None, debug=False):
+        """
+        Executes the task while monitoring stdout and stderr for messages.
+        For each line of stdout/stderr, run a callback function that does "something".
+        The default behavior would be to log the message, but other behavior can be swapped in,
+        for instance to communicate back to a UJS process what the job status is.
+        """
+
         command_list = self._build_command_list(arguments,debug)
     
         self.logger.info("Executing {0}".format(" ".join(command_list)))
     
-        task = subprocess.Popen(command_list, stdout=subprocess.PIPE)
+        task = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         
         lines_iterator = iter(task.stdout.readline, b"")
         for line in lines_iterator:

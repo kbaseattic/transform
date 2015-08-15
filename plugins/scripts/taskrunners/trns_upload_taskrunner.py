@@ -266,7 +266,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                                                     1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
                             task_output = handler_utils.run_task(logger, validation_args, callback=lambda msg: \
-                                ujs.update_job_progress(ujs_job_id, kb_token, msg.split("-")[-1][:200], 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000')))
+                                ujs.update_job_progress(ujs_job_id, kb_token, msg[:handler_utils.UJS_STATUS_MAX], 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000')))
                         else:
                             logger.info("Attempting to validate {0}".format(filename))
                             task_output = handler_utils.run_task(logger, validation_args)
@@ -274,8 +274,19 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                         logger.debug("Caught exception while validating!")
 
                         if ujs_job_id is not None:
-                            error_object["status"] = "ERROR : Validation of input data - {0}".format(e["stderr"][-handler_utils.UJS_STATUS_MAX])[:handler_utils.UJS_STATUS_MAX]
-                            error_object["error_message"] = e["stderr"]
+                            task_output = dict()
+                            task_output["stdout"] = e.args[0]
+                            task_output["stderr"] = e.args[1]
+
+                            if task_output["stderr"] != None and len(task_output["stderr"].strip()) > 0:
+                                error_object["status"] = "ERROR : Validation of input data - {0}".format(task_output["stderr"][-handler_utils.UJS_STATUS_MAX:])[:handler_utils.UJS_STATUS_MAX]
+                                error_object["error_message"] = task_output["stderr"]
+                            elif task_output["stdout"] != None and len(task_output["stdout"].strip()) > 0:
+                                error_object["status"] = "ERROR : Validation of input data - {0}".format(task_output["stdout"][-handler_utils.UJS_STATUS_MAX:])[:handler_utils.UJS_STATUS_MAX]
+                                error_object["error_message"] = task_output["stdout"]
+                            else:
+                                error_object["status"] = "ERROR : Validation of input data - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
+                                error_object["error_message"] = traceback.format_exc()
                 
                             handler_utils.report_exception(logger, error_object, cleanup_details)
 
@@ -434,13 +445,24 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
             try:
                 if ujs_job_id is not None:
                     task_output = handler_utils.run_task(logger, transformation_args, debug=debug, callback=lambda msg: \
-                        ujs.update_job_progress(ujs_job_id, kb_token, msg.split("-")[-1][:200], 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000')))
+                        ujs.update_job_progress(ujs_job_id, kb_token, msg[-handler_utils.UJS_STATUS_MAX:], 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000')))
                 else:
                     task_output = handler_utils.run_task(logger, transformation_args, debug=debug)
             except Exception, e:
-                if ujs_job_id is not None:
-                    error_object["status"] = "ERROR : Creating objects - {0}".format(e["stderr"][-handler_utils.UJS_STATUS_MAX:])[:handler_utils.UJS_STATUS_MAX]
-                    error_object["error_message"] = e["stderr"]
+                if ujs_job_id is not None:                    
+                    task_output = dict()
+                    task_output["stdout"] = e.args[0]
+                    task_output["stderr"] = e.args[1]
+                    
+                    if task_output["stderr"] != None and len(task_output["stderr"].strip()) > 0:
+                        error_object["status"] = "ERROR : Creating objects - {0}".format(task_output["stderr"][-handler_utils.UJS_STATUS_MAX:])[:handler_utils.UJS_STATUS_MAX]
+                        error_object["error_message"] = task_output["stderr"]
+                    elif task_output["stdout"] != None and len(task_output["stdout"].strip()) > 0:
+                        error_object["status"] = "ERROR : Creating objects - {0}".format(task_output["stdout"][-handler_utils.UJS_STATUS_MAX:])[:handler_utils.UJS_STATUS_MAX]
+                        error_object["error_message"] = task_output["stdout"]
+                    else:
+                        error_object["status"] = "ERROR : Creating objects - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
+                        error_object["error_message"] = traceback.format_exc()
             
                     handler_utils.report_exception(logger, error_object, cleanup_details)
 

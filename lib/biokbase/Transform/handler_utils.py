@@ -150,7 +150,7 @@ class TaskRunner(object):
     
         self.logger.info("Executing {0}".format(" ".join(command_list)))
     
-        task = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        task = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
         lines_iterator = iter(task.stdout.readline, b"")
         for line in lines_iterator:
@@ -163,7 +163,7 @@ class TaskRunner(object):
         task_output["stderr"] = sub_stderr
         
         if task.returncode != 0:
-            raise Exception(task_output)
+            raise Exception(task_output["stdout"], task_output["stderr"])
         else:
             return task_output
 

@@ -102,8 +102,9 @@ def transform(workspace_service_url=None, workspace_name=None,
         logger.info(stdout)
 
     if stderr is not None and len(stderr) > 0:
-        logger.error("Transformation from TSV.Growth to KBaseEnigmaMetals.GrowthMatrix failed on {0}".format(input_directory))
         logger.error(stderr)
+    if tool_process.returncode:
+        logger.error("Transformation from TSV.Growth to KBaseEnigmaMetals.GrowthMatrix failed on {0}".format(input_directory))
         sys.exit(1)
 
     logger.info("Conversion completed.")

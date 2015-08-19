@@ -1,0 +1,49 @@
+{
+    "script_name": "trns_transform_TSV_Growth_to_KBaseEnigmaMetals_GrowthMatrix.py",
+    "script_type": "upload",
+    "external_type": "TSV.Growth",
+    "kbase_type": "KBaseEnigmaMetals.GrowthMatrix",
+    "user_description": "Converts Growth TSV file to GrowthMatrix object in Narrative.",
+    "url_mapping": ["TSV.Growth"],    
+    "handler_options": {
+        "must_own_validation": true,
+        "must_own_saving_to_workspace": false,
+        "max_runtime": 360,
+        "custom_options": [],
+        "required_fields": [
+            "input_directory",
+            "workspace_name",
+            "workspace_service_url",
+            "working_directory",
+            "object_name"
+        ],
+        "optional_fields": [
+            "input_file_name",
+            "output_file_name",
+            "format_type",
+            "fill_missing_values"
+        ],
+        "input_mapping": {"TSV.Growth": "input_directory"}
+    },
+    "user_options": [
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "ID for output GrowthMatrix in Narrative."
+        },
+        {
+            "name": "format_type",
+            "type": "string",
+            "required": false,
+            "help": "Manually defined type of TSV file format."
+        },
+        {
+            "name": "fill_missing_values",
+            "type": "int",
+            "required": false,
+            "help": "Flag for filling in missing values in matrix (0-false, 1-true)."
+        }
+    ],
+    "user_option_groups": []
+}

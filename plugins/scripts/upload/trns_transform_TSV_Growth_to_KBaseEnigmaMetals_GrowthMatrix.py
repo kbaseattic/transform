@@ -87,14 +87,12 @@ def transform(workspace_service_url=None, workspace_name=None,
         argslist.append("--output_file_name {0}".format(output_file_name))
     if input_mapping:
         argslist.append("--input_mapping {0}".format(input_mapping))
-    if format_type:
-        argslist.append("--format_type {0}".format(format_type))
-    if fill_missing_values:
-        argslist.append("--fill_missing_values")
+    argslist.append("--format_type {0}".format(format_type))
+    argslist.append("--fill_missing_values {0}".format(fill_missing_values))
 
     arguments = ["java", "-classpath", ":".join(classpath), mc, " ".join(argslist)]
 
-    logger.debug(arguments)
+    logger.info(arguments)
 
     # need shell in this case because the java code is depending on finding the KBase token in the environment
     tool_process = subprocess.Popen(" ".join(arguments), stderr=subprocess.PIPE, shell=True)

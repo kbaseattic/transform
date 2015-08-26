@@ -14,6 +14,13 @@ public class GbkParser {
     public static final int HEADER_PREFIX_LENGTH = 12;
     public static final int FEATURE_PREFIX_LENGTH = 21;
 
+    /**
+     * @param br
+     * @param params
+     * @param filename
+     * @param ret
+     * @throws Exception
+     */
     public static void parse(BufferedReader br, GbkParsingParams params, String filename, GbkCallback ret) throws Exception {
         TypeManager qual_tm = new TypeManager("qualifier_types.properties");
         String SUBHEADER_ORGANISM_TYPE = "ORGANISM";
@@ -98,8 +105,12 @@ public class GbkParser {
                         if (qual != null) qual.close();
                         qual = null;
                         loc.addFeature(feat, filename);
+                    } else if (line.indexOf("/") == 0 && line.indexOf("=") == -1 && line.indexOf("\"") == - 1) {//skips illegal features with no '=' and no quotes
+                        System.err.println("Warning parsing GBK file: ignoring field [" + line.substring(1) + "]");
+                        continue;
                     } else {
-                        if ((line.startsWith("/")) &&
+
+                        if (qual == null && (line.startsWith("/")) &&//added qual = null to allow feature text which spans multiple lines and potentially starts with a '/'
                             (!line.startsWith("/ ")) && // these are continued strings with slashes from previous line
                             (line.indexOf("=")==-1)) {
                             if (!qual_tm.isType(line.substring(1)))
@@ -110,6 +121,8 @@ public class GbkParser {
                         int equal_pos = line.indexOf("=");
                         String qual_name = null;
                         if ((slash_pos == 0) && (1 < equal_pos)) {
+                            System.out.println("debug slash " + slash_pos + "\t" + equal_pos);
+                            System.out.println("debug slash " + line);
                             qual_name = line.substring(slash_pos + 1, equal_pos).trim();
                             if (qual_name.length() == 0) {
                                 qual_name = null;
@@ -161,33 +174,37 @@ public class GbkParser {
         if (seq != null) seq.close(filename);
     }
 
+    /**
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         final PrintWriter pw = new PrintWriter("test/parse.txt");
         final String filename = "Pseudomonas_stutzeri_DSM_10701.gb";
         BufferedReader br = new BufferedReader(new FileReader(new File("test/" + filename)));
         parse(br, new GbkParsingParams(false), filename, new GbkCallback() {
             @Override
-		    public void setGenomeTrackFile(String contigName, String genomeName, int taxId, String plasmid, String filename) throws Exception {
+            public void setGenomeTrackFile(String contigName, String genomeName, int taxId, String plasmid, String filename) throws Exception {
                 pw.println("setGenome: contigName=" + contigName + ", genomeName=" + genomeName + ", taxId=" + taxId + ", plasmid=" + plasmid);
             }
 
             @Override
-		    public void addHeaderTrackFile(String contigName, String headerType, String value, List<GbkSubheader> items, String filename) throws Exception {
+            public void addHeaderTrackFile(String contigName, String headerType, String value, List<GbkSubheader> items, String filename) throws Exception {
                 pw.println("addHeader: contigName=" + contigName + ", type=" + headerType + ", value=" + value + ", subheader=" + items);
             }
 
             @Override
-		    public void addFeatureTrackFile(String contigName, String featureType, int strand, int start, int stop, List<GbkLocation> locations, List<GbkQualifier> props, String filename) throws Exception {
+            public void addFeatureTrackFile(String contigName, String featureType, int strand, int start, int stop, List<GbkLocation> locations, List<GbkQualifier> props, String filename) throws Exception {
                 pw.println("addFeature: contigName=" + contigName + ", type=" + featureType + ", " +
-                           "start=" + start + ", stop=" + stop + ", strand=" + strand + ", locations=" + locations + ", props=" + props);
+                        "start=" + start + ", stop=" + stop + ", strand=" + strand + ", locations=" + locations + ", props=" + props);
             }
 
             @Override
-		    public void addSeqPartTrackFile(String contigName, int seqPartIndex, String seqPart, int commonLen, String filename) {
+            public void addSeqPartTrackFile(String contigName, int seqPartIndex, String seqPart, int commonLen, String filename) {
                 pw.println("addSeqPart: contigName=" + contigName + ", seqPartIndex=" + seqPartIndex +
-                           ", seqPart=" + seqPart.length());
+                        ", seqPart=" + seqPart.length());
             }
-	    });
+        });
         br.close();
         pw.close();
     }

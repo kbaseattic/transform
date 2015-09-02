@@ -105,16 +105,16 @@ public class GbkParser {
                         if (qual != null) qual.close();
                         qual = null;
                         loc.addFeature(feat, filename);
-                    } else if (line.indexOf("/") == 0 && line.indexOf("=") == -1 && line.indexOf("\"") == - 1) {//skips illegal features with no '=' and no quotes
+                    } else if (line.indexOf("/") == 0 && line.indexOf("=") == -1 && line.indexOf("\"") == -1) {//skips illegal features with no '=' and no quotes
                         System.err.println("Warning parsing GBK file: ignoring field [" + line.substring(1) + "]");
                         continue;
                     } else {
 
                         if (qual == null && (line.startsWith("/")) &&//added qual = null to allow feature text which spans multiple lines and potentially starts with a '/'
-                            (!line.startsWith("/ ")) && // these are continued strings with slashes from previous line
-                            (line.indexOf("=")==-1)) {
+                                (!line.startsWith("/ ")) && // these are continued strings with slashes from previous line
+                                (line.indexOf("=") == -1)) {
                             if (!qual_tm.isType(line.substring(1)))
-                                System.err.println("Warning parsing GBK file: ignoring field ["+line.substring(1)+"]");
+                                System.err.println("Warning parsing GBK file: ignoring field [" + line.substring(1) + "]");
                             line += "=";
                         }
                         int slash_pos = line.indexOf("/");
@@ -130,7 +130,7 @@ public class GbkParser {
                                 for (int i = 0; i < qual_name.length(); i++) {
                                     char ch = qual_name.charAt(i);
                                     if ((!Character.isLetterOrDigit(ch)) &&
-                                        (ch != '_')) {
+                                            (ch != '_')) {
                                         qual_name = null;
                                         break;
                                     }
@@ -140,7 +140,7 @@ public class GbkParser {
                         if (qual_name != null) {
                             line = line.substring(equal_pos + 1).trim();
                             if (qual != null) qual.close();
-                            qual = new GbkQualifier(line_num,qual_name,line);
+                            qual = new GbkQualifier(line_num, qual_name, line);
                             feat.qualifiers.add(qual);
                         } else {
                             if (qual != null) {

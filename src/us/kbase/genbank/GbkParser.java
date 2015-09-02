@@ -121,8 +121,8 @@ public class GbkParser {
                         int equal_pos = line.indexOf("=");
                         String qual_name = null;
                         if ((slash_pos == 0) && (1 < equal_pos)) {
-                            System.out.println("debug slash " + slash_pos + "\t" + equal_pos);
-                            System.out.println("debug slash " + line);
+                            //System.out.println("debug slash " + slash_pos + "\t" + equal_pos);
+                            //System.out.println("debug slash " + line);
                             qual_name = line.substring(slash_pos + 1, equal_pos).trim();
                             if (qual_name.length() == 0) {
                                 qual_name = null;

@@ -353,7 +353,7 @@ public class GenometoGbk {
             out.append("            " + formatTax + ".\n");
         }
 
-            /*TODO populate references in Genome objects */
+            /*TODO populate literature references in Genome objects */
             /*
              //typedef tuple<int id, string source_db, string article_title, string link, string pubdate, string authors, string journal_name> publication;
             List<Tuple7<Long, String, String, String, String, String, String>> pubs = genome.getPublications();
@@ -437,16 +437,19 @@ public class GenometoGbk {
                             + curcontig.getName());*/
                 String id = null;
                 try {
-                    final List<String> aliases = cur.getAliases();
-                    if (aliases != null) {
-                        try {
-                            id = aliases.get(0);
-                        } catch (Exception e) {
-                            //e.printStackTrace();
+                    id = cur.getId();
+                    System.out.println("id "+id);
+                    if (id == null) {
+                        final List<String> aliases = cur.getAliases();
+                        if (aliases != null) {
+                            try {
+                                id = aliases.get(0);
+                            } catch (Exception e) {
+
+                                //e.printStackTrace();
+                            }
                         }
                     }
-                    if (id == null)
-                        id = cur.getId();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -464,18 +467,17 @@ public class GenometoGbk {
                     function = "";
                 }
 
-                boolean test = false;
-
-            /*if (id.equals("NP_963295.1")) {
+            /*
+             boolean test = false;
+             if (id.equals("NP_963295.1")) {
                 test = true;
                 System.out.println("allfunction " + allfunction.length + "\t" + function.length());
             }*/
 
-
                 StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
                 StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
 
-            /*TODO add operons and promoteres and terminators as gene features ? */
+            /*TODO add operons, promoteres, terminators as gene features ? */
                 if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
 
                     if (cur.getType().equals("CDS")) //id.indexOf(".rna.") == -1)
@@ -966,6 +968,12 @@ public class GenometoGbk {
         return out;
     }
 
+    /**
+     * @param s
+     * @param charnum
+     * @param linenum
+     * @param out
+     */
     public void formatDNASequence(String s, int charnum, int linenum, PrintWriter out) {
         out.append("        1 ");
         int index = 1;

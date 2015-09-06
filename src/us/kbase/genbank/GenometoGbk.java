@@ -438,7 +438,8 @@ public class GenometoGbk {
                 String id = null;
                 try {
                     id = cur.getId();
-                    System.out.println("id "+id);
+                    //System.out.println("id "+id);
+
                     if (id == null) {
                         final List<String> aliases = cur.getAliases();
                         if (aliases != null) {

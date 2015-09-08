@@ -25,6 +25,7 @@ public class GbkParser {
         TypeManager qual_tm = new TypeManager("qualifier_types.properties");
         String SUBHEADER_ORGANISM_TYPE = "ORGANISM";
         String QUALIFIER_DB_XREF_TYPE = "db_xref";
+        String QUALIFIER_NOTE_TYPE = "note";
         String QUALIFIER_TRANSLATION_TYPE = "translation";
         int state = 0;
         GbkLocus loc = null;
@@ -104,43 +105,50 @@ public class GbkParser {
                             feat.close(params);
                         }
                         feat = new GbkFeature(line_num, prefix, line);
-                        if (qual != null) qual.close();
+
+                        if (qual != null) {
+                            //System.out.println("qual.close() " + qual.value);
+                            qual.close();
+                        }
                         qual = null;
+
                         loc.addFeature(feat, filename);
-                    }
-                    //qual == null &&
-                    else if (line.indexOf("/") == 0 && line.indexOf("/ ") != 0 && line.indexOf("=") == -1 && line.indexOf("\"") == -1) {//skips illegal features with no '=' and no quotes
+                    } else if (line.indexOf("/") == 0 && line.indexOf("/ ") != 0 && line.indexOf("=") == -1 && line.indexOf("\"") == -1) {//skips illegal features with no '=' and no quotes
 
                         //System.err.println("qual "+qual);
                         //System.err.println("Warning parsing GBK file: ignoring field A [" + line.substring(1) + "]");
 
                         if (line.equals("/pseudo") || line.equals("/trans_splicing") || line.equals("/ribosomal_slippage")) {
-                            System.out.println("special " + line);
+
                             if (qual != null) {
                                 String s = qual.toString();
-                                System.out.println("qual " + s);
+                                //System.out.println("qual " + s);
                                 if (s.endsWith("\")"))
                                     s = s.substring(0, s.length() - 2);
 
                                 //if (s.substring(s.length() - 1, s.length()).equals("\""))
-                                if (qual.type.equals(QUALIFIER_DB_XREF_TYPE) || qual.type.equals(QUALIFIER_TRANSLATION_TYPE)) {
+                                /*if (qual.type.equals(QUALIFIER_DB_XREF_TYPE) || qual.type.equals(QUALIFIER_TRANSLATION_TYPE)) {
                                     qual.value = new StringBuffer(s + ";" + line.substring(1) + "\");");
-                                    System.out.println("qual 1 " + qual.value);
-                                } else {
+                                    //System.out.println("qual 1 " + qual.value);
+                                }*/
+                                if(qual.type.equals(QUALIFIER_NOTE_TYPE)) {
                                     qual.value = new StringBuffer(s + ";" + " " + line.substring(1) + "\");");
-                                    System.out.println("qual 2 " + qual.value);
+                                    //System.out.println("qual 2 " + qual.value);
                                 }
-                            } else {
-                                //feat.appendValue(line);
-                                String s = feat.toString();
-                                if (s.endsWith(";)\""))
-                                    s = s.substring(0, s.length() - 3);
-                                feat.value = new StringBuffer(s + ";" + " " + line.substring(1) + "\");");
-                                System.out.println("feat " + feat.value);
                             }
+                            /*else {
+                            //feat.appendValue(line);
+
+                            System.out.println("special " + line);
+                            String s = feat.toString();
+                            if (s.endsWith(";)\""))
+                                s = s.substring(0, s.length() - 3);
+                            feat.value = new StringBuffer(s + ";" + " " + line.substring(1) + "\");");
+                            System.out.println("feat " + feat.value);
+                            }*/
                         }
 
-                        continue;
+                        //continue;
                     } else {
 
                         if (qual == null && (line.startsWith("/")) &&//added qual = null to allow feature text which spans multiple lines and potentially starts with a '/'
@@ -172,6 +180,7 @@ public class GbkParser {
                             line = line.substring(equal_pos + 1).trim();
                             if (qual != null) qual.close();
                             qual = new GbkQualifier(line_num, qual_name, line);
+
                             feat.qualifiers.add(qual);
                         } else {
                             if (qual != null) {
@@ -179,8 +188,16 @@ public class GbkParser {
                                     qual.appendValueWithoutSpace(line);
                                 } else {
                                     qual.appendValue(line);
+                                    /*if (line.equals("/pseudo") || line.equals("/trans_splicing") || line.equals("/ribosomal_slippage")) {
+                                        System.out.println("specialappend qual");
+                                    }*/
                                 }
-                            } else feat.appendValue(line);
+                            } else {
+                                feat.appendValue(line);
+                                /*if (line.equals("/pseudo") || line.equals("/trans_splicing") || line.equals("/ribosomal_slippage")) {
+                                    System.out.println("specialappend feat");
+                                }*/
+                            }
                         }
                     }
                 } else if (state == 2) {

@@ -115,10 +115,11 @@ public class GbkParser {
                         loc.addFeature(feat, filename);
                     } else if (line.indexOf("/") == 0 && line.indexOf("/ ") != 0 && line.indexOf("=") == -1 && line.indexOf("\"") == -1) {//skips illegal features with no '=' and no quotes
 
-                        //System.err.println("qual "+qual);
-                        //System.err.println("Warning parsing GBK file: ignoring field A [" + line.substring(1) + "]");
+                        //System.err.println("qual " + qual);
+                        System.err.println("Warning parsing GBK file: ignoring field [" + line + "], non-standard qualifier not confirming to /X=\"Y\"");
+                        continue;
 
-                        if (line.equals("/pseudo") || line.equals("/trans_splicing") || line.equals("/ribosomal_slippage")) {
+                        /*if (line.equals("/pseudo") || line.equals("/trans_splicing") || line.equals("/ribosomal_slippage")) {
 
                             if (qual != null) {
                                 String s = qual.toString();
@@ -127,16 +128,16 @@ public class GbkParser {
                                     s = s.substring(0, s.length() - 2);
 
                                 //if (s.substring(s.length() - 1, s.length()).equals("\""))
-                                /*if (qual.type.equals(QUALIFIER_DB_XREF_TYPE) || qual.type.equals(QUALIFIER_TRANSLATION_TYPE)) {
-                                    qual.value = new StringBuffer(s + ";" + line.substring(1) + "\");");
-                                    //System.out.println("qual 1 " + qual.value);
-                                }*/
+                                //if (qual.type.equals(QUALIFIER_DB_XREF_TYPE) || qual.type.equals(QUALIFIER_TRANSLATION_TYPE)) {
+                                //    qual.value = new StringBuffer(s + ";" + line.substring(1) + "\");");
+                                //    //System.out.println("qual 1 " + qual.value);
+                                //}
                                 if(qual.type.equals(QUALIFIER_NOTE_TYPE)) {
                                     qual.value = new StringBuffer(s + ";" + " " + line.substring(1) + "\");");
                                     //System.out.println("qual 2 " + qual.value);
                                 }
                             }
-                            /*else {
+                            else {
                             //feat.appendValue(line);
 
                             System.out.println("special " + line);
@@ -145,8 +146,8 @@ public class GbkParser {
                                 s = s.substring(0, s.length() - 3);
                             feat.value = new StringBuffer(s + ";" + " " + line.substring(1) + "\");");
                             System.out.println("feat " + feat.value);
-                            }*/
-                        }
+                            }
+                        }*/
 
                         //continue;
                     } else {

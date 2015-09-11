@@ -23,7 +23,7 @@ if sys.version.startswith('3'):
 def transform(workspace_service_url=None, workspace_name=None,
               object_name=None, output_file_name=None, input_directory=None, 
               working_directory=None, input_mapping=None, format_type=None, 
-              fill_missing_values=None, level=logging.INFO, logger=None):
+              level=logging.INFO, logger=None):
     """
     Converts Growth TSV file to json string of KBaseEnigmaMetals.GrowthMatrix type.
 
@@ -43,7 +43,6 @@ def transform(workspace_service_url=None, workspace_name=None,
                        If you don't get this you need to scan the input
                        directory and look for your files.
         format_type: Mannually defined type of TSV file format.
-        fill_missing_values: Flag for filling in missing values in matrix (0-false, 1-true).
 
     Returns:
         JSON files on disk that can be saved as a KBase workspace objects.
@@ -159,7 +158,6 @@ def main():
                   working_directory=args.working_directory,
                   input_mapping=args.input_mapping,
                   format_type=args.format_type,
-                  fill_missing_values=args.fill_missing_values,
                   logger=logger)
     except Exception as e:
         logger.exception(e)

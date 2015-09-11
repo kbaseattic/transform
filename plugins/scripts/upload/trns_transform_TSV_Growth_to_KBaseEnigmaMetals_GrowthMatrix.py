@@ -62,7 +62,7 @@ def transform(workspace_service_url=None, workspace_name=None,
         raise Exception("The working directory {0} is not a valid directory!"
                         .format(working_directory))
 
-    classpath = ["$KB_TOP/lib/jars/kbase/enigma-metals/kbase-enigma-metals-0.1.jar",
+    classpath = ["$KB_TOP/lib/jars/kbase/enigma-metals/kbase-enigma-metals-0.2.jar",
                  "$KB_TOP/lib/jars/apache_commons/commons-cli-1.2.jar",
                  "$KB_TOP/lib/jars/ini4j/ini4j-0.5.2.jar",
                  "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",
@@ -88,7 +88,6 @@ def transform(workspace_service_url=None, workspace_name=None,
     if input_mapping:
         argslist.append("--input_mapping {0}".format(input_mapping))
     argslist.append("--format_type {0}".format(format_type))
-    argslist.append("--fill_missing_values {0}".format(fill_missing_values))
 
     arguments = ["java", "-classpath", ":".join(classpath), mc, " ".join(argslist)]
 
@@ -145,9 +144,6 @@ def main():
     parser.add_argument('--format_type',
                         help=script_details["Args"]["format_type"],
                         action='store', type=str, required=False)
-    parser.add_argument('--fill_missing_values',
-                        help=script_details["Args"]["fill_missing_values"],
-                        action='store', type=int, required=False)
 
     args, unknown = parser.parse_known_args()
 

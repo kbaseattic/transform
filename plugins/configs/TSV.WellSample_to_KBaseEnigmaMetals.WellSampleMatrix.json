@@ -1,10 +1,10 @@
 {
-    "script_name": "trns_transform_TSV_Growth_to_KBaseEnigmaMetals_GrowthMatrix.py",
+    "script_name": "trns_transform_TSV_WellSample_to_KBaseEnigmaMetals_WellSampleMatrix.py",
     "script_type": "upload",
-    "external_type": "TSV.Growth",
-    "kbase_type": "KBaseEnigmaMetals.GrowthMatrix",
-    "user_description": "Converts Growth TSV file to GrowthMatrix object in Narrative.",
-    "url_mapping": ["TSV.Growth"],    
+    "external_type": "TSV.WellSample",
+    "kbase_type": "KBaseEnigmaMetals.WellSampleMatrix",
+    "user_description": "Converts well sample TSV file to WellSampleMatrix object in Narrative.",
+    "url_mapping": ["TSV.WellSample"],    
     "handler_options": {
         "must_own_validation": true,
         "must_own_saving_to_workspace": false,
@@ -22,14 +22,14 @@
             "output_file_name",
             "format_type"
         ],
-        "input_mapping": {"TSV.Growth": "input_directory"}
+        "input_mapping": {"TSV.WellSample": "input_directory"}
     },
     "user_options": [
         {
             "name": "object_name",
             "type": "string",
             "required": true,
-            "help": "ID for output GrowthMatrix in Narrative."
+            "help": "ID for output WellSampleMatrix in Narrative."
         },
         {
             "name": "format_type",

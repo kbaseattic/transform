@@ -557,8 +557,8 @@ def download_from_urls(logger = stderrlogger(__file__),
 
             # check for a shock url
             try:
-                shock_id = re.search('^http[s]://.*/node/([a-fA-f0-9\-]+).*', url).group(1)
-                shock_download_url = re.search('^(http[s]://.*)/node/[a-fA-f0-9\-]+.*', url).group(1)
+                shock_id = re.search('^https?://.*/node/([a-fA-F0-9\-]+).*', url).group(1)
+                shock_download_url = re.search('^(https?://.*)/node/[a-fA-F0-9\-]+.*', url).group(1)
             except Exception, e:
                 shock_id = None
 

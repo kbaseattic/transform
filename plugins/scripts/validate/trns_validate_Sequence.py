@@ -58,7 +58,7 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
 
-    fasta_extensions = [".fa",".fasta",".fna"]
+    fasta_extensions = [".fa",".fas",".fasta",".fna"]
     fastq_extensions = [".fq",".fastq",".fnq"]
         
     extensions = fasta_extensions + fastq_extensions

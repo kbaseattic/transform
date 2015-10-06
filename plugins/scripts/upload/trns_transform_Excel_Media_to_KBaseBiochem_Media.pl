@@ -65,6 +65,11 @@ $logger->info("Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
 
 my $sheets = parse_excel($In_File);
 my $Media = (grep { $_ =~ /[Mm]edia/ } keys %$sheets)[0];
+if (! defined $Media) {
+    print("Excel file must have a Sheet named 'MediaCompounds' containing the definition of the media compounds, their concentrations, and their min and max fluxes.\n");
+    $logger->warn("Excel file must have a Sheet named 'MediaCompounds' containing the definition of the media compounds, their concentrations, and their min and max fluxes.\n");
+    exit(1);
+}
 my $mediadata = parse_input_table($sheets->{$Media},[
 	["compounds",1],
 	["concentrations",0,"0.001"],

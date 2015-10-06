@@ -14,6 +14,13 @@ public class GbkParser {
     public static final int HEADER_PREFIX_LENGTH = 12;
     public static final int FEATURE_PREFIX_LENGTH = 21;
 
+    /**
+     * @param br
+     * @param params
+     * @param filename
+     * @param ret
+     * @throws Exception
+     */
     public static void parse(BufferedReader br, GbkParsingParams params, String filename, GbkCallback ret) throws Exception {
         TypeManager qual_tm = new TypeManager("qualifier_types.properties");
         String SUBHEADER_ORGANISM_TYPE = "ORGANISM";
@@ -98,14 +105,24 @@ public class GbkParser {
                         if (qual != null) qual.close();
                         qual = null;
                         loc.addFeature(feat, filename);
+                    } else if (line.indexOf("/") == 0 && line.indexOf("=") == -1 && line.indexOf("\"") == - 1) {//skips illegal features with no '=' and no quotes
+                        System.err.println("Warning parsing GBK file: ignoring field [" + line.substring(1) + "]");
+                        continue;
                     } else {
-                        if ((line.startsWith("/")) && (qual_tm.isType(line.substring(1)))) {
+
+                        if (qual == null && (line.startsWith("/")) &&//added qual = null to allow feature text which spans multiple lines and potentially starts with a '/'
+                            (!line.startsWith("/ ")) && // these are continued strings with slashes from previous line
+                            (line.indexOf("=")==-1)) {
+                            if (!qual_tm.isType(line.substring(1)))
+                                System.err.println("Warning parsing GBK file: ignoring field ["+line.substring(1)+"]");
                             line += "=";
                         }
                         int slash_pos = line.indexOf("/");
                         int equal_pos = line.indexOf("=");
                         String qual_name = null;
                         if ((slash_pos == 0) && (1 < equal_pos)) {
+                            System.out.println("debug slash " + slash_pos + "\t" + equal_pos);
+                            System.out.println("debug slash " + line);
                             qual_name = line.substring(slash_pos + 1, equal_pos).trim();
                             if (qual_name.length() == 0) {
                                 qual_name = null;
@@ -113,7 +130,7 @@ public class GbkParser {
                                 for (int i = 0; i < qual_name.length(); i++) {
                                     char ch = qual_name.charAt(i);
                                     if ((!Character.isLetterOrDigit(ch)) &&
-                                            (ch != '_')) {
+                                        (ch != '_')) {
                                         qual_name = null;
                                         break;
                                     }
@@ -123,18 +140,8 @@ public class GbkParser {
                         if (qual_name != null) {
                             line = line.substring(equal_pos + 1).trim();
                             if (qual != null) qual.close();
-                            //System.out.println(":" + line + ":");
-                            if ((line.indexOf("/function=") != -1 || line.indexOf("/note=") != -1) && line.indexOf("/protein_id=") != -1) {
-                                //System.out.println(":" + line + ":");
-                                int chop = line.indexOf("/protein_id=");
-                                line = line.substring(0, chop);
-                            }
-                            if (!line.endsWith("\""))
-                                line += "\"";
-                            if (!line.equals("\"")) {
-                                qual = new GbkQualifier(line_num, qual_name, line);
-                                feat.qualifiers.add(qual);
-                            }
+                            qual = new GbkQualifier(line_num,qual_name,line);
+                            feat.qualifiers.add(qual);
                         } else {
                             if (qual != null) {
                                 if (qual.type.equals(QUALIFIER_DB_XREF_TYPE) || qual.type.equals(QUALIFIER_TRANSLATION_TYPE)) {
@@ -160,13 +167,17 @@ public class GbkParser {
                 }
             }
         } catch (Throwable t) {
-            System.err.println("Error parsing GBK-file " + filename + " at line " + line_num);
-            throw new IllegalStateException("Error parsing GBK-file " + filename + " at line " + line_num + " (" + t.getMessage() + ")", t);
+            System.err.println("Error parsing GBK file " + filename + " at line " + line_num);
+            throw new IllegalStateException("Error parsing GBK file " + filename + " at line " + line_num + " (" + t.getMessage() + ")", t);
         }
         if ((loc != null) && (loc.isClosed())) loc.close(filename);
         if (seq != null) seq.close(filename);
     }
 
+    /**
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         final PrintWriter pw = new PrintWriter("test/parse.txt");
         final String filename = "Pseudomonas_stutzeri_DSM_10701.gb";

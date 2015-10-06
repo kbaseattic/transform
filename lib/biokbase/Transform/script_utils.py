@@ -334,7 +334,7 @@ def upload_file_to_shock(logger = stderrlogger(__file__),
     if filePath is None:
         raise Exception("No file given for upload to SHOCK!")
 
-    dataFile = open(os.path.abspath(filePath), 'r')
+    dataFile = open(os.path.abspath(filePath), 'rb')
     m = MultipartEncoder(fields={'upload': (os.path.split(filePath)[-1], dataFile)})
     header['Content-Type'] = m.content_type
 
@@ -557,8 +557,8 @@ def download_from_urls(logger = stderrlogger(__file__),
 
             # check for a shock url
             try:
-                shock_id = re.search('^http[s]://.*/node/([a-fA-f0-9\-]+).*', url).group(1)
-                shock_download_url = re.search('^(http[s]://.*)/node/[a-fA-f0-9\-]+.*', url).group(1)
+                shock_id = re.search('^https?://.*/node/([a-fA-F0-9\-]+).*', url).group(1)
+                shock_download_url = re.search('^(https?://.*)/node/[a-fA-F0-9\-]+.*', url).group(1)
             except Exception, e:
                 shock_id = None
 

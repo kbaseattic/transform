@@ -122,6 +122,7 @@ public class GenometoGbk {
 
         System.out.println(genome.getTaxonomy());
 
+        /*
         if (contigSet == null || contigSet.getContigs() == null || contigSet.getContigs().size() == 0) {  // Hack for plant transcriptomes
             System.out.println("Correction for plant transcriptomes");
             StringBuilder contigDna = new StringBuilder();
@@ -135,13 +136,13 @@ public class GenometoGbk {
                     if (len > 0)
                         dnaChars = f.getDnaSequence().toCharArray();
                 } else if (f.getDnaSequenceLength() != null) {
-                    len = (int)(long)f.getDnaSequenceLength();
+                    len = (int) (long) f.getDnaSequenceLength();
                 }
                 if (len == 0) {
                     if (f.getProteinTranslation() != null) {
                         len = f.getProteinTranslation().length() * 3;
                     } else if (f.getProteinTranslationLength() != null) {
-                        len = (int)(long)f.getProteinTranslationLength() * 3;
+                        len = (int) (long) f.getProteinTranslationLength() * 3;
                     }
                 }
                 if (len == 0)
@@ -166,67 +167,100 @@ public class GenometoGbk {
                     loc = new Tuple4<String, Long, String, Long>();
                     f.getLocation().add(loc);
                 }
-                loc.withE1(contigId).withE2((long)(contigDna.length() + flank.length() + 1)).withE3("+").withE4((long)len);
+                loc.withE1(contigId).withE2((long) (contigDna.length() + flank.length() + 1)).withE3("+").withE4((long) len);
                 contigDna.append(flank).append(dnaSeq).append(flank);
             }
             String description = "This is synthetic genome constructed by concatenation of transcript sequences.";
             contigSet = new ContigSet().withContigs(Arrays.asList(new Contig().withId(contigId)
-                    .withLength((long)contigDna.length()).withSequence(contigDna.toString())
+                    .withLength((long) contigDna.length()).withSequence(contigDna.toString())
                     .withDescription(description)));
             genome.withComplete(0L);
             PrintWriter pw = new PrintWriter(new File(workdir, "readme.txt"));
             pw.print(description);
             pw.close();
         }
-        
-        List<Contig> contigs = contigSet.getContigs();
+        */
 
-        StringBuffer out = createHeader(genome.getId(), 0, 0, "");
+        //List<Contig> contigs = contigSet.getContigs();
 
-        int donumcontigs = contigs.size();
-        if (contigs.size() > MAX_ALLOWED_CONTIGS)
-            donumcontigs = MAX_ALLOWED_CONTIGS;
+        if (contigSet != null && contigSet.getContigs() != null && contigSet.getContigs().size() != 0)
+            try {
+                List<Contig> contigs = null;
+                contigs = contigSet.getContigs();
 
+                if (contigs != null) {
+                    int donumcontigs = contigs.size();
+                    if (contigs.size() > MAX_ALLOWED_CONTIGS)
+                        donumcontigs = MAX_ALLOWED_CONTIGS;
 
-        if (contigs != null && contigs.size() > 0) {
-            for (int j = 0; j < donumcontigs; j++) {
+                    if (contigs != null && contigs.size() > 0) {
+                        for (int j = 0; j < donumcontigs; j++) {
+                            StringBuffer out = null; //createHeader(genome.getId(), 0, 0, "");
 
-                Contig curcontig = contigs.get(j);
-                //if (j > 0)
-                out = createHeader(curcontig.getId(), 1, curcontig.getLength(), curcontig.getName());
+                            Contig curcontig = contigs.get(j);
+                            //if (j > 0)
+                            out = createHeader(curcontig.getId(), 1, curcontig.getLength(), curcontig.getName());
 
-                out = createFeatures(curcontig.getId(), curcontig.getName(), out);
+                            out = createFeatures(curcontig.getId(), curcontig.getName(), out);
 
-                out.append("ORIGIN\n");
-                PrintWriter pw = outputGenbank(contigs, out, j, curcontig);
-                formatDNASequence(curcontig.getSequence(), 10, 60, pw);
-                pw.append("\n//\n");
-                pw.close();
-            }
+                            out.append("ORIGIN\n");
+                            if (contigs.size() > 0) {
 
-            if (donumcontigs < contigs.size()) {
-                final String outpath = (workdir != null ? workdir + "/" : "") + "README.txt";
-                System.out.println("writing " + outpath);
-                try {
-                    File outf = new File(outpath);
-                    PrintWriter pw = new PrintWriter(outf);
+                                out.append("ORIGIN\n");
+                                PrintWriter pw = outputGenbank(contigs, out, j, curcontig);
+                                formatDNASequence(curcontig.getSequence(), 10, 60, pw);
+                                pw.append("\n//\n");
+                                pw.close();
+                            }
 
-                    String readmestr = "The limit for downloading is 1000 contigs. This download had "+contigs.size()
-                            +" contigs, however only the first 1000 are available for downloaded.";
-                    pw.print(readmestr);
-                    pw.close();
-                } catch (FileNotFoundException e) {
-                    System.err.println("failed to write output " + outpath);
-                    e.printStackTrace();
+                            out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
+                            //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
+
+                            out.append("//\n");
+                            outputGenbank(contigs, out, j, curcontig);
+                        }
+
+                        if (donumcontigs < contigs.size()) {
+                            final String outpath = (workdir != null ? workdir + "/" : "") + "README.txt";
+                            System.out.println("writing " + outpath);
+                            try {
+                                File outf = new File(outpath);
+                                PrintWriter pw = new PrintWriter(outf);
+
+                                String readmestr = "The limit for downloading is 1000 contigs. This download had " + contigs.size()
+                                        + " contigs, however only the first 1000 are available for downloaded.";
+                                pw.print(readmestr);
+                                pw.close();
+                            } catch (FileNotFoundException e) {
+                                System.err.println("failed to write output " + outpath);
+                                e.printStackTrace();
+                            }
+                        }
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } /*else {
 
-            out.append("ORIGIN\n");
-            out.append("//\n");
+        //hack for plant transcripts
+        if (contigSet == null || contigSet.getContigs() == null || contigSet.getContigs().size() == 0) {
 
-            outputGenbank(null, out, -1, null);
-        }*/
+            genome.setComplete(0L);
+            StringBuffer out2 = createHeader(genome.getId(), 0, 0, "");
+
+            out2.append("ORIGIN\n");
+            out2.append("//\n");
+
+
+            out2 = createFeatures(null, null, out2);
+
+            outputGenbank(null, out2, -1, null);
+
+            String description = "This is non-standard GenBank file containing only genome meta-data.";
+            PrintWriter pw = new PrintWriter(new File(workdir, "readme.txt"));
+            pw.print(description);
+            pw.close();
+        }
     }
 
     /**
@@ -292,26 +326,32 @@ public class GenometoGbk {
         out.append("  ORGANISM  " + genome.getScientificName() + "\n");
         final String rawTaxonomy = genome.getTaxonomy();
 
-        String[] alltax = rawTaxonomy.split(" ");
+        if (rawTaxonomy != null) {
+            // format taxonomy string
+            String[] alltax = rawTaxonomy.split(" ");
 
-        StringBuffer formatTax = new StringBuffer("");
+            StringBuffer formatTax = new StringBuffer("");
 
-        int counter = 0;
-        int index = 0;
-        while (index < alltax.length) {
-            formatTax.append(alltax[index]);
-            if (index < alltax.length - 1)
-                formatTax.append(" ");
-            counter += alltax[index].length() + 1;
-            index++;
-            if (counter >= 65 || rawTaxonomy.length() < 80) {
-                formatTax.append("\n");
-                formatTax.append("            ");
-                counter = 0;
+            int counter = 0;
+            int index = 0;
+            while (index < alltax.length) {
+                formatTax.append(alltax[index]);
+                if (index < alltax.length - 1)
+                    formatTax.append(" ");
+                counter += alltax[index].length() + 1;
+                index++;
+
+                // split formatted taxonomy across multiple lines if
+                // at least 65 characters long
+                if (counter >= 65 || rawTaxonomy.length() < 80) {
+                    formatTax.append("\n");
+                    formatTax.append("            ");
+                    counter = 0;
+                }
             }
-        }
 
-        out.append("            " + formatTax + ".\n");
+            out.append("            " + formatTax + ".\n");
+        }
 
             /*TODO populate references in Genome objects */
             /*
@@ -338,7 +378,14 @@ public class GenometoGbk {
 
         //out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
         //out += "            NCBI review. The reference sequence was derived from AE017199.\n";
-        out.append(" COMMENT            COMPLETENESS: " + (genome.getComplete() == 1 ? "full length" : "incomplete") + ".\n");
+
+        System.out.println(genome.getNumContigs());
+
+        Long completeness = genome.getComplete();
+        if (completeness == null)
+            completeness = new Long(0);
+        out.append(" COMMENT            COMPLETENESS: " + (completeness == 1 ? "full length" : "incomplete") + ".\n");
+
         out.append("                    Exported from the DOE KnowledgeBase.\n");
 
 
@@ -350,11 +397,13 @@ public class GenometoGbk {
 
         String taxId = null;
         Map<String, Object> addprops = genome.getAdditionalProperties();
-        for (String k : addprops.keySet()) {
-            //System.out.println("addprops " + k + "\t" + addprops.get(k));
-            if (k.equals("tax_id"))
-                taxId = "" + (Integer) addprops.get(k);
+        if (addprops != null) {
+            for (String k : addprops.keySet()) {
+                //System.out.println("addprops " + k + "\t" + addprops.get(k));
+                if (k.equals("tax_id"))
+                    taxId = "" + (Integer) addprops.get(k);
 
+            }
         }
 
         if (taxId != null)
@@ -380,7 +429,7 @@ public class GenometoGbk {
             //System.out.println(location);
 
             //match features to their contig
-            if (location.get(0).getE1().equals(contig_name) || location.get(0).getE1().equals(contig_id)) {
+            if ((contig_id == null && contig_name == null) || location.get(0).getE1().equals(contig_name) || location.get(0).getE1().equals(contig_id)) {
                 //"location":[["kb|g.0.c.1",3378378,"+",1368]]
                 //if (curcontig.getName().equals("NC_009926")) {
                     /*System.out.println("match feature to contig " + j + "\t" + location.get(0).getE1() + "\t" +
@@ -403,9 +452,10 @@ public class GenometoGbk {
                 }
 
                 String function = cur.getFunction();
-
                 String[] allfunction = {""};
                 if (function != null) {
+                    function = function.replace('\"', ' ');
+
                     final int ind1 = function.indexOf(" /protein_id=");
                     if (ind1 != -1)
                         function = function.substring(0, ind1);
@@ -455,10 +505,10 @@ public class GenometoGbk {
                     if (cur.getType().equals("CDS")) {
                         final String str = "                     /protein_id=\"" + id + "\"\n";
                         out.append(str);
-                        if (formatNote.indexOf("two component transcriptional regulator") != -1) {
+                        /*if (formatNote.indexOf("two component transcriptional regulator") != -1) {
                             System.out.println("added :" + str + ":");
                             System.out.println("added :" + function + ":");
-                        }
+                        }*/
                     }
 
                     List<String> aliases = cur.getAliases();
@@ -604,7 +654,6 @@ public class GenometoGbk {
         System.out.println("got Genome in " + result + " s");
 
         genome = data1.asClassInstance(Genome.class);
-        String contigref = genome.getContigsetRef();
 
         GetObjectInfoNewParams params = new GetObjectInfoNewParams();
         params.setObjects(objectIds);
@@ -626,44 +675,46 @@ public class GenometoGbk {
         System.out.println("got Genome object size " + result2 + "M");
 
         List<ObjectIdentity> objectIds2 = new ArrayList<ObjectIdentity>();
+        String contigref = genome.getContigsetRef();
         ObjectIdentity contigobj = new ObjectIdentity();
-        contigobj.setRef(contigref);
-        objectIds2.add(contigobj);
-        System.out.println("got contigref " + contigref);
-        try {
+        if (contigref != null) {
+            contigobj.setRef(contigref);
+            objectIds2.add(contigobj);
+            System.out.println("got contigref " + contigref);
+            try {
 
-            long startg2 = System.currentTimeMillis();
-            List<ObjectData> lod2 = wc.getObjects(objectIds2);
-            long endg2 = System.currentTimeMillis();
-            final UObject data2 = lod2.get(0).getData();
-            final double doub3 = (double) (endg2 - startg2) / (double) 1000;
-            df = DecimalFormat.getInstance();
-            df.setMinimumFractionDigits(2);
-            df.setMaximumFractionDigits(2);
-            df.setRoundingMode(RoundingMode.DOWN);
-            String result3 = df.format(doub3);
+                long startg2 = System.currentTimeMillis();
+                List<ObjectData> lod2 = wc.getObjects(objectIds2);
+                long endg2 = System.currentTimeMillis();
+                final UObject data2 = lod2.get(0).getData();
+                final double doub3 = (double) (endg2 - startg2) / (double) 1000;
+                df = DecimalFormat.getInstance();
+                df.setMinimumFractionDigits(2);
+                df.setMaximumFractionDigits(2);
+                df.setRoundingMode(RoundingMode.DOWN);
+                String result3 = df.format(doub3);
 
-            System.out.println("got ContigSet in " + result3 + " s");
+                System.out.println("got ContigSet in " + result3 + " s");
 
-            contigSet = data2.asClassInstance(ContigSet.class);
+                contigSet = data2.asClassInstance(ContigSet.class);
 
-            GetObjectInfoNewParams params2 = new GetObjectInfoNewParams();
-            params2.setObjects(objectIds2);
-            params2.setIncludeMetadata(1L);
-            //System.out.println(Instrumentation.getObjectSize(contigSet));
-            List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> oinfo2 = wc.getObjectInfoNew(params2);
-            Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>> tup2 = oinfo2.get(0);
+                GetObjectInfoNewParams params2 = new GetObjectInfoNewParams();
+                params2.setObjects(objectIds2);
+                params2.setIncludeMetadata(1L);
+                //System.out.println(Instrumentation.getObjectSize(contigSet));
+                List<Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>>> oinfo2 = wc.getObjectInfoNew(params2);
+                Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String, String>> tup2 = oinfo2.get(0);
 
-            final double doub4 = (double) tup2.getE10() / (double) (1024 * 1024);
-            df = DecimalFormat.getInstance();
-            df.setMinimumFractionDigits(2);
-            df.setMaximumFractionDigits(2);
-            df.setRoundingMode(RoundingMode.DOWN);
-            String result4 = df.format(doub4);
+                final double doub4 = (double) tup2.getE10() / (double) (1024 * 1024);
+                df = DecimalFormat.getInstance();
+                df.setMinimumFractionDigits(2);
+                df.setMaximumFractionDigits(2);
+                df.setRoundingMode(RoundingMode.DOWN);
+                String result4 = df.format(doub4);
 
-            System.out.println("got ContigSet object number " + contigSet.getContigs().size() + ", size " + result4 + "M");
-        } catch (Exception e) {
-            System.err.println("ContigSet not found in workspace.");
+                System.out.println("got ContigSet object number " + contigSet.getContigs().size() + ", size " + result4 + "M");
+            } catch (Exception e) {
+                System.err.println("ContigSet not found in workspace.");
 
             /*String outputfile = args[0] + "_ContigSet.json";
             try {
@@ -689,6 +740,7 @@ public class GenometoGbk {
             File loadContigs = new File(args[1]);
             contigSet = mapper.readValue(loadContigs, ContigSet.class);
             */
+            }
         }
 
     }
@@ -828,6 +880,7 @@ public class GenometoGbk {
      * @return
      */
     public StringBuffer formatString(String s, int one, int two) {
+        s = s.replace("\"", "");
         //StringBuilder out = new StringBuilder("");
         StringBuffer out = new StringBuffer("");
         boolean first = true;
@@ -909,7 +962,7 @@ public class GenometoGbk {
         }
         if (out.charAt(out.length() - 1) == (' '))
             out.deleteCharAt(out.length() - 1);
-
+        out.append("\n");
         return out;
     }
 
@@ -939,7 +992,9 @@ public class GenometoGbk {
                     out.append(" ");
             }
         }
+        out.append("\n");
     }
+
     /**
      * @param args
      */

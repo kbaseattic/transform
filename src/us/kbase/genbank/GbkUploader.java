@@ -87,7 +87,7 @@ public class GbkUploader {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
-                .withSource("KBase user upload").withSourceId("noid");
+                .withSource("KBase user upload").withSourceId(id);
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
         final Map<String, Integer> generatedFeatureIds = new HashMap<String, Integer>();
@@ -362,7 +362,7 @@ public class GbkUploader {
             }
             contigSet = new ContigSet().withContigs(new ArrayList<Contig>(contigMap.values()))
                     .withId(contigSetId).withMd5("md5").withName(id)
-                    .withSource("User uploaded data").withSourceId("noid").withType("Organism");
+                    .withSource("User uploaded data").withSourceId(id).withType("Organism");
 
             long numcontig = 0;
             if (contigMap != null) {
@@ -417,7 +417,7 @@ public class GbkUploader {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
                 .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
-                .withSource("KBase user upload").withSourceId("noid");
+                .withSource("KBase user upload").withSourceId(id);
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
         final Map<String, Integer> generatedFeatureIds = new HashMap<String, Integer>();

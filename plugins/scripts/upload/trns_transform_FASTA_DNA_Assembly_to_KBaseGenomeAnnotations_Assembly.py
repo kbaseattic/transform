@@ -291,7 +291,7 @@ def upload_assembly(shock_service_url = None,
                  "provenance":assembly_provenance}]}) 
             assembly_not_saved = False 
         except biokbase.workspace.client.ServerError as err: 
-            print "ASSEMBLY SAVE FAILED ON genome " + str(assembly_name) + " ERROR: " + err 
+            print "ASSEMBLY SAVE FAILED ON genome " + str(assembly_name) + " ERROR: " + str(err) 
             raise 
         except: 
             print "ASSEMBLY SAVE FAILED ON genome " + str(assembly_name) + " GENERAL_EXCEPTION: " + str(sys.exc_info()[0]) 

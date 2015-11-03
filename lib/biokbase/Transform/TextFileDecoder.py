@@ -7,8 +7,17 @@ def open_textdecoder(file=None, codec=None, chunkSize=1024):
     fp = open(file, 'rb')
     return TextFileDecoder(fp, codec, chunkSize)
 
+# TODO look into inheriting from a stream for this class
 class TextFileDecoder(object):
+    """Class that wraps a file object and handles text decoding while
+       adjusting the file pointer to relative byte positions after
+       each read operation.  Convenience methods for finding a string
+       in the file are also included."""
+
     def __init__(self, file=None, codec=None, chunkSize=1024):
+        """Constructor accepts a file object, a codec string, and an
+           optional chunk size used when reading bytes from the file."""
+
         self._fp = file
         self._codec = codec
         
@@ -16,9 +25,17 @@ class TextFileDecoder(object):
         self._chunkSize = chunkSize
     
     def close(self):
+        """Calls file object close() method"""
         self._fp.close()
 
     def readline(self):
+        """Reads chunks of bytes from the file, decoding each chunk until
+           EOL is found.  Once EOL is found, the file pointer is set to
+           the byte immediately following the EOL character, and the decoded
+           text of the line is returned.
+           If the end of the file is reached first, the file read() method
+           will raise an IOError."""
+
         startPosition = self._fp.tell()
 
         chunkString = str()       
@@ -41,6 +58,10 @@ class TextFileDecoder(object):
             chunkString += nextChunk
                     
     def read(self, size):
+        """Reads a fixed number of bytes from the file and decodes them,
+           resetting the file pointer to the byte immediately following the
+           last decoded character and returning the decoded text."""
+
         startPosition = self._fp.tell()
 
         byteString = self._fp.read(size)
@@ -56,13 +77,22 @@ class TextFileDecoder(object):
         return charString
 
     def tell(self):
+        """Calls file tell() method."""
         return self._fp.tell()
 
     def seek(self, position, start=0):
+        """Calls file seek() method."""
         self._fp.seek(position, start)
 
-
-    def find(self, s, startPosition=0, lastPosition=-1, firstByte=False):        
+    def find(self, s, startPosition=0, lastPosition=-1, firstByte=False):
+        """Find a string within the file, optionally constrained by a start
+           and end byte position in the file.  The firstByte option is a 
+           switch that returns by default the byte immediately following
+           the found string so that it can be read in.  If firstByte is True,
+           the position returned will be the byte immmediately preceding
+           the found string.  If the string is not found, returns -1.
+           The file pointer is reset to the position it was at before this
+           method was called before returning."""
         filePosition = self._fp.tell()
         self._fp.seek(0,2)
         finalPosition = self._fp.tell()
@@ -138,6 +168,8 @@ class TextFileDecoder(object):
 
 
     def rfind(self, s, lastPosition=-1, startPosition=0, firstByte=False):
+        """Same behavior as find method above, but searches in reverse from
+           the end of the file or the last file position provided."""
         filePosition = self._fp.tell()
         self._fp.seek(0,2)
         finalPosition = self._fp.tell()

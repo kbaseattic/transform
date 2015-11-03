@@ -364,7 +364,7 @@ def upload_genome(shock_service_url=None,
                     next_line = metadata_lines[metadata_line_counter + definition_loop_counter]
                     while (next_line.startswith("            ")) and ((metadata_line_counter + definition_loop_counter)<= num_metadata_lines) :
                         definition = "%s %s" % (definition,next_line[12:])
-                        defintion_loop_counter += 1
+                        definition_loop_counter += 1
                         if ((metadata_line_counter + definition_loop_counter)<= num_metadata_lines):
                             next_line = metadata_lines[metadata_line_counter + definition_loop_counter]
                         else:
@@ -624,21 +624,21 @@ def upload_genome(shock_service_url=None,
                 end_pos= re.sub('<', '', end_pos)
                 end_pos= re.sub('>', '', end_pos)
 
-                if int(start_pos) > int(end_pos):
-                    fasta_file_handle.close() 
-                    print "FEATURE TEXT: " + feature_text
-                    raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s is bigger than End coordinate %s. Should be ascending order." % (accession, str(start_pos), str(end_pos)))
-
-                if (int(start_pos) < last_coordinate or int(end_pos) < last_coordinate) and ("trans_splicing" not in feature_keys_present_dict) :
-                    fasta_file_handle.close()
-                    raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s and/or End coordinate %s is larger than the previous coordinate %s within this feature. Should be ascending order since this is not a trans_splicing feature." % (accession, str(start_pos), str(end_pos),str(last_coordinate)))
-
-                if (int(start_pos) > contig_length) or (int(end_pos) > contig_length):
-                    fasta_file_handle.close() 
-                    raise Exception("The genbank record %s has coordinates (start: %s , end: %s) that are longer than the sequence length %s." % \
-                                    (accession,str(start_pos), int(end_pos),str(contig_length)))
-
                 if (represents_int(start_pos) and represents_int(end_pos)):
+                    if int(start_pos) > int(end_pos):
+                        fasta_file_handle.close() 
+                        print "FEATURE TEXT: " + feature_text
+                        raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s is bigger than End coordinate %s. Should be ascending order." % (accession, str(start_pos), str(end_pos)))
+
+                    if (int(start_pos) < last_coordinate or int(end_pos) < last_coordinate) and ("trans_splicing" not in feature_keys_present_dict) :
+                        fasta_file_handle.close()
+                        raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s and/or End coordinate %s is larger than the previous coordinate %s within this feature. Should be ascending order since this is not a trans_splicing feature." % (accession, str(start_pos), str(end_pos),str(last_coordinate)))
+
+                    if (int(start_pos) > contig_length) or (int(end_pos) > contig_length):
+                        fasta_file_handle.close() 
+                        raise Exception("The genbank record %s has coordinates (start: %s , end: %s) that are longer than the sequence length %s." % \
+                                        (accession,str(start_pos), int(end_pos),str(contig_length)))
+
                     segment_length = (int(end_pos) - int(start_pos)) + 1
                     dna_sequence_length += segment_length
                     temp_sequence = sequence_part[(int(start_pos)-1):int(end_pos)] 

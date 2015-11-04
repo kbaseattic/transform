@@ -569,6 +569,8 @@ def upload_genome(shock_service_url=None,
             #split the feature into the key value pairs. "/" denotes start of a new key value pair.
             feature_key_value_pairs_list = feature_text.split("                     /")
             feature_header = feature_key_value_pairs_list.pop(0)
+            if len(feature_header[:5].strip()) != 0:
+                continue
             coordinates_info = feature_header[21:] 
             feature_type = feature_header[:21] 
             quality_warnings = list() #list of warnings about the feature. Can do more with this at a later time.
@@ -597,10 +599,12 @@ def upload_genome(shock_service_url=None,
             coordinates_info = re.sub( '\s+', '', coordinates_info ).strip()
             coordinates_list = list()
             apply_complement_to_all = False
-            if coordinates_info.startswith("complement"): 
+            need_to_reverse_locations = False
+            if coordinates_info.startswith("complement") and coordinates_info.endswith(")"): 
                 apply_complement_to_all = True
+                need_to_reverse_locations = True
                 coordinates_info = coordinates_info[complement_len:-1]
-            if coordinates_info.startswith("join"): 
+            if coordinates_info.startswith("join") and coordinates_info.endswith(")"):
                 coordinates_info = coordinates_info[join_len:-1]
             coordinates_list = coordinates_info.split(",")
             last_coordinate = 0
@@ -609,7 +613,7 @@ def upload_genome(shock_service_url=None,
             locations = list()#list of location objects
             for coordinates in coordinates_list:
                 apply_complement_to_current = False
-                if coordinates.startswith("complement"): 
+                if coordinates.startswith("complement") and coordinates.endswith(")"): 
                     apply_complement_to_current = True 
                     coordinates = coordinates[complement_len:-1]
                 try:
@@ -630,9 +634,10 @@ def upload_genome(shock_service_url=None,
                         print "FEATURE TEXT: " + feature_text
                         raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s is bigger than End coordinate %s. Should be ascending order." % (accession, str(start_pos), str(end_pos)))
 
-                    if (int(start_pos) < last_coordinate or int(end_pos) < last_coordinate) and ("trans_splicing" not in feature_keys_present_dict) :
-                        fasta_file_handle.close()
-                        raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s and/or End coordinate %s is larger than the previous coordinate %s within this feature. Should be ascending order since this is not a trans_splicing feature." % (accession, str(start_pos), str(end_pos),str(last_coordinate)))
+#CANT COUNT ON THEM BEING IN ASCENDING POSITIONAL ORDER
+#                    if (int(start_pos) < last_coordinate or int(end_pos) < last_coordinate) and ("trans_splicing" not in feature_keys_present_dict) :
+#                        fasta_file_handle.close()
+#                        raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s and/or End coordinate %s is larger than the previous coordinate %s within this feature. Should be ascending order since this is not a trans_splicing feature." % (accession, str(start_pos), str(end_pos),str(last_coordinate)))
 
                     if (int(start_pos) > contig_length) or (int(end_pos) > contig_length):
                         fasta_file_handle.close() 
@@ -656,14 +661,14 @@ def upload_genome(shock_service_url=None,
                 else:
                     #no valid coordinates
                     fasta_file_handle.close() 
-                    raise Exception("The genbank record %s containes coordinates that are not valid number(s)." % (accession)) 
+                    raise Exception("The genbank record %s containes coordinates that are not valid number(s).  Feature text is : %s" % (accession,feature_text)) 
 
                 last_coordinate = int(end_pos)
             
             dna_sequence = dna_sequence.upper()
 
             if len(locations) > 0:
-                if apply_complement_to_all and (len(locations) > 1):
+                if need_to_reverse_locations and (len(locations) > 1):
                     locations.reverse()
             feature_object["locations"]=locations
 

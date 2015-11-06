@@ -117,6 +117,7 @@ def upload_assembly(shock_service_url = None,
 
     input_file_handle = TextFileDecoder.open_textdecoder(fasta_file_name, 'ISO-8859-1')    
     fasta_header = None
+    fasta_description = None
     sequence_list = []
     fasta_dict = dict()
     first_header_found = False
@@ -136,7 +137,7 @@ def upload_assembly(shock_service_url = None,
 
     current_line = input_file_handle.readline()
     while current_line != None and len(current_line) > 0:
-        #        print "CURRENT LINE: " + current_line
+#        print "CURRENT LINE: " + current_line
         if (current_line[0] == ">"):
             # found a header line
             # Wrap up previous fasta sequence
@@ -174,6 +175,8 @@ def upload_assembly(shock_service_url = None,
                 contig_set_md5_list.append(contig_md5)
 
                 contig_dict["is_circular"] = "Unknown"
+                if fasta_description is not None: 
+                    contig_dict["description"] = fasta_description
                 if contig_information_dict is not None:
                     if contig_information_dict[fasta_key] is not None:
                         if contig_information_dict[fasta_key]["definition"] is not None:
@@ -194,13 +197,19 @@ def upload_assembly(shock_service_url = None,
 #               sequence_start = input_file_handle.tell()               
             sequence_start = 0            
 
-            fasta_header = current_line.replace('>','')
+            fasta_header_line = current_line.strip().replace('>','')
+            try:
+                fasta_header , fasta_description = fasta_header_line.split(' ',1)
+            except:
+                fasta_header = fasta_header_line
+                fasta_description = None
         else:
             if sequence_start == 0:
                 sequence_start = input_file_handle.tell() - len(current_line) 
             sequence_list.append(current_line)
             sequence_exists = True
         current_line = input_file_handle.readline()
+#        print "ENDING CURRENT LINE: " + current_line
 
     # wrap up last fasta sequence
     if (not sequence_exists) and first_header_found: 
@@ -236,6 +245,8 @@ def upload_assembly(shock_service_url = None,
         contig_dict["name"] = fasta_key
 
         contig_dict["is_circular"] = "Unknown"
+        if fasta_description is not None:
+            contig_dict["description"] = fasta_description
         if contig_information_dict is not None: 
             if contig_information_dict[fasta_key] is not None:
                 if contig_information_dict[fasta_key]["definition"] is not None:

@@ -88,8 +88,10 @@ class TransformVirtualEnv(object):
         for root, _, files in os.walk(scripts_dir):
             for file_ in files:
                 filepath = os.path.join(root, file_)
-                print("copy from {0} {1}".format(filepath, bin_dir))
-                shutil.copy(filepath, bin_dir)
+                symlink_to = os.path.join(os.path.relpath(root, bin_dir), file_)
+                symlink_from = os.path.join(bin_dir, file_)
+                print("symlink from {0} {1}".format(symlink_to, symlink_from))
+                os.symlink(symlink_to, symlink_from)
                 self._make_executable_for_all(os.path.join(bin_dir, file_))
                 self._make_wrapper(bin_dir, file_)
 

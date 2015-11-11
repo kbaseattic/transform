@@ -94,7 +94,6 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
                 stdout, stderr = filtering.communicate()
                 if filtering.returncode != 0:
                     raise Exception("sed execution failed for the file {0}".format(filePath))
-                
             if (check_interleavedPE(filePath) == 1):
                 arguments = ["fastQValidator", "--file", filePath, "--maxErrors", "10", "--disableSeqIDCheck"]      
             else :

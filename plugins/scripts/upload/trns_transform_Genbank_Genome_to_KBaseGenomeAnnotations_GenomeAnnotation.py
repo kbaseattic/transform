@@ -21,7 +21,7 @@ from Bio.Alphabet import IUPAC, generic_dna
 
 # KBase imports
 import biokbase.Transform.script_utils as script_utils
-import TextFileDecoder
+import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import biokbase.workspace.client 
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
 
@@ -43,6 +43,8 @@ def make_scientific_names_lookup(taxon_names_file=None):
     else:
         raise Exception("The taxon names file does not exist") 
     return scientific_names_lookup
+
+
 
 
 def insert_newlines(s, every): 
@@ -68,12 +70,12 @@ def upload_genome(shock_service_url=None,
                   #handle_service_url=None, 
                   #output_file_name=None, 
                   #input_fasta_directory=None, 
-                  working_directory=None, 
+                  input_directory=None, 
                   shock_id=None, handle_id=None, 
                   #input_file_name=None, 
                   #fasta_reference_only=False,
-                  wsname=None,
-                  wsurl=None,
+                  workspace_name=None,
+                  workspace_service_url=None,
                   genome_list_file=None,
                   taxon_wsname=None,
                   taxon_names_file=None,
@@ -100,16 +102,16 @@ def upload_genome(shock_service_url=None,
         logger = script_utils.stderrlogger(__file__)
 
 
-    scientific_names_lookup = make_scientific_names_lookup(taxon_names_file)
+#    scientific_names_lookup = make_scientific_names_lookup(taxon_names_file)
 
-    ws_client = biokbase.workspace.client.Workspace(wsurl)
+    ws_client = biokbase.workspace.client.Workspace(workspace_service_url)
  
-    workspace_object = ws_client.get_workspace_info({'workspace':wsname}) 
+    workspace_object = ws_client.get_workspace_info({'workspace':workspace_name}) 
 
     workspace_id = workspace_object[0] 
     workspace_name = workspace_object[1] 
  
-    taxon_ws_client = biokbase.workspace.client.Workspace(wsurl)
+    taxon_ws_client = biokbase.workspace.client.Workspace(workspace_service_url)
     taxon_workspace_object = ws_client.get_workspace_info({'workspace':taxon_wsname}) 
 
     taxon_workspace_id = taxon_workspace_object[0] 
@@ -119,7 +121,7 @@ def upload_genome(shock_service_url=None,
  
     valid_extensions = [".gbff",".gbk",".gb",".genbank"] 
  
-    files = os.listdir(working_directory) 
+    files = os.listdir(os.path.abspath(input_directory)) 
     print "FILES : " + str(files)
     genbank_files = [x for x in files if os.path.splitext(x)[-1] in valid_extensions] 
  
@@ -128,7 +130,7 @@ def upload_genome(shock_service_url=None,
   
     logger.info("Found {0}".format(str(genbank_files))) 
  
-    input_file_name = os.path.join(working_directory,genbank_files[0]) 
+    input_file_name = os.path.join(input_directory,genbank_files[0]) 
  
     if len(genbank_files) > 1: 
         # TODO if multiple files - CONCATENATE FILES HERE (sort by name)? OR Change how the byte coordinates work.
@@ -183,9 +185,17 @@ def upload_genome(shock_service_url=None,
 
     tax_id = 0;
     if taxon_reference is None:
-        if organism in scientific_names_lookup: 
-            tax_id = scientific_names_lookup[organism]
-            taxon_object_name = "%s_taxon" % (str(tax_id)) 
+        #Get the taxon_lookup_object
+        taxon_lookup = ws_client.get_object( {'workspace':taxon_wsname,
+                                              'id':"taxon_lookup"})
+        if organism[0:3] in taxon_lookup['data']['taxon_lookup']:
+            if organism in taxon_lookup['data']['taxon_lookup'][organism[0:3]]:
+                tax_id = taxon_lookup['data']['taxon_lookup'][organism[0:3]][organism] 
+                taxon_object_name = "%s_taxon" % (str(tax_id))
+            else:
+                genomes_without_taxon_refs.append(organism)
+                taxon_object_name = "unknown_taxon"
+                genome_annotation['notes'] = "Unable to find taxon for this organism : %s ." % (organism ) 
         else: 
             genomes_without_taxon_refs.append(organism)
             taxon_object_name = "unknown_taxon"
@@ -238,7 +248,10 @@ def upload_genome(shock_service_url=None,
     genbank_metadata_objects = dict() #the data structure for holding the top level metadata information of each genbank file
     contig_information_dict = dict() #the data structure for holding the top level metadata information of each genbank file for the stuff needed for making the assembly.
 
-    genbank_division_set = {'PRI','ROD','MAM','VRT','INV','PLN','BCT','VRL','PHG','SYN','UNA','EST','PAT','STS','GSS','HTG','HTC','ENV'}
+    #HAD TO ADD "CON" as a possible division set.  Even though that does not exist according to this documentation:
+    #http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html#GenBankDivisionB
+    #Found this http://www.ncbi.nlm.nih.gov/Web/Newsltr/Fall99/contig.html , oddly suggests no sequence should be associated with this.
+    genbank_division_set = {'PRI','ROD','MAM','VRT','INV','PLN','BCT','VRL','PHG','SYN','UNA','EST','PAT','STS','GSS','HTG','HTC','ENV','CON'}
 
     #Make the Fasta file for the sequences to be written to
     os.makedirs("temp_fasta_file_dir")
@@ -279,6 +292,7 @@ def upload_genome(shock_service_url=None,
     #integers used for stripping text 
     complement_len = len("complement(")
     join_len = len("join(")
+    order_len = len("order(")
     
     for byte_coordinates in genbank_file_boundaries: 
         genbank_file_handle.seek(byte_coordinates[0]) 
@@ -348,7 +362,9 @@ def upload_genome(shock_service_url=None,
 
         except ValueError:
             fasta_file_handle.close()
-            raise ValueError("Incorrect date format, should be 'DD-MON-YYYY'")
+            exception_string = "Incorrect date format, should be 'DD-MON-YYYY' , attempting to parse the following as a date: %s , the locus line elements: %s " % (date_text, ":".join(locus_line_info))
+#            raise ValueError("Incorrect date format, should be 'DD-MON-YYYY' , attempting to parse the following as a date:" + date_text)
+            raise ValueError(exception_string)
             sys.exit(1)
 
         genbank_metadata_objects[accession]["external_source_origination_date"] = date_text
@@ -606,6 +622,8 @@ def upload_genome(shock_service_url=None,
                 coordinates_info = coordinates_info[complement_len:-1]
             if coordinates_info.startswith("join") and coordinates_info.endswith(")"):
                 coordinates_info = coordinates_info[join_len:-1]
+            if coordinates_info.startswith("order") and coordinates_info.endswith(")"):
+                coordinates_info = coordinates_info[order_len:-1]
             coordinates_list = coordinates_info.split(",")
             last_coordinate = 0
             dna_sequence_length = 0
@@ -968,12 +986,12 @@ def upload_genome(shock_service_url=None,
         fasta_working_dir = str(os.getcwd()) + "/temp_fasta_file_dir"
         assembly.upload_assembly(shock_service_url = shock_service_url,
                                  #                  handle_service_url = args.handle_service_url,
-                                 working_directory = fasta_working_dir,
+                                 input_directory = fasta_working_dir,
                                  #                  shock_id = args.shock_id,
                                  #                  handle_id = args.handle_id,
                                  #                  input_mapping = args.input_mapping, 
-                                 wsname = wsname,
-                                 wsurl = wsurl,
+                                 workspace_name = workspace_name,
+                                 workspace_service_url = workspace_service_url,
                                  taxon_reference = taxon_id,
                                  assembly_name = "%s_assembly" % (core_genome_name),
                                  source = source_name,
@@ -1435,12 +1453,11 @@ if __name__ == "__main__":
 #    parser.add_argument('--input_file_name', 
 #                        help="genbank file", 
 #                        nargs='?', required=True)
-#    parser.add_argument('--taxon_names_file', nargs='?', help='file with scientific name to taxon id mapping information in it.', required=True)
-    parser.add_argument('--wsname', nargs='?', help='workspace name to populate', required=True)
-    parser.add_argument('--taxon_wsname', nargs='?', help='workspace name with taxon in it, assumes the same wsurl', required=True)
-    parser.add_argument('--taxon_names_file', nargs='?', help='file with scientific name to taxon id mapping information in it.', required=True)
+    parser.add_argument('--workspace_name', nargs='?', help='workspace name to populate', required=True)
+    parser.add_argument('--taxon_wsname', nargs='?', help='workspace name with taxon in it, assumes the same workspace_service_url', required=False, default='ReferenceTaxons2')
+    parser.add_argument('--taxon_names_file', nargs='?', help='file with scientific name to taxon id mapping information in it.', required=False, default="/homes/oakland/jkbaumohl/Genome_Spec_files/Taxonomy/names.dmp")
     parser.add_argument('--taxon_reference', nargs='?', help='ONLY NEEDED IF PERSON IS DOING A CUSTOM TAXON NOT REPRESENTED IN THE NCBI TAXONOMY TREE', required=False)
-    parser.add_argument('--wsurl', action='store', type=str, nargs='?', required=True) 
+    parser.add_argument('--workspace_service_url', action='store', type=str, nargs='?', required=True) 
 
     parser.add_argument('--core_genome_name', 
                         help="genbank file", 
@@ -1450,15 +1467,15 @@ if __name__ == "__main__":
 #                        nargs='?', required=False) 
     parser.add_argument('--source', 
                         help="data source : examples Refseq, Genbank, Pythozyme, Gramene, etc", 
-                        nargs='?', required=True) 
+                        nargs='?', required=False, default="Genbank") 
     parser.add_argument('--type', 
                         help="data source : examples Reference, Representative, User Upload", 
-                        nargs='?', required=True) 
+                        nargs='?', required=False, default="User upload") 
 
 
 #    parser.add_argument('--genome_list_file', action='store', type=str, nargs='?', required=True) 
 
-    parser.add_argument('--working_directory', 
+    parser.add_argument('--input_directory', 
                         help="directory the genbank file is in", 
                         action='store', type=str, nargs='?', required=True)
 #    parser.add_argument('--output_file_name', 
@@ -1485,12 +1502,12 @@ if __name__ == "__main__":
                       #                  handle_service_url = args.handle_service_url, 
                       #                  output_file_name = args.output_file_name, 
                       #                      input_file_name = args.input_file_name, 
-                      working_directory = args.working_directory, 
+                      input_directory = args.input_directory, 
                       #                  shock_id = args.shock_id, 
                       #                  handle_id = args.handle_id,
                       #                  input_mapping = args.input_mapping,
-                      wsname = args.wsname,
-                      wsurl = args.wsurl,
+                      workspace_name = args.workspace_name,
+                      workspace_service_url = args.workspace_service_url,
                       taxon_wsname = args.taxon_wsname,
                       taxon_names_file = args.taxon_names_file,
                       taxon_reference = args.taxon_reference,

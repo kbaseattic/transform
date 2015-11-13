@@ -1,0 +1,46 @@
+{
+    "script_name": "trns_transform_Genbank_Genome_to_KBaseGenomeAnnotations_GenomeAnnotation.py", 
+    "script_type": "upload",
+    "external_type": "Genbank.Genome",
+    "kbase_type": "KBaseGenomeAnnotations.GenomeAnnotation",
+    "user_description": "",
+    "developer_description": "",
+    "url_mapping":["Genbank.Genome"],
+    "handler_options": {        
+        "must_own_validation": true,
+        "must_own_saving_to_workspace": true,
+        "max_runtime": 360,
+        "required_fields": 
+        [
+            "input_directory",
+            "workspace_name",
+            "workspace_service_url",
+            "working_directory",
+            "object_name"
+        ], 
+        "optional_fields": 
+        [
+            "contigset_object_name",
+            "shock_service_url",
+            "source"
+        ],
+        
+        "input_mapping":{"Genbank.Genome":"input_directory"},
+        "custom_options": []
+    },
+    "user_options": [
+        { 
+            "name": "object_name",
+            "type": "string",
+            "required": false,
+            "help": "The name you would like to use to reference this GenomeAnnotation.  If not supplied, will use the Taxon Id and the data source to determine the name."
+        },
+        { 
+            "name": "assembly_object_name",
+            "type": "string",
+            "required": false,
+            "help": "If not supplied, will use the GenomeAnnotation name."
+        }
+        ],
+    "user_option_groups": []
+}

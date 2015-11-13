@@ -78,7 +78,7 @@ def upload_genome(shock_service_url=None,
                   workspace_service_url=None,
                   genome_list_file=None,
                   taxon_wsname=None,
-                  taxon_names_file=None,
+#                  taxon_names_file=None,
                   taxon_reference = None,
                   #              fasta_file_directory=None,
                   core_genome_name=None,
@@ -1455,7 +1455,7 @@ if __name__ == "__main__":
 #                        nargs='?', required=True)
     parser.add_argument('--workspace_name', nargs='?', help='workspace name to populate', required=True)
     parser.add_argument('--taxon_wsname', nargs='?', help='workspace name with taxon in it, assumes the same workspace_service_url', required=False, default='ReferenceTaxons2')
-    parser.add_argument('--taxon_names_file', nargs='?', help='file with scientific name to taxon id mapping information in it.', required=False, default="/homes/oakland/jkbaumohl/Genome_Spec_files/Taxonomy/names.dmp")
+#    parser.add_argument('--taxon_names_file', nargs='?', help='file with scientific name to taxon id mapping information in it.', required=False, default="/homes/oakland/jkbaumohl/Genome_Spec_files/Taxonomy/names.dmp")
     parser.add_argument('--taxon_reference', nargs='?', help='ONLY NEEDED IF PERSON IS DOING A CUSTOM TAXON NOT REPRESENTED IN THE NCBI TAXONOMY TREE', required=False)
     parser.add_argument('--workspace_service_url', action='store', type=str, nargs='?', required=True) 
 
@@ -1509,7 +1509,7 @@ if __name__ == "__main__":
                       workspace_name = args.workspace_name,
                       workspace_service_url = args.workspace_service_url,
                       taxon_wsname = args.taxon_wsname,
-                      taxon_names_file = args.taxon_names_file,
+#                      taxon_names_file = args.taxon_names_file,
                       taxon_reference = args.taxon_reference,
                       core_genome_name = args.core_genome_name,
                       source = args.source,

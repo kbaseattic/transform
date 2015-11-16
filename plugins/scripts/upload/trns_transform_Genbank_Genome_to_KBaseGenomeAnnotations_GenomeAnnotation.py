@@ -119,7 +119,7 @@ def upload_genome(shock_service_url=None,
  
     logger.info("Scanning for Genbank Format files.") 
  
-    valid_extensions = [".gbff",".gbk",".gb",".genbank"] 
+    valid_extensions = [".gbff",".gbk",".gb",".genbank",".dat"] 
  
     files = os.listdir(os.path.abspath(input_directory)) 
     print "FILES : " + str(files)

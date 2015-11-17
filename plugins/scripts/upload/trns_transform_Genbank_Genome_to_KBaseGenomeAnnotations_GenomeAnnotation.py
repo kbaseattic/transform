@@ -1449,6 +1449,9 @@ def upload_genome(shock_service_url=None,
     genome_annotation['taxon_ref'] = taxon_id
     genome_annotation['assembly_ref'] =  assembly_reference 
     genome_annotation['genome_annotation_id'] = genome_annotation_object_name
+    genome_annotation['external_source'] = source_name
+    genome_annotation['external_source_id'] = ",".join(locus_name_order)
+    genome_annotation['external_source_origination_date'] = genbank_time_string
 #    print "Genome Annotation id %s" % (genome_annotation['genome_annotation_id'])
  
 #    while genome_annotation_not_saved:

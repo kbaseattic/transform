@@ -15,12 +15,10 @@
             "input_directory",
             "workspace_name",
             "workspace_service_url",
-            "working_directory",
-            "object_name"
+            "working_directory"
         ], 
         "optional_fields": 
         [
-            "contigset_object_name",
             "shock_service_url",
             "source"
         ],
@@ -35,11 +33,11 @@
             "required": false,
             "help": "The name you would like to use to reference this GenomeAnnotation.  If not supplied, will use the Taxon Id and the data source to determine the name."
         },
-        { 
-            "name": "assembly_object_name",
-            "type": "string",
-            "required": false,
-            "help": "If not supplied, will use the GenomeAnnotation name."
+	{ 
+            "name": "source", 
+            "type": "string", 
+            "required": false, 
+            "help": "The source of the data  Examples might be RefSeq, Genbank, User data, TAIR, etc." 
         }
         ],
     "user_option_groups": []

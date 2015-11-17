@@ -1495,7 +1495,7 @@ if __name__ == "__main__":
     parser.add_argument('--taxon_reference', nargs='?', help='ONLY NEEDED IF PERSON IS DOING A CUSTOM TAXON NOT REPRESENTED IN THE NCBI TAXONOMY TREE', required=False)
     parser.add_argument('--workspace_service_url', action='store', type=str, nargs='?', required=True) 
 
-    parser.add_argument('--core_genome_name', 
+    parser.add_argument('--object_name', 
                         help="genbank file", 
                         nargs='?', required=False) 
 #    parser.add_argument('--fasta_file_directory', 
@@ -1547,7 +1547,7 @@ if __name__ == "__main__":
                       taxon_wsname = args.taxon_wsname,
 #                      taxon_names_file = args.taxon_names_file,
                       taxon_reference = args.taxon_reference,
-                      core_genome_name = args.core_genome_name,
+                      core_genome_name = args.object_name,
                       source = args.source,
                       type = args.type,
                       #                      genome_list_file = args.genome_list_file,

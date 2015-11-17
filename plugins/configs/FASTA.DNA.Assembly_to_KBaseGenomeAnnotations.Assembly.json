@@ -34,17 +34,11 @@
     "user_options": 
     [ 
         { 
-            "name": "output_file_name",
-            "type": "string",
-            "required": true,
-            "help": "If not supplied, will default the base input_file_name with '_contig_set.json' appended to the end."
-        },
-        { 
-            "name": "fasta_reference_only",
-            "type": "boolean",
+            "name": "object_name", 
+            "type": "string", 
             "required": false, 
-            "help": "Creates a reference to the fasta file in Shock, but does not store the sequences in the workspace object. Not recommended unless the fasta file is larger than 1GB. This is the default behaviour for files that are large."
-        },
+            "help": "The name you would like to use to reference this Assembly.  If not supplied, will default to the name of the file." 
+        }, 
         {
             "name": "source",
             "type": "string",

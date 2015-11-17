@@ -333,7 +333,7 @@ if __name__ == "__main__":
     parser.add_argument('--workspace_service_url', action='store', type=str, nargs='?', required=True) 
     parser.add_argument('--taxon_reference', nargs='?', help='The ws object reference for the related taxon.  If not set the taxon reference will not get set in the object', required=False)
 
-    parser.add_argument('--assembly_name', 
+    parser.add_argument('--object_name', 
                         help="name of object to create.  If not specified it defaults to the file name.", 
                         nargs='?', required=False) 
     parser.add_argument('--source', 
@@ -369,7 +369,7 @@ if __name__ == "__main__":
                       workspace_name = args.workspace_name,
                       workspace_service_url = args.workspace_service_url,
                       taxon_reference = args.taxon_reference,
-                      assembly_name = args.assembly_name,
+                      assembly_name = args.object_name,
                       source = args.source,
                       logger = logger)
     except Exception, e:

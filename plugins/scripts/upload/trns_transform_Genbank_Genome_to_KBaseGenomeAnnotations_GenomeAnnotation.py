@@ -166,6 +166,7 @@ def upload_genome(shock_service_url=None,
     print "Number of contigs : " + str(len(genbank_file_boundaries))
    
     organism_dict = dict() 
+    organism = None
     if len(genbank_file_boundaries) < 1 :
         print "Error no genbank record found in the input file"
         sys.exit(1)
@@ -188,7 +189,7 @@ def upload_genome(shock_service_url=None,
         #Get the taxon_lookup_object
         taxon_lookup = ws_client.get_object( {'workspace':taxon_wsname,
                                               'id':"taxon_lookup"})
-        if organism[0:3] in taxon_lookup['data']['taxon_lookup']:
+        if ((organism is not None) and (organism[0:3] in taxon_lookup['data']['taxon_lookup'])):
             if organism in taxon_lookup['data']['taxon_lookup'][organism[0:3]]:
                 tax_id = taxon_lookup['data']['taxon_lookup'][organism[0:3]][organism] 
                 taxon_object_name = "%s_taxon" % (str(tax_id))

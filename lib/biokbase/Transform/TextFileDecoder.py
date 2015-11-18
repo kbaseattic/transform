@@ -44,7 +44,7 @@ class TextFileDecoder(object):
             bytes = self._fp.read(self._chunkSize)
 
             if not bytes:
-                return bytes
+                return chunkString
 
             nextChunk = codecs.decode(bytes, self._codec)
 

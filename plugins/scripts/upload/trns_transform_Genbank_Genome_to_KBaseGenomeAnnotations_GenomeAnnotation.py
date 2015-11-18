@@ -119,7 +119,7 @@ def upload_genome(shock_service_url=None,
  
     logger.info("Scanning for Genbank Format files.") 
  
-    valid_extensions = [".gbff",".gbk",".gb",".genbank"] 
+    valid_extensions = [".gbff",".gbk",".gb",".genbank",".dat"] 
  
     files = os.listdir(os.path.abspath(input_directory)) 
     print "FILES : " + str(files)
@@ -166,6 +166,7 @@ def upload_genome(shock_service_url=None,
     print "Number of contigs : " + str(len(genbank_file_boundaries))
    
     organism_dict = dict() 
+    organism = None
     if len(genbank_file_boundaries) < 1 :
         print "Error no genbank record found in the input file"
         sys.exit(1)
@@ -188,7 +189,7 @@ def upload_genome(shock_service_url=None,
         #Get the taxon_lookup_object
         taxon_lookup = ws_client.get_object( {'workspace':taxon_wsname,
                                               'id':"taxon_lookup"})
-        if organism[0:3] in taxon_lookup['data']['taxon_lookup']:
+        if ((organism is not None) and (organism[0:3] in taxon_lookup['data']['taxon_lookup'])):
             if organism in taxon_lookup['data']['taxon_lookup'][organism[0:3]]:
                 tax_id = taxon_lookup['data']['taxon_lookup'][organism[0:3]][organism] 
                 taxon_object_name = "%s_taxon" % (str(tax_id))
@@ -327,15 +328,17 @@ def upload_genome(shock_service_url=None,
         locus_name_order.append(accession)
         genbank_metadata_objects[accession]["number_of_basepairs"] = locus_line_info[2]
         date_text = None
-        if locus_line_info[4] != 'DNA':
-            print "Error the record with the Locus Name of %s is not valid as the molecule type of %s , is not 'DNA'" % (locus_info_line[1],locus_info_line[4])
+        if ((len(locus_line_info)!= 7) and (len(locus_line_info)!= 8)): 
             fasta_file_handle.close()
-            sys.exit(1)
-        if locus_line_info[5] in genbank_division_set:
+            raise Error ("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
+        if locus_line_info[4] != 'DNA':
+            fasta_file_handle.close()
+            raise Error ("Error the record with the Locus Name of %s is not valid as the molecule type of %s , is not 'DNA'" % (locus_info_line[1],locus_info_line[4]))
+        if ((locus_line_info[5] in genbank_division_set) and (len(locus_line_info) == 7)) :
             genbank_metadata_objects[accession]["is_circular"] = "Unknown"
             contig_information_dict[accession]["is_circular"] = "Unknown"
             date_text = locus_line_info[6]
-        elif locus_line_info[6] in genbank_division_set:
+        elif (locus_line_info[6] in genbank_division_set  and (len(locus_line_info) == 8)) :
             date_text = locus_line_info[7]
             if locus_line_info[5] == "circular":
                 genbank_metadata_objects[accession]["is_circular"] = "True"
@@ -613,9 +616,12 @@ def upload_genome(shock_service_url=None,
 
 
             coordinates_info = re.sub( '\s+', '', coordinates_info ).strip()
+            original_coordinates = coordinates_info
             coordinates_list = list()
             apply_complement_to_all = False
             need_to_reverse_locations = False
+            has_odd_coordinates = False
+            can_not_process_feature = False
             if coordinates_info.startswith("complement") and coordinates_info.endswith(")"): 
                 apply_complement_to_all = True
                 need_to_reverse_locations = True
@@ -624,6 +630,8 @@ def upload_genome(shock_service_url=None,
                 coordinates_info = coordinates_info[join_len:-1]
             if coordinates_info.startswith("order") and coordinates_info.endswith(")"):
                 coordinates_info = coordinates_info[order_len:-1]
+                has_odd_coordinates = True
+                quality_warnings.append("Note this feature has the rare 'order' coordinate. The sequence was joined together because KBase does not allow for a non contiguous resulting sequence with multiple locations for a feature.")
             coordinates_list = coordinates_info.split(",")
             last_coordinate = 0
             dna_sequence_length = 0
@@ -634,54 +642,79 @@ def upload_genome(shock_service_url=None,
                 if coordinates.startswith("complement") and coordinates.endswith(")"): 
                     apply_complement_to_current = True 
                     coordinates = coordinates[complement_len:-1]
-                try:
-                    start_pos, end_pos = coordinates.split('..', 1)
-                except Exception, e:
-                    #Some rare coordintes are a single base. 
+                #Look for and handle odd coordinates
+                if (("<" in coordinates) or (">" in coordinates)):
+                    has_odd_coordinates = True
+                    quality_warnings.append("Note this feature has a '<' or a '>' in the coordinates.  This means the feature starts or ends beyond the known sequence.")
+                    coordinates= re.sub('<', '', coordinates)
+                    coordinates= re.sub('>', '', coordinates)
+
+
+
+                period_count = coordinates.count('.')
+                if ((period_count == 2) and (".." in coordinates)):
+                    start_pos, end_pos = coordinates.split('..', 1)                    
+                elif period_count == 0:
                     start_pos = coordinates
                     end_pos = coordinates
+                elif period_count == 1:
+                    start_pos, end_pos = coordinates.split('.', 1) 
+                    has_odd_coordinates = True
+                    quality_warnings.append("The single period in the coordinate Indicates that the exact location is unknown but that it is one of the bases between bases %s and %s, inclusive.  Note the entire sequence range has been put into this feature." % (str(start_pos),str(end_pos)))
+                elif period_count > 2 :
+                    can_not_process_feature = True
+                else:
+                    can_not_process_feature = True
+                if "^" in coordinates:
+                    start_pos, end_pos = coordinates.split('^', 1) 
+                    has_odd_coordinates = True
+                    quality_warnings.append("Note this has a feature between bases.  It points to a site between bases %s and %s, inclusive.  Note the entire sequence range has been put into this feature." % (str(start_pos),str(end_pos)))                    
 
-                start_pos= re.sub('<', '', start_pos)
-                start_pos= re.sub('>', '', start_pos)
-                end_pos= re.sub('<', '', end_pos)
-                end_pos= re.sub('>', '', end_pos)
 
-                if (represents_int(start_pos) and represents_int(end_pos)):
-                    if int(start_pos) > int(end_pos):
-                        fasta_file_handle.close() 
-                        print "FEATURE TEXT: " + feature_text
-                        raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s is bigger than End coordinate %s. Should be ascending order." % (accession, str(start_pos), str(end_pos)))
+                if not can_not_process_feature:
+                    if (represents_int(start_pos) and represents_int(end_pos)):
+                        if int(start_pos) > int(end_pos):
+                            fasta_file_handle.close() 
+                            print "FEATURE TEXT: " + feature_text
+                            raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s is bigger than End coordinate %s. Should be ascending order." % (accession, str(start_pos), str(end_pos)))
 
 #CANT COUNT ON THEM BEING IN ASCENDING POSITIONAL ORDER
 #                    if (int(start_pos) < last_coordinate or int(end_pos) < last_coordinate) and ("trans_splicing" not in feature_keys_present_dict) :
 #                        fasta_file_handle.close()
 #                        raise Exception("The genbank record %s has coordinates that are out of order. Start coordinate %s and/or End coordinate %s is larger than the previous coordinate %s within this feature. Should be ascending order since this is not a trans_splicing feature." % (accession, str(start_pos), str(end_pos),str(last_coordinate)))
 
-                    if (int(start_pos) > contig_length) or (int(end_pos) > contig_length):
-                        fasta_file_handle.close() 
-                        raise Exception("The genbank record %s has coordinates (start: %s , end: %s) that are longer than the sequence length %s." % \
-                                        (accession,str(start_pos), int(end_pos),str(contig_length)))
+                        if (int(start_pos) > contig_length) or (int(end_pos) > contig_length):
+                            fasta_file_handle.close() 
+                            raise Exception("The genbank record %s has coordinates (start: %s , end: %s) that are longer than the sequence length %s." % \
+                                            (accession,str(start_pos), int(end_pos),str(contig_length)))
 
-                    segment_length = (int(end_pos) - int(start_pos)) + 1
-                    dna_sequence_length += segment_length
-                    temp_sequence = sequence_part[(int(start_pos)-1):int(end_pos)] 
-                    strand = "+"
-                    if apply_complement_to_current or apply_complement_to_all: 
-                        my_dna = Seq(temp_sequence, IUPAC.ambiguous_dna)
-                        my_dna = my_dna.reverse_complement()
-                        temp_sequence = str(my_dna).upper()      
-                        strand = "-"
-                    if apply_complement_to_all:
-                        dna_sequence =  temp_sequence + dna_sequence 
+                        segment_length = (int(end_pos) - int(start_pos)) + 1
+                        dna_sequence_length += segment_length
+                        temp_sequence = sequence_part[(int(start_pos)-1):int(end_pos)] 
+                        strand = "+"
+                        if apply_complement_to_current or apply_complement_to_all: 
+                            my_dna = Seq(temp_sequence, IUPAC.ambiguous_dna)
+                            my_dna = my_dna.reverse_complement()
+                            temp_sequence = str(my_dna).upper()      
+                            strand = "-"
+                        if apply_complement_to_all:
+                            dna_sequence =  temp_sequence + dna_sequence 
+                        else:
+                            dna_sequence +=  temp_sequence 
+                        locations.append([accession,int(start_pos),strand,segment_length]) 
                     else:
-                        dna_sequence +=  temp_sequence 
-                    locations.append([accession,int(start_pos),strand,segment_length]) 
-                else:
-                    #no valid coordinates
-                    fasta_file_handle.close() 
-                    raise Exception("The genbank record %s containes coordinates that are not valid number(s).  Feature text is : %s" % (accession,feature_text)) 
+                        #no valid coordinates
+                        fasta_file_handle.close() 
+                        raise Exception("The genbank record %s containes coordinates that are not valid number(s).  Feature text is : %s" % (accession,feature_text)) 
 
-                last_coordinate = int(end_pos)
+                    last_coordinate = int(end_pos)
+
+            if has_odd_coordinates:
+                    quality_warnings.insert(0,"Note this feature contained some atypical coordinates, see the rest of the warnings for details : %s" % (original_coordinates))
+            if can_not_process_feature: 
+                #skip source feature types.
+                continue
+
             
             dna_sequence = dna_sequence.upper()
 
@@ -1417,6 +1450,9 @@ def upload_genome(shock_service_url=None,
     genome_annotation['taxon_ref'] = taxon_id
     genome_annotation['assembly_ref'] =  assembly_reference 
     genome_annotation['genome_annotation_id'] = genome_annotation_object_name
+    genome_annotation['external_source'] = source_name
+    genome_annotation['external_source_id'] = ",".join(locus_name_order)
+    genome_annotation['external_source_origination_date'] = genbank_time_string
 #    print "Genome Annotation id %s" % (genome_annotation['genome_annotation_id'])
  
 #    while genome_annotation_not_saved:
@@ -1454,12 +1490,12 @@ if __name__ == "__main__":
 #                        help="genbank file", 
 #                        nargs='?', required=True)
     parser.add_argument('--workspace_name', nargs='?', help='workspace name to populate', required=True)
-    parser.add_argument('--taxon_wsname', nargs='?', help='workspace name with taxon in it, assumes the same workspace_service_url', required=False, default='ReferenceTaxons2')
+    parser.add_argument('--taxon_wsname', nargs='?', help='workspace name with taxon in it, assumes the same workspace_service_url', required=False, default='ReferenceTaxons')
 #    parser.add_argument('--taxon_names_file', nargs='?', help='file with scientific name to taxon id mapping information in it.', required=False, default="/homes/oakland/jkbaumohl/Genome_Spec_files/Taxonomy/names.dmp")
     parser.add_argument('--taxon_reference', nargs='?', help='ONLY NEEDED IF PERSON IS DOING A CUSTOM TAXON NOT REPRESENTED IN THE NCBI TAXONOMY TREE', required=False)
     parser.add_argument('--workspace_service_url', action='store', type=str, nargs='?', required=True) 
 
-    parser.add_argument('--core_genome_name', 
+    parser.add_argument('--object_name', 
                         help="genbank file", 
                         nargs='?', required=False) 
 #    parser.add_argument('--fasta_file_directory', 
@@ -1511,7 +1547,7 @@ if __name__ == "__main__":
                       taxon_wsname = args.taxon_wsname,
 #                      taxon_names_file = args.taxon_names_file,
                       taxon_reference = args.taxon_reference,
-                      core_genome_name = args.core_genome_name,
+                      core_genome_name = args.object_name,
                       source = args.source,
                       type = args.type,
                       #                      genome_list_file = args.genome_list_file,

@@ -396,7 +396,7 @@ if __name__ == "__main__":
                 if type(input_object[x]) == type(dict()):
                     input_object[x] = base64.urlsafe_b64encode(simplejson.dumps(input_object[x]))
 
-            command_list = ["trns_upload_taskrunner", "--ujs_job_id", ujs_job_id]
+            command_list = ["trns_upload_taskrunner", "--ujs_job_id", ujs_job_id, "--keep_working_directory"]
             
             for k in input_object:
                command_list.append("--{0}".format(k))

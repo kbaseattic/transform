@@ -303,7 +303,7 @@ def upload_genome(shock_service_url=None,
         except Exception, e:
             #sequence does not exist.
             fasta_file_handle.close() 
-            raise SequenceError("This Genbank file has at least one record without a sequence.")
+            raise Exception("This Genbank file has at least one record without a sequence.")
             sys.exit(1) 
 
         #done with need for variable genbank_record. Freeing up memory

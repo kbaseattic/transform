@@ -20,7 +20,7 @@ if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
 
 # make sure the 3rd party and kbase modules are in the path for importing
-#sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
+sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
 
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import requests
@@ -72,7 +72,7 @@ def show_workspace_object_contents(workspace_url, workspace_name, object_name, t
     print object_contents
 
 
-def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
+def show_job_progress(ujs_url, ujs_id, token):
     c = biokbase.userandjobstate.client.UserAndJobState(url=ujs_url, token=token)
 
     completed = ["complete", "success"]
@@ -114,17 +114,17 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             print term.red("{0}".format(c.get_detailed_error(ujs_id)))
             print term.red("{0}".format(c.get_results(ujs_id)))
             
-            print term.bold("Additional AWE job details for debugging")
+            #print term.bold("Additional AWE job details for debugging")
             # check awe job output
-            awe_details = requests.get("{0}/job/{1}".format(awe_url,awe_id), headers=header, verify=True)
-            job_info = awe_details.json()["data"]
-            print term.red(simplejson.dumps(job_info, sort_keys=True, indent=4))
+            #awe_details = requests.get("{0}/job/{1}".format(awe_url,awe_id), headers=header, verify=True)
+            #job_info = awe_details.json()["data"]
+            #print term.red(simplejson.dumps(job_info, sort_keys=True, indent=4))
             
-            awe_stdout = requests.get("{0}/work/{1}?report=stdout".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
-            print term.red("STDOUT : " + simplejson.dumps(awe_stdout.json()["data"], sort_keys=True, indent=4))
+            #awe_stdout = requests.get("{0}/work/{1}?report=stdout".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
+            #print term.red("STDOUT : " + simplejson.dumps(awe_stdout.json()["data"], sort_keys=True, indent=4))
             
-            awe_stderr = requests.get("{0}/work/{1}?report=stderr".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
-            print term.red("STDERR : " + simplejson.dumps(awe_stderr.json()["data"], sort_keys=True, indent=4))
+            #awe_stderr = requests.get("{0}/work/{1}?report=stderr".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
+            #print term.red("STDERR : " + simplejson.dumps(awe_stderr.json()["data"], sort_keys=True, indent=4))
             
             break
     
@@ -293,14 +293,10 @@ if __name__ == "__main__":
         inputs = config["upload"]
 
     uc = biokbase.userandjobstate.client.UserAndJobState(url=args.ujs_service_url, token=token)
-
-
-
     
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)
     
-    #task_driver = biokbase.Transform.drivers.TransformTaskRunnerDriver(services, args.plugin_directory)
     task_driver = biokbase.Transform.drivers.TransformClientTerminalDriver(services)
     plugins = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory)
     
@@ -404,9 +400,12 @@ if __name__ == "__main__":
 
             print "\n\nHandler invocation {0}".format(" ".join(command_list))
 
-            task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
+            task = subprocess.Popen(command_list, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+            show_job_progress(args.ujs_service_url, ujs_job_id, token)
+
             sub_stdout, sub_stderr = task.communicate()
-            
+
             if sub_stdout is not None:
                 print sub_stdout
             if sub_stderr is not None:

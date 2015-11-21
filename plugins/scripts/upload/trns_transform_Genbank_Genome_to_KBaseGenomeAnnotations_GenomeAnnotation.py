@@ -143,6 +143,21 @@ def upload_genome(shock_service_url=None,
 
     if os.path.isfile(input_file_name):
         print "Found Genbank_File" 
+        dir_name = os.path.dirname(input_file_name)
+#        print "Prefix : " + str(dir_name)
+
+        #take in Genbank file and remove all empty lines from it.
+        os.rename(input_file_name,"%s/temp_file_name" % (dir_name))
+        temp_file = "%s/temp_file_name" % (dir_name)
+
+        with open(temp_file) as f_in:
+            with open(input_file_name, 'w') as f_out:
+                lines = f_in.readlines()
+                for i, line in enumerate(lines):
+                    if line.strip():
+                        f_out.write(line)
+        os.remove(temp_file)
+
         genbank_file_handle = TextFileDecoder.open_textdecoder(input_file_name, 'ISO-8859-1') 
         start_position = 0
         current_line = genbank_file_handle.readline()
@@ -294,7 +309,8 @@ def upload_genome(shock_service_url=None,
     complement_len = len("complement(")
     join_len = len("join(")
     order_len = len("order(")
-    
+
+    print "NUMBER OF GENBANK COORDINATES: " + str(len(genbank_file_boundaries))
     for byte_coordinates in genbank_file_boundaries: 
         genbank_file_handle.seek(byte_coordinates[0]) 
         genbank_record = genbank_file_handle.read(byte_coordinates[1] - byte_coordinates[0]) 
@@ -330,10 +346,10 @@ def upload_genome(shock_service_url=None,
         date_text = None
         if ((len(locus_line_info)!= 7) and (len(locus_line_info)!= 8)): 
             fasta_file_handle.close()
-            raise Error ("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
+            raise Exception("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
         if locus_line_info[4] != 'DNA':
             fasta_file_handle.close()
-            raise Error ("Error the record with the Locus Name of %s is not valid as the molecule type of %s , is not 'DNA'" % (locus_info_line[1],locus_info_line[4]))
+            raise Exception("Error the record with the Locus Name of %s is not valid as the molecule type of %s , is not 'DNA'" % (locus_info_line[1],locus_info_line[4]))
         if ((locus_line_info[5] in genbank_division_set) and (len(locus_line_info) == 7)) :
             genbank_metadata_objects[accession]["is_circular"] = "Unknown"
             contig_information_dict[accession]["is_circular"] = "Unknown"

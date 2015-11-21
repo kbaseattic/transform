@@ -347,9 +347,9 @@ def upload_genome(shock_service_url=None,
         if ((len(locus_line_info)!= 7) and (len(locus_line_info)!= 8)): 
             fasta_file_handle.close()
             raise Exception("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
-        if locus_line_info[4] != 'DNA':
+        if locus_line_info[4] != 'DNA' and locus_line_info[4] != 'RNA':
             fasta_file_handle.close()
-            raise Exception("Error the record with the Locus Name of %s is not valid as the molecule type of %s , is not 'DNA'" % (locus_info_line[1],locus_info_line[4]))
+            raise Exception("Error the record with the Locus Name of %s is not valid as the molecule type of '%s' , is not 'DNA' or 'RNA'" % (locus_line_info[1],locus_line_info[4]))
         if ((locus_line_info[5] in genbank_division_set) and (len(locus_line_info) == 7)) :
             genbank_metadata_objects[accession]["is_circular"] = "Unknown"
             contig_information_dict[accession]["is_circular"] = "Unknown"

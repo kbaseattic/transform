@@ -200,6 +200,7 @@ def upload_genome(shock_service_url=None,
                 break
 
     tax_id = 0;
+    tax_lineage = None;
     if taxon_reference is None:
         #Get the taxon_lookup_object
         taxon_lookup = ws_client.get_object( {'workspace':taxon_wsname,
@@ -217,24 +218,29 @@ def upload_genome(shock_service_url=None,
             taxon_object_name = "unknown_taxon"
             genome_annotation['notes'] = "Unable to find taxon for this organism : %s ." % (organism ) 
         try: 
-            taxon_info = ws_client.get_object_info_new({"objects":[{"wsid": str(taxon_workspace_id), 
-                                                                    "name": taxon_object_name}],
-                                                        "includeMetadata":0,"ignoreErrors": 0}) 
-            taxon_id = "%s/%s/%s" % (taxon_info[0][6], taxon_info[0][0], taxon_info[0][4]) 
-            print "Found name : " + taxon_object_name + " id: " + taxon_id
-            print "TAXON OBJECT TYPE : " + taxon_info[0][2]
-            if not taxon_info[0][2].startswith("KBaseGenomeAnnotations.Taxon"):
-                raise Exception("The object retrieved for the taxon object is not actually a taxon object.  It is " + taxon_info[2])
+#            taxon_info = ws_client.get_object_info_new({"objects":[{"wsid": str(taxon_workspace_id), 
+#                                                                    "name": taxon_object_name}],
+#                                                        "includeMetadata":0,"ignoreErrors": 0}) 
+            taxon_info = ws_client.get_objects([{"workspace": taxon_wsname, 
+                                                 "name": taxon_object_name}]) 
+            taxon_id = "%s/%s/%s" % (taxon_info[0]["info"][6], taxon_info[0]["info"][0], taxon_info[0]["info"][4]) 
+#            print "Found name : " + taxon_object_name + " id: " + taxon_id
+#            print "TAXON OBJECT TYPE : " + taxon_info[0]["info"][2]
+            if not taxon_info[0]["info"][2].startswith("KBaseGenomeAnnotations.Taxon"):
+                raise Exception("The object retrieved for the taxon object is not actually a taxon object.  It is " + taxon_info[0]["info"][2])
         except Exception, e: 
             raise Exception("The taxon " + taxon_object_name + " from workspace " + str(taxon_workspace_id) + " does not exist. " + str(e))
     else:
         try: 
-            taxon_info = ws_client.get_object_info_new({"objects":[{"ref": taxon_reference}],"includeMetadata":0,"ignoreErrors": 0}) 
-            print "TAXON OBJECT TYPE : " + taxon_info[0][2] 
-            if not taxon_info[0][2].startswith("KBaseGenomeAnnotations.Taxon"):
-                raise Exception("The object retrieved for the taxon object is not actually a taxon object.  It is " + taxon_info[2])
+#            taxon_info = ws_client.get_object_info_new({"objects":[{"ref": taxon_reference}],"includeMetadata":0,"ignoreErrors": 0})
+            taxon_info = ws_client.get_objects({"object_ids":[{"ref": taxon_reference}]})
+            print "TAXON OBJECT TYPE : " + taxon_info[0]["info"][2] 
+            if not taxon_info[0]["info"][2].startswith("KBaseGenomeAnnotations.Taxon"):
+                raise Exception("The object retrieved for the taxon object is not actually a taxon object.  It is " + taxon_info[0]["info"][2])
         except Exception, e:
             raise Exception("The taxon reference " + taxon_reference + " does not correspond to a workspace object.")
+    tax_lineage = taxon_info[0]["data"]["scientific_lineage"]
+
 #EARLY BAILOUT FOR TESTING
 #    sys.exit(1)
 
@@ -347,9 +353,14 @@ def upload_genome(shock_service_url=None,
         if ((len(locus_line_info)!= 7) and (len(locus_line_info)!= 8)): 
             fasta_file_handle.close()
             raise Exception("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
-        if locus_line_info[4] != 'DNA' and locus_line_info[4] != 'RNA':
-            fasta_file_handle.close()
-            raise Exception("Error the record with the Locus Name of %s is not valid as the molecule type of '%s' , is not 'DNA' or 'RNA'" % (locus_line_info[1],locus_line_info[4]))
+        if locus_line_info[4] != 'DNA':
+            if locus_line_info[4] == 'RNA':
+                if not tax_lineage.lower().startswith("viruses") and not tax_lineage.lower().startswith("viroids"):
+                    fasta_file_handle.close()
+                    raise Exception("Error the record with the Locus Name of %s is RNA, but the organism does not belong to Viruses or Viroids." % (locus_line_info[1]))
+            else:
+                fasta_file_handle.close()
+                raise Exception("Error the record with the Locus Name of %s is not valid as the molecule type of '%s' , is not 'DNA' or 'RNA'.  If it is RNA it must be a virus or a viroid." % (locus_line_info[1],locus_line_info[4]))
         if ((locus_line_info[5] in genbank_division_set) and (len(locus_line_info) == 7)) :
             genbank_metadata_objects[accession]["is_circular"] = "Unknown"
             contig_information_dict[accession]["is_circular"] = "Unknown"

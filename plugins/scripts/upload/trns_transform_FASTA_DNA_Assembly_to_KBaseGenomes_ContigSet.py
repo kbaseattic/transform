@@ -140,14 +140,23 @@ def transform(shock_service_url=None, handle_service_url=None,
                         if character in amino_acid_specific_characters:
                             raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
                         raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
-                fasta_key = fasta_header.strip()
+#                fasta_key = fasta_header.strip()
+                try:
+                    fasta_key , fasta_description = fasta_header.strip().split(' ',1)
+                except:
+                    fasta_key = fasta_header.strip()
+                    fasta_description = None
+
                 if fasta_key == '':
                     raise Exception("One fasta header lines '>' does not have an identifier associated with it")
                 contig_dict = dict() 
                 contig_dict["id"] = fasta_key 
                 contig_dict["length"] = len(total_sequence) 
-                contig_dict["name"] = fasta_key 
-                contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+                contig_dict["name"] = fasta_key
+                if fasta_description is None:
+                    contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+                else:
+                    contig_dict["description"] = "%s.  Note MD5 is generated from uppercasing the sequence" % (fasta_description)
                 contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest() 
                 contig_dict["md5"] = contig_md5 
                 contig_set_md5_list.append(contig_md5)
@@ -194,14 +203,24 @@ def transform(shock_service_url=None, handle_service_url=None,
                     raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
                 raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
 
-        fasta_key = fasta_header.strip()
+#        fasta_key = fasta_header.strip()
+        try: 
+            fasta_key , fasta_description = fasta_header.strip().split(' ',1)
+        except:
+            fasta_key = fasta_header.strip()
+            fasta_description = None
+ 
         if fasta_key == '':
             raise Exception("One fasta header lines '>' does not have an identifier associated with it")
         contig_dict = dict()
         contig_dict["id"] = fasta_key 
         contig_dict["length"] = len(total_sequence)
         contig_dict["name"] = fasta_key
-        contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+ 
+        if fasta_description is None: 
+            contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+        else: 
+            contig_dict["description"] = "%s.  Note MD5 is generated from uppercasing the sequence" % (fasta_description) 
         contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest()
         contig_dict["md5"]= contig_md5
         contig_set_md5_list.append(contig_md5)

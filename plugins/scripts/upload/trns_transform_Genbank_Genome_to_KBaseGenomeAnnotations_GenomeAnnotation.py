@@ -523,6 +523,7 @@ def upload_genome(shock_service_url=None,
                             else:
                                 break
                     else:
+                        reference_loop_counter += 1
                         if ((metadata_line_counter + reference_loop_counter)<= num_metadata_lines):
                             next_line = metadata_lines[metadata_line_counter + reference_loop_counter]
                         else:
@@ -594,7 +595,7 @@ def upload_genome(shock_service_url=None,
         #break up the features section into individual features.
         for feature_line_counter in range(0,(num_feature_lines)):
             feature_line = features_lines[feature_line_counter]
-            if not feature_line.startswith("                     ") and feature_line != "" :
+            if ((not feature_line.startswith("                     ")) and (feature_line.startswith("     ")) and (feature_line[5:7].strip() != "")):
                 #Means a new feature:
                 #
                 current_feature_string = feature_line
@@ -731,8 +732,9 @@ def upload_genome(shock_service_url=None,
                         locations.append([accession,int(start_pos),strand,segment_length]) 
                     else:
                         #no valid coordinates
+                        print "Feature text : " + feature_text + ":"
                         fasta_file_handle.close() 
-                        raise Exception("The genbank record %s containes coordinates that are not valid number(s).  Feature text is : %s" % (accession,feature_text)) 
+                        raise Exception("The genbank record %s contains coordinates that are not valid number(s).  Feature text is : %s" % (accession,feature_text)) 
 
                     last_coordinate = int(end_pos)
 
@@ -971,7 +973,7 @@ def upload_genome(shock_service_url=None,
                     if "dna_sequence" in feature_object:
                         coding_dna = Seq(feature_object["dna_sequence"], generic_dna)
                         aa_seq = coding_dna.translate()
-                        protein_object["amino_acid_sequence"] = aa_seq[0:].upper()
+                        protein_object["amino_acid_sequence"] = str(aa_seq[0:].upper())
                     else:
                         # TODO.  REMOVE PROTEIN REF FROM CDS PROPERTIES?
                         #CAN'T MAKE CDS PROPERTIES BECAUSE PROTEIN OBJECT CAN NOT BE MADE.  REMOVE FROM GROUPINGS
@@ -989,7 +991,7 @@ def upload_genome(shock_service_url=None,
                     else:
                         #Have to set to empty dict (since it is required field in spec.  Probably need to make it optional.)
                         protein_object["aliases"] = dict()
-                        
+
                     protein_object["md5"] = hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
                     protein_container_dict[protein_object["protein_id"]] = protein_object
                     protein_container_object_name = "%s_protein_container" % (core_genome_name)

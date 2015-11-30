@@ -8,7 +8,7 @@
   <property name="src" location="src"/>
   <property name="dst" location="lib/jars"/>
   <property name="classes" location="classes"/>
-  <property name="jar.file" value="GenBankTransform.jar"/>
+  <property name="jar.file" value="kbase_transform_deps.jar"/>
   <property name="jarsdir" value="../jars/lib/jars"/>
   <property name="doc" location="docs/javadoc"/>
   <property name="dst.jar.dir" value="lib/jars/kbase/transform/"/>
@@ -20,6 +20,7 @@
     <include name="apache_commons/commons-codec-1.8.jar"/>
     <include name="apache_commons/commons-io-2.4.jar"/>
     <include name="apache_commons/commons-fileupload-1.2.2.jar"/>
+    <include name="apache_commons/commons-cli-1.2.jar"/>
     <include name="jackson/jackson-annotations-2.2.3.jar"/>
     <include name="jackson/jackson-core-2.2.3.jar"/>
     <include name="jackson/jackson-databind-2.2.3.jar"/>

@@ -1416,7 +1416,7 @@ def upload_genome(shock_service_url=None,
 #                #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
 #                raise 
     else:
-        raise Exception("No CDS/proteins exist in this Genbank file.  This appears not to be a genome.")
+        raise Exception("No CDS annotations exist in this Genbank file.  This appears not to be a genome.  If this is just an assembly, you should upload it as an assembly using a fasta file.")
 
 
     counts_map = dict() #dict of feature type and number of occurrences.

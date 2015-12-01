@@ -1065,6 +1065,7 @@ def upload_genome(shock_service_url=None,
         logger.exception(e) 
         sys.exit(1) 
 
+    logger.info("Assembly Uploaded")
 
     ####################################
     #DETERMINE INTERFEATURE RELATIONSHIPS
@@ -1410,7 +1411,8 @@ def upload_genome(shock_service_url=None,
                                                           "objects":[ { "type":"KBaseGenomeAnnotations.ProteinContainer",
                                                                         "data":protein_container,
                                                                         "name": protein_container_object_name,
-                                                                        "provenance":protein_container_provenance}]}) 
+                                                                        "provenance":protein_container_provenance}]})
+        logger.info("Protein Container saved for %s" % (protein_container_object_name))  
 #                protein_container_not_saved = False 
 #            except biokbase.workspace.client.ServerError as err:
 #                #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
@@ -1452,7 +1454,7 @@ def upload_genome(shock_service_url=None,
                                                                             "name": feature_container_object_name,
                                                                             "provenance":feature_container_provenance}]}) 
 #                    feature_container_not_saved = False 
-            print "Feature Container saved for %s" % (feature_container_object_name) 
+            logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
 #                except biokbase.workspace.client.ServerError as err: 
 #                    #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
 #                    raise 
@@ -1492,7 +1494,7 @@ def upload_genome(shock_service_url=None,
                                                                     "name": genome_annotation_object_name,
                                                                     "provenance":genome_annotation_provenance}]}) 
 #            genome_annotation_not_saved = False 
-    print "Genome Annotation saved for %s" % (genome_annotation_object_name)
+    logger.info("Genome Annotation saved for %s" % (genome_annotation_object_name))
 #        except biokbase.workspace.client.ServerError as err: 
 #            raise 
 

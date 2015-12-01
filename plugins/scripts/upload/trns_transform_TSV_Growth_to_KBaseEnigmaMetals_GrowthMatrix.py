@@ -61,7 +61,7 @@ def transform(workspace_service_url=None, workspace_name=None,
         raise Exception("The working directory {0} is not a valid directory!"
                         .format(working_directory))
 
-    classpath = ["$KB_TOP/lib/jars/kbase/enigma-metals/kbase-enigma-metals-0.2.jar",
+    classpath = ["$KB_TOP/lib/jars/kbase/transform/kbase_transform_deps.jar",
                  "$KB_TOP/lib/jars/apache_commons/commons-cli-1.2.jar",
                  "$KB_TOP/lib/jars/ini4j/ini4j-0.5.2.jar",
                  "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",

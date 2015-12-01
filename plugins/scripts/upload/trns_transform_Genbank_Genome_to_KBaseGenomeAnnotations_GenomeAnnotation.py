@@ -1407,6 +1407,8 @@ def upload_genome(shock_service_url=None,
 #            try: 
 
 #        print "PROTEIN CONTAINER : \n\n\n\n" + str(protein_container)
+
+        logger.info("Attempting Protein Container save for %s" % (protein_container_object_name))  
         protein_container_info =  ws_client.save_objects({"workspace": workspace_name,
                                                           "objects":[ { "type":"KBaseGenomeAnnotations.ProteinContainer",
                                                                         "data":protein_container,
@@ -1444,6 +1446,8 @@ def upload_genome(shock_service_url=None,
             #Provencance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
             #provenance_description = "features from upload from %s includes accession(s) : " % (source_name,",".join(locus_name_order))
             feature_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source_name)}]
+
+            logger.info("Attempting save of Feature Container %s" % (feature_container_object_name)) 
 
 #            feature_container_not_saved = True
 #            while feature_container_not_saved:
@@ -1486,6 +1490,7 @@ def upload_genome(shock_service_url=None,
     genome_annotation['external_source_origination_date'] = genbank_time_string
 #    print "Genome Annotation id %s" % (genome_annotation['genome_annotation_id'])
  
+    logger.info("Attempting Genome Annotation save for %s" % (genome_annotation_object_name))
 #    while genome_annotation_not_saved:
 #        try:
     genome_annotation_info =  ws_client.save_objects({"workspace":workspace_name,

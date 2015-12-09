@@ -28,6 +28,7 @@ public class WellSampleMatrixUploader {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+		MetadataProperties.startup();
 		WellSampleMatrixUploader uploader = new WellSampleMatrixUploader();
 		uploader.upload(args);
 	}
@@ -217,41 +218,59 @@ public class WellSampleMatrixUploader {
 		
 		Matrix2DMetadata returnVal = DataMatrixUploader.parseMetadata(metaData, sampleNames, rowNames);
 		
-		Map<String,String> units = new HashMap<String, String>();
-
-		for (List<PropertyValue> properties : returnVal.getRowMetadata().values()){
-			for (PropertyValue property: properties){
-				String key = property.getEntity() + property.getPropertyName() + property.getPropertyValue();
-				if (units.containsKey(key)) {
-					if (!units.get(key).equals(property.getPropertyUnit())) {
-						System.err.println("Well sample matrix upload failed: " + property.getPropertyName() + " of " + property.getEntity() + " of " + property.getPropertyValue() + " has two different units: " + units.get(key) + " and " + property.getPropertyUnit());
-						System.exit(1);
-					}
-				} else {
-					units.put(key, property.getPropertyUnit());
-				}
-			}
-		}
-		
-		units.clear();
-
-		for (List<PropertyValue> properties : returnVal.getColumnMetadata().values()){
-			for (PropertyValue property: properties){
-				String key = property.getEntity() + property.getPropertyName() + property.getPropertyValue();
-				if (units.containsKey(key)) {
-					if (!units.get(key).equals(property.getPropertyUnit())) {
-						System.err.println("Well sample matrix upload failed: " + property.getPropertyName() + " of " + property.getEntity() + " of " + property.getPropertyValue() + " has two different units: " + units.get(key) + " and " + property.getPropertyUnit());
-						System.exit(1);
-					}
-				} else {
-					units.put(key, property.getPropertyUnit());
-				}
-			}
-		}
-		
+		validateMetadata(returnVal, sampleNames, rowNames);
+				
 		return returnVal;
 	};
 	
+	private void validateMetadata(Matrix2DMetadata m, List<String> columnNames, List<String> rowNames) {
+		
+		int flag = 0;
+		
+		for (String rowName : rowNames){
+			flag = 0;
+			for (PropertyValue p: m.getRowMetadata().get(rowName)){
+				if (p.getEntity().equals(MetadataProperties.WELLSAMPLEMATRIX_METADATA_ROW_SAMPLE)&&p.getPropertyName().equals(MetadataProperties.WELLSAMPLEMATRIX_METADATA_ROW_SAMPLE_ID)){
+					if (p.getPropertyValue().equals("")) throw new IllegalStateException(MetadataProperties.WELLSAMPLEMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.WELLSAMPLEMATRIX_METADATA_ROW_SAMPLE_ID + " metadata entry for row " + rowName + " must have a value");
+					flag++;
+				}
+			}
+			if (flag == 0) {
+				throw new IllegalStateException("Metadata for row " + rowName + " must have one " + MetadataProperties.WELLSAMPLEMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.WELLSAMPLEMATRIX_METADATA_ROW_SAMPLE_ID + " entry");
+			} else if (flag > 1) {
+				throw new IllegalStateException("Metadata for row " + rowName + " must have only one " + MetadataProperties.WELLSAMPLEMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.WELLSAMPLEMATRIX_METADATA_ROW_SAMPLE_ID + " entry, but it contains " + flag);
+			}
+		}
+
+		
+		Map<String,String> units = new HashMap<String, String>();
+		
+		for (String colName : columnNames) {
+			boolean measurementFlag = false;
+			
+			for (PropertyValue p : m.getColumnMetadata().get(colName)){
+				if (p.getEntity().equals(MetadataProperties.WELLSAMPLEMATRIX_METADATA_COLUMN_MEASUREMENT)) {
+					measurementFlag = true;
+					if (p.getPropertyName().equals(MetadataProperties.WELLSAMPLEMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE)){
+						if (MetadataProperties.WELLSAMPLEMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE_UNIT.contains(p.getPropertyUnit())){
+							String key = p.getEntity() + p.getPropertyName() + p.getPropertyValue();
+							if (units.containsKey(key)) {
+								if (!units.get(key).equals(p.getPropertyUnit())) {
+									throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
+								}
+							} else {
+								units.put(key, p.getPropertyUnit());
+							}
+						} else {
+							throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
+						}
+					}
+					if (!measurementFlag) throw new IllegalStateException("Metadata for column " + colName + " must have at least one " + MetadataProperties.WELLSAMPLEMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");				
+				}
+			}
+		}
+	}
+
 
 	private static boolean validateInput(CommandLine line) {
 		boolean returnVal = true;

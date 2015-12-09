@@ -272,8 +272,8 @@ public class WellSampleMatrixUploader {
 							}
 						}
 					}
-					if (!measurementFlag) throw new IllegalStateException("Metadata for column " + colName + " must have at least one " + MetadataProperties.WELLSAMPLEMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");
 				}
+				if (!measurementFlag) throw new IllegalStateException("Metadata for column " + colName + " must have at least one " + MetadataProperties.WELLSAMPLEMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");
 			} catch (NullPointerException e) {
 				throw new IllegalStateException ("Metadata entries for column " + colName + " are missing");
 			}

@@ -234,17 +234,21 @@ public class GrowthMatrixUploader {
 		
 		for (String rowName : rowNames){
 			flag = 0;
-			for (PropertyValue p: m.getRowMetadata().get(rowName)){
-				//System.out.println(rowName + " " + p.getEntity() + " " + p.getPropertyName() + " " + p.getPropertyUnit() + " " + p.getPropertyValue() + " " + flag);
-				if ((p.getEntity().equals(MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES))&&(p.getPropertyName().equals(MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME))){
-					flag++;
-					if (timeUnit.equals("")) timeUnit = p.getPropertyUnit();
-					if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT.contains(p.getPropertyUnit())){
-						throw new IllegalStateException(MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains illegal unit " + p.getPropertyUnit());
-					} else if (!p.getPropertyUnit().equals(timeUnit)) {
-						throw new IllegalStateException(MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains unit " + p.getPropertyUnit() + ", which is different from " + timeUnit + " in other entries" );
+			try {
+				for (PropertyValue p: m.getRowMetadata().get(rowName)){
+					//System.out.println(rowName + " " + p.getEntity() + " " + p.getPropertyName() + " " + p.getPropertyUnit() + " " + p.getPropertyValue() + " " + flag);
+					if ((p.getEntity().equals(MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES))&&(p.getPropertyName().equals(MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME))){
+						flag++;
+						if (timeUnit.equals("")) timeUnit = p.getPropertyUnit();
+						if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT.contains(p.getPropertyUnit())){
+							throw new IllegalStateException(MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains illegal unit " + p.getPropertyUnit());
+						} else if (!p.getPropertyUnit().equals(timeUnit)) {
+							throw new IllegalStateException(MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains unit " + p.getPropertyUnit() + ", which is different from " + timeUnit + " in other entries" );
+						}
 					}
 				}
+			} catch (NullPointerException e) {
+				throw new IllegalStateException ("Metadata entries for row " + rowName + " are missing");
 			}
 			if (flag == 0) {
 				throw new IllegalStateException("Metadata for row " + rowName + " must have one " + MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME + " entry");
@@ -259,23 +263,27 @@ public class GrowthMatrixUploader {
 		for (String colName : columnNames) {
 			boolean conditionFlag = false;
 			
-			for (PropertyValue p : m.getColumnMetadata().get(colName)){
-				if (p.getEntity().equals(MetadataProperties.GROWTHMATRIX_METADATA_COLUMN_CONDITION)&&!p.getPropertyName().equals("")) {
-					conditionFlag = true;
-					if (MetadataProperties.GROWTHMATRIX_METADATA_COLUMN_CONDITION_UNIT.contains(p.getPropertyUnit())){
-						String key = p.getEntity() + p.getPropertyName();
-						if (units.containsKey(key)) {
-							if (!units.get(key).equals(p.getPropertyUnit())) {
-								throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
+			try {
+				for (PropertyValue p : m.getColumnMetadata().get(colName)){
+					if (p.getEntity().equals(MetadataProperties.GROWTHMATRIX_METADATA_COLUMN_CONDITION)&&!p.getPropertyName().equals("")) {
+						conditionFlag = true;
+						if (MetadataProperties.GROWTHMATRIX_METADATA_COLUMN_CONDITION_UNIT.contains(p.getPropertyUnit())){
+							String key = p.getEntity() + p.getPropertyName();
+							if (units.containsKey(key)) {
+								if (!units.get(key).equals(p.getPropertyUnit())) {
+									throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
+								}
+							} else {
+								units.put(key, p.getPropertyUnit());
 							}
-						} else {
-							units.put(key, p.getPropertyUnit());
+						} else if (!p.getPropertyUnit().equals("")) {
+							throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
 						}
-					} else if (!p.getPropertyUnit().equals("")) {
-						throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
 					}
+					
 				}
-				
+			} catch (NullPointerException e) {
+				throw new IllegalStateException ("Metadata entries for column " + colName + " are missing");
 			}
 			
 			if (!conditionFlag) throw new IllegalStateException("Metadata for column " + colName + " must have at least one " + MetadataProperties.GROWTHMATRIX_METADATA_COLUMN_CONDITION + " entry");

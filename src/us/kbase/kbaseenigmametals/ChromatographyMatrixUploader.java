@@ -255,17 +255,21 @@ public class ChromatographyMatrixUploader {
 		
 		for (String rowName : rowNames){
 			flag = 0;
-			for (PropertyValue p: m.getRowMetadata().get(rowName)){
-				if (p.getEntity().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES)&&p.getPropertyName().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME)){
-					if (timeUnit.equals("")) timeUnit = p.getPropertyUnit();
-					if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT.contains(p.getPropertyUnit())){
-						throw new IllegalStateException(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains illegal unit " + p.getPropertyUnit());
-					} else if (!p.getPropertyUnit().equals(timeUnit)) {
-						throw new IllegalStateException(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains unit " + p.getPropertyUnit() + ", which is different from " + timeUnit + " in other entries" );
+			try {
+				for (PropertyValue p: m.getRowMetadata().get(rowName)){
+					if (p.getEntity().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES)&&p.getPropertyName().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME)){
+						if (timeUnit.equals("")) timeUnit = p.getPropertyUnit();
+						if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT.contains(p.getPropertyUnit())){
+							throw new IllegalStateException(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains illegal unit " + p.getPropertyUnit());
+						} else if (!p.getPropertyUnit().equals(timeUnit)) {
+							throw new IllegalStateException(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains unit " + p.getPropertyUnit() + ", which is different from " + timeUnit + " in other entries" );
+						}
+						flag++;
+						
 					}
-					flag++;
-					
 				}
+			} catch (NullPointerException e) {
+				throw new IllegalStateException ("Metadata entries for row " + rowName + " are missing");
 			}
 			if (flag == 0) {
 				throw new IllegalStateException("Metadata for row " + rowName + " must have one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME + " entry");
@@ -280,25 +284,29 @@ public class ChromatographyMatrixUploader {
 		for (String colName : columnNames) {
 			boolean measurementFlag = false;
 			
-			for (PropertyValue p : m.getColumnMetadata().get(colName)){
-				if (p.getEntity().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT)) {
-					measurementFlag = true;
-					if (p.getPropertyName().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY)){
-						if (MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY_UNIT.contains(p.getPropertyUnit())){
-							String key = p.getEntity() + p.getPropertyName() + p.getPropertyValue();
-							if (units.containsKey(key)) {
-								if (!units.get(key).equals(p.getPropertyUnit())) {
-									throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
+			try {
+				for (PropertyValue p : m.getColumnMetadata().get(colName)){
+					if (p.getEntity().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT)) {
+						measurementFlag = true;
+						if (p.getPropertyName().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY)){
+							if (MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY_UNIT.contains(p.getPropertyUnit())){
+								String key = p.getEntity() + p.getPropertyName() + p.getPropertyValue();
+								if (units.containsKey(key)) {
+									if (!units.get(key).equals(p.getPropertyUnit())) {
+										throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
+									}
+								} else {
+									units.put(key, p.getPropertyUnit());
 								}
 							} else {
-								units.put(key, p.getPropertyUnit());
+								throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
 							}
-						} else {
-							throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
 						}
 					}
-					if (!measurementFlag) throw new IllegalStateException("Metadata for column " + colName + " must have at least one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");				
+					if (!measurementFlag) throw new IllegalStateException("Metadata for column " + colName + " must have at least one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");
 				}
+			} catch (NullPointerException e) {
+				throw new IllegalStateException ("Metadata entries for column " + colName + " are missing");
 			}
 		}
 	}

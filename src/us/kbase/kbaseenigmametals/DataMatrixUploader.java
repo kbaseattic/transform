@@ -34,6 +34,7 @@ public class DataMatrixUploader {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+		MetadataProperties.startup();
 		DataMatrixUploader uploader = new DataMatrixUploader();
 		uploader.upload(args);
 	}
@@ -423,9 +424,68 @@ public class DataMatrixUploader {
 		returnVal.setRowMetadata(rowMetadata);
 		returnVal.setMatrixMetadata(matrixMetadata);
 		
+		validateMetadata(returnVal, sampleNames, rowNames);
+		
 		return returnVal;
 	};
 
+	private static void validateMetadata(Matrix2DMetadata metaData, List<String> sampleNames, List<String> rowNames) {
+		
+		//Check Description 
+		int flag = 0;
+		for (PropertyValue p: metaData.getMatrixMetadata()) {
+			if (p.getEntity().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_DESCRIPTION)) flag++;
+		}
+		if (flag == 0) {
+			throw new IllegalStateException("Metadata must have a " + MetadataProperties.DATAMATRIX_METADATA_TABLE_DESCRIPTION + " entry");
+		} else if (flag > 1){
+			throw new IllegalStateException("Metadata must have only one " + MetadataProperties.DATAMATRIX_METADATA_TABLE_DESCRIPTION + " entry, but " + flag + " entries found");
+		}
+		
+		//Check Measurement for the entire table
+		boolean Measures = false;
+		flag = 0;
+		for (PropertyValue p: metaData.getMatrixMetadata()) {
+			if (p.getEntity().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT)&&p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES)) {
+				if (!MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES_VALUE.contains(p.getPropertyValue())){
+					throw new IllegalStateException(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES + " metadata entry contains illegal value " + p.getPropertyValue());
+				} else if (p.getPropertyValue().equals("Measures")) {
+					Measures = true;
+				}
+				flag++;
+			}
+		}
+		if (flag == 0) {
+			throw new IllegalStateException("Metadata must have " + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES + " entry");
+		} else if (flag > 1){
+			throw new IllegalStateException("Metadata must have only one " + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES + " entry, , but it contains " + flag);
+		}
+		
+		if (Measures){
+			for (String sampleName : sampleNames){
+				flag = 0;
+				try {
+					for (PropertyValue p: metaData.getColumnMetadata().get(sampleName)){
+						if (p.getEntity().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT)&&p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE)){
+							if (!MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE_VALUE.contains(p.getPropertyValue())){
+								throw new IllegalStateException(MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE + " entry for column " + sampleName + " contains illegal value " + p.getPropertyValue());
+							}
+							flag++;
+						}
+					}
+				} catch (NullPointerException e) {
+					throw new IllegalStateException ("Metadata entries for column " + sampleName + " are missing");
+				}
+				if (flag == 0) {
+					throw new IllegalStateException("Metadata for column " + sampleName + " must have a " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE + " entry");
+				} else if (flag > 1) {
+					throw new IllegalStateException("Metadata for column " + sampleName + " must have only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE + " entry, but it contains " + flag);
+				}
+			}
+		}
+	 
+	}
+	
 	private static boolean validateInput(CommandLine line) {
 		boolean returnVal = true;
 		if (!line.hasOption("ws")) {

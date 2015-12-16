@@ -20,6 +20,9 @@ import java.util.*;
 
 public class GbkUploader {
 
+
+    final static boolean debug = false;
+
     /**
      * @param files
      * @param wsName
@@ -207,6 +210,8 @@ public class GbkUploader {
                             f.withLocation(locList).withAnnotations(new ArrayList<Tuple3<String, String, Long>>());
                             f.withAliases(new ArrayList<String>());
                             for (GbkQualifier prop : props) {
+                                if (debug)
+                                    System.out.println("addFeatureTrackFile " + prop.type);
                                 if (prop.type.equals("locus_tag")) {
                                     try {
                                         f.setId(prop.getValue());
@@ -262,10 +267,35 @@ public class GbkUploader {
                                 } else if (prop.type.equals("protein_id")) {
                                     try {
                                         final String pg = prop.getValue();
-                                        //System.out.println("addFeatureTrackFile protein_id "+pg);
-                                        f.getAliases().add(pg);
+                                        ArrayList aliases = (ArrayList) f.getAliases();
+
+                                        if (debug) {
+                                            System.out.println("getAliases");
+                                            System.out.println(aliases);
+                                        }
+
+                                        if (!aliases.contains(pg))
+                                            f.getAliases().add(pg);
                                     } catch (Exception e) {
-                                        System.err.println("addFeature error " + filename);
+                                        System.err.println("add alias error " + filename);
+                                        System.err.print(e.getMessage());
+                                        System.err.print(e.getStackTrace());
+                                        e.printStackTrace();
+                                    }
+                                } else if (prop.type.equals("db_xref")) {//protein id
+                                    try {
+                                        final String pg = prop.getValue();
+                                        ArrayList aliases = (ArrayList) f.getAliases();
+
+                                        if (debug) {
+                                            System.out.println("getAliases");
+                                            System.out.println(aliases);
+                                        }
+
+                                        if (!aliases.contains(pg))
+                                            f.getAliases().add(pg);
+                                    } catch (Exception e) {
+                                        System.err.println("add alias error " + filename);
                                         System.err.print(e.getMessage());
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
@@ -515,9 +545,27 @@ public class GbkUploader {
                                     f.setId(pg);
                                 }
                                 //System.out.println("addFeatureTrackFile "+pg);
-                                f.getAliases().add(pg);
+
+                                ArrayList aliases = (ArrayList) f.getAliases();
+
+                                if (debug) {
+                                    System.out.println("getAliases");
+                                    System.out.println(aliases);
+                                }
+
+                                if (!aliases.contains(pg))
+                                    f.getAliases().add(pg);
+
                             } else if (prop.type.equals("protein_id")) {
-                                f.getAliases().add(prop.getValue());
+                                ArrayList aliases = (ArrayList) f.getAliases();
+
+                                if (debug) {
+                                    System.out.println("getAliases");
+                                    System.out.println(aliases);
+                                }
+                                String val = prop.getValue();
+                                if (!aliases.contains(val))
+                                    f.getAliases().add(val);
                             }
                         }
                         if (f.getId() == null) {

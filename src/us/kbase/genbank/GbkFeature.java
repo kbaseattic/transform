@@ -13,6 +13,7 @@ import java.util.StringTokenizer;
  */
 public class GbkFeature extends GbkLocation {
     public static final String TAXON_PREFIX = "taxon:";
+    public static final String DBXREF_PREFIX = "db_xref:";
     public List<GbkLocation> locations;
     public List<GbkQualifier> qualifiers;
     public boolean wasError = false;
@@ -104,7 +105,9 @@ public class GbkFeature extends GbkLocation {
             String genomeName = null;
             int taxId = -1;
             String plasmid = null;
+            ArrayList aliases = new ArrayList();
             for (GbkQualifier qualifier : qualifiers) {
+                //System.out.println("qualifier " + qualifier);
                 if (qualifier.type.equals("organism")) {
                     genomeName = qualifier.getValue();
                 } else if (qualifier.type.equals("db_xref")) {
@@ -112,6 +115,11 @@ public class GbkFeature extends GbkLocation {
                     if (value.startsWith(TAXON_PREFIX)) {
                         taxId = Integer.parseInt(value.substring(TAXON_PREFIX.length()).trim());
                         //System.out.println("taxid " + taxId);
+                    }
+                    else {
+                        //System.out.println("DBXREF_PREFIX " + value);
+                        String alias = value.substring(DBXREF_PREFIX.length()).trim();
+                        aliases.add(alias);
                     }
                 } else if (qualifier.type.equals("plasmid")) {
                     plasmid = qualifier.getValue();

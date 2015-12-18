@@ -67,7 +67,7 @@ def represents_int(s):
 #
 # The default level is set to INFO which includes everything except DEBUG
 def upload_genome(shock_service_url=None, 
-                  #handle_service_url=None, 
+                  handle_service_url=None, 
                   #output_file_name=None, 
                   #input_fasta_directory=None, 
                   input_directory=None, 
@@ -100,7 +100,7 @@ def upload_genome(shock_service_url=None,
 
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
-
+    token = os.environ.get('KB_AUTH_TOKEN') 
 
 #    scientific_names_lookup = make_scientific_names_lookup(taxon_names_file)
 
@@ -1046,8 +1046,10 @@ def upload_genome(shock_service_url=None,
     assembly_reference = "%s/%s_assembly" % (workspace_name,core_genome_name)
     try:
         fasta_working_dir = str(os.getcwd()) + "/temp_fasta_file_dir"
+
+        print "HANDLE SERVICE URL " + handle_service_url
         assembly.upload_assembly(shock_service_url = shock_service_url,
-                                 #                  handle_service_url = args.handle_service_url,
+                                 handle_service_url = handle_service_url,
                                  input_directory = fasta_working_dir,
                                  #                  shock_id = args.shock_id,
                                  #                  handle_id = args.handle_id,
@@ -1469,6 +1471,16 @@ def upload_genome(shock_service_url=None,
     #Save genome annotation
     #Then Finally store the GenomeAnnotation.                                                                            
     genome_annotation = dict()
+
+    shock_id = None
+    handle_id = None
+    if shock_id is None:
+        shock_info = script_utils.upload_file_to_shock(logger, shock_service_url, input_file_name, token=token)
+        shock_id = shock_info["id"]
+        handles = script_utils.getHandles(logger, shock_service_url, handle_service_url, [shock_id], [handle_id], token)   
+        handle_id = handles[0]
+
+    genome_annotation['genbank_handle_ref'] = handle_id
     genome_annotation['feature_lookup'] = feature_lookup_dict
     genome_annotation['protein_container_ref'] = protein_reference
     genome_annotation['feature_container_references'] = feature_container_references 
@@ -1519,9 +1531,9 @@ if __name__ == "__main__":
     parser.add_argument('--shock_service_url', 
                         help=script_details["Args"]["shock_service_url"],
                         action='store', type=str, nargs='?', required=True)
-#    parser.add_argument('--handle_service_url', 
+    parser.add_argument('--handle_service_url', 
 #                        help=script_details["Args"]["handle_service_url"], 
-#                        action='store', type=str, nargs='?', default=None, required=False)
+                        action='store', type=str, nargs='?', default=None, required=True)
 #    parser.add_argument('--input_file_name', 
 #                        help="genbank file", 
 #                        nargs='?', required=True)
@@ -1571,7 +1583,7 @@ if __name__ == "__main__":
     logger.debug(args)
     try:
         upload_genome(shock_service_url = args.shock_service_url, 
-                      #                  handle_service_url = args.handle_service_url, 
+                      handle_service_url = args.handle_service_url, 
                       #                  output_file_name = args.output_file_name, 
                       #                      input_file_name = args.input_file_name, 
                       input_directory = args.input_directory, 

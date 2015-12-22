@@ -47,7 +47,7 @@ my $Help       = 0;
 my $fbaurl = "";
 my $wsurl = "";
 
-GetOptions("input_file_name=s"  => \$In_RxnFile,
+GetOptions("input_file_name|s=s"  => \$In_RxnFile,
 	   "compounds|c=s"      => \$In_CpdFile,
 	   "object_name|o=s"    => \$Out_Object,
 	   "workspace_name|w=s" => \$Out_WS,

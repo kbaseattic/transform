@@ -83,7 +83,7 @@ for (my $i=0; $i < @{$obj->{orthologs}}; $i++) {
 	];
 	my $genomehash;
 	for (my $j=0; $j < @{$orthfam->{orthologs}}; $j++) {
-		$genomehash->{$orthfam->{orthologs}->[$j]->[2]} = $orthfam->{orthologs}->[$j]->[0].":".$orthfam->{orthologs}->[$j]->[1];
+		push @{$genomehash->{$orthfam->{orthologs}->[$j]->[2]}}, $orthfam->{orthologs}->[$j]->[0].":".$orthfam->{orthologs}->[$j]->[1];
 		for (my $k=0; $k < @{$orthfam->{orthologs}}; $k++) {
 			$tables->{$opt->workspace_name."_".$opt->object_name."_Genomes"}->[1+$wshash->{$orthfam->{orthologs}->[$j]->[2]}]->[1+$wshash->{$orthfam->{orthologs}->[$k]->[2]}]++;
 		}
@@ -92,7 +92,7 @@ for (my $i=0; $i < @{$obj->{orthologs}}; $i++) {
 		if (!defined($genomehash->{$obj->{genome_refs}->[$j]})) {
 			push(@{$row},"");
 		} else {
-			push(@{$row},$genomehash->{$obj->{genome_refs}->[$j]});
+			push(@{$row}, (join ";", @{$genomehash->{$obj->{genome_refs}->[$j]}}));
 		}
 	}
 	push(@{$tables->{$opt->workspace_name."_".$opt->object_name."_Orthologs"}},$row);

@@ -311,6 +311,18 @@ def upload_genome(shock_service_url=None,
     #Key is the feature type, value is the object reference to the feature container object.
     feature_container_references = dict()
 
+    #LIST OF WARNINGS TO PUT INTO THE AnnotationQualityObject.
+    annotation_quality_warnings = list()
+
+    #Dict of alias source and the count
+    alias_source_counts_map = dict()
+    #Dict of interfeature relationship type and count of occurences.  
+    #Keys "CDS_with_mRNA","CDS_with_gene","mRNA_with_CDS","mRNA_with_gene","gene_with_CDS" and "gene_with_mRNA"
+    interfeature_relationship_counts_map = dict()
+
+    genes_with_mRNA = dict()
+    genes_with_CDS = dict()
+
     #integers used for stripping text 
     complement_len = len("complement(")
     join_len = len("join(")
@@ -688,7 +700,7 @@ def upload_genome(shock_service_url=None,
                 elif period_count == 1:
                     start_pos, end_pos = coordinates.split('.', 1) 
                     has_odd_coordinates = True
-                    quality_warnings.append("The single period in the coordinate Indicates that the exact location is unknown but that it is one of the bases between bases %s and %s, inclusive.  Note the entire sequence range has been put into this feature." % (str(start_pos),str(end_pos)))
+                    quality_warnings.append("Note this feature has a single period in the original coordinate this indicates that the exact location is unknown but that it is one of the bases between bases %s and %s, inclusive.  Note the entire sequence range has been put into this feature." % (str(start_pos),str(end_pos)))
                 elif period_count > 2 :
                     can_not_process_feature = True
                 else:
@@ -696,7 +708,7 @@ def upload_genome(shock_service_url=None,
                 if "^" in coordinates:
                     start_pos, end_pos = coordinates.split('^', 1) 
                     has_odd_coordinates = True
-                    quality_warnings.append("Note this has a feature between bases.  It points to a site between bases %s and %s, inclusive.  Note the entire sequence range has been put into this feature." % (str(start_pos),str(end_pos)))                    
+                    quality_warnings.append("Note this feature is between bases.  It points to a site between bases %s and %s, inclusive.  Note the entire sequence range has been put into this feature." % (str(start_pos),str(end_pos)))                    
 
 
                 if not can_not_process_feature:
@@ -739,7 +751,7 @@ def upload_genome(shock_service_url=None,
                     last_coordinate = int(end_pos)
 
             if has_odd_coordinates:
-                    quality_warnings.insert(0,"Note this feature contained some atypical coordinates, see the rest of the warnings for details : %s" % (original_coordinates))
+                    quality_warnings.insert(0,"Note this feature contains some atypical coordinates, see the rest of the warnings for details : %s" % (original_coordinates))
             if can_not_process_feature: 
                 #skip source feature types.
                 continue
@@ -782,7 +794,7 @@ def upload_genome(shock_service_url=None,
                     key, value = temp_string.split('=', 1) 
                 except Exception, e: 
                     #Does not follow key value pair structure.  This unexpected. Skipping.
-                    quality_warnings.append("The following feature property does not follow the expected key=value format : %s" % (temp_string)) 
+                    quality_warnings.append("Note this feature has the following feature property does not follow the expected key=value format : %s" % (temp_string)) 
                     key = temp_string 
                     value = "" 
 
@@ -893,39 +905,61 @@ def upload_genome(shock_service_url=None,
             if feature_type not in features_type_containers_dict:
                 features_type_containers_dict[feature_type] = dict()
             feature_id = None
-            if "feature_specific_id" not in feature_object:
-                if "locus_tag" not in feature_object:
-                    if feature_type not in feature_type_id_counter_dict:
-                        feature_type_id_counter_dict[feature_type] = 1;
-                        feature_id = "%s_%s" % (feature_type,str(1))
-                    else:
-                        feature_type_id_counter_dict[feature_type] += 1;
-                        feature_id = "%s_%s" % (feature_type,str(feature_type_id_counter_dict[feature_type]))
-                else:
-                    feature_id = feature_object["locus_tag"]
-            else:
-                feature_id = feature_object["feature_specific_id"]
-            if feature_id in features_type_containers_dict[feature_type]:
-                #Insure that no duplicate ids exist
-                if feature_type not in feature_type_id_counter_dict:
-                    feature_type_id_counter_dict[feature_type] = 1;
-                    feature_id = "%s_%s" % (feature_type,str(1))
-                else: 
-                    feature_type_id_counter_dict[feature_type] += 1;
-                    feature_id = "%s_%s" % (feature_type,str(feature_type_id_counter_dict[feature_type]))
+#OLD WAY TRIED TO USE ID FROM THE FEATURE, UNIQUENESS ONLY GUARANTEED WITH FEATURE CONTAINER AND NOT ACROSS THE GENOME ANNOTATION
+#            if "feature_specific_id" not in feature_object:
+#                if "locus_tag" not in feature_object:
+#                    if feature_type not in feature_type_id_counter_dict:
+#                        feature_type_id_counter_dict[feature_type] = 1;
+#                        feature_id = "%s_%s" % (feature_type,str(1))
+#                    else:
+#                        feature_type_id_counter_dict[feature_type] += 1;
+#                        feature_id = "%s_%s" % (feature_type,str(feature_type_id_counter_dict[feature_type]))
+#                else:
+#                    feature_id = feature_object["locus_tag"]
+#            else:
+#                feature_id = feature_object["feature_specific_id"]
+#            if feature_id in features_type_containers_dict[feature_type]:
+#                #Insure that no duplicate ids exist
+#                if feature_type not in feature_type_id_counter_dict:
+#                    feature_type_id_counter_dict[feature_type] = 1;
+#                    feature_id = "%s_%s" % (feature_type,str(1))
+#                else: 
+#                    feature_type_id_counter_dict[feature_type] += 1;
+#                    feature_id = "%s_%s" % (feature_type,str(feature_type_id_counter_dict[feature_type]))
+#END OLD WAY
+
+
+#NEW WAY:  MAKING ALL IDS UNIQUE ACROSS THE GENOME.
+            if feature_type not in feature_type_id_counter_dict:
+                feature_type_id_counter_dict[feature_type] = 1;
+                feature_id = "%s_%s" % (feature_type,str(1))
+            else: 
+                feature_type_id_counter_dict[feature_type] += 1;
+                feature_id = "%s_%s" % (feature_type,str(feature_type_id_counter_dict[feature_type]))
+#END NEW WAY
+
             if feature_type not in features_type_containers_dict:
                 features_type_containers_dict[feature_type]=dict()
             feature_object["feature_id"] = feature_id
 
+            for warning in quality_warnings:
+                temp_warning = warning
+                temp_warning = temp_warning.replace("Note this feature ","Feature %s of type %s " % (feature_id,feature_type))
+                annotation_quality_warnings.append(temp_warning)
+
             features_type_containers_dict[feature_type][feature_id] = feature_object
 
             feature_container_object_name = "%s_feature_container_%s" % (core_genome_name, feature_type)
+            feature_container_ref = "%s/%s" % (workspace_name,feature_container_object_name)
+
+            if feature_id not in feature_lookup_dict: 
+                feature_lookup_dict[feature_id] = list() 
+            feature_lookup_dict[feature_id].append([feature_container_ref,feature_id])
 
             if "aliases" in feature_object: 
                 for alias in feature_object["aliases"]:
                     if alias not in feature_lookup_dict:
                         feature_lookup_dict[alias] = list()
-                    feature_container_ref = "%s/%s" % (workspace_name,feature_container_object_name)
                     feature_lookup_dict[alias].append([feature_container_ref,feature_id])
 
 
@@ -941,14 +975,21 @@ def upload_genome(shock_service_url=None,
                         features_grouping_dict[feature_object["locus_tag"]][feature_type]= [feature_id]
                     else:
                         features_grouping_dict[feature_object["locus_tag"]][feature_type].append(feature_id)
-                elif "gene" in feature_object:
-                    if feature_object["gene"] not in features_grouping_dict:
-                        features_grouping_dict[feature_object["gene"]]=dict()
-                    if feature_type not in features_grouping_dict[feature_object["gene"]]:
-                        features_grouping_dict[feature_object["gene"]][feature_type]= [feature_id]
-                    else:
-                        features_grouping_dict[feature_object["gene"]][feature_type].append(feature_id)
-
+                if "gene" in feature_object: 
+                    if "locus_tag" in feature_object and feature_object["locus_tag"] != feature_object["gene"]:
+                        if feature_object["gene"] not in features_grouping_dict:
+                            features_grouping_dict[feature_object["gene"]]=dict()
+                        if feature_type not in features_grouping_dict[feature_object["gene"]]:
+                            features_grouping_dict[feature_object["gene"]][feature_type]= [feature_id]
+                        else:
+                            features_grouping_dict[feature_object["gene"]][feature_type].append(feature_id)
+                    elif "locus_tag" not in feature_object:
+                        if feature_object["gene"] not in features_grouping_dict:
+                            features_grouping_dict[feature_object["gene"]]=dict()
+                        if feature_type not in features_grouping_dict[feature_object["gene"]]:
+                            features_grouping_dict[feature_object["gene"]][feature_type]= [feature_id]
+                        else:
+                            features_grouping_dict[feature_object["gene"]][feature_type].append(feature_id)
 
 
             #############################
@@ -976,12 +1017,12 @@ def upload_genome(shock_service_url=None,
                         protein_object["amino_acid_sequence"] = str(aa_seq[0:].upper())
                     else:
                         # TODO.  REMOVE PROTEIN REF FROM CDS PROPERTIES?
-                        #CAN'T MAKE CDS PROPERTIES BECAUSE PROTEIN OBJECT CAN NOT BE MADE.  REMOVE FROM GROUPINGS
                         add_protein = false
-                        if "locus_tag" in feature_object: 
-                            features_grouping_dict[feature_object["locus_tag"]]["CDS"].remove(feature_id) 
-                        elif "gene" in feature_object: 
-                            features_grouping_dict[feature_object["gene"]]["CDS"].remove(feature_id)
+                        #CAN'T MAKE CDS PROPERTIES BECAUSE PROTEIN OBJECT CAN NOT BE MADE.  REMOVE FROM GROUPINGS
+#                        if "locus_tag" in feature_object: 
+#                            features_grouping_dict[feature_object["locus_tag"]]["CDS"].remove(feature_id) 
+#                        elif "gene" in feature_object: 
+#                            features_grouping_dict[feature_object["gene"]]["CDS"].remove(feature_id)
                 
                 if add_protein:
                     if "function" in feature_object:
@@ -1102,7 +1143,8 @@ def upload_genome(shock_service_url=None,
         #####################################################
         if num_genes_present > 1:
             #THIS COULD CHANGE THE DOWN THE LINE (NOT GOING TO IMPLEMENT THE LOGIC NOW)
-            general_warning = "Multiple genes shared the same LocusTag(or Gene Name) : %s. The interfeature relationships will not be determined." % (feature_grouping_id)
+            general_warning = "Multiple genes shared the same LocusTag or GeneID : %s. The interfeature relationships will not be determined." % (feature_grouping_id)
+            annotation_quality_warnings.append(general_warning) 
             for feature_type in features_grouping_dict[feature_grouping_id]:
                 for feature_id in features_grouping_dict[feature_grouping_id][feature_type]:
                     if "quality_warnings" in features_type_containers_dict[feature_type][feature_id]: 
@@ -1172,16 +1214,56 @@ def upload_genome(shock_service_url=None,
                                     gene_mRNA_list.append(["mRNA",feature_id])
                                     if "mRNA_properties" not in features_type_containers_dict["mRNA"][feature_id]:
                                         features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"] = dict()
-                                    features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]["parent_gene"] = ["gene",gene_id]
-                                    if "function" not in features_type_containers_dict["mRNA"][feature_id] and \
-                                       "function" in features_type_containers_dict["gene"][gene_id]:
-                                        #inherit function from gene if mRNA has not function
-                                        features_type_containers_dict["mRNA"][feature_id]["function"] = features_type_containers_dict["gene"][gene_id]["function"]
-
+                                    if "parent_gene" not in features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]:
+                                        features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]["parent_gene"] = ["gene",gene_id]
+                                        if "mRNA_with_gene" not in interfeature_relationship_counts_map:
+                                            interfeature_relationship_counts_map["mRNA_with_gene"] = 1
+                                        else:
+                                            interfeature_relationship_counts_map["mRNA_with_gene"] = interfeature_relationship_counts_map["mRNA_with_gene"] + 1
+                                        if "function" not in features_type_containers_dict["mRNA"][feature_id] and \
+                                           "function" in features_type_containers_dict["gene"][gene_id]:
+                                            #inherit function from gene if mRNA has not function
+                                            features_type_containers_dict["mRNA"][feature_id]["function"] = features_type_containers_dict["gene"][gene_id]["function"]
+                                    else:
+                                        existing_gene_id = features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]["parent_gene"][1]
+                                        if existing_gene_id != gene_id:
+                                            general_warning = "mRNA %s ambiguously is associated with two different gene ids (%s and %s), no association can be made" % (feature_id,existing_gene_id,gene_id)
+                                            annotation_quality_warnings.append(general_warning) 
+                                            del features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]["parent_gene"]
+#                                            count_to_remove = len(features_type_containers_dict["gene"][existing_gene_id]["gene_properties"]["children_mRNA"])
+                                            interfeature_relationship_counts_map["gene_with_mRNA"] = interfeature_relationship_counts_map["gene_with_mRNA"] - 1
+                                            interfeature_relationship_counts_map["mRNA_with_gene"] = interfeature_relationship_counts_map["mRNA_with_gene"] - 1
+                                            del features_type_containers_dict["gene"][existing_gene_id]["gene_properties"]["children_mRNA"] 
+                                            gene_mRNA_list = list()
+                                            if not features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]:
+                                                del features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]
+                                            if "quality_warnings" in features_type_containers_dict[feature_type][feature_id]: 
+                                                features_type_containers_dict["mRNA"][feature_id]["quality_warnings"].append(general_warning) 
+                                            else: 
+                                                features_type_containers_dict["mRNA"][feature_id]["quality_warnings"] = [general_warning] 
                 if len(gene_mRNA_list) > 0:
-                    if "gene_properties" not in features_type_containers_dict["gene"][gene_id]:
-                        features_type_containers_dict["gene"][gene_id]["gene_properties"] = dict()
-                    features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"] = gene_mRNA_list 
+                    if gene_id not in genes_with_mRNA:
+                        if "gene_properties" not in features_type_containers_dict["gene"][gene_id]:
+                            features_type_containers_dict["gene"][gene_id]["gene_properties"] = dict()
+                        temp_dict = dict()
+                        for e1 in gene_mRNA_list:
+                            temp_dict[e1[1]] = 1
+                        new_list = list()
+                        for temp_key in temp_dict.keys():
+                            new_list.append(["mRNA",temp_key])
+                        features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"]=new_list 
+                        if "gene_with_mRNA" not in interfeature_relationship_counts_map:
+                            interfeature_relationship_counts_map["gene_with_mRNA"] = 0
+                        interfeature_relationship_counts_map["gene_with_mRNA"] = interfeature_relationship_counts_map["gene_with_mRNA"] + 1
+                        genes_with_mRNA[gene_id] = 1
+                    elif "children_mRNA" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
+                        temp_dict = dict()
+                        for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"]:
+                            for e2 in e1:
+                                temp_dict[e2[1]] = 1
+                        for new_child_mRNA in gene_mRNA_list:
+                            if new_child_mRNA[1] not in temp_dict:
+                                features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"].append(new_child_mRNA)
 
 
             if "CDS" in features_grouping_dict[feature_grouping_id]: 
@@ -1216,19 +1298,57 @@ def upload_genome(shock_service_url=None,
                                     gene_CDS_list.append(["CDS",feature_id]) 
                                     if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
                                         features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
-                                    features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["parent_gene"] = ["gene",gene_id] 
-                                    if "function" not in features_type_containers_dict["CDS"][feature_id] and \
-                                       "function" in features_type_containers_dict["gene"][gene_id]:
-                                        #inherit function from gene if CDS has not function
-                                        features_type_containers_dict["CDS"][feature_id]["function"] = features_type_containers_dict["gene"][gene_id]["function"]
-                                        if feature_id in protein_container_dict:
-                                            protein_container_dict[feature_id]["function"] = features_type_containers_dict["gene"][gene_id]["function"] 
-
-
+                                    if "parent_gene" not in features_type_containers_dict["CDS"][feature_id]["CDS_properties"]:
+                                        features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["parent_gene"] = ["gene",gene_id] 
+                                        if "CDS_with_gene" not in interfeature_relationship_counts_map:
+                                            interfeature_relationship_counts_map["CDS_with_gene"] = 1
+                                        else:
+                                            interfeature_relationship_counts_map["CDS_with_gene"] = interfeature_relationship_counts_map["CDS_with_gene"] + 1
+                                        if "function" not in features_type_containers_dict["CDS"][feature_id] and \
+                                           "function" in features_type_containers_dict["gene"][gene_id]:
+                                            #inherit function from gene if CDS has not function
+                                            features_type_containers_dict["CDS"][feature_id]["function"] = features_type_containers_dict["gene"][gene_id]["function"]
+                                    else:
+                                        existing_gene_id = features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["parent_gene"][1]
+                                        if existing_gene_id != gene_id:
+                                            general_warning = "CDS %s ambiguously is associated with two different gene ids (%s and %s), no association can be made" % (feature_id,existing_gene_id,gene_id)
+                                            annotation_quality_warnings.append(general_warning) 
+#                                            count_to_remove = len(features_type_containers_dict["gene"][existing_gene_id]["gene_properties"]["children_CDS"])
+                                            interfeature_relationship_counts_map["gene_with_CDS"] = interfeature_relationship_counts_map["gene_with_CDS"] - 1
+                                            interfeature_relationship_counts_map["CDS_with_gene"] = interfeature_relationship_counts_map["CDS_with_gene"] - 1
+                                            del features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["parent_gene"]
+                                            gene_CDS_list = list()
+                                            if not features_type_containers_dict["CDS"][feature_id]["CDS_properties"]:
+                                                del features_type_containers_dict["CDS"][feature_id]["CDS_properties"]
+                                            if "quality_warnings" in features_type_containers_dict[feature_type][feature_id]: 
+                                                features_type_containers_dict["CDS"][feature_id]["quality_warnings"].append(general_warning) 
+                                            else: 
+                                                features_type_containers_dict["CDS"][feature_id]["quality_warnings"] = [general_warning] 
                 if len(gene_CDS_list) > 0: 
-                    if "gene_properties" not in features_type_containers_dict["gene"][gene_id]: 
-                        features_type_containers_dict["gene"][gene_id]["gene_properties"] = dict() 
-                    features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"] = gene_CDS_list
+                    if gene_id not in genes_with_CDS:
+                        if "gene_properties" not in features_type_containers_dict["gene"][gene_id]: 
+                            features_type_containers_dict["gene"][gene_id]["gene_properties"] = dict()
+                        temp_dict = dict()
+                        for e1 in gene_CDS_list:
+                            temp_dict[e1[1]] = 1
+                        new_list = list()
+                        for temp_key in temp_dict.keys():
+                            new_list.append(["CDS",temp_key])
+                        features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"]=new_list 
+                        if "gene_with_CDS" not in interfeature_relationship_counts_map:
+                            interfeature_relationship_counts_map["gene_with_CDS"] = 0 
+                        interfeature_relationship_counts_map["gene_with_CDS"] = interfeature_relationship_counts_map["gene_with_CDS"] + 1
+                        genes_with_CDS[gene_id] = 1
+                    elif "children_CDS" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
+                        temp_dict = dict()
+                        for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"]:
+                            for e2 in e1:
+                                temp_dict[e2[1]] = 1
+                        for new_child_CDS in gene_CDS_list:
+                            if new_child_CDS[1] not in temp_dict:
+                                features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"].append(new_child_CDS)
+
+
 
         #########################        
         #CDS to mRNA interfeature relationships
@@ -1352,14 +1472,50 @@ def upload_genome(shock_service_url=None,
                 for CDS_feature_id in CDS_to_mRNA_pairings_made:
                     if "CDS_properties" not in features_type_containers_dict["CDS"][CDS_feature_id]: 
                         features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"] = dict() 
-                    features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]["associated_mRNA"] \
-                        = ["mRNA",CDS_to_mRNA_pairings_made[CDS_feature_id]] 
+                    if "asssociated_mRNA" in features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]:
+                        existing_mRNA_id = features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]["associated_mRNA"][1]
+                        if CDS_to_mRNA_pairings_made[CDS_feature_id] != existing_mRNA_id:
+                            #REMOVE THE OLD ONE ASSOCIATION, POTENTIALLY REMOVE THE PROPERTIES, ADD A WARNING
+                            general_warning = "CDS %s ambiguously is associated with two different mRNA ids (%s and %s), no association can be made" % (feature_id,existing_mRNA_id,CDS_to_mRNA_pairings_made[CDS_feature_id])
+                            annotation_quality_warnings.append(general_warning)
+                            del features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]["associated_mRNA"]
+#                            interfeature_relationship_counts_map["CDS_with_mRNA"] = interfeature_relationship_counts_map["CDS_with_mRNA"] - 1 
+                            if not features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]:
+                                del features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]
+                                if "quality_warnings" in features_type_containers_dict["CDS"][CDS_feature_id]:
+                                    features_type_containers_dict["CDS"][CDS_feature_id]["quality_warnings"].append(general_warning)
+                                else: 
+                                    features_type_containers_dict["CDS"][CDS_feature_id]["quality_warnings"] = [general_warning]
+                    else:
+                        features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]["associated_mRNA"] \
+                            = ["mRNA",CDS_to_mRNA_pairings_made[CDS_feature_id]] 
+#                        if "CDS_with_mRNA" not in interfeature_relationship_counts_map:
+#                            interfeature_relationship_counts_map["CDS_with_mRNA"] = 0 
+#                        interfeature_relationship_counts_map["CDS_with_mRNA"] = interfeature_relationship_counts_map["CDS_with_mRNA"] + 1 
                 for mRNA_feature_id in mRNA_to_CDS_pairings_made:
 #                    print " mRNA_to_CDS_pairings_made : \n" + str( mRNA_to_CDS_pairings_made)
                     if "mRNA_properties" not in features_type_containers_dict["mRNA"][mRNA_feature_id]: 
                         features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"] = dict() 
-                    features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]["associated_CDS"] \
-                        = ["CDS",mRNA_to_CDS_pairings_made[mRNA_feature_id]] 
+                    if "asssociated_CDS" in features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]:
+                        existing_CDS_id = features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]["associated_CDS"][1]
+                        if mRNA_to_CDS_pairings_made[mRNA_feature_id] != existing_CDS_id:
+                            #REMOVE THE OLD ONE ASSOCIATION, POTENTIALLY REMOVE THE PROPERTIES, ADD A WARNING
+                            general_warning = "mRNA %s ambiguously is associated with two different CDS ids (%s and %s), no association can be made" % (feature_id,existing_CDS_id,mRNA_to_CDS_pairings_made[mRNA_feature_id])
+                            annotation_quality_warnings.append(general_warning)
+                            del features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]["associated_CDS"]
+#                            interfeature_relationship_counts_map["mRNA_with_CDS"] = interfeature_relationship_counts_map["mRNA_with_CDS"] - 1 
+                            if not features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]:
+                                del features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]
+                                if "quality_warnings" in features_type_containers_dict["mRNA"][mRNA_feature_id]:
+                                    features_type_containers_dict["mRNA"][mRNA_feature_id]["quality_warnings"].append(general_warning)
+                                else: 
+                                    features_type_containers_dict["CDS"][mRNA_feature_id]["quality_warnings"] = [general_warning]
+                    else:
+                        features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]["associated_CDS"] \
+                            = ["CDS",mRNA_to_CDS_pairings_made[mRNA_feature_id]] 
+#                        if "mRNA_with_CDS" not in interfeature_relationship_counts_map:
+#                            interfeature_relationship_counts_map["mRNA_with_CDS"] = 0 
+#                        interfeature_relationship_counts_map["mRNA_with_CDS"] = interfeature_relationship_counts_map["mRNA_with_CDS"] + 1 
 
 
         running_grouping_elements_count += (num_cds_present + num_mrna_present + num_genes_present)
@@ -1466,7 +1622,23 @@ def upload_genome(shock_service_url=None,
 #                    raise 
     else:
         raise Exception("This genome appears to have no annotations.")
-        
+
+    #determine mRNA to CDS relationship counts
+    CDS_to_mRNA_count = 0
+    if "CDS" in features_type_containers_dict:
+        for feature in features_type_containers_dict["CDS"]:
+            if "CDS_properties" in features_type_containers_dict["CDS"][feature]:
+                if "associated_mRNA" in features_type_containers_dict["CDS"][feature]["CDS_properties"]:
+                    CDS_to_mRNA_count += 1
+    interfeature_relationship_counts_map["CDS_with_mRNA"] = CDS_to_mRNA_count
+
+    mRNA_to_CDS_count = 0
+    if "mRNA" in features_type_containers_dict:
+        for feature in features_type_containers_dict["mRNA"]:
+            if "mRNA_properties" in features_type_containers_dict["mRNA"][feature]:
+                if "associated_CDS" in features_type_containers_dict["mRNA"][feature]["mRNA_properties"]:
+                    mRNA_to_CDS_count += 1
+    interfeature_relationship_counts_map["mRNA_with_CDS"] = mRNA_to_CDS_count
 
     #Save genome annotation
     #Then Finally store the GenomeAnnotation.                                                                            
@@ -1500,6 +1672,7 @@ def upload_genome(shock_service_url=None,
     genome_annotation['external_source'] = source_name
     genome_annotation['external_source_id'] = ",".join(locus_name_order)
     genome_annotation['external_source_origination_date'] = genbank_time_string
+    genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
 #    print "Genome Annotation id %s" % (genome_annotation['genome_annotation_id'])
  
     logger.info("Attempting Genome Annotation save for %s" % (genome_annotation_object_name))

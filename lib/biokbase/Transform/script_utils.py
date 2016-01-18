@@ -501,6 +501,8 @@ def download_from_urls(logger = stderrlogger(__file__),
                 file_list = ftp_connection.listdir(path)
             elif ftp_connection.path.isfile(path):
                 file_list = [path]
+            else:
+                raise Exception('File not found for FTP URL "{0}"'.format(url))
 
             if len(file_list) > 1:            
                 if len(file_list) > threshold:

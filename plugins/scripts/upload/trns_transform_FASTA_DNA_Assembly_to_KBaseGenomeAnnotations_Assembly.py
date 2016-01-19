@@ -26,7 +26,7 @@ import biokbase.workspace.client
 #
 # The default level is set to INFO which includes everything except DEBUG
 def upload_assembly(shock_service_url = None, 
-#                    handle_service_url = None,
+                    handle_service_url = None,
                     input_directory = None,
 #                    shock_id = None,
 #                  handle_id = None,
@@ -44,6 +44,7 @@ def upload_assembly(shock_service_url = None,
     Uploads CondensedGenomeAssembly
     Args:
         shock_service_url: A url for the KBase SHOCK service.
+        handle_service_url: A url for the KBase Handle service.
         shock_id: If the shock id exists use same file (NEEDS TO BE UPDATED TO HANDLE ID)
         input_mapping: (not sure, I think for mapping multiple files, not needed here only 1 file expected)
         workspace_name: Name of ws to load into
@@ -92,7 +93,7 @@ def upload_assembly(shock_service_url = None,
  
     if not os.path.isfile(fasta_file_name): 
         raise Exception("The fasta file name {0} is not a file!".format(fasta_file_name)) 
- 
+                    
     if not os.path.isdir(input_directory): 
         raise Exception("The input directory {0} is not a valid directory!".format(input_directory)) 
 
@@ -286,11 +287,14 @@ def upload_assembly(shock_service_url = None,
 
 
     shock_id = None
+    handle_id = None
     if shock_id is None:
         shock_info = script_utils.upload_file_to_shock(logger, shock_service_url, fasta_file_name, token=token)
         shock_id = shock_info["id"]
-    
-    contig_set_dict["fasta_handle_ref"] = shock_id
+        handles = script_utils.getHandles(logger, shock_service_url, handle_service_url, [shock_id], [handle_id], token)   
+        handle_id = handles[0]
+
+    contig_set_dict["fasta_handle_ref"] = handle_id
 
     # For future development if the type is updated to the handle_reference instead of a shock_reference
     assembly_not_saved = True 
@@ -326,9 +330,9 @@ if __name__ == "__main__":
     parser.add_argument('--shock_service_url', 
                         help=script_details["Args"]["shock_service_url"],
                         action='store', type=str, nargs='?', required=True)
-#    parser.add_argument('--handle_service_url', 
-#                        help=script_details["Args"]["handle_service_url"], 
-#                        action='store', type=str, nargs='?', default=None, required=False)
+    parser.add_argument('--handle_service_url', 
+                        help=script_details["Args"]["handle_service_url"], 
+                        action='store', type=str, nargs='?', default=None, required=True)
     parser.add_argument('--workspace_name', nargs='?', help='workspace name to populate', required=True)
     parser.add_argument('--workspace_service_url', action='store', type=str, nargs='?', required=True) 
     parser.add_argument('--taxon_reference', nargs='?', help='The ws object reference for the related taxon.  If not set the taxon reference will not get set in the object', required=False)
@@ -361,17 +365,17 @@ if __name__ == "__main__":
     try:
     
         upload_assembly(shock_service_url = args.shock_service_url, 
-#                  handle_service_url = args.handle_service_url, 
-                  input_directory = args.input_directory, 
+                        handle_service_url = args.handle_service_url, 
+                        input_directory = args.input_directory, 
 #                  shock_id = args.shock_id, 
 #                  handle_id = args.handle_id,
 #                  input_mapping = args.input_mapping,
-                      workspace_name = args.workspace_name,
-                      workspace_service_url = args.workspace_service_url,
-                      taxon_reference = args.taxon_reference,
-                      assembly_name = args.object_name,
-                      source = args.source,
-                      logger = logger)
+                        workspace_name = args.workspace_name,
+                        workspace_service_url = args.workspace_service_url,
+                        taxon_reference = args.taxon_reference,
+                        assembly_name = args.object_name,
+                        source = args.source,
+                        logger = logger)
     except Exception, e:
         logger.exception(e)
         sys.exit(1)

@@ -14,7 +14,7 @@ public class GbkHeader extends GbkElement {
 		super(line_num,type,value);
 		this.subheaders = new ArrayList<GbkSubheader>();
 	}
-	public void save(GbkLocus l, GbkCallback ret) throws Exception {
-		ret.addHeader(l.name, type, getValue(), subheaders);
+	public void save(GbkLocus l, GbkCallback ret, String filename) throws Exception {
+		ret.addHeaderTrackFile(l.name, type, getValue(), subheaders, filename);
 	}
 }

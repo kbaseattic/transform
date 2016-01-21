@@ -10,6 +10,8 @@ use Spreadsheet::XLSX;
 #KBASE USE
 use Bio::KBase::Transform::ScriptHelpers qw( parse_excel getStderrLogger );
 
+my $logger = getStderrLogger();
+
 my $In_File = "";
 my $Help = 0;
 GetOptions("input_file_name|i=s"  => \$In_File,

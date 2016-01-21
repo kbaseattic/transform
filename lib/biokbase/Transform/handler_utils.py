@@ -1,3 +1,8 @@
+"""
+Provides utility functions for handler/taskrunner level code to provide consistent
+behavior across different taskrunners and reduce code repetition of similar tasks.
+"""
+
 import sys
 import os
 import shutil
@@ -7,91 +12,174 @@ import simplejson
 
 from biokbase.Transform import script_utils
 
+UJS_STATUS_MAX = 200
+
 def report_exception(logger=None, report_details=None, cleanup_details=None):
-    logger.error(report_details["message"])
-    logger.exception(report_details["exc"])
+    """
+    Report a fatal error from a taskrunner script back to UJS if possible.
+    Clean up the working directory that the job was running in before exiting.
+    """
+
+    if logger is None:
+        raise Exception("A logger must be defined!")
+
+    logger.debug(report_details)
+    logger.error(report_details["error_message"])
 
     if report_details["ujs_job_id"] is not None:
-        report_details["ujs"].complete_job(report_details["ujs_job_id"], 
-                                           report_details["token"], 
-                                           report_details["message"], 
-                                           report_details["exc"], 
-                                           None) 
+        ujs = report_details["ujs_client"]
+        
+        job_status = ujs.get_job_status(report_details["ujs_job_id"])
+
+        if job_status[-2] == 0:
+            ujs.complete_job(report_details["ujs_job_id"], 
+                             report_details["token"], 
+                             report_details["status"][:UJS_STATUS_MAX], 
+                             report_details["error_message"], 
+                             None)
+    else:
+        raise Exception("No report details included!") 
     
-    if not cleanup_details["keep_working_directory"]:
-        cleanup(cleanup_details["working_directory"])
+    if cleanup_details is not None:    
+        if not cleanup_details["keep_working_directory"]:
+            try:
+                cleanup(logger=logger, directory=cleanup_details["working_directory"])            
+            except Exception, e:
+                logger.exception(e)
+    else:
+        raise Exception("Unable to cleanup working directory without cleanup info!")
         
 
 def cleanup(logger=None, directory=None):
+    """
+    Clean up after the job.  At the moment this just means removing the working
+    directory, but later could mean other things.
+    """
+    
     try:
         shutil.rmtree(directory)
     except IOError, e:
-        report_exception("{0}".format(directory), e, ujs)
+        logger.error("Unable to remove working directory {0}".format(directory))
+        raise
 
 
 def gen_recursive_filelist(d):
+    """
+    Generate a list of all files present below a given directory.
+    """
+    
     for root, directories, files in os.walk(d):
         for file in files:
             yield os.path.join(root, file)
 
 
-def run_task(logger, arguments, debug=False):
+def run_task(logger, arguments, debug=False, callback=None):
+    """
+    A factory function to abstract the implementation details of how tasks are run.
+    """
+
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
 
-    h = TaskRunner(logger)
-    h.run(arguments, debug)
+    h = TaskRunner(logger, callback=callback)
+    out = h.run(arguments, debug)
+    return out
 
 
 class TaskRunner(object):
-    def __init__(self, logger=None):
+    """
+    A simple task runner that builds a command line call from a given config, runs
+    the command and reports back the stdout and stderr of the task if it succeeds,
+    or raises an exception if the task fails, which is detected at the moment by the
+    return code of the task.
+    """
+    
+    def __init__(self, logger=None, callback=None):
         #logger_stdout = script_utils.getStdoutLogger()
         if logger is None:
             self.logger = script_utils.stderrlogger(__file__)
         else:
             self.logger = logger
+            
+        if callback is None:
+            self.callback = lambda x: self.logger.info(x)
+        else:
+            self.callback = callback
 
 
     def _build_command_list(self, arguments=None, debug=False):
+        """
+        Generate the command argument list.  If debug is True you are running in a mode
+        where the scripts are expected to be run directly.  In a KBase environment,
+        each script is wrapped in a bash shell script that sets some environment
+        variables, so we strip out the actual script extension to make sure that the
+        correct entity is invoked when the job runs.
+        """
+        
         if debug:
             command_name = arguments["script_name"]
         else:
             command_name = os.path.splitext(arguments["script_name"])[0]
         
         command_list = [command_name]
-        del arguments["script_name"]
+        #del arguments["script_name"]
         #del arguments["optional_arguments"]
 
         for k in arguments:
-            command_list.append("--{0}".format(k))
-            command_list.append("{0}".format(arguments[k]))
+            if k == "script_name": continue
+            if type(arguments[k]) == type(list()):
+                for n in arguments[k]:
+                    command_list.append("--{0}".format(k))
+                    command_list.append("{0}".format(n))
+            else:            
+                command_list.append("--{0}".format(k))
+                command_list.append("{0}".format(arguments[k]))
         
-        print command_list
-
         return command_list
 
 
     def run(self, arguments=None, debug=False):
-        task = subprocess.Popen(self._build_command_list(arguments,debug), stderr=subprocess.PIPE)
+        """
+        Executes the task while monitoring stdout and stderr for messages.
+        For each line of stdout/stderr, run a callback function that does "something".
+        The default behavior would be to log the message, but other behavior can be swapped in,
+        for instance to communicate back to a UJS process what the job status is.
+        """
+
+        command_list = self._build_command_list(arguments,debug)
+    
+        self.logger.info("Executing {0}".format(" ".join(command_list)))
+    
+        task = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        lines_iterator = iter(task.stdout.readline, b"")
+        for line in lines_iterator:
+            self.callback(line)
+
         sub_stdout, sub_stderr = task.communicate()
 
-        if sub_stdout is not None:
-            print sub_stdout
-        if sub_stderr is not None:
-            print >> sys.stderr, sub_stderr
-
+        task_output = dict()
+        task_output["stdout"] = sub_stdout
+        task_output["stderr"] = sub_stderr
+        
         if task.returncode != 0:
-            raise Exception(sub_stderr)
+            raise Exception(task_output["stdout"], task_output["stderr"])
+        else:
+            return task_output
 
 
 def PluginManager(directory=None, logger=script_utils.stderrlogger(__file__)):
+    if directory is None:
+        raise Exception("Must provide a directory to read plugin configs from!")
+
     manager = PlugIns(directory, logger)
     return manager
 
 
 class PlugIns(object):
 
-    def __init__(self, pluginsDir, logger=script_utils.stderrlogger(__file__)):
+    # read in all configs
+    def __init__(self, plugins_directory=None, logger=script_utils.stderrlogger(__file__)):
         self.scripts_config = {"external_types": list(),
                                "kbase_types": list(),
                                "validate": dict(),
@@ -101,11 +189,11 @@ class PlugIns(object):
 
         self.logger = logger
 
-        plugins = os.listdir(pluginsDir)
+        plugins = sorted(os.listdir(plugins_directory))
         
         for p in plugins:
             try:
-                f = open(os.path.join(pluginsDir, p), 'r')
+                f = open(os.path.join(plugins_directory, p), 'r')
                 pconfig = simplejson.loads(f.read())
                 f.close()
 
@@ -118,7 +206,7 @@ class PlugIns(object):
                     id = pconfig["external_type"]
                 elif pconfig["script_type"] == "upload":
                     if pconfig["external_type"] not in self.scripts_config["external_types"]:
-		                self.scripts_config["external_types"].append(pconfig["external_type"])
+                        self.scripts_config["external_types"].append(pconfig["external_type"])
                     
                     if pconfig["kbase_type"] not in self.scripts_config["kbase_types"]:
                         self.scripts_config["kbase_types"].append(pconfig["kbase_type"])
@@ -142,29 +230,20 @@ class PlugIns(object):
                     id = "{0}=>{1}".format(pconfig["source_kbase_type"],pconfig["destination_kbase_type"])
 
                 self.scripts_config[pconfig["script_type"]][id] = pconfig
+
+                self.logger.info("Successfully added plugin {0}".format(p))
             except Exception, e:
                 self.logger.warning("Unable to read plugin {0}: {1}".format(p,e.message))
-        
-        self.logger.debug(simplejson.dumps(self.scripts_config, indent=4, sort_keys=True))
 
 
-    def get_handler_args(self, method, args):
-        if "optional_arguments" not in args:
-            args["optional_arguments"] = dict()
-
+    def get_job_details(self, method, args):
         job_details = dict()        
 
-        self.logger.debug((method, args))
-
         if method == "upload":
-            args["url_mapping"] = base64.urlsafe_b64encode(simplejson.dumps(args["url_mapping"]))
-
             if self.scripts_config["validate"].has_key(args["external_type"]):
                 plugin_key = args["external_type"]
-
-                self.logger.debug(self.scripts_config["validate"][plugin_key])
-                        
-                job_details["validate"] = self.scripts_config["validate"][plugin_key]                
+                
+                job_details["validate"] = self.scripts_config["validate"][plugin_key]
             else:
                 self.logger.warning("No validation available for {0}".format(args["external_type"]))
 
@@ -174,8 +253,6 @@ class PlugIns(object):
                 job_details["transform"] = self.scripts_config["upload"][plugin_key]
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["external_type"],args["kbase_type"]))
-                
-            self.logger.debug(simplejson.dumps(job_details, indent=4, sort_keys=True))
         elif method == "download":
             if self.scripts_config["download"].has_key("{0}=>{1}".format(args["kbase_type"],args["external_type"])):
                 plugin_key = "{0}=>{1}".format(args["kbase_type"],args["external_type"])
@@ -183,8 +260,6 @@ class PlugIns(object):
                 job_details["transform"] = self.scripts_config["download"][plugin_key]
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["kbase_type"],args["external_type"]))
-                
-            self.logger.debug(simplejson.dumps(job_details, indent=4, sort_keys=True))
         elif method == "convert":
             if self.scripts_config["convert"].has_key("{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])):
                 plugin_key = "{0}=>{1}".format(args["source_kbase_type"],args["destination_kbase_type"])
@@ -192,13 +267,8 @@ class PlugIns(object):
                 job_details["transform"] = self.scripts_config["convert"][plugin_key]
             else:
                 raise Exception("No conversion available for {0} => {1}".format(args["source_kbase_type"],args["destination_kbase_type"]))
-            
-            self.logger.debug(simplejson.dumps(job_details, indent=4, sort_keys=True))
-                
-        print "---------"
-        print args["optional_arguments"]
-        print "---------"
-        args["job_details"] = base64.urlsafe_b64encode(simplejson.dumps(job_details))
-        args["optional_arguments"] = base64.urlsafe_b64encode(simplejson.dumps(args["optional_arguments"]))
-        return args
+        else:
+            raise Exception("Unknown method {0}".format(method))
+        
+        return job_details
 

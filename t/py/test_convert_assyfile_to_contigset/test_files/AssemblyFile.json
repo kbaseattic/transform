@@ -1,0 +1,30 @@
+{
+    "contigs": 1, 
+    "assembler_version": "2.2.0.p1", 
+    "strain": {
+        "strain": "Hel_I_33_5", 
+        "genus": "Lutibacter", 
+        "species": "Lutibacter sp. Hel_I_33_5"
+    }, 
+    "assembler": "HGAP", 
+    "assembly_file": {
+        "size": 3101438, 
+        "type": "scaffolds", 
+        "file": {
+            "url": "FAKE", 
+            "type": "shock", 
+            "hid": "FAKE", 
+            "id": "FAKE"
+        }, 
+        "encoding": "UTF8"
+    }, 
+    "source": {
+        "source_id": "546544ab0d8785589ead8b33", 
+        "source": "JGI", 
+        "project_id": "1047275"
+    }, 
+    "scaffold_N50": 1, 
+    "assembler_parameters": "input.xml settings.xml", 
+    "scaffold_L50": 3101420, 
+    "size": null
+}

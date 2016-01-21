@@ -80,19 +80,25 @@ my $Help      = 0;
 GetOptions("input_file_name|i=s"   => \$In_File,
 	   "output_file_name|o=s"  => \$Out_File,
 	   "genome_id|g=s" => \$Genome_ID,
-	   "dna|d"         => \$IsDNA,
+	   "dna|d=i"         => \$IsDNA,
            "help|h"        => \$Help);
 
-if($Help || !$In_File || !$Out_File ||!$Genome_ID){
+if($Help || !$In_File || !$Out_File){
     print($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (input_file_name used by default)> --dna|d");
     $logger->warn($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseGenomes.Genome JSON Flat File> --genome_id|g <Genome ID (input_file_name used by default)> --dna|d");
     exit();
 }
 
-if($Genome_ID ne "" && $Genome_ID !~ /^[\w\|.-]+$/){
-    $logger->warn("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
-    die("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
+if ($Genome_ID eq "" || !defined($Genome_ID)) {
+    my(@names) = split(m%/%, $In_File);
+    $Genome_ID = $names[-1];
 }
+
+#if($Genome_ID ne "" && $Genome_ID !~ /^[\w\|.-]+$/){
+#    $logger->warn("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
+#    die("Genome_id parameter contains illegal characters, must only use a-z, A-Z, '_', '|', '.', and '-'");
+#}
+
 
 if(!-f $In_File){
     $logger->warn("Cannot find file ".$In_File);
@@ -111,17 +117,21 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 my $fh = getFileHandle($In_File);
 my @seqs = read_fasta($fh,1);
 
+
 my $GenomeHash = {id => $Genome_ID,
 		  scientific_name => '',
 		  domain => "Plant",
-		  genetic_code => 11,
+		  genetic_code => 1,
 		  source => "User",
 		  source_id => "User",
 		  taxonomy => "viridiplantae",
 		  gc_content => 0.5,
 		  dna_size => 0,
 		  features => [],
-                  contigs => []};
+                  contigs => [],
+		  num_contigs => 0,
+		  contig_lengths => [],
+		  contig_ids => []};
 
 #Test first sequence for NAs
 if(!$IsDNA){
@@ -132,6 +142,9 @@ if(!$IsDNA){
     my $sum = $entities{'A'}+$entities{'G'}+$entities{'C'}+$entities{'T'};
     $IsDNA = 1 if ( $sum/length($seqs[0][2]) > 0.75 );
 }
+
+my $Contig = "1";
+my $Contig_Location = "0";
 
 my $GCs=0;
 my $DNA_Size=0;
@@ -151,13 +164,23 @@ foreach my $Seq (@seqs){
 	$GCs++ if $na =~ /[GgCc]/;
     }
 
+
+    if( $Seq->[0] !~ /^([\w\.\|\-]+)$/){
+	$Seq->[0] =~ s/[\s:,-]/_/g;
+    }
+
     my $CDSHash={id=>$Seq->[0],
 		 type=>'CDS',
 		 protein_translation=>$ProtSeq,
 		 protein_translation_length=>length($ProtSeq),
 		 md5=>Digest::MD5::md5_hex($ProtSeq),
 		 dna_sequence => $DNASeq,
-		 dna_sequence_length => length($DNASeq)};
+		 dna_sequence_length => length($DNASeq),
+		 location => []};
+
+    push @{$CDSHash->{location}}, [$Contig,$Contig_Location+0,'>',length($DNASeq)];
+    $Contig_Location+=length($DNASeq)+1;
+
     push(@{$GenomeHash->{features}},$CDSHash);
 }
 
@@ -167,13 +190,20 @@ $GenomeHash->{dna_size} = $DNA_Size;
 
 $logger->info("Writing Genome WS Object");
 
-use JSON;
-my $json_text = encode_json($GenomeHash);
-open(OUT, "> $Out_File");
-print OUT $json_text;
-close(OUT);
 
-$logger->info("Writing Genome WS Object Complete");
+eval {
+    use JSON;
+    my $json_text = encode_json($GenomeHash);
+    open(OUT, "> $Out_File");
+    print OUT $json_text;
+    close(OUT);
+
+    $logger->info("Writing Genome WS Object Complete");
+};
+
+if ($@) {
+    die("Unable to create JSON :: ".$@);
+}
 
 sub getFileHandle{
     my $file=shift;

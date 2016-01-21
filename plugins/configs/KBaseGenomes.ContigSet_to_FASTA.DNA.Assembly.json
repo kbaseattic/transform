@@ -12,11 +12,12 @@
             "shock_service_url",
             "workspace_name", 
             "object_name",
-            "input_mapping", 
-            "output_file_name",
             "working_directory"
         ], 
-        "optional_fields": ["object_version"], 
+        "optional_fields": [
+            "object_version", 
+            "output_file_name"
+        ], 
         "custom_options": []
     },  
     "user_options": [ 

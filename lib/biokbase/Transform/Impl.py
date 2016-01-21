@@ -4,8 +4,10 @@ import os
 import time
 import logging
 import logging.handlers
+import base64
 
 #import pymemcache.client
+import simplejson
 
 from biokbase.workflow.KBW import run_async
 import biokbase.Transform.handler_utils as handler_utils
@@ -56,13 +58,24 @@ type but different versions.
 
     def _run_job(self, method, ctx, args):
         if "optional_arguments" not in args:
-            args["optional_arguments"] = '{}'
+            args["optional_arguments"] = dict()
+        
+        if method == "upload":
+            if not args["optional_arguments"].has_key("validate"):
+                args["optional_arguments"]["validate"] = dict()
+
+        if not args["optional_arguments"].has_key("transform"):
+            args["optional_arguments"]["transform"] = dict()
 
         # read local configuration
         #memcacheClient = self._get_memcache_client()
 
         # filter the config information for this request so that the script arguments are proper
-        args = self.pluginManager.get_handler_args(method, args)
+        args["job_details"] = self.pluginManager.get_job_details(method, args)
+
+        for x in args:
+            if type(args[x]) == type(dict()):
+                args[x] = base64.urlsafe_b64encode(simplejson.dumps(args[x]))
         
         return run_async(self.config, ctx, args)
 
@@ -180,7 +193,7 @@ type but different versions.
         # ctx is the context object
         # return variables are: result
         #BEGIN convert
-        self.logger.debug("Calling download")
+        self.logger.debug("Calling convert")
         result = self._run_job("convert", ctx, args)
         #END convert
 

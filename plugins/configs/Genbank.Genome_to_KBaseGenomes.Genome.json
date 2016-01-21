@@ -7,8 +7,8 @@
     "developer_description": "",
     "url_mapping":["Genbank.Genome"],
     "handler_options": {        
-        "must_own_validation": false,
-        "must_own_saving_to_workspace": false,
+        "must_own_validation": true,
+        "must_own_saving_to_workspace": true,
         "max_runtime": 360,
         "required_fields": 
         [

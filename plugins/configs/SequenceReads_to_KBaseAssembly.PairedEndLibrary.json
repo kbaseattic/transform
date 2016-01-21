@@ -15,9 +15,9 @@
         [
             "shock_service_url",
             "handle_service_url",
-	    "input_file_name",
+	        "input_file_name",
             "output_file_name",
-	    "type"
+	        "type"
         ],
         "optional_fields":
         [
@@ -28,7 +28,7 @@
         "custom_options": [
             {
                 "name": "type",
-		"value": "PairedEndLibrary",
+		        "value": "PairedEndLibrary",
                 "type": "string",
                 "required": true
             }
@@ -54,10 +54,9 @@
         },
         {
             "name": "outward",
-            "type": "boolean",
-	    "value" : 0,
+            "type": "int",
             "required": false,
-            "help": "Whether reads in the pair point outward"
+            "help": "Whether reads in the pair point outward.  1 is true, 0 is false."
         }
     ],
     "user_option_groups": []

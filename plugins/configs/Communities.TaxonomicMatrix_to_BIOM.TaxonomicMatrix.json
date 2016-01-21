@@ -1,5 +1,5 @@
 {
-    "script_name": "trns_transform_WSBiomType-to-Biom.pl", 
+    "script_name": "trns_transform_Communities_to_BIOM_Communities.pl", 
     "script_type": "download",
     "external_type": "BIOM.TaxonomicMatrix",
     "kbase_type": "Communities.TaxonomicMatrix",
@@ -12,10 +12,9 @@
             "workspace_service_url",
             "workspace_name",
             "object_name",
-            "output_file_name",
-			"working_directory"
+            "working_directory"
         ],
-        "optional_fields": ["object_version"],
+        "optional_fields": ["object_version","output_file_name"],
         "custom_options": []
     },
     "user_options": [

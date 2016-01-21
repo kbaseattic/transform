@@ -38,11 +38,22 @@ my $In_File   = "";
 my $Out_Object = "";
 my $Out_WS    = "";
 my $Help      = 0;
+my $fbaurl = "";
+my $wsurl = "";
 
 GetOptions("input_file_name|i=s"  => \$In_File,
 	   "object_name|o=s" => \$Out_Object,
 	   "workspace_name|w=s" => \$Out_WS,
+	   "workspace_service_url=s" => $wsurl,
+	   "fba_service_url=s" => $fbaurl,
 	   "help|h"     => \$Help);
+
+if (length($fbaurl) == 0) {
+	$fbaurl = undef;
+}
+if (length($wsurl) == 0) {
+	$wsurl = undef;
+}
 
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
     print($0." --input_file_name/-i <Input Excel File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in>\n");
@@ -54,6 +65,11 @@ $logger->info("Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
 
 my $sheets = parse_excel($In_File);
 my $Media = (grep { $_ =~ /[Mm]edia/ } keys %$sheets)[0];
+if (! defined $Media) {
+    print("Excel file must have a Sheet named 'MediaCompounds' containing the definition of the media compounds, their concentrations, and their min and max fluxes.\n");
+    $logger->warn("Excel file must have a Sheet named 'MediaCompounds' containing the definition of the media compounds, their concentrations, and their min and max fluxes.\n");
+    exit(1);
+}
 my $mediadata = parse_input_table($sheets->{$Media},[
 	["compounds",1],
 	["concentrations",0,"0.001"],
@@ -77,7 +93,10 @@ $logger->info("Loading Media WS Object");
 
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
-    my $fba = get_fba_client();
+    my $fba = get_fba_client($fbaurl);
+    if (defined($wsurl)) {
+    	$input->{wsurl} = $wsurl;
+    }
     $fba->addmedia($input);
 };
 

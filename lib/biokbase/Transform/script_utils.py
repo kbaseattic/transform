@@ -1,3 +1,9 @@
+"""
+Provides utility functions for providing standardized behavior among python scripts.
+In addition, many of the functions are designed to significantly ease the burden
+to produce a new script for validation, transformation, or conversion.
+"""
+
 import sys
 import os
 import logging
@@ -9,22 +15,65 @@ import gzip
 import bz2
 import tarfile
 import zipfile
+import argparse
 
 import simplejson
 import magic
 import ftputil
 import requests
 from requests_toolbelt import MultipartEncoder
+import subprocess
 
 try:
-    from biokbase.HandleService.Client import HandleService 
+    from biokbase.HandleService.Client import HandleService
 except:
-    from biokbase.AbstractHandle.Client import AbstractHandle as HandleService 
+    from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
 
 import biokbase.workspace.client
 
 
+# override default ArgumentParser behavior
+class ArgumentParser(argparse.ArgumentParser):
+    def exit(self, status=1, message=None):
+        if message:
+            self._print_message(message, sys.stderr)
+        sys.exit(status)
+
+
+def get_token():
+    """
+    Retrieve the KBase token in the local shell environment.
+    """
+
+    token = os.environ.get("KB_AUTH_TOKEN")
+
+    if token is None:
+        try:
+            task = subprocess.Popen(["kbase-whoami", "-t"],
+                                    stdout=subprocess.PIPE, shell=True)
+            stdout, stderr = task.communicate()
+
+            if stderr is not None:
+                raise Exception("Unable to retrieve user token : {0}".format(stderr))
+            elif stdout is not None:
+                if 'You are not logged in' in stdout or 'command not found' in stdout:
+                    raise Exception("Unable to retrieve user token, " +
+                                    "login with CLI or export KB_AUTH_TOKEN")
+                return stdout.strip()
+            else:
+                raise None
+        except:
+            raise Exception("Unable to find token, export KB_AUTH_TOKEN")
+    else:
+        return token
+
+
 def stderrlogger(name, level=logging.INFO):
+    """
+    Return a standard python logger with a stderr handler attached and using a prefix
+    format that will make logging consistent between scripts.
+    """
+    
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
@@ -41,6 +90,11 @@ def stderrlogger(name, level=logging.INFO):
 
 
 def stdoutlogger(name, level=logging.INFO):
+    """
+    Return a standard python logger with a stdout handler attached and using a prefix
+    format that will make logging consistent between scripts.
+    """
+    
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
@@ -58,7 +112,9 @@ def stdoutlogger(name, level=logging.INFO):
 
 
 def parse_docs(docstring=None):
-    """Parses the docstring of a function and returns a dictionary of the elements."""
+    """
+    Parses the docstring of a function and returns a dictionary of the elements.
+    """
 
     # TODO, revisit this, probably can use other ways of doing this
     script_details = dict()
@@ -89,7 +145,11 @@ def parse_docs(docstring=None):
     return script_details
 
 
-def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
+def extract_data(logger = stderrlogger(__file__), filePath = None, chunkSize = 2**30):
+    """
+    Unpack a data file that may be compressed or an archive.
+    """
+
     def extract_tar(tarPath):
         if not tarfile.is_tarfile(tarPath):
             raise Exception("Inavalid tar file " + tarPath)
@@ -113,7 +173,7 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
 
     logger.info("Extracting {0} as {1}".format(filePath, mimeType))
 
-    if mimeType == "application/x-gzip":
+    if mimeType == "application/x-gzip" or mimeType == "application/gzip":
         outFile = os.path.splitext(filePath)[0]
         with gzip.GzipFile(filePath, 'rb') as gzipDataFile, io.open(outFile, 'wb') as f:
             for chunk in gzipDataFile:
@@ -190,7 +250,7 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
                     os.makedirs(infoPath)                    
 
                 if os.path.exists(os.path.join(infoPath,os.path.split(member.name)[-1])):
-                    raise Exception("Extracting zip contents will overwrite an existing file!")
+                    raise Exception("Extracting tar contents will overwrite an existing file!")
 
                 if member.isfile():
                     with io.open(memberPath, 'wb') as f, tarDataFile.extractfile(member.name) as inputFile:
@@ -200,11 +260,16 @@ def extract_data(logger = None, filePath = None, chunkSize=10 * 2**20):
 
 
 
-def download_file_from_shock(logger = None,
-                             shock_service_url = "https://kbase.us/services/shock-api/",
+def download_file_from_shock(logger = stderrlogger(__file__),
+                             shock_service_url = None,
                              shock_id = None,
-                             filePath = None,
+                             filename = None,
+                             directory = None,
                              token = None):
+    """
+    Given a SHOCK instance URL and a SHOCK node id, download the contents of that node
+    to a file on disk.
+    """
 
     header = dict()
     header["Authorization"] = "Oauth {0}".format(token)
@@ -213,34 +278,51 @@ def download_file_from_shock(logger = None,
 
     metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(shock_service_url, shock_id), headers=header, stream=True, verify=True)
     shock_metadata = metadata_response.json()['data']
-    fileName = shock_metadata['file']['name']
-    fileSize = shock_metadata['file']['size']
+    shockFileName = shock_metadata['file']['name']
+    shockFileSize = shock_metadata['file']['size']
     metadata_response.close()
         
     download_url = "{0}/node/{1}?download_raw".format(shock_service_url, shock_id)
         
-    data = requests.get(download_url, headers=header, stream=True, verify=ssl_verify)
-    size = int(data.headers['content-length'])
+    data = requests.get(download_url, headers=header, stream=True, verify=True)
 
-    filePath = os.path.join(filePath)
+    if filename is not None:
+        shockFileName = filename
 
+    if directory is not None:
+        filePath = os.path.join(directory, shockFileName)
+    else:
+        filePath = shockFileName
+
+    chunkSize = shockFileSize/4
+    
+    maxChunkSize = 2**30
+    
+    if chunkSize > maxChunkSize:
+        chunkSize = maxChunkSize
+    
     f = io.open(filePath, 'wb')
     try:
         for chunk in data.iter_content(chunkSize):
-            f.write(chunk)
+            if chunk:                
+                f.write(chunk)
+                f.flush()            
     finally:
         data.close()
         f.close()      
     
-    extract_data(filePath)
+    extract_data(logger, filePath)
                              
 
 
-def upload_file_to_shock(logger = None,
-                         shock_service_url = "https://kbase.us/services/shock-api/",
+def upload_file_to_shock(logger = stderrlogger(__file__),
+                         shock_service_url = None,
                          filePath = None,
                          ssl_verify = True,
                          token = None):
+    """
+    Use HTTP multi-part POST to save a file to a SHOCK instance.
+    """
 
     if token is None:
         raise Exception("Authentication token required!")
@@ -252,7 +334,7 @@ def upload_file_to_shock(logger = None,
     if filePath is None:
         raise Exception("No file given for upload to SHOCK!")
 
-    dataFile = open(os.path.abspath(filePath), 'r')
+    dataFile = open(os.path.abspath(filePath), 'rb')
     m = MultipartEncoder(fields={'upload': (os.path.split(filePath)[-1], dataFile)})
     header['Content-Type'] = m.content_type
 
@@ -260,27 +342,30 @@ def upload_file_to_shock(logger = None,
     try:
         response = requests.post(shock_service_url + "/node", headers=header, data=m, allow_redirects=True, verify=ssl_verify)
         dataFile.close()
-
-        if not response.ok:
-            response.raise_for_status()
-
-        result = response.json()
-
-        if result['error']:            
-            raise Exception(result['error'][0])
-        else:
-            return result["data"]    
     except:
         dataFile.close()
         raise    
 
+    if not response.ok:
+        response.raise_for_status()
+
+    result = response.json()
+
+    if result['error']:            
+        raise Exception(result['error'][0])
+    else:
+        return result["data"]    
+
 
 def getHandles(logger = None,
-               shock_service_url = "https://kbase.us/services/shock-api/",
-               handle_service_url = "https://kbase.us/services/handle_service/",
+               shock_service_url = None,
+               handle_service_url = None,
                shock_ids = None,
                handle_ids = None,
                token = None):
+    """
+    Retrieve KBase handles for a list of shock ids or a list of handle ids.
+    """
     
     if token is None:
         raise Exception("Authentication token required!")
@@ -362,13 +447,25 @@ def getHandles(logger = None,
     return handles
 
 
-def download_from_urls(logger = None,
+def download_from_urls(logger = stderrlogger(__file__),
                        working_directory = os.getcwd(),
                        urls = None,
-                       shock_service_url = "https://kbase.us/services/shock-api/",
                        ssl_verify = True,
                        token = None, 
-                       chunkSize = 10 * 2**20):
+                       chunkSize = 2**30):
+    """
+    Downloads urls defined by key names in a dictionary, with each key name getting
+    its own subdirectory and the contents of the url for that key deposited in the
+    subdirectory that matches the key name.  Key names are defined by developers in
+    a config file per upload conversion.
+    """
+    
+    def _gen_ftp_file_list(root):
+        for root, directories, files in ftputil.walk(d):
+            for file in files:
+                yield os.path.join(root, file)
+            
+    
     if token is None:
         raise Exception("Unable to find token!")
     
@@ -404,6 +501,8 @@ def download_from_urls(logger = None,
                 file_list = ftp_connection.listdir(path)
             elif ftp_connection.path.isfile(path):
                 file_list = [path]
+            else:
+                raise Exception('File not found for FTP URL "{0}"'.format(url))
 
             if len(file_list) > 1:            
                 if len(file_list) > threshold:
@@ -418,6 +517,11 @@ def download_from_urls(logger = None,
                 check = file_list[:]
                 while len(check) > 0:
                     x = check.pop()
+
+                    if ftp_connection.path.isdir(path):
+                        file_list = ftp_connection.listdir(path)
+                    elif ftp_connection.path.isfile(path):
+                        file_list = [path]
             
                     new_files = ftp_connection.listdir(x)
                 
@@ -455,7 +559,8 @@ def download_from_urls(logger = None,
 
             # check for a shock url
             try:
-                shock_id = re.search('^http[s]://.*/node/([a-fA-f0-9\-]+).*', url).group(1)
+                shock_id = re.search('^https?://.*/node/([a-fA-F0-9\-]+).*', url).group(1)
+                shock_download_url = re.search('^(https?://.*)/node/[a-fA-F0-9\-]+.*', url).group(1)
             except Exception, e:
                 shock_id = None
 
@@ -463,13 +568,13 @@ def download_from_urls(logger = None,
                 download_url = url
                 fileName = url.split('/')[-1]
             else:
-                metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(shock_service_url, shock_id), headers=header, stream=True, verify=ssl_verify)
+                metadata_response = requests.get("{0}/node/{1}?verbosity=metadata".format(shock_download_url, shock_id), headers=header, stream=True, verify=ssl_verify)
                 shock_metadata = metadata_response.json()['data']
                 fileName = shock_metadata['file']['name']
                 fileSize = shock_metadata['file']['size']
                 metadata_response.close()
                     
-                download_url = "{0}/node/{1}?download_raw".format(shock_service_url, shock_id)
+                download_url = "{0}/node/{1}?download_raw".format(shock_download_url, shock_id)
 
             data = None
             size = 0

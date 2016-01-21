@@ -19,7 +19,7 @@
 	    {
                 "name": "download_all",
 		"value": true,
-                "type": "boolean",
+                "type": "int",
                 "required": true
 	    }
 	]

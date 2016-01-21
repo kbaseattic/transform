@@ -36,7 +36,7 @@ public class ValidateGBK {
 
         for (int i = 0; i < args.length; i++) {
             int index = Arrays.binarySearch(argsPossible, args[i]);//Arrays.asList(argsPossible).indexOf(args[i]);
-            System.out.println(index);
+            //System.out.println(index);
             if (index > -1 && argsPossibleMap[index].equals("input")) {
                 indir = new File(args[i + 1]);
             }
@@ -73,7 +73,7 @@ public class ValidateGBK {
         for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
                 parseAllInDir(pos, f, wc);
-            } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbff)$")) {//if (f.getName().endsWith(".gbk")) {
+            } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {//if (f.getName().endsWith(".gbk")) {
                 files.add(f);
                 System.err.println("Added " + f);
             }
@@ -111,6 +111,7 @@ public class ValidateGBK {
 
             ContigSet cs = (ContigSet) ar.get(4);
         } catch (Exception e) {
+            System.err.println("parseGenome failure");
             System.err.print(e.getMessage());
             System.err.print(e.getStackTrace());
             e.printStackTrace();
@@ -125,13 +126,15 @@ public class ValidateGBK {
         if (args.length == 2) {
             try {
                 ValidateGBK vg = new ValidateGBK(args);
+                System.out.println("Validation ended");
             } catch (Exception e) {
+                System.out.println("Validation failed");
                 e.printStackTrace();
             }
         } else {
             /*TODO separate input file and input dir args*/
             //System.out.println("usage: java us.kbase.genbank.ValidateGBK <dir or dir of dirs with GenBank .gbk files>");// <convert y/n> <save y/n>");
-            System.out.println("usage: java us.kbase.genbank.ConvertGBK <-i or --input_file_name file or dir or files of GenBank .gbk files>");// <convert y/n> <save y/n>");
+            System.out.println("usage: java us.kbase.genbank.ValidateGBK <-i or --input_file file or dir of files of GenBank .gbk files>");// <convert y/n> <save y/n>");
         }
     }
 

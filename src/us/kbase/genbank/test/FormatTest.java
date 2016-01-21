@@ -30,6 +30,7 @@ public class FormatTest {
     // ones in "nonstandard" directory should throw errors or warnings.
     private static final String[] sampleGBKs = { "NC_005213/NC_005213.gbk",
 						 "NC_009925/NC_009925.gbk",
+                         "NC_002937/NC_002937.gbk",
 						 "standard/sample1.gbk",
 						 "nonstandard/sample2.gbk",
 						 "nonstandard/sample3.gbk",

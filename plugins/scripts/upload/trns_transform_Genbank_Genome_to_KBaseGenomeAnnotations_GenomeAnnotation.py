@@ -600,7 +600,7 @@ def upload_genome(shock_service_url=None,
         ##################################################################################################
         #FEATURE ANNOTATION PORTION - Build up datastructures to be able to build feature containers.
         ##################################################################################################
-        print "GOT TO FEATURE PORTION"
+        #print "GOT TO FEATURE PORTION"
         features_lines = features_part.split("\n") 
 
         num_feature_lines = len(features_lines)

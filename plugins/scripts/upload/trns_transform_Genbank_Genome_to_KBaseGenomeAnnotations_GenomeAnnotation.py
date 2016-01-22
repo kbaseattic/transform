@@ -201,6 +201,10 @@ def upload_genome(shock_service_url=None,
 
     tax_id = 0;
     tax_lineage = None;
+
+    genome_annotation = dict()
+
+    genomes_without_taxon_refs = list()
     if taxon_reference is None:
         #Get the taxon_lookup_object
         taxon_lookup = ws_client.get_object( {'workspace':taxon_wsname,
@@ -1683,7 +1687,6 @@ def upload_genome(shock_service_url=None,
 
     #Save genome annotation
     #Then Finally store the GenomeAnnotation.                                                                            
-    genome_annotation = dict()
 
     shock_id = None
     handle_id = None

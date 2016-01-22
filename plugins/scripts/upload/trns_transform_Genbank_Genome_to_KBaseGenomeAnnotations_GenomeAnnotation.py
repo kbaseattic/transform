@@ -755,16 +755,19 @@ def upload_genome(shock_service_url=None,
                         dna_sequence_length += segment_length
                         temp_sequence = sequence_part[(int(start_pos)-1):int(end_pos)] 
                         strand = "+"
+                        location_start = int(start_pos)
                         if apply_complement_to_current or apply_complement_to_all: 
                             my_dna = Seq(temp_sequence, IUPAC.ambiguous_dna)
                             my_dna = my_dna.reverse_complement()
                             temp_sequence = str(my_dna).upper()      
                             strand = "-"
+                            location_start = location_start + (segment_length - 1)
                         if apply_complement_to_all:
                             dna_sequence =  temp_sequence + dna_sequence 
                         else:
                             dna_sequence +=  temp_sequence 
-                        locations.append([accession,int(start_pos),strand,segment_length]) 
+
+                        locations.append([accession,location_start,strand,segment_length]) 
                     else:
                         #no valid coordinates
                         print "Feature text : " + feature_text + ":"

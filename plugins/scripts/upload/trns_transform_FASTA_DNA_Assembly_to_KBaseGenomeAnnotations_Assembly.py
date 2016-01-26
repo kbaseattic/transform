@@ -278,7 +278,7 @@ def upload_assembly(shock_service_url = None,
     contig_set_dict["contigs"] = fasta_dict
     contig_set_dict["dna_size"] = total_length
     contig_set_dict["gc_content"] = float(gc_length)/float(total_length)
-    print "Fasta dict Keys :"+",".join(fasta_dict.keys())+":" 
+#    print "Fasta dict Keys :"+",".join(fasta_dict.keys())+":" 
     contig_set_dict["num_contigs"] = len(fasta_dict.keys())
     contig_set_dict["type"] = "Unknown"
     contig_set_dict["notes"] = "Note MD5s are generated from uppercasing the sequences" 

@@ -76,7 +76,7 @@ def upload_genome(shock_service_url=None,
                   #fasta_reference_only=False,
                   workspace_name=None,
                   workspace_service_url=None,
-                  genome_list_file=None,
+#                  genome_list_file=None,
                   taxon_wsname=None,
 #                  taxon_names_file=None,
                   taxon_reference = None,
@@ -201,6 +201,10 @@ def upload_genome(shock_service_url=None,
 
     tax_id = 0;
     tax_lineage = None;
+
+    genome_annotation = dict()
+
+    genomes_without_taxon_refs = list()
     if taxon_reference is None:
         #Get the taxon_lookup_object
         taxon_lookup = ws_client.get_object( {'workspace':taxon_wsname,
@@ -600,7 +604,7 @@ def upload_genome(shock_service_url=None,
         ##################################################################################################
         #FEATURE ANNOTATION PORTION - Build up datastructures to be able to build feature containers.
         ##################################################################################################
-        print "GOT TO FEATURE PORTION"
+        #print "GOT TO FEATURE PORTION"
         features_lines = features_part.split("\n") 
 
         num_feature_lines = len(features_lines)
@@ -755,16 +759,19 @@ def upload_genome(shock_service_url=None,
                         dna_sequence_length += segment_length
                         temp_sequence = sequence_part[(int(start_pos)-1):int(end_pos)] 
                         strand = "+"
+                        location_start = int(start_pos)
                         if apply_complement_to_current or apply_complement_to_all: 
                             my_dna = Seq(temp_sequence, IUPAC.ambiguous_dna)
                             my_dna = my_dna.reverse_complement()
                             temp_sequence = str(my_dna).upper()      
                             strand = "-"
+                            location_start = location_start + (segment_length - 1)
                         if apply_complement_to_all:
                             dna_sequence =  temp_sequence + dna_sequence 
                         else:
                             dna_sequence +=  temp_sequence 
-                        locations.append([accession,int(start_pos),strand,segment_length]) 
+
+                        locations.append([accession,location_start,strand,segment_length]) 
                     else:
                         #no valid coordinates
                         print "Feature text : " + feature_text + ":"
@@ -1680,7 +1687,6 @@ def upload_genome(shock_service_url=None,
 
     #Save genome annotation
     #Then Finally store the GenomeAnnotation.                                                                            
-    genome_annotation = dict()
 
     shock_id = None
     handle_id = None

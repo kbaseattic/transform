@@ -13,6 +13,10 @@ import datetime
 import shutil
 from string import digits
 from string import maketrans
+try:
+    from cStringIO import StringIO
+except:
+    from StringIO import StringIO
 
 # 3rd party imports
 import simplejson
@@ -66,6 +70,7 @@ def represents_int(s):
 # See: https://docs.python.org/2/library/logging.html#logging-levels
 #
 # The default level is set to INFO which includes everything except DEBUG
+@profile
 def upload_genome(shock_service_url=None, 
                   handle_service_url=None, 
                   #output_file_name=None, 
@@ -78,6 +83,7 @@ def upload_genome(shock_service_url=None,
                   workspace_service_url=None,
 #                  genome_list_file=None,
                   taxon_wsname=None,
+                  exclude_feature_types=list(),
 #                  taxon_names_file=None,
                   taxon_reference = None,
                   #              fasta_file_directory=None,
@@ -101,6 +107,9 @@ def upload_genome(shock_service_url=None,
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
     token = os.environ.get('KB_AUTH_TOKEN') 
+
+    if exclude_feature_types is None:
+        exclude_feature_types = list()
 
 #    scientific_names_lookup = make_scientific_names_lookup(taxon_names_file)
 
@@ -140,6 +149,8 @@ def upload_genome(shock_service_url=None,
 
     genbank_file_boundaries = list()  
     #list of tuples: (first value record start byte position, second value record stop byte position)
+
+    exclude_feature_types.append("source")
 
     if os.path.isfile(input_file_name):
         print "Found Genbank_File" 
@@ -288,7 +299,8 @@ def upload_genome(shock_service_url=None,
     max_date = None
     genbank_time_string = None
     genome_publication_dict = dict()
-    genome_comment = ''
+#    genome_comment = ''
+    genome_comment_io = StringIO()
 
     #Feature Data structures
 
@@ -454,7 +466,8 @@ def upload_genome(shock_service_url=None,
                             next_line = metadata_lines[metadata_line_counter + comment_loop_counter]
                         else:
                             break
-                genome_comment = "%s<%s :: %s> " % (genome_comment,accession,comment)
+#                genome_comment = "%s<%s :: %s> " % (genome_comment,accession,comment)
+                genome_comment_io.write("<%s :: %s> " % (accession,comment))
             elif metadata_line.startswith("REFERENCE   "):
                 #PUBLICATION SECTION (long)
                 authors = ''
@@ -639,7 +652,8 @@ def upload_genome(shock_service_url=None,
             coordinates_info = feature_header[21:] 
             feature_type = feature_header[:21] 
             feature_type = feature_type.strip().replace(" ","_")
-            if feature_type == "source":
+            if feature_type in exclude_feature_types:
+#            if feature_type == "source":
                 #skip source feature types.
                 continue
             feature_object["type"] = feature_type
@@ -1765,7 +1779,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--object_name', 
                         help="genbank file", 
-                        nargs='?', required=False) 
+                        nargs='?', required=False)
+    parser.add_argument('--exclude_feature_types', type=str, nargs='*', required=False,
+                        help='which feature types to exclude.  feature type "source" is always excluded.  Ensembl should exclude "misc_feature"') 
 #    parser.add_argument('--fasta_file_directory', 
 #                        help="fasta_dile_directory", 
 #                        nargs='?', required=False) 
@@ -1813,6 +1829,7 @@ if __name__ == "__main__":
                       workspace_name = args.workspace_name,
                       workspace_service_url = args.workspace_service_url,
                       taxon_wsname = args.taxon_wsname,
+                      exclude_feature_types = args.exclude_feature_types,
 #                      taxon_names_file = args.taxon_names_file,
                       taxon_reference = args.taxon_reference,
                       core_genome_name = args.object_name,

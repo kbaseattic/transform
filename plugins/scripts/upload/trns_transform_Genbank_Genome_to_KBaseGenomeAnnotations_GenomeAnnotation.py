@@ -70,7 +70,7 @@ def represents_int(s):
 # See: https://docs.python.org/2/library/logging.html#logging-levels
 #
 # The default level is set to INFO which includes everything except DEBUG
-@profile
+#@profile
 def upload_genome(shock_service_url=None, 
                   handle_service_url=None, 
                   #output_file_name=None, 

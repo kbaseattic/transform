@@ -13,10 +13,10 @@ import datetime
 import shutil
 from string import digits
 from string import maketrans
-try:
-    from cStringIO import StringIO
-except:
-    from StringIO import StringIO
+#try:
+#    from cStringIO import StringIO
+#except:
+#    from StringIO import StringIO
 
 # 3rd party imports
 import simplejson
@@ -300,7 +300,7 @@ def upload_genome(shock_service_url=None,
     genbank_time_string = None
     genome_publication_dict = dict()
 #    genome_comment = ''
-    genome_comment_io = StringIO()
+#    genome_comment_io = StringIO()
 
     #Feature Data structures
 
@@ -467,7 +467,7 @@ def upload_genome(shock_service_url=None,
                         else:
                             break
 #                genome_comment = "%s<%s :: %s> " % (genome_comment,accession,comment)
-                genome_comment_io.write("<%s :: %s> " % (accession,comment))
+#                genome_comment_io.write("<%s :: %s> " % (accession,comment))
             elif metadata_line.startswith("REFERENCE   "):
                 #PUBLICATION SECTION (long)
                 authors = ''

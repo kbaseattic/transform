@@ -10,6 +10,7 @@ import time
 import traceback 
 import os.path 
 import datetime
+import collections
 from string import digits
 
 # 3rd party imports
@@ -25,6 +26,7 @@ import biokbase.workspace.client
 # See: https://docs.python.org/2/library/logging.html#logging-levels
 #
 # The default level is set to INFO which includes everything except DEBUG
+#@profile
 def upload_assembly(shock_service_url = None, 
                     handle_service_url = None,
                     input_directory = None,
@@ -158,7 +160,14 @@ def upload_assembly(shock_service_url = None,
                 if not total_sequence :
                     logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
                     raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header))
-                for character in total_sequence:
+#                for character in total_sequence:
+#                    if character not in valid_chars:
+#                        if character in amino_acid_specific_characters:
+#                            raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
+#                        raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
+                seq_count = collections.Counter(total_sequence)
+                seq_dict = dict(seq_count)
+                for character in seq_dict:
                     if character not in valid_chars:
                         if character in amino_acid_specific_characters:
                             raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
@@ -230,7 +239,10 @@ def upload_assembly(shock_service_url = None,
             logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
             raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
 
-        for character in total_sequence: 
+#        for character in total_sequence: 
+        seq_count = collections.Counter(total_sequence) 
+        seq_dict = dict(seq_count) 
+        for character in seq_dict: 
             if character not in valid_chars: 
                 if character in amino_acid_specific_characters:
                     raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")

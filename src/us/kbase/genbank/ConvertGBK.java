@@ -685,6 +685,7 @@ public class ConvertGBK {
                 ConvertGBK clt = new ConvertGBK(args);
             } catch (Exception e) {
                 e.printStackTrace();
+		System.exit(1);
             }
         } else {
             System.out.println("usage: java us.kbase.genbank.ConvertGBK " +

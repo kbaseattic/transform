@@ -79,6 +79,7 @@ def transform(shock_service_url=None, workspace_service_url=None,
         logger.info(stdout)
 
     exit_status = tool_process.wait()
+    logger.debug("Tool execution returned exit status {}".format(exit_status))
 
     if exit_status != 0:
         logger.error("Transformation from Genbank.Genome to KBaseGenomes.Genome failed on {0}".format(input_directory))

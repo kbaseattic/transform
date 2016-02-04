@@ -16,8 +16,7 @@
             "shock_service_url",
             "input_directory",
             "workspace_name",
-            "workspace_service_url",
-	    "taxon_ws_name"
+            "workspace_service_url"
         ], 
         "optional_fields": 
         [

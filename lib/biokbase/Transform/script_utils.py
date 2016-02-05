@@ -136,7 +136,7 @@ def parse_docs(docstring=None):
     remainder = script_details["Args"]
     argument_values = list()
     for k in reversed(argument_keys):
-        remainder, value = remainder.split(k)        
+        remainder, value = remainder.split(k)      
         argument_values.append(" ".join([x.strip() for x in value.split("\n")]))
     
     # create the dict using they keys without :, then get the values in the correct order

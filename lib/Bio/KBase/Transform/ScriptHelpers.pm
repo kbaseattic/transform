@@ -181,7 +181,8 @@ sub write_tsv_tables {
 sub write_excel_tables {
 	my($tables,$filename) = @_;
 	require "Spreadsheet/WriteExcel.pm";
-	my $wkbk = Spreadsheet::WriteExcel->new($filename);
+	my $wkbk = Spreadsheet::WriteExcel->new($filename)
+		or die "can not create workbook: $!";
 	foreach my $tbl (keys(%{$tables})) {
 		my $sheet = $wkbk->add_worksheet($tbl);
 		my $data = $tables->{$tbl};
@@ -192,6 +193,7 @@ sub write_excel_tables {
 			$sheet->write_row($i,0,$data->[$i]);
 		}
 	}
+	$wkbk->close();
 }
 
 sub write_output

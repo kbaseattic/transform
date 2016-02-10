@@ -43,7 +43,7 @@ def transform(shock_service_url=None, workspace_service_url=None,
     
     logger.info("Starting transformation of KBaseGenomes.Genome to Genbank")
 
-    classpath = ["$KB_TOP/lib/jars/kbase/transform/GenBankTransform.jar",
+    classpath = ["$KB_TOP/lib/jars/kbase/transform/kbase_transform_deps.jar",
                  "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar",
                  "$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar",
                  "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",

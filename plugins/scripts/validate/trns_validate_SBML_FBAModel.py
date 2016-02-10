@@ -1,103 +1,86 @@
-#!/usr/bin/python
-# This code is part of KBase project to validate 
-#the sbml files
+#!/usr/bin/env python
 
-import sys, getopt
-import os.path
+# standard library imports
+import sys
+import os
 import subprocess
-import json
+import traceback
 import logging
 
 # KBase imports
 import biokbase.Transform.script_utils as script_utils
 
-desc1 = '''
-NAME
-      trns_validate_KBaseFBA.SBML.py -- Validate the fasta files (1.0)
 
-SYNOPSIS      
-      
-'''
+def validate(input_file_name, working_directory, level=logging.INFO, logger=None):
+    """
+    Validates any file containing sequence data.
 
-desc2 = '''
-DESCRIPTION
-  trns_validate_KBaseFBA.SBML.py validate the fasta file and returns
-  a json string
+    Args:
+        input_file_name: An input SBML file.
+        working_directory: A directory where any output files produced by validation can be written.
+        level: Logging level, defaults to logging.INFO.
+    
+    Returns:
+        0 on success, 1 on failure.
+        All statements passed to standard out via a logger, any errors throw an Exception
+        and result in a non-zero exit status back to the caller.
+    
+    Authors:
+        Srividya Ramikrishnan, Matt Henderson
+    """
 
-  TODO: It will support KBase log format.
-'''
+    if logger is None:
+        logger = script_utils.stdoutlogger(__file__)
 
-desc3 = '''
-EXAMPLES
-   > trns_validate_KBaseFBA.SBML.py -i <Input fasta file>
+    command = os.path.join(os.environ.get("KB_TOP"), "bin/validateSBML")
+    
+    validated = False
+    fileName = os.path.split(input_file_name)[-1]
+        
+    if not os.path.isfile(input_file_name):
+        raise Exception("Not a file {0}".format(fileName))
 
-AUTHORS
-Srividya Ramakrishnan; Sam Seaver
-'''
+    logger.info("Starting SBML validation of {0}".format(fileName))
+    
+    arguments = [command, input_file_name]        
+        
+    tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)
+    stdout, stderr = tool_process.communicate()
 
-impt = "../bin/validateSBML"
+    if len(stderr) > 0:
+        logger.error("Validation failed on {0}".format(fileName))
+    else:
+        logger.info("Validation passed on {0}".format(fileName))
+        validated = True
+        
+    if not validated:
+        raise Exception("Validation failed!")
+    else:
+        logger.info("Validation passed.")
 
-def to_JSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-class Validate(object):
-        """ Validate the object and return 0 or exit with an error
-        """
-        def __init__(self,filename):
-                """ Initialize the validation function to proceed with validation
-                """
-                self.filename=filename
-                cmd = [impt,filename]
-                process = subprocess.Popen(cmd,stdout=subprocess.PIPE)
-                output, unused_err = process.communicate()
-                retcode = process.poll()
+if __name__ == "__main__":
+    script_details = script_utils.parse_docs(validate.__doc__)
 
-                error = ''
-                status = ''
+    import argparse
 
-                if retcode:
-                    self.status = 'FAILED'
-                    self.error = output
-                else:
-                    self.status = 'SUCCESS'
+    parser = argparse.ArgumentParser(prog=__file__,
+                                     description=script_details["Description"],                                     
+                                     epilog=script_details["Authors"])
+    parser.add_argument("--input_file_name", help=script_details["Args"]["input_file_name"], type=str, nargs="?", required=True)
+    parser.add_argument("--working_directory", help=script_details["Args"]["working_directory"], type=str, nargs="?", required=True)
 
-def usage():
-        print("Usage : trns_validate_KBaseFBA.SBML.py -i <filename> ")
+    args = parser.parse_args()
 
-def main(argv):
-   inputfile = ''
-   ret = None
-   logger = script_utils.getStderrLogger(__file__)
-
-   logger.info("Validation of SBML")
-
-   try:
-      opts, args = getopt.getopt(argv,"hi:")
-   except getopt.GetoptError:
-      print('trns_validate_KBaseFBA.SBML.py -i <inputfile>')
-      sys.exit(2)
-
-   for opt, arg in opts:
-      if opt == '-h':
-         print('trns_validate_KBaseFBA.SBML.py -i <inputfile>')
-         sys.exit()
-      elif opt == "-i":
-         if os.path.isfile(arg):
-             ret = Validate(arg)
-         else:
-             logger.warn("File " + arg + " does not exist ")
-             print("File " + arg + " does not exist ")
-             sys.exit(1)
-      else:
-        logger.warn("Invalid Option "+usage())
-        print('Invalid Option ' + usage())
-
-   return ret
-
-if __name__ == "__main__" :
-   if len(sys.argv) != 1:
-        ret = main(sys.argv[1:])
-        print(to_JSON(ret))
-   else:
-        usage()
-exit(0);
+    logger = script_utils.stdoutlogger(__file__)
+    
+    try:
+        validate(input_file_name = args.input_file_name, 
+                 working_directory = args.working_directory,
+                 level = logging.DEBUG,
+                 logger = logger)
+    except Exception, e:
+        logger.exception(e)
+        sys.exit(1)
+    
+    sys.exit(0)

@@ -1,0 +1,54 @@
+{
+    "script_name": "trns_transform_TSV_Phenotypes_to_KBasePhenotypes_PhenotypeSet.pl",
+    "script_type": "upload",
+    "external_type": "TSV.PhenotypeSet",
+    "kbase_type": "KBasePhenotypes.PhenotypeSet",
+    "user_description": "Converts TSV file to PhenotypeSet object in workspace.",
+    "url_mapping": ["TSV.PhenotypeSet"],    
+    "handler_options": {        
+        "must_own_validation": false,
+        "must_own_saving_to_workspace": true,
+        "max_runtime": 360,
+        "custom_options": [],
+	"required_fields":
+	[
+	    "input_file_name",
+	    "object_name",
+	    "workspace_name",
+	    "workspace_service_url",
+	    "fba_service_url"
+	],
+	"optional_fields":
+	[
+	    "genome"
+	],
+	"input_mapping": {"TSV.PhenotypeSet": "input_file_name"}
+    },
+    "user_options": [
+        {
+            "name": "input_file_name",
+            "type": "string",
+            "required": true,
+            "help": "Input TSV File"
+        },
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "ID for output PhenotypeSet in workspace."
+        },
+        {
+            "name": "workspace_name",
+            "type": "string",
+            "required": true,
+            "help": "Workspace ID for saving output PhenotypeSet."
+        },
+        {
+            "name": "genome",
+            "type": "string",
+            "required": false,
+            "help": "Identifier for Genome which contains features referenced to in PhenotypeSet (Defaults to empty Genome)."
+        }
+    ],
+    "user_option_groups": []
+}

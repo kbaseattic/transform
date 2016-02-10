@@ -32,7 +32,7 @@ def convert(shock_url, shock_id, handle_url, handle_id, input_filename, output_f
     """
 
     if logger is None:
-        logger = script_utils.getStderrLogger(__file__)
+        logger = script_utils.stderrlogger(__file__)
     
     logger.info("Starting conversion of FASTA to KBaseAssembly.SingleEndLibrary.")
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger = script_utils.getStderrLogger(__file__)
+    logger = script_utils.stderrlogger(__file__)
     
     try:
         convert(args.shock_url, args.shock_id, args.handle_url, args.handle_id, args.input_filename, args.output_filename, logger=logger)

@@ -5,13 +5,41 @@
     "kbase_type": "KBaseGenomes.Genome",
     "user_description": "",
     "developer_description": "",
-    
+    "url_mapping":["Genbank.Genome"],
     "handler_options": {        
-        "must_own_validation": false,
-        "must_own_saving_to_workspace": false,
+        "must_own_validation": true,
+        "must_own_saving_to_workspace": true,
         "max_runtime": 360,
+        "required_fields": 
+        [
+            "input_directory",
+            "workspace_name",
+            "workspace_service_url",
+            "working_directory",
+            "object_name"
+        ], 
+        "optional_fields": 
+        [
+            "contigset_object_name",
+            "shock_service_url"
+        ],
+        
+        "input_mapping":{"Genbank.Genome":"input_directory"},
         "custom_options": []
     },
-    "user_options": [],
+    "user_options": [
+        { 
+            "name": "object_name",
+            "type": "string",
+            "required": false,
+            "help": "If not supplied, will default the base input_file_name with '_contig_set.json' appended to the end."
+        },
+        { 
+            "name": "contigset_object_name",
+            "type": "string",
+            "required": false,
+            "help": "If not supplied, will default the base input_file_name with '_contig_set.json' appended to the end."
+        }
+        ],
     "user_option_groups": []
 }

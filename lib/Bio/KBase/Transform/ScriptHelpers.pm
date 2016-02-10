@@ -15,7 +15,7 @@ use Spreadsheet::ParseExcel;
 use Spreadsheet::ParseXLSX;
 use Log::Log4perl;
 use parent qw(Exporter);
-our @EXPORT_OK = qw(parse_input_table get_input_fh get_output_fh
+our @EXPORT_OK = qw(write_excel_tables write_tsv_tables write_csv_tables parse_input_table get_input_fh get_output_fh
 		    load_input write_output write_text_output
 		    genome_to_gto contigs_to_gto
                     parse_excel getStderrLogger);
@@ -36,7 +36,7 @@ sub parse_input_table {
 	}
 	open(my $fh, "<", $filename) || return;
 	my $headingline = <$fh>;
-	chomp($headingline);
+	$headingline =~ tr/\r\n//d;#This line removes line endings from nix and windows files
 	my $delim = undef;
 	if ($headingline =~ m/\t/) {
 		$delim = "\\t";
@@ -49,7 +49,7 @@ sub parse_input_table {
 	my $headings = [split(/$delim/,$headingline)];
 	my $data = [];
 	while (my $line = <$fh>) {
-		chomp($line);
+		$line =~ tr/\r\n//d;#This line removes line endings from nix and windows files
 		push(@{$data},[split(/$delim/,$line)]);
 	}
 	close($fh);
@@ -142,6 +142,56 @@ sub load_input
     undef $fh;
     my $obj = decode_json($text);
     return $obj;
+}
+
+sub write_csv_tables {
+	my($tables) = @_;
+	foreach my $tbl (keys(%{$tables})) {
+		open(OUT, "> $tbl.csv");
+		for (my $j=0; $j < @{$tables->{$tbl}}; $j++) {
+			for (my $k=0; $k < @{$tables->{$tbl}->[0]}; $k++) {
+				if ($k > 0) {
+					print OUT "\t";
+				}
+				print OUT $tables->{$tbl}->[$j]->[$k];
+			}
+			print OUT "\n";
+		}
+		close(OUT);
+	}	
+}
+
+sub write_tsv_tables {
+	my($tables) = @_;
+	foreach my $tbl (keys(%{$tables})) {
+		open(OUT, "> $tbl.tsv");
+		for (my $j=0; $j < @{$tables->{$tbl}}; $j++) {
+			for (my $k=0; $k < @{$tables->{$tbl}->[0]}; $k++) {
+				if ($k > 0) {
+					print OUT "\t";
+				}
+				print OUT $tables->{$tbl}->[$j]->[$k];
+			}
+			print OUT "\n";
+		}
+		close(OUT);
+	}	
+}
+
+sub write_excel_tables {
+	my($tables,$filename) = @_;
+	require "Spreadsheet/WriteExcel.pm";
+	my $wkbk = Spreadsheet::WriteExcel->new($filename);
+	foreach my $tbl (keys(%{$tables})) {
+		my $sheet = $wkbk->add_worksheet($tbl);
+		my $data = $tables->{$tbl};
+		for (my $i=0; $i < @{$data}; $i++) {
+			for (my $j=0; $j < @{$data->[$i]}; $j++) {
+				$data->[$i]->[$j] =~ s/=/-/g;
+			}
+			$sheet->write_row($i,0,$data->[$i]);
+		}
+	}
 }
 
 sub write_output

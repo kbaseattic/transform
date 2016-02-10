@@ -14,7 +14,7 @@ $script
 
 =head1 SYNOPSIS
 
-$script --input/-i <Input Excel File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
+$script --input_file_name/-i <Input Excel File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>
 
 =head1 DESCRIPTION
 
@@ -22,9 +22,9 @@ Transform a CSV file into an object in the workspace.
 
 =head1 COMMAND-LINE OPTIONS
 $script
-	-i --input	name of reactions file with model data
-	-o --output     id under which KBaseBiochem.Media is to be saved
-	-w --out_ws     workspace where KBaseBiochem.Media is to be saved
+	-i --input_file_name	name of reactions file with model data
+	-o --object_name     id under which KBaseBiochem.Media is to be saved
+	-w --workspace_name     workspace where KBaseBiochem.Media is to be saved
 	-g --genome	genome for which model was constructed
 	-b --biomass	id of biomass reaction in model
 	--help          print usage message and exit
@@ -39,17 +39,28 @@ my $Out_WS    = "";
 my $Genome    = "Empty";
 my $Biomass   = "";
 my $Help      = 0;
+my $fbaurl = "";
+my $wsurl = "";
 
-GetOptions("input|i=s"     => \$In_File,
-	   "output|o=s"    => \$Out_Object,
-	   "out_ws|w=s"    => \$Out_WS,
+GetOptions("input_file_name|i=s"     => \$In_File,
+	   "object_name|o=s"    => \$Out_Object,
+	   "workspace_name|w=s"    => \$Out_WS,
 	   "genome|g=s"    => \$Genome,
-	   "biomass|b=s"   => \$Biomass,
+	   "biomass|b=s@"   => \$Biomass,
+	   "workspace_service_url=s" => $wsurl,
+	   "fba_service_url=s" => $fbaurl,
 	   "help|h"        => \$Help);
 
+if (length($fbaurl) == 0) {
+	$fbaurl = undef;
+}
+if (length($wsurl) == 0) {
+	$wsurl = undef;
+}
+
 if($Help || !$In_File || !$Out_Object || !$Out_WS){
-    print($0." --input/-i <Input Excel File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
-    $logger->warn($0." --input/-i <Input Excel File> --output/-o <Output Object ID> --out_ws/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+    print($0." --input_file_name/-i <Input Excel File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
+    $logger->warn($0." --input_file_name/-i <Input Excel File> --object_name/-o <Output Object ID> --workspace_name/-w <Workspace to save Object in> --genome/-g <Input Genome ID> --biomass/-b <Input Biomass ID>\n");
     exit();
 }
 
@@ -102,7 +113,10 @@ $logger->info("Loading FBAModel WS Object");
 
 use Capture::Tiny qw( capture );
 my ($stdout, $stderr, @result) = capture {
-    my $fba = get_fba_client();
+    my $fba = get_fba_client($fbaurl);
+    if (defined($wsurl)) {
+    	$input->{wsurl} = $wsurl;
+    }
     $fba->import_fbamodel($input);
 };
 

@@ -132,7 +132,7 @@ type but different versions.
         # return variables are: result
         #BEGIN version
 
-        result = "v0.1"        
+        # get service config version        
 
         #END version
 

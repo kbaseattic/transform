@@ -187,17 +187,20 @@ public class ChromatographyMatrixUploader {
 
 		try {
 			String line = null;
+			int index = 0;
 			boolean metaDataFlag = false;
 			boolean dataFlag = false;
 			BufferedReader br = new BufferedReader(new FileReader(inputFile));
+
 			while ((line = br.readLine()) != null) {
+				index++;
 				if (line.equals("")) {
 					// do nothing on blank lines
 				} else if (line.matches("DATA\t.*")) {
 					dataFlag = true;
 					metaDataFlag = false;
 					data.add(line);
-				} else if (line.matches("METADATA\tEntity\tProperty\tUnit\tValue.*")) {
+				} else if (line.matches("METADATA\tCategory\tProperty\tUnit\tValue.*")) {
 					dataFlag = false;
 					metaDataFlag = true;
 				} else {
@@ -206,17 +209,18 @@ public class ChromatographyMatrixUploader {
 					} else if (!dataFlag && metaDataFlag) {
 						metaData.add(line);
 					} else {
-						System.out.println("Warning: string will be missed "
-								+ line);
+						System.out.println("Warning: line " + index + "will be missed");
 					}
-					;
 				}
-				;
-
 			}
 			br.close();
+			if (!dataFlag && !metaDataFlag) {
+				printErrorStatus("Data parsing");
+				throw new IllegalStateException("Sorry, file format not recognized. Neither data nor metadata sections were found. Please check input file.");
+			}
+			
 		} catch (IOException e) {
-			System.out.println(e.getLocalizedMessage());
+			System.err.println(e.getLocalizedMessage());
 		}
 		
 		
@@ -227,7 +231,7 @@ public class ChromatographyMatrixUploader {
 		List<PropertyValue> properties = matrix.getMetadata().getMatrixMetadata();
 		matrix.setDescription("");
 		for (PropertyValue propertyValue:properties){
-			if (propertyValue.getEntity().equals("Description")){
+			if (propertyValue.getCategory().equals("Description")){
 				matrix.setDescription(propertyValue.getPropertyValue());
 				break;
 			}
@@ -238,7 +242,7 @@ public class ChromatographyMatrixUploader {
 
 	private Matrix2DMetadata parseChromatographyMetadata (List<String> metaData, List<String> sampleNames, List<String> rowNames) {
 		
-		Matrix2DMetadata returnVal = DataMatrixUploader.parseMetadata(metaData, sampleNames, rowNames);
+		Matrix2DMetadata returnVal = DataMatrixUploader.parseMetadata(metaData, sampleNames, rowNames, "3");//"3" is a dirty hack to avoid auto-generation of data series
 		
 		validateMetadata(returnVal, sampleNames, rowNames);
 
@@ -250,31 +254,47 @@ public class ChromatographyMatrixUploader {
 	private void validateMetadata(Matrix2DMetadata m, List<String> columnNames, List<String> rowNames) {
 		
 		int flag = 0;
-		
+		int errorCount = 0;
 		String timeUnit = "";
 		
 		for (String rowName : rowNames){
 			flag = 0;
 			try {
 				for (PropertyValue p: m.getRowMetadata().get(rowName)){
-					if (p.getEntity().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES)&&p.getPropertyName().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME)){
+					if (p.getCategory().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES)){
+						if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME.contains(p.getPropertyName())) {
+							if (errorCount == 0) printErrorStatus("Metadata validation");
+							if (errorCount < 50) System.err.println(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + " metadata entry for row " + rowName + " contains illegal property name " + p.getPropertyName());
+							errorCount ++;
+						}
+						
 						if (timeUnit.equals("")) timeUnit = p.getPropertyUnit();
 						if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT.contains(p.getPropertyUnit())){
-							throw new IllegalStateException(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains illegal unit " + p.getPropertyUnit());
+							if (errorCount == 0) printErrorStatus("Metadata validation");
+							if (errorCount < 50) System.err.println(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + p.getPropertyName() + " metadata entry for row " + rowName + " contains illegal unit " + p.getPropertyUnit());
+							errorCount ++;
 						} else if (!p.getPropertyUnit().equals(timeUnit)) {
-							throw new IllegalStateException(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME + " metadata entry for row " + rowName + " contains unit " + p.getPropertyUnit() + ", which is different from " + timeUnit + " in other entries" );
+							if (errorCount == 0) printErrorStatus("Metadata validation");
+							if (errorCount < 50) System.err.println(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + p.getPropertyName() + " metadata entry for row " + rowName + " contains unit " + p.getPropertyUnit() + ", which is different from " + timeUnit + " in other entries" );
+							errorCount ++;
 						}
 						flag++;
 						
 					}
 				}
 			} catch (NullPointerException e) {
-				throw new IllegalStateException ("Metadata entries for row " + rowName + " are missing");
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata entries for row " + rowName + " are missing");
+				errorCount ++;
 			}
 			if (flag == 0) {
-				throw new IllegalStateException("Metadata for row " + rowName + " must have one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME + " entry");
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + " entry");
+				errorCount ++;
 			} else if (flag > 1) {
-				throw new IllegalStateException("Metadata for row " + rowName + " must have only one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME + " entry, but it contains " + flag);
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have only one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + " entry, but it contains " + flag);
+				errorCount ++;
 			}
 		}
 
@@ -286,30 +306,46 @@ public class ChromatographyMatrixUploader {
 			
 			try {
 				for (PropertyValue p : m.getColumnMetadata().get(colName)){
-					//System.out.println(colName + " " + p.getEntity() + " " + p.getPropertyName() + " " + p.getPropertyUnit() + " " + p.getPropertyValue() + " " + flag);
-					if (p.getEntity().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT)) {
+					if (p.getCategory().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT)) {
 						measurementFlag = true;
 						if (p.getPropertyName().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY)){
 							if (MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY_UNIT.contains(p.getPropertyUnit())){
-								String key = p.getEntity() + p.getPropertyName() + p.getPropertyValue();
+								String key = p.getCategory() + p.getPropertyName() + p.getPropertyValue();
 								if (units.containsKey(key)) {
 									if (!units.get(key).equals(p.getPropertyUnit())) {
-										throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
+										if (errorCount == 0) printErrorStatus("Metadata validation");
+										if (errorCount < 50) System.err.println(p.getCategory() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
+										errorCount ++;
 									}
 								} else {
 									units.put(key, p.getPropertyUnit());
 								}
 							} else {
-								throw new IllegalStateException(p.getEntity() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
+								if (errorCount == 0) printErrorStatus("Metadata validation");
+								if (errorCount < 50) System.err.println(p.getCategory() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
+								errorCount ++;
 							}
 						}
 					}
 				}
-				if (!measurementFlag) throw new IllegalStateException("Metadata for column " + colName + " must have at least one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");
+				if (!measurementFlag) {
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println("Metadata for column " + colName + " must have at least one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");
+					errorCount ++;
+				}
 			} catch (NullPointerException e) {
-				throw new IllegalStateException ("Metadata entries for column " + colName + " are missing");
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata entries for column " + colName + " are missing");
+				errorCount ++;
 			}
 		}
+		
+		if (errorCount > 50) {
+			throw new IllegalStateException("Cannot proceed with upload: metadata validation failed. " + errorCount + " errors were found, but only first 50 were displayed");
+		} else if (errorCount > 0) {
+			throw new IllegalStateException("Cannot proceed with upload: metadata validation failed.");
+		}
+
 	}
 
 	private static boolean validateInput(CommandLine line) {
@@ -340,6 +376,10 @@ public class ChromatographyMatrixUploader {
 		}
 
 		return returnVal;
+	}
+
+	private static void printErrorStatus(String message) {
+		System.err.println("\n" + message + " failed. See detailed report for a list of errors.\n                                                                                                                                \n");
 	}
 
 	public static File findTabFile(File inputDir) {

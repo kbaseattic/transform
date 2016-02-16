@@ -236,7 +236,7 @@ def transform(shock_service_url=None, handle_service_url=None,
             contig_dict["sequence"] = total_sequence 
         else:
             contig_dict["sequence"]= ""
-        if fasta_key in fasta_dict.keys():
+        if fasta_key in fasta_dict:
             raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key)) 
         else:
             fasta_dict[fasta_key] = contig_dict 

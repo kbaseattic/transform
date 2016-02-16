@@ -267,7 +267,8 @@ def transform(shock_service_url=None, handle_service_url=None,
     objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
     if len(contig_set_dict["contigs"]) == 0:
         raise Exception("There appears to be no FASTA DNA Sequences in the input file.") 
-    if sys.getsizeof(objectString) > 1000000000 :
+    #The workspace has a 1GB limit
+    if sys.getsizeof(objectString) > 1E9 :
         contig_set_dict["contigs"] = []
         objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
         logger.warning("The fasta file has a very large number of contigs thus resulting in an object being too large if " 

@@ -200,7 +200,11 @@ def upload_assembly(shock_service_url = None,
 
 #                print "Sequence Start: " + str(sequence_start) + "Fasta: " + fasta_key
 #                print "Sequence Stop: " + str(sequence_stop) + "Fasta: " + fasta_key
-                fasta_dict[fasta_key] = contig_dict
+
+                if fasta_key in fasta_dict:
+                    raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key))
+                else: 
+                    fasta_dict[fasta_key] = contig_dict
                
                 # get set up for next fasta sequence
                 sequence_list = []
@@ -274,7 +278,10 @@ def upload_assembly(shock_service_url = None,
         contig_dict["start_position"] = sequence_start
         contig_dict["num_bytes"] = sequence_stop - sequence_start
         
-        fasta_dict[fasta_key] = contig_dict 
+        if fasta_key in fasta_dict:
+            raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key))
+        else: 
+            fasta_dict[fasta_key] = contig_dict
         input_file_handle.close()
 
     contig_set_dict = dict()

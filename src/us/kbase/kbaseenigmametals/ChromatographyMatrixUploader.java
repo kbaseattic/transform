@@ -303,13 +303,15 @@ public class ChromatographyMatrixUploader {
 		
 		for (String colName : columnNames) {
 			boolean measurementFlag = false;
+			boolean substanceFlag = false;
 			
 			try {
 				for (PropertyValue p : m.getColumnMetadata().get(colName)){
 					if (p.getCategory().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT)) {
 						measurementFlag = true;
-						if (p.getPropertyName().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY)){
-							if (MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY_UNIT.contains(p.getPropertyUnit())){
+						if (p.getPropertyName().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE)){
+							substanceFlag = true;
+							/*if (MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY_UNIT.contains(p.getPropertyUnit())){
 								String key = p.getCategory() + p.getPropertyName() + p.getPropertyValue();
 								if (units.containsKey(key)) {
 									if (!units.get(key).equals(p.getPropertyUnit())) {
@@ -324,13 +326,18 @@ public class ChromatographyMatrixUploader {
 								if (errorCount == 0) printErrorStatus("Metadata validation");
 								if (errorCount < 50) System.err.println(p.getCategory() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
 								errorCount ++;
-							}
+							}*/
 						}
 					}
 				}
 				if (!measurementFlag) {
 					if (errorCount == 0) printErrorStatus("Metadata validation");
 					if (errorCount < 50) System.err.println("Metadata for column " + colName + " must have at least one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");
+					errorCount ++;
+				}
+				if (!substanceFlag) {
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println("Metadata for column " + colName + " must have at least one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT + "." + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE + " entry");
 					errorCount ++;
 				}
 			} catch (NullPointerException e) {

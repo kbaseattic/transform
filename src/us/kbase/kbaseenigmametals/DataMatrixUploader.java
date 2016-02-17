@@ -536,8 +536,8 @@ public class DataMatrixUploader {
 			String seriesId = columnIds2SeriesId.get(columnId);
 			entry.getValue().add(
 					new PropertyValue()
-					.withCategory("DataSeries")
-					.withPropertyName("SeriesId")
+					.withCategory(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES)
+					.withPropertyName(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES_SERIESID)
 					.withPropertyUnit("")
 					.withPropertyValue(seriesId)); 
 		}

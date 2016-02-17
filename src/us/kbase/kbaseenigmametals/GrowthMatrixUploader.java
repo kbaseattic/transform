@@ -294,6 +294,7 @@ public class GrowthMatrixUploader {
 		
 		for (String colName : columnNames) {
 			boolean conditionFlag = false;
+			int sampleIdCount = 0;
 			int seriesCount = 0;
 			
 			try {
@@ -318,6 +319,8 @@ public class GrowthMatrixUploader {
 						}
 					} else if ((p.getCategory().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES)) && (p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES_SERIESID))) {
 						seriesCount++;
+					} else if ((p.getCategory().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES)) && (p.getPropertyName().equals(MetadataProperties.GROWTHMATRIX_METADATA_COLUMN_DATASERIES_SAMPLEID))) {
+						sampleIdCount++;
 					}
 					
 				}
@@ -352,7 +355,20 @@ public class GrowthMatrixUploader {
 					errorCount ++;
 				}
 			}
-
+			
+			if (sampleIdCount > 1) {
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println ("Metadata for column " + colName + " should not have more than one  " + MetadataProperties.GROWTHMATRIX_METADATA_COLUMN_DATASERIES_SAMPLEID + " entry");
+				errorCount ++;
+			} /*else if (sampleIdCount == 0) {
+				m.getColumnMetadata().get(colName).add(
+						new PropertyValue()
+						.withCategory(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES)
+						.withPropertyName(MetadataProperties.GROWTHMATRIX_METADATA_COLUMN_DATASERIES_SAMPLEID)
+						.withPropertyUnit("")
+						.withPropertyValue(colName)); 
+			}
+*/
 		}
 		
 		if (errorCount > 50) {

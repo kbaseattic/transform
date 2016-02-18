@@ -28,6 +28,7 @@ my($opt, $usage) = describe_options("%c %o",
 				    ['object_name=s', 'workspace object name from which the input is to be read'],
 				    ['workspace_name=s', 'workspace name from which the input is to be read'],
 				    ['workspace_service_url=s', 'workspace service url to pull from'],
+				    ['fba_service_url=s', 'fba service url to use'],
 				    ['help|h', 'show this help message'],
 				    );
 

@@ -1207,14 +1207,19 @@ def upload_genome(shock_service_url=None,
             gene_id = features_grouping_dict[feature_grouping_id]["gene"][0]
             if "locations" in features_type_containers_dict["gene"][gene_id]:
                 for location in features_type_containers_dict["gene"][gene_id]["locations"]:
+                    temp_start_location = location[1]
+                    temp_end_location = location[1] + location[3]
+                    if location[2] == "-":
+                        temp_start_location = location[1] - location[3]
+                        temp_end_location = location[1]
                     if gene_start_boundary is None:
-                        gene_start_boundary = location[1]
-                    elif location[1] < gene_start_boundary:
-                        gene_start_boundary = location[1]
+                        gene_start_boundary = temp_start_location
+                    elif temp_start_location < gene_start_boundary:
+                        gene_start_boundary = temp_start_location
                     if gene_end_boundary is None:
-                        gene_end_boundary = location[1] + location[3]
-                    elif (location[1] + location[3]) > gene_end_boundary:
-                        gene_end_boundary = location[1] + location[3]
+                        gene_end_boundary = temp_end_location
+                    elif temp_end_location > gene_end_boundary:
+                        gene_end_boundary = temp_end_location
 
                 
 #                gene_start_boundary = features_type_containers_dict["gene"][gene_id]["locations"][0][1]
@@ -1230,14 +1235,19 @@ def upload_genome(shock_service_url=None,
                     mRNA_contig = None
                     if "locations" in  features_type_containers_dict["mRNA"][feature_id]:
                         for location in features_type_containers_dict["mRNA"][feature_id]["locations"]:
+                            temp_start_location = location[1] 
+                            temp_end_location = location[1] + location[3] 
+                            if location[2] == "-": 
+                                temp_start_location = location[1] - location[3] 
+                                temp_end_location = location[1] 
                             if mRNA_start_boundary is None: 
-                                mRNA_start_boundary = location[1]
-                            elif location[1] < mRNA_start_boundary:
-                                mRNA_start_boundary = location[1]
+                                mRNA_start_boundary = temp_start_location
+                            elif temp_start_location < mRNA_start_boundary:
+                                mRNA_start_boundary = temp_start_location
                             if mRNA_end_boundary is None:
-                                mRNA_end_boundary = location[1] + location[3]
-                            elif (location[1] + location[3]) > mRNA_end_boundary:
-                                mRNA_end_boundary = location[1] + location[3]
+                                mRNA_end_boundary = temp_end_location
+                            elif temp_end_location > mRNA_end_boundary:
+                                mRNA_end_boundary = temp_end_location
  
 #                        mRNA_start_boundary = features_type_containers_dict["mRNA"][feature_id]["locations"][0][1]
                         mRNA_contig = features_type_containers_dict["mRNA"][feature_id]["locations"][0][0]
@@ -1314,14 +1324,19 @@ def upload_genome(shock_service_url=None,
                     CDS_contig = None 
                     if "locations" in  features_type_containers_dict["CDS"][feature_id]:
                         for location in features_type_containers_dict["CDS"][feature_id]["locations"]:
+                            temp_start_location = location[1] 
+                            temp_end_location = location[1] + location[3] 
+                            if location[2] == "-": 
+                                temp_start_location = location[1] - location[3] 
+                                temp_end_location = location[1] 
                             if CDS_start_boundary is None: 
-                                CDS_start_boundary = location[1]
-                            elif location[1] < CDS_start_boundary:
-                                CDS_start_boundary = location[1]
+                                CDS_start_boundary = temp_start_location
+                            elif temp_start_location < CDS_start_boundary:
+                                CDS_start_boundary = temp_start_location
                             if CDS_end_boundary is None:
-                                CDS_end_boundary = location[1] + location[3]
-                            elif (location[1] + location[3]) > CDS_end_boundary:
-                                CDS_end_boundary = location[1] + location[3] 
+                                CDS_end_boundary = temp_end_location
+                            elif temp_end_location > CDS_end_boundary:
+                                CDS_end_boundary = temp_end_location 
 #                        CDS_start_boundary = features_type_containers_dict["CDS"][feature_id]["locations"][0][1] 
                         CDS_contig = features_type_containers_dict["CDS"][feature_id]["locations"][0][0] 
                         CDS_strand = features_type_containers_dict["CDS"][feature_id]["locations"][0][2] 
@@ -1405,14 +1420,19 @@ def upload_genome(shock_service_url=None,
                 mRNA_contig = None 
                 if "locations" in  features_type_containers_dict["mRNA"][mRNA_feature_id]: 
                     for location in features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"]:
+                        temp_start_location = location[1] 
+                        temp_end_location = location[1] + location[3] 
+                        if location[2] == "-": 
+                            temp_start_location = location[1] - location[3] 
+                            temp_end_location = location[1] 
                         if mRNA_start_boundary is None: 
-                            mRNA_start_boundary = location[1]
-                        elif location[1] < mRNA_start_boundary:
-                            mRNA_start_boundary = location[1]
+                            mRNA_start_boundary = temp_start_location
+                        elif temp_start_location < mRNA_start_boundary:
+                            mRNA_start_boundary = temp_start_location
                         if mRNA_end_boundary is None:
-                            mRNA_end_boundary = location[1] + location[3]
-                        elif (location[1] + location[3]) > mRNA_end_boundary:
-                            mRNA_end_boundary = location[1] + location[3]
+                            mRNA_end_boundary = temp_end_location
+                        elif temp_end_location > mRNA_end_boundary:
+                            mRNA_end_boundary = temp_end_location
 
 #                    mRNA_start_boundary = features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"][0][1] 
                     mRNA_contig = features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"][0][0] 
@@ -1429,14 +1449,19 @@ def upload_genome(shock_service_url=None,
 
                             if "locations" in  features_type_containers_dict["CDS"][CDS_feature_id]: 
                                 for location in features_type_containers_dict["CDS"][CDS_feature_id]["locations"]:
+                                    temp_start_location = location[1] 
+                                    temp_end_location = location[1] + location[3] 
+                                    if location[2] == "-": 
+                                        temp_start_location = location[1] - location[3] 
+                                        temp_end_location = location[1] 
                                     if CDS_start_boundary is None: 
-                                        CDS_start_boundary = location[1]
-                                    elif location[1] < CDS_start_boundary:
-                                        CDS_start_boundary = location[1]
+                                        CDS_start_boundary = temp_start_location
+                                    elif temp_start_location < CDS_start_boundary:
+                                        CDS_start_boundary = temp_start_location
                                     if CDS_end_boundary is None:
-                                        CDS_end_boundary = location[1] + location[3]
-                                    elif (location[1] + location[3]) > CDS_end_boundary:
-                                        CDS_end_boundary = location[1] + location[3] 
+                                        CDS_end_boundary = temp_end_location
+                                    elif temp_end_location > CDS_end_boundary:
+                                        CDS_end_boundary = temp_end_location 
 
 #                                CDS_start_boundary = features_type_containers_dict["CDS"][CDS_feature_id]["locations"][0][1] 
                                 CDS_contig = features_type_containers_dict["CDS"][CDS_feature_id]["locations"][0][0] 

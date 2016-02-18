@@ -253,10 +253,10 @@ public class SamplePropertyMatrixUploader {
 			flag = 0;
 			try {
 				for (PropertyValue p: m.getRowMetadata().get(rowName)){
-					if (p.getCategory().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE)&&p.getPropertyName().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_ID)){
+					if (p.getCategory().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE)&&p.getPropertyName().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME)){
 						if (p.getPropertyValue().equals("")) {
 							if (errorCount == 0) printErrorStatus("Metadata validation");
-							if (errorCount < 50) System.err.println(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_ID + " metadata entry for row " + rowName + " must have a value");
+							if (errorCount < 50) System.err.println(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME + " metadata entry for row " + rowName + " must have a value");
 							errorCount++;
 						}
 						flag++;
@@ -270,11 +270,11 @@ public class SamplePropertyMatrixUploader {
 
 			if (flag == 0) {
 				if (errorCount == 0) printErrorStatus("Metadata validation");
-				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have a " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_ID + " entry");
+				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have a " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME + " entry");
 				errorCount++;
 			} else if (flag > 1) {
 				if (errorCount == 0) printErrorStatus("Metadata validation");
-				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have only one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_ID + " entry, but it contains " + flag);
+				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have only one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME + " entry, but it contains " + flag);
 				errorCount++;
 			}
 		}
@@ -283,40 +283,33 @@ public class SamplePropertyMatrixUploader {
 		Map<String,String> units = new HashMap<String, String>();
 		
 		for (String colName : columnNames) {
-			boolean measurementFlag = false;
 			int seriesCount = 0;
+			int namesCount = 0;
+			int measurementsCount = 0;
 			
 			try {
 				for (PropertyValue p : m.getColumnMetadata().get(colName)){
-					if (p.getCategory().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT)) {
-						measurementFlag = true;
-						if (p.getPropertyName().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE)){
-							if (MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE_UNIT.contains(p.getPropertyUnit())){
-								String key = p.getCategory() + p.getPropertyName() + p.getPropertyValue();
-								if (units.containsKey(key)) {
-									if (!units.get(key).equals(p.getPropertyUnit())) {
-										if (errorCount == 0) printErrorStatus("Metadata validation");
-										if (errorCount < 50) System.err.println(p.getCategory() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
-										errorCount++;
-									}
-								} else {
-									units.put(key, p.getPropertyUnit());
+					if (p.getCategory().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY)) {
+						if (p.getPropertyName().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_MEASUREMENT)){
+							measurementsCount++;
+							String key = p.getCategory() + p.getPropertyName() + p.getPropertyValue();
+							if (units.containsKey(key)) {
+								if (!units.get(key).equals(p.getPropertyUnit())) {
+									if (errorCount == 0) printErrorStatus("Metadata validation");
+									if (errorCount < 50) System.err.println(p.getCategory() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
+									errorCount++;
 								}
 							} else {
-								if (errorCount == 0) printErrorStatus("Metadata validation");
-								if (errorCount < 50) System.err.println(p.getCategory() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
-								errorCount++;
+								units.put(key, p.getPropertyUnit());
 							}
+						} else if (p.getPropertyName().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_NAME)) {
+							namesCount++;
 						}
 					} else if ((p.getCategory().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES)) && (p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES_SERIESID))) {
 						seriesCount++;
 					}
 				}
-				if (!measurementFlag) {
-					if (errorCount == 0) printErrorStatus("Metadata validation");
-					if (errorCount < 50) System.err.println("Metadata for column " + colName + " must have at least one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");
-					errorCount++;
-				}
+
 			} catch (NullPointerException e) {
 				if (errorCount == 0) printErrorStatus("Metadata validation");
 				if (errorCount < 50) System.err.println ("Metadata entries for column " + colName + " are missing");
@@ -326,11 +319,11 @@ public class SamplePropertyMatrixUploader {
 			if (seriesCount != 1) {
 				if (!statValues && replicatesOption.equals("0")){
 					if (errorCount == 0) printErrorStatus("Metadata validation");
-					if (errorCount < 50) System.err.println ("Metadata for column " + colName + " must have one and only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " entry");
+					if (errorCount < 50) System.err.println ("Metadata for column " + colName + " should have one and only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " entry");
 					errorCount ++;
 				} else if (!statValues && replicatesOption.equals("1")){
 					if (errorCount == 0) printErrorStatus("Metadata validation");
-					if (errorCount < 50) System.err.println ("Metadata for column " + colName + " must have one and only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " entry, but " + seriesCount + " entries were auto-generated " );
+					if (errorCount < 50) System.err.println ("Metadata for column " + colName + " should have one and only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " entry, but " + seriesCount + " entries were auto-generated " );
 					errorCount ++;
 				} else if (!statValues && replicatesOption.equals("2")) {
 					if (errorCount == 0) printErrorStatus("Metadata validation");
@@ -338,9 +331,29 @@ public class SamplePropertyMatrixUploader {
 					errorCount ++;
 				} else if (statValues) {
 					if (errorCount == 0) printErrorStatus("Metadata validation");
-					if (errorCount < 50) System.err.println ("Metadata for column " + colName + " must have one and only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " entry" );
+					if (errorCount < 50) System.err.println ("Metadata for column " + colName + " should have one and only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " entry" );
 					errorCount ++;
 				}
+			}
+
+			if (measurementsCount == 0) {
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for column " + colName + " should have at least one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY + "." + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_MEASUREMENT + " entry");
+				errorCount++;
+			} else if (measurementsCount > 1) {
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for column " + colName + " should have only one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY + "." + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_MEASUREMENT + " entry");
+				errorCount++;
+			}
+
+			if (namesCount == 0) {
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for column " + colName + " should have at least one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY + "." + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_NAME + " entry");
+				errorCount++;
+			} else if (namesCount > 1) {
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for column " + colName + " should have only one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY + "." + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_NAME + " entry");
+				errorCount++;
 			}
 
 		}

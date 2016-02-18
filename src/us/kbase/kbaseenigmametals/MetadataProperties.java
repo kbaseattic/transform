@@ -32,13 +32,11 @@ public class MetadataProperties {
 	public static List<String> CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT;
 	public static String CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT;
 	public static String CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE;
-	//public static List<String> CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY_UNIT;
-	public static String SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT;
-	public static String SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE;
-	public static List<String> SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE_UNIT;
+	public static String SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY;
+	public static String SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_NAME;
+	public static String SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_MEASUREMENT;
 	public static String SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE;
-	public static String SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_ID;
-	public static String SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_WELLID;
+	public static String SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME;
 	
 	
 	public static void startup() {
@@ -82,16 +80,12 @@ public class MetadataProperties {
 			CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT = Arrays.asList(prop.getProperty("chromatographymatrix.metadata.row.timeseries.time.unit").split(",", 0));
 			CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT = prop.getProperty("chromatographymatrix.metadata.column.measurement");
 			CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE = prop.getProperty("chromatographymatrix.metadata.column.measurement.substance");
-			//CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY_UNIT = Arrays.asList(prop.getProperty("chromatographymatrix.metadata.column.measurement.intensity.unit").split(",", 0));
-			SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT = prop.getProperty("samplepropertymatrix.metadata.column.measurement");
-			SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE = prop.getProperty("samplepropertymatrix.metadata.column.measurement.substance");
-			SAMPLEPROPERTYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE_UNIT = Arrays.asList(prop.getProperty("samplepropertymatrix.metadata.column.measurement.substance.unit").split(",", 0));
+			SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY = prop.getProperty("samplepropertymatrix.metadata.column.property");
+			SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_NAME = prop.getProperty("samplepropertymatrix.metadata.column.property.name");
+			SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_MEASUREMENT = prop.getProperty("samplepropertymatrix.metadata.column.property.measurement");
 			SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE = prop.getProperty("samplepropertymatrix.metadata.row.sample");
-			SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_ID = prop.getProperty("samplepropertymatrix.metadata.row.sample.id");
-			SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_WELLID = prop.getProperty("samplepropertymatrix.metadata.row.sample.wellid");
+			SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME = prop.getProperty("samplepropertymatrix.metadata.row.sample.name");
 			
-			//System.out.println(WELLSAMPLEMATRIX_METADATA_ROW_SAMPLE_WELLID);
-	 
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		} finally {

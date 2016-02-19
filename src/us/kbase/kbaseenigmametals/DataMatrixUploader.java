@@ -5,9 +5,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
+import java.util.Map.Entry;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -16,6 +20,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.StringUtils;
+
 
 import us.kbase.kbaseenigmametals.FloatMatrix2D;
 import us.kbase.kbaseenigmametals.DataMatrix;
@@ -140,7 +146,7 @@ public class DataMatrixUploader {
 						ChromatographyMatrixUploader uploader = new ChromatographyMatrixUploader();
 						uploader.upload(args);
 					} else if (externalType.equalsIgnoreCase(WELLS_EXTERNAL_TYPE)){
-						WellSampleMatrixUploader uploader = new WellSampleMatrixUploader();
+						SamplePropertyMatrixUploader uploader = new SamplePropertyMatrixUploader();
 						uploader.upload(args);
 					} else {
 						System.err.println("Unknown external type " + externalType);
@@ -175,13 +181,15 @@ public class DataMatrixUploader {
 			boolean metaDataFlag = false;
 			boolean dataFlag = false;
 			BufferedReader br = new BufferedReader(new FileReader(inputFile));
+			int index = 0;
 			while ((line = br.readLine()) != null) {
+				index++;
 				if (line.equals("")) {
 					// do nothing on blank lines
 				} else if (line.matches("DATA\t\t.*")) {
 					dataFlag = true;
 					metaDataFlag = false;
-				} else if (line.matches("METADATA\tEntity\tProperty\tUnit\tValue.*")) {
+				} else if (line.matches("METADATA\tCategory\tProperty\tUnit\tValue.*")) {
 					dataFlag = false;
 					metaDataFlag = true;
 				} else {
@@ -190,26 +198,28 @@ public class DataMatrixUploader {
 					} else if (!dataFlag && metaDataFlag) {
 						metaData.add(line);
 					} else {
-						System.out.println("Warning: string will be missed "
+						System.out.println("Warning: line " + index + " will be missed:\n"
 								+ line);
 					}
-					;
 				}
-				;
-
 			}
 			br.close();
+			
+			if (!dataFlag && !metaDataFlag) {
+				throw new IllegalStateException("Sorry, format not recognized. Check input file.");
+			}
+
 		} catch (IOException e) {
 			System.out.println(e.getLocalizedMessage());
 		}
 		
 		matrix.setData(parseData(data));
-		matrix.setMetadata(parseMetadata(metaData, matrix.getData().getColIds(), matrix.getData().getRowIds()));
+		matrix.setMetadata(parseMetadata(metaData, matrix.getData().getColIds(), matrix.getData().getRowIds(), "3"));//"3" is a dirty hack to avoid auto-generation of data series
 		
 		List<PropertyValue> properties = matrix.getMetadata().getMatrixMetadata();
 		matrix.setDescription("");
 		for (PropertyValue propertyValue:properties){
-			if (propertyValue.getEntity().equals("Description")){
+			if (propertyValue.getCategory().equals("Description")){
 				matrix.setDescription(propertyValue.getPropertyValue());
 				break;
 			}
@@ -224,8 +234,10 @@ public class DataMatrixUploader {
 		List<String> sampleNames = new ArrayList<String>();
 		List<String> rowNames = new ArrayList<String>();
 		FloatMatrix2D floatMatrix = new FloatMatrix2D();
+		int index = 0;
 
 		for (String line : data) {
+			index++;
 			if (line.matches("DATA\t.*")) {
 				String[] fields = line.split("\t");
 				for (int i = 1; i < fields.length; i++) {
@@ -244,6 +256,13 @@ public class DataMatrixUploader {
 				// System.out.println(samplesNumber);
 				//System.out.println(line);
 				String[] fields = line.split("\t", -1);
+				
+				if (fields.length < samplesNumber + 1) {
+					printErrorStatus("Data parsing");
+					System.err.println("Data parsing failed: insufficient number of values in line " + index + " of data section");
+					throw new IllegalStateException("Number of values in line " + index + " of the DATA section smaller than number of columns");
+					
+				}
 				rowNames.add(fields[0]);
 
 				List<Double> rowValues = new ArrayList<Double>();
@@ -255,7 +274,7 @@ public class DataMatrixUploader {
 						rowValues.add(value);
 					} catch (NumberFormatException e) {
 						rowValues.add(0.00);
-						System.out.println("WARNING: unsuccessful conversion of data value " + fields[j+1] + " in line " + line);
+						System.out.println("WARNING: unsuccessful conversion of data value " + fields[j+1] + " in row " + fields [0] + ", column " + j);
 					}
 					// System.out.println(fields[0]+" "+fields[j+1]);
 					j++;
@@ -279,6 +298,7 @@ public class DataMatrixUploader {
 		Map<String, List<PropertyValue>> rowMetadata = new HashMap<String, List<PropertyValue>>();
 		List<PropertyValue> matrixMetadata = new ArrayList<PropertyValue>();
 		
+		boolean errorFlag = false;
 		for (String line : columnMetadataLines) {
 			if (line.equals("")) {
 				// do nothing on blank lines
@@ -287,7 +307,7 @@ public class DataMatrixUploader {
 				if (fields[0].equals("T")) {
 					// process series-specific fields
 					PropertyValue propertyValue = new PropertyValue();
-					if (fields.length > 1) propertyValue.setEntity(fields[1]);
+					if (fields.length > 1) propertyValue.setCategory(fields[1]);
 					if (fields.length > 2) propertyValue.setPropertyName(fields[2]);
 					if (fields.length > 3) propertyValue.setPropertyUnit(fields[3]);
 					if (fields.length > 4) propertyValue.setPropertyValue(fields[4]);
@@ -295,7 +315,7 @@ public class DataMatrixUploader {
 				} else if (sampleNames.contains(fields[0])) {
 					// process sample-specific fields
 					PropertyValue propertyValue = new PropertyValue();
-					if (fields.length > 1) propertyValue.setEntity(fields[1]);
+					if (fields.length > 1) propertyValue.setCategory(fields[1]);
 					if (fields.length > 2) propertyValue.setPropertyName(fields[2]);
 					if (fields.length > 3) propertyValue.setPropertyUnit(fields[3]);
 					if (fields.length > 4) propertyValue.setPropertyValue(fields[4]);
@@ -311,7 +331,9 @@ public class DataMatrixUploader {
 					}
 					
 				} else {
-					System.err.println("Unknown column label in line " + line);
+					if (!errorFlag) printErrorStatus("Metadata parsing");
+					System.err.println("Unknown column label " + fields[0] + " in the Metadata section.\n");
+					errorFlag = true;
 				}
 			}
 		}
@@ -324,7 +346,7 @@ public class DataMatrixUploader {
 				if (fields[0].equals("T")) {
 					// process series-specific fields
 					PropertyValue propertyValue = new PropertyValue();
-					if (fields.length > 1) propertyValue.setEntity(fields[1]);
+					if (fields.length > 1) propertyValue.setCategory(fields[1]);
 					if (fields.length > 2) propertyValue.setPropertyName(fields[2]);
 					if (fields.length > 3) propertyValue.setPropertyUnit(fields[3]);
 					if (fields.length > 4) propertyValue.setPropertyValue(fields[4]);
@@ -332,7 +354,7 @@ public class DataMatrixUploader {
 				} else if (rowNames.contains(fields[0])) {
 					// process sample-specific fields
 					PropertyValue propertyValue = new PropertyValue();
-					if (fields.length > 1) propertyValue.setEntity(fields[1]);
+					if (fields.length > 1) propertyValue.setCategory(fields[1]);
 					if (fields.length > 2) propertyValue.setPropertyName(fields[2]);
 					if (fields.length > 3) propertyValue.setPropertyUnit(fields[3]);
 					if (fields.length > 4) propertyValue.setPropertyValue(fields[4]);
@@ -348,11 +370,17 @@ public class DataMatrixUploader {
 					}
 					
 				} else {
-					System.err.println("Unknown column label in line " + line);
+					if (!errorFlag) printErrorStatus("Metadata parsing");
+					System.err.println("Unknown row label " + fields[0] + " in the Metadata section.\n");
+					errorFlag = true;
 				}
 			}
 		}
 
+		if (errorFlag) {
+			throw new IllegalStateException("Cannot proceed with upload: metadata parsing failed");
+		}
+		
 		returnVal.setColumnMetadata(columnMetadata);
 		returnVal.setRowMetadata(rowMetadata);
 		returnVal.setMatrixMetadata(matrixMetadata);
@@ -360,14 +388,19 @@ public class DataMatrixUploader {
 		return returnVal;
 	};
 
-	protected static Matrix2DMetadata parseMetadata (List<String> metadataLines, List<String> sampleNames, List<String> rowNames) {
+	protected static Matrix2DMetadata parseMetadata (List<String> metadataLines, List<String> sampleNames, List<String> rowNames, String repOption) {
+		
+		boolean errorFlag = false;
+		boolean statValues = false;
 		Matrix2DMetadata returnVal = new Matrix2DMetadata();
 		
 		Map<String, List<PropertyValue>> columnMetadata = new HashMap<String, List<PropertyValue>>();
 		Map<String, List<PropertyValue>> rowMetadata = new HashMap<String, List<PropertyValue>>();
 		List<PropertyValue> matrixMetadata = new ArrayList<PropertyValue>();
+		int index = 0;
 		
 		for (String line : metadataLines) {
+			index++;
 			if (line.equals("")) {
 				// do nothing on blank lines
 			} else {
@@ -375,15 +408,20 @@ public class DataMatrixUploader {
 				if (fields[0].equals("T")) {
 					// process series-specific fields
 					PropertyValue propertyValue = new PropertyValue();
-					if (fields.length > 1) propertyValue.setEntity(fields[1]);
+					if (fields.length > 1) propertyValue.setCategory(fields[1]);
 					if (fields.length > 2) propertyValue.setPropertyName(fields[2]);
 					if (fields.length > 3) propertyValue.setPropertyUnit(fields[3]);
 					if (fields.length > 4) propertyValue.setPropertyValue(fields[4]);
 					matrixMetadata.add(propertyValue);
+					
+					if (propertyValue.getCategory().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT) && propertyValue.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES) && propertyValue.getPropertyValue().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES_VALUE_STATVALUES)) {
+						statValues = true;
+					}
+
 				} else if (sampleNames.contains(fields[0])) {
 					// process sample-specific fields
 					PropertyValue propertyValue = new PropertyValue();
-					if (fields.length > 1) propertyValue.setEntity(fields[1]);
+					if (fields.length > 1) propertyValue.setCategory(fields[1]);
 					if (fields.length > 2) propertyValue.setPropertyName(fields[2]);
 					if (fields.length > 3) propertyValue.setPropertyUnit(fields[3]);
 					if (fields.length > 4) propertyValue.setPropertyValue(fields[4]);
@@ -400,7 +438,7 @@ public class DataMatrixUploader {
 				} else if (rowNames.contains(fields[0])) {
 					// process sample-specific fields
 					PropertyValue propertyValue = new PropertyValue();
-					if (fields.length > 1) propertyValue.setEntity(fields[1]);
+					if (fields.length > 1) propertyValue.setCategory(fields[1]);
 					if (fields.length > 2) propertyValue.setPropertyName(fields[2]);
 					if (fields.length > 3) propertyValue.setPropertyUnit(fields[3]);
 					if (fields.length > 4) propertyValue.setPropertyValue(fields[4]);
@@ -415,11 +453,34 @@ public class DataMatrixUploader {
 						rowMetadata.put(fields[0], propertyValuesList);
 					}
 				} else {
-					System.err.println("Unknown column label in line " + line);
+					if (!errorFlag) printErrorStatus("Metadata parsing");
+					System.err.println("Unknown column or row label " + fields[0] + " in line " + index + " of Metadata section");
+					errorFlag = true;
+					
 				}
 			}
 		}
+		
+		if (errorFlag) {
+			throw new IllegalStateException("Cannot proceed with upload: metadata parsing failed");
+		}
 
+//auto-generate data series IDs if not provided by user 
+		if (repOption.equals("1") && !statValues) {
+			generateSeriesIds(columnMetadata, MetadataProperties.GROWTHMATRIX_METADATA_COLUMN_CONDITION);
+		} else if (repOption.equals("2") && !statValues) {
+			int seriesIndex = 0; 
+			for(Entry<String, List<PropertyValue>> entry: columnMetadata.entrySet()){
+				seriesIndex++;
+				entry.getValue().add(
+						new PropertyValue()
+						.withCategory("DataSeries")
+						.withPropertyName("SeriesId")
+						.withPropertyUnit("")
+						.withPropertyValue("S" + seriesIndex)); 
+			}
+		}
+		
 		returnVal.setColumnMetadata(columnMetadata);
 		returnVal.setRowMetadata(rowMetadata);
 		returnVal.setMatrixMetadata(matrixMetadata);
@@ -428,62 +489,147 @@ public class DataMatrixUploader {
 		
 		return returnVal;
 	};
+	
+	private static void generateSeriesIds(Map<String, List<PropertyValue>> columnMetadata, String category){
+		Map<String, List<String>> columnProperties2columnIds = new Hashtable<String, List<String>>();
+		List<String> columnProperties = new Vector<String>();
+		
+		// Build an association between concatenated properties and columnIds
+		for(Entry<String, List<PropertyValue>> entry: columnMetadata.entrySet()){
+			String columnId = entry.getKey();
+			columnProperties.clear();
+			
+			// Build a list of properties
+			for(PropertyValue pv: entry.getValue()){
+				if(pv.getCategory().equals(category)){
+					String property = pv.getPropertyName() + "." + pv.getPropertyUnit() + "." + pv.getPropertyValue();
+					columnProperties.add(property);
+				}
+			}	
+			
+			// Sort properties alphabetically
+			Collections.sort(columnProperties);
+			String seriesProxyId = StringUtils.join(columnProperties, ";");
+			
+			// Register association between concatenated properties and column Id
+			List<String> columnIds  = columnProperties2columnIds.get(seriesProxyId);
+			if(columnIds == null){
+				columnIds = new Vector<String>();
+				columnProperties2columnIds.put(seriesProxyId, columnIds);
+			}
+			columnIds.add(columnId);						
+		}
+		
+		// Generate Series Id, and build a  hash to associate column id with series id
+		Map<String, String> columnIds2SeriesId = new Hashtable<String, String>();
+		int i = 0;
+		for (Entry<String,List<String>> entry: columnProperties2columnIds.entrySet()){
+			String seriesId = "Series_" + (++i);
+			for(String columnId: entry.getValue()){
+				columnIds2SeriesId.put(columnId, seriesId);
+			}
+		}
+		
+		// Add series id property to each column
+		for(Entry<String, List<PropertyValue>> entry: columnMetadata.entrySet()){
+			String columnId = entry.getKey();
+			String seriesId = columnIds2SeriesId.get(columnId);
+			entry.getValue().add(
+					new PropertyValue()
+					.withCategory(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES)
+					.withPropertyName(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES_SERIESID)
+					.withPropertyUnit("")
+					.withPropertyValue(seriesId)); 
+		}
+	}	
+
+	
+	
 
 	private static void validateMetadata(Matrix2DMetadata metaData, List<String> sampleNames, List<String> rowNames) {
 		
 		//Check Description 
 		int flag = 0;
+		int errorCount = 0;
+		
 		for (PropertyValue p: metaData.getMatrixMetadata()) {
-			if (p.getEntity().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_DESCRIPTION)) flag++;
+			if (p.getCategory().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_DESCRIPTION)) flag++;			
 		}
 		if (flag == 0) {
-			throw new IllegalStateException("Metadata must have a " + MetadataProperties.DATAMATRIX_METADATA_TABLE_DESCRIPTION + " entry");
+			if (errorCount == 0) printErrorStatus("Metadata validation");
+			if (errorCount < 50) System.err.println ("Metadata must have a " + MetadataProperties.DATAMATRIX_METADATA_TABLE_DESCRIPTION + " entry");
+			errorCount ++;
 		} else if (flag > 1){
-			throw new IllegalStateException("Metadata must have only one " + MetadataProperties.DATAMATRIX_METADATA_TABLE_DESCRIPTION + " entry, but " + flag + " entries found");
+			if (errorCount == 0) printErrorStatus("Metadata validation");
+			if (errorCount < 50) System.err.println ("Metadata must have only one " + MetadataProperties.DATAMATRIX_METADATA_TABLE_DESCRIPTION + " entry, but " + flag + " entries found");
+			errorCount ++;
 		}
 		
 		//Check Measurement for the entire table
-		boolean Measures = false;
+		boolean statValues = false;
 		flag = 0;
 		for (PropertyValue p: metaData.getMatrixMetadata()) {
-			if (p.getEntity().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT)&&p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES)) {
+			if (p.getCategory().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT)&&p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES)) {
 				if (!MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES_VALUE.contains(p.getPropertyValue())){
-					throw new IllegalStateException(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES + " metadata entry contains illegal value " + p.getPropertyValue());
-				} else if (p.getPropertyValue().equals("Measures")) {
-					Measures = true;
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println (MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES + " metadata entry contains illegal value " + p.getPropertyValue());
+					errorCount ++;
+				} else if (p.getPropertyValue().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES_VALUE_STATVALUES)) {
+					statValues = true;
 				}
 				flag++;
 			}
 		}
 		if (flag == 0) {
-			throw new IllegalStateException("Metadata must have " + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES + " entry");
+			if (errorCount == 0) printErrorStatus("Metadata validation");
+			if (errorCount < 50) System.err.println ("Metadata must have " + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES + " entry");
+			errorCount ++;
 		} else if (flag > 1){
-			throw new IllegalStateException("Metadata must have only one " + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES + " entry, , but it contains " + flag);
+			if (errorCount == 0) printErrorStatus("Metadata validation");
+			if (errorCount < 50) System.err.println ("Metadata must have only one " + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES + " entry, , but it contains " + flag);
+			errorCount ++;
 		}
-		
-		if (Measures){
+
+		if (statValues){
 			for (String sampleName : sampleNames){
 				flag = 0;
 				try {
 					for (PropertyValue p: metaData.getColumnMetadata().get(sampleName)){
-						if (p.getEntity().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT)&&p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE)){
+						if (p.getCategory().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT)&&p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE)){
 							if (!MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE_VALUE.contains(p.getPropertyValue())){
-								throw new IllegalStateException(MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE + " entry for column " + sampleName + " contains illegal value " + p.getPropertyValue());
+								if (errorCount == 0) printErrorStatus("Metadata validation");
+								if (errorCount < 50) System.err.println (MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE + " entry for column " + sampleName + " contains illegal value " + p.getPropertyValue());
+								errorCount ++;
 							}
 							flag++;
 						}
 					}
 				} catch (NullPointerException e) {
-					throw new IllegalStateException ("Metadata entries for column " + sampleName + " are missing");
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println ("Metadata entries for column " + sampleName + " are missing");
+					errorCount ++;
 				}
 				if (flag == 0) {
-					throw new IllegalStateException("Metadata for column " + sampleName + " must have a " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE + " entry");
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println ("Metadata for column " + sampleName + " must have a " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE + " entry");
+					errorCount ++;
 				} else if (flag > 1) {
-					throw new IllegalStateException("Metadata for column " + sampleName + " must have only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE + " entry, but it contains " + flag);
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println ("Metadata for column " + sampleName + " must have only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT + "_" + MetadataProperties.DATAMATRIX_METADATA_COLUMN_MEASUREMENT_VALUETYPE + " entry, but it contains " + flag);
+					errorCount ++;
 				}
 			}
 		}
+		if (errorCount > 50) {
+			throw new IllegalStateException("Cannot proceed with upload: metadata validation failed. " + errorCount + " errors were found, but only first 50 were displayed");
+		} else if (errorCount > 0) {
+			throw new IllegalStateException("Cannot proceed with upload: metadata validation failed");
+		}
 	 
+	}
+
+	private static void printErrorStatus(String message) {
+		System.err.println("\n" + message + " failed. See detailed report for a list of errors.\n                                                                                                                                \n");
 	}
 	
 	private static boolean validateInput(CommandLine line) {
@@ -537,10 +683,10 @@ public class DataMatrixUploader {
 				fileList.append(", ");
 			fileList.append(f.getName());
 		}
-		if (inputFile == null)
-			throw new IllegalStateException(
-					"Input file with extention .txt or .tsv was not "
-							+ "found among: " + fileList);
+		if (inputFile == null){
+			throw new IllegalStateException("Input file with extention .txt or .tsv was not "
+					+ "found among: " + fileList);
+		}
 		return inputFile;
 	}
 

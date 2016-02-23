@@ -86,6 +86,7 @@ def upload_genome(shock_service_url=None,
                   exclude_feature_types=list(),
 #                  taxon_names_file=None,
                   taxon_reference = None,
+                  release= None,
                   #              fasta_file_directory=None,
                   core_genome_name=None,
                   source=None,
@@ -1760,6 +1761,8 @@ def upload_genome(shock_service_url=None,
     genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
     genome_annotation['alias_source_counts_map'] = alias_source_counts_map
     genome_annotation['annotation_quality_ref'] = annotation_quality_reference
+    if release is not None:
+        genome_annotation['release'] = release
 
 #    print "Genome Annotation id %s" % (genome_annotation['genome_annotation_id'])
  
@@ -1818,8 +1821,9 @@ if __name__ == "__main__":
     parser.add_argument('--type', 
                         help="data source : examples Reference, Representative, User Upload", 
                         nargs='?', required=False, default="User upload") 
-
-
+    parser.add_argument('--release', 
+                        help="Release or version of the data.  Example Ensembl release 30", 
+                        nargs='?', required=False) 
 #    parser.add_argument('--genome_list_file', action='store', type=str, nargs='?', required=True) 
 
     parser.add_argument('--input_directory', 
@@ -1861,6 +1865,7 @@ if __name__ == "__main__":
                       taxon_reference = args.taxon_reference,
                       core_genome_name = args.object_name,
                       source = args.source,
+                      release = args.release,
                       type = args.type,
                       #                      genome_list_file = args.genome_list_file,
                       logger = logger)

@@ -474,8 +474,8 @@ public class DataMatrixUploader {
 				seriesIndex++;
 				entry.getValue().add(
 						new PropertyValue()
-						.withCategory("DataSeries")
-						.withPropertyName("SeriesId")
+						.withCategory(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES)
+						.withPropertyName(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES_SERIESID)
 						.withPropertyUnit("")
 						.withPropertyValue("S" + seriesIndex)); 
 			}

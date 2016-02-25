@@ -506,7 +506,7 @@ public class ConvertGBK {
 
             String kbtok = System.getenv("KB_AUTH_TOKEN");
 
-            //System.out.println(http);
+            //System.out.println(kbtok);
 
             try {
 
@@ -530,12 +530,17 @@ public class ConvertGBK {
                 boolean saved2 = false;
                 int retry2 = 0;
                 try {
-                    System.out.println("saving ContigSet " + cname);
-                    wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                            .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
-                                    .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
-                    saved2 = true;
-                    System.out.println("successfully saved object");
+                    if (!genome.getGcContent().isNaN()) {
+                        System.out.println("saving ContigSet " + cname);
+                        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                                .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
+                                        .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
+                        saved2 = true;
+                        System.out.println("successfully saved object");
+                    } else {
+                        System.err.println("The provided GenBank data contains no contig sequence.");
+                        System.exit(1);
+                    }
                 /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
                 } catch (ServerException e) {
@@ -687,6 +692,7 @@ public class ConvertGBK {
         if (args.length == 2 || args.length == 4 || args.length == 6 || args.length == 8 || args.length == 10 || args.length == 12 || args.length == 14) {
             try {
                 ConvertGBK clt = new ConvertGBK(args);
+                System.exit(0);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);

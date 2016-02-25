@@ -113,10 +113,13 @@ public class GbkFeature extends GbkLocation {
                 } else if (qualifier.type.equals("db_xref")) {
                     String value = qualifier.getValue();
                     if (value.startsWith(TAXON_PREFIX)) {
-                        taxId = Integer.parseInt(value.substring(TAXON_PREFIX.length()).trim());
-                        //System.out.println("taxid " + taxId);
-                    }
-                    else {
+                        String taxstring = value.substring(TAXON_PREFIX.length()).trim();
+                        int dotind = taxstring.indexOf(".");
+                        if (dotind != -1)
+                            taxstring = taxstring.substring(0, dotind - 1);
+                        taxId = Integer.parseInt(taxstring);
+                        System.out.println("taxid " + taxId);
+                    } else {
                         //System.out.println("DBXREF_PREFIX " + value);
                         String alias = value.substring(DBXREF_PREFIX.length()).trim();
                         aliases.add(alias);

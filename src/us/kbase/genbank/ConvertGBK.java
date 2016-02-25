@@ -251,7 +251,7 @@ public class ConvertGBK {
         List<String> locitest = new ArrayList<String>();
         while (fileScanner.hasNextLine()) {
             String cur = fileScanner.nextLine();
-            if (!cur.startsWith(" "))
+            if (!cur.startsWith(" ") && isTest)
                 System.out.println("curtest " + cur);
             if (cur.indexOf("LOCUS") == 0) {
                 String curlocus = cur.substring(start, cur.indexOf(" ", start + 1));
@@ -278,18 +278,21 @@ public class ConvertGBK {
             StringBuilder sb = new StringBuilder("");
             while (fileScanner2.hasNextLine() && countfiles < MAX_ALLOWED_FILES) {
                 String cur = fileScanner2.nextLine();
-                if (!cur.startsWith(" "))
-                    System.out.println(cur);
+                //if (!cur.startsWith(" "))
+                //    System.out.println(cur);
                 if (cur.indexOf("LOCUS") == 0) {
                     String curlocus = cur.substring(start, cur.indexOf(" ", start + 1));
-                    System.out.println("loci add " + curlocus);
+                    if (isTest)
+                        System.out.println("loci add " + curlocus);
                     loci.add(curlocus);
                     sb.append(cur).append("\n");
                 } else if (cur.indexOf("//") == 0) {
                     sb.append(cur).append("\n");
-                    System.out.println("loci2 " + loci.size());
+                    if (isTest)
+                        System.out.println("loci2 " + loci.size());
                     final int index = loci.size() - 1;
-                    System.out.println("loci2 " + loci.size() + "\t" + index);
+                    if (isTest)
+                        System.out.println("loci2 " + loci.size() + "\t" + index);
                     String curoutpath = outpath + "/" + loci.get(index) + ".gbk";
                     try {
                         PrintWriter out = new PrintWriter(new FileWriter(curoutpath));
@@ -381,7 +384,8 @@ public class ConvertGBK {
      * @throws Exception
      */
     public void parseGenome(int[] pos, File dir, List<File> gbkFiles, String wsname, String http, boolean isTestThis) throws Exception {
-        System.out.println("[" + (pos[0]++) + "] input dir " + dir.getName() + "\tfirst file " + gbkFiles.get(0));
+        if (isTest)
+            System.out.println("[" + (pos[0]++) + "] input dir " + dir.getName() + "\tfirst file " + gbkFiles.get(0));
         long time = System.currentTimeMillis();
         //System.out.println("parseGenome "+wsname);
         //ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
@@ -460,7 +464,7 @@ public class ConvertGBK {
         ArrayList md5s = new ArrayList();
         for (int j = 0; j < contigs.size(); j++) {
             Contig curcontig = contigs.get(j);
-            final String md5 = MD5(curcontig.getSequence().toUpperCase());
+            final String md5 = MD5(curcontig.getSequence().toUpperCase(), this.isTest);
             md5s.add(md5);
             curcontig.setMd5(md5);
             contigs.set(j, curcontig);
@@ -479,7 +483,7 @@ public class ConvertGBK {
 
         String globalmd5 = out.toString();
 
-        genome.setMd5(MD5(globalmd5));
+        genome.setMd5(MD5(globalmd5, this.isTest));
 
         if (wsname != null) {
 
@@ -505,7 +509,6 @@ public class ConvertGBK {
             //System.out.println(http);
 
             try {
-
 
                 if (isTestThis) {
                     System.out.println("using test mode");
@@ -667,11 +670,12 @@ public class ConvertGBK {
      * @return
      */
 
-    public static String MD5(String s) throws NoSuchAlgorithmException {
+    public static String MD5(String s, boolean isTest) throws NoSuchAlgorithmException {
         MessageDigest m = MessageDigest.getInstance("MD5");
         m.update(s.getBytes(), 0, s.length());
         final String s1 = new BigInteger(1, m.digest()).toString(16);
-        System.out.println("MD5: " + s1);
+        if (isTest)
+            System.out.println("MD5: " + s1);
         return s1;
     }
 
@@ -685,7 +689,7 @@ public class ConvertGBK {
                 ConvertGBK clt = new ConvertGBK(args);
             } catch (Exception e) {
                 e.printStackTrace();
-		System.exit(1);
+                System.exit(1);
             }
         } else {
             System.out.println("usage: java us.kbase.genbank.ConvertGBK " +

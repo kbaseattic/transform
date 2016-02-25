@@ -1,0 +1,16 @@
+{
+    "script_name": "trns_validate_SBML_FBAModel.py",
+    "script_type": "validate",
+    "external_type": "SBML.FBAModel",
+    "user_description": "Validate SBML file for use in importing FBA Model",
+    "developer_description": "",
+    
+    "handler_options": {        
+        "max_runtime": 360,
+        "custom_options": [],
+        "required_fields": ["input_file_name"],
+        "optional_fields":[]
+    },
+    "user_options": [],
+    "user_option_groups": []
+}

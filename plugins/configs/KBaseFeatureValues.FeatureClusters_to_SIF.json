@@ -1,0 +1,40 @@
+{ 
+    "script_name": "trns_transform_KBaseFeatureValues_FeatureClusters_to_SIF.py", 
+    "script_type": "download", 
+    "external_type": "SIF.FeatureClusters", 
+    "kbase_type": "KBaseFeatureValues.FeatureClusters", 
+    "user_description": "Download cluster set in SIF format", 
+    "developer_description": "Download cluster set in SIF format", 
+    "handler_options": { 
+        "max_runtime": 600, 
+        "required_fields": [ 
+            "object_name",
+            "workspace_name",
+            "workspace_service_url",
+            "working_directory"
+        ], 
+        "optional_fields": ["version"], 
+        "custom_options": [] 
+    },  
+    "user_options": [ 
+        { 
+            "name": "object_name", 
+            "type": "string", 
+            "required": true, 
+            "help": "Name of the cluster set object." 
+        }, 
+        { 
+            "name": "workspace_name",
+            "type": "string", 
+            "required": false,
+            "help": "Workspace containing object."
+        }, 
+        { 
+            "name": "version", 
+            "type": "int", 
+            "required": false,
+            "help": "Version of the cluster set object, if not given we assume the latest."
+        } 
+    ], 
+    "user_option_groups": [] 
+}

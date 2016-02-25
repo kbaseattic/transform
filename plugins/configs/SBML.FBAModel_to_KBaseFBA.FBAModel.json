@@ -1,0 +1,68 @@
+{
+    "script_name": "trns_transform_SBML_FBAModel_to_KBaseFBA_FBAModel.pl",
+    "script_type": "upload",
+    "external_type": "SBML.FBAModel",
+    "kbase_type": "KBaseFBA.FBAModel",
+    "user_description": "Converts SBML file to FBAModel object in workspace.",
+    "url_mapping": ["SBML.FBAModel"],    
+    "handler_options": {        
+        "must_own_validation": true,
+        "must_own_saving_to_workspace": true,
+        "max_runtime": 360,
+        "custom_options": [],
+	"required_fields":
+	[
+	    "input_file_name",
+	    "object_name",
+	    "workspace_name",
+        "workspace_service_url",
+        "fba_service_url"
+	],
+	"optional_fields":
+	[
+	    "genome",
+	    "biomass",
+	    "compounds"
+	],
+	"input_mapping": {"SBML.FBAModel" : "input_file_name"}
+    },
+    "user_options": [
+        {
+            "name": "input_file_name",
+            "type": "string",
+            "required": true,
+            "help": "Input SBML File"
+        },
+        {
+            "name": "compounds",
+            "type": "string",
+            "required": false,
+            "help": "Input Compound TSV File"
+        },
+        {
+            "name": "genome",
+            "type": "string",
+            "required": false,
+            "help": "Identifier for Genome which contains features referenced to in FBAModel (Defaults to empty Genome)."
+        },
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "ID for output FBAModel in workspace."
+        },
+        {
+            "name": "workspace_name",
+            "type": "string",
+            "required": true,
+            "help": "Workspace ID for saving output FBAModel."
+        },
+        {
+            "name": "biomass",
+            "type": "string",
+            "required": false,
+            "help": "ID of biomass reaction in SBML File."
+        }
+    ],
+    "user_option_groups": []
+}

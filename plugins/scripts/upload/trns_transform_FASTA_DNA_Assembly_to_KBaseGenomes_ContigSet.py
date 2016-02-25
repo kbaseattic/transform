@@ -36,7 +36,7 @@ def transform(shock_service_url=None, handle_service_url=None,
         output_file_name: A file name where the output JSON string should be stored.  
                           If the output file name is not specified the name will default 
                           to the name of the input file appended with '_contig_set'
-        input_directory: The directory the resulting json file will be written to.
+        input_directory: The directory where files will be read from.
         working_directory: The directory the resulting json file will be written to.
         shock_id: Shock id for the fasta file if it already exists in shock
         handle_id: Handle id for the fasta file if it already exists as a handle
@@ -62,21 +62,23 @@ def transform(shock_service_url=None, handle_service_url=None,
     if input_mapping is None:
         logger.info("Scanning for FASTA files.")
     
-        valid_extensions = [".fa",".fasta",".fna"]
+        valid_extensions = [".fa",".fasta",".fna",".fas"]
     
-        files = os.listdir(working_directory)
+        files = os.listdir(input_directory)
         fasta_files = [x for x in files if os.path.splitext(x)[-1] in valid_extensions]
             
-        assert len(fasta_files) != 0
+        if (len(fasta_files) == 0):
+            raise Exception("The input file does not have one of the following extensions .fa, .fasta, .fas or .fna")        
+
     
         logger.info("Found {0}".format(str(fasta_files)))
 
-        input_file_name = files[0]
+        input_file_name = os.path.join(input_directory,files[0])
     
         if len(fasta_files) > 1:
             logger.warning("Not sure how to handle multiple FASTA files in this context. Using {0}".format(input_file_name))
     else:
-        input_file_name = os.path.join(os.path.join(input_directory, "fasta_assembly"), simplejson.loads(input_mapping)["fasta_assembly"])
+        input_file_name = os.path.join(os.path.join(input_directory, "FASTA.DNA.Assembly"), simplejson.loads(input_mapping)["FASTA.DNA.Assembly"])
         
                 
     logger.info("Building Object.")
@@ -84,8 +86,10 @@ def transform(shock_service_url=None, handle_service_url=None,
     if not os.path.isfile(input_file_name):
         raise Exception("The input file name {0} is not a file!".format(input_file_name))        
 
-    if not os.path.isdir(args.working_directory):
+    if not os.path.isdir(working_directory):
         raise Exception("The working directory {0} is not a valid directory!".format(working_directory))        
+
+    logger.debug(fasta_reference_only)
 
     # default if not too large
     contig_set_has_sequences = True 
@@ -112,6 +116,9 @@ def transform(shock_service_url=None, handle_service_url=None,
     pattern = re.compile(r'\s+')
     sequence_exists = False
     
+    valid_chars = "-AaCcGgTtUuWwSsMmKkRrYyBbDdHhVvNn"
+    amino_acid_specific_characters = "PpLlIiFfQqEe" 
+
     for current_line in input_file_handle:
         if (current_line[0] == ">"):
             # found a header line
@@ -119,19 +126,37 @@ def transform(shock_service_url=None, handle_service_url=None,
             if (not sequence_exists) and first_header_found:
                 logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header))        
                 raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header))
-                    
             if not first_header_found:
                 first_header_found = True
             else:
                 # build up sequence and remove all white space
                 total_sequence = ''.join(sequence_list)
                 total_sequence = re.sub(pattern, '', total_sequence)
-                fasta_key = fasta_header.strip()
+                if not total_sequence :
+                    logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
+                    raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header))
+                for character in total_sequence:
+                    if character not in valid_chars:
+                        if character in amino_acid_specific_characters:
+                            raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
+                        raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
+#                fasta_key = fasta_header.strip()
+                try:
+                    fasta_key , fasta_description = fasta_header.strip().split(' ',1)
+                except:
+                    fasta_key = fasta_header.strip()
+                    fasta_description = None
+
+                if fasta_key == '':
+                    raise Exception("One fasta header lines '>' does not have an identifier associated with it")
                 contig_dict = dict() 
                 contig_dict["id"] = fasta_key 
                 contig_dict["length"] = len(total_sequence) 
-                contig_dict["name"] = fasta_key 
-                contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+                contig_dict["name"] = fasta_key
+                if fasta_description is None:
+                    contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+                else:
+                    contig_dict["description"] = "%s.  Note MD5 is generated from uppercasing the sequence" % (fasta_description)
                 contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest() 
                 contig_dict["md5"] = contig_md5 
                 contig_set_md5_list.append(contig_md5)
@@ -141,7 +166,10 @@ def transform(shock_service_url=None, handle_service_url=None,
                 else: 
                     contig_dict["sequence"]= ""
                 
-                fasta_dict[fasta_key] = contig_dict
+                if fasta_key in fasta_dict.keys():
+                    raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key)) 
+                else:
+                    fasta_dict[fasta_key] = contig_dict                 
                
                 # get set up for next fasta sequence
                 sequence_list = []
@@ -158,16 +186,41 @@ def transform(shock_service_url=None, handle_service_url=None,
     if (not sequence_exists) and first_header_found: 
         logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header))        
         raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
+    elif not first_header_found :
+        logger.error("There are no contigs in this file") 
+        raise Exception("There are no contigs in this file") 
     else: 
         # build up sequence and remove all white space      
         total_sequence = ''.join(sequence_list)
         total_sequence = re.sub(pattern, '', total_sequence)
-        fasta_key = fasta_header.strip()
+        if not total_sequence :
+            logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
+            raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
+
+        for character in total_sequence: 
+            if character not in valid_chars: 
+                if character in amino_acid_specific_characters:
+                    raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
+                raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
+
+#        fasta_key = fasta_header.strip()
+        try: 
+            fasta_key , fasta_description = fasta_header.strip().split(' ',1)
+        except:
+            fasta_key = fasta_header.strip()
+            fasta_description = None
+ 
+        if fasta_key == '':
+            raise Exception("One fasta header lines '>' does not have an identifier associated with it")
         contig_dict = dict()
         contig_dict["id"] = fasta_key 
         contig_dict["length"] = len(total_sequence)
         contig_dict["name"] = fasta_key
-        contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+ 
+        if fasta_description is None: 
+            contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+        else: 
+            contig_dict["description"] = "%s.  Note MD5 is generated from uppercasing the sequence" % (fasta_description) 
         contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest()
         contig_dict["md5"]= contig_md5
         contig_set_md5_list.append(contig_md5)
@@ -176,8 +229,10 @@ def transform(shock_service_url=None, handle_service_url=None,
             contig_dict["sequence"] = total_sequence 
         else:
             contig_dict["sequence"]= ""
-         
-        fasta_dict[fasta_key] = contig_dict 
+        if fasta_key in fasta_dict.keys():
+            raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key)) 
+        else:
+            fasta_dict[fasta_key] = contig_dict 
 
 
     if output_file_name is None:
@@ -203,6 +258,13 @@ def transform(shock_service_url=None, handle_service_url=None,
 
     # This generates the json for the object
     objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
+    if len(contig_set_dict["contigs"]) == 0:
+        raise Exception("There appears to be no FASTA DNA Sequences in the input file.") 
+    if sys.getsizeof(objectString) > 1000000000 :
+        contig_set_dict["contigs"] = []
+        objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
+        logger.warning("The fasta file has a very large number of contigs thus resulting in an object being too large if " 
+                       "the contigs are to have metadata. The resulting contigset will not have individual metadata for the contigs.")
 
     logger.info("ContigSet data structure creation completed.  Writing out JSON.")
 
@@ -252,12 +314,21 @@ if __name__ == "__main__":
     # Example of a custom argument specific to this uploader
     parser.add_argument('--fasta_reference_only', 
                         help=script_details["Args"]["fasta_reference_only"], 
-                        action='store_true', required=False)
+                        action='store', type=str, default="False", required=False)
 
     args, unknown = parser.parse_known_args()
 
     logger = script_utils.stderrlogger(__file__)
+
+    logger.debug(args)
     try:
+        if args.fasta_reference_only.lower() == "true":
+            ref_only = True
+        elif args.fasta_reference_only.lower() == "false":
+            ref_only = False
+        else:
+            raise Exception("Expected true or false for fasta_reference_only.")
+    
         transform(shock_service_url = args.shock_service_url, 
                   handle_service_url = args.handle_service_url, 
                   output_file_name = args.output_file_name, 
@@ -266,7 +337,7 @@ if __name__ == "__main__":
                   shock_id = args.shock_id, 
                   handle_id = args.handle_id,
                   input_mapping = args.input_mapping,
-                  fasta_reference_only = args.fasta_reference_only,
+                  fasta_reference_only = ref_only,
                   logger = logger)
     except Exception, e:
         logger.exception(e)

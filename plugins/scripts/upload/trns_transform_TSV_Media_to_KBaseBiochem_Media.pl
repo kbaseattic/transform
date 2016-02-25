@@ -42,8 +42,8 @@ my $wsurl = "";
 GetOptions("input_file_name|i=s" => \$In_File,
 	   "object_name|o=s"     => \$Out_Object,
 	   "workspace_name|w=s"  => \$Out_WS,
-	   "workspace_service_url=s" => $wsurl,
-	   "fba_service_url=s" => $fbaurl,
+	   "workspace_service_url=s" => \$wsurl,
+	   "fba_service_url=s" => \$fbaurl,
 	   "help|h"              => \$Help);
 
 if (length($fbaurl) == 0) {

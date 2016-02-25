@@ -78,7 +78,7 @@ def transform(shock_service_url=None, workspace_service_url=None,
     if stdout is not None and len(stdout) > 0:
         logger.info(stdout)
 
-    exit_status = tool_process.wait()
+    exit_status = tool_process.returncode
     logger.debug("Tool execution returned exit status {}".format(exit_status))
 
     if exit_status != 0:

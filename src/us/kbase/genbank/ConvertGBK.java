@@ -1,13 +1,10 @@
 package us.kbase.genbank;
 
+import us.kbase.auth.AuthException;
 import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
-import us.kbase.auth.TokenFormatException;
-import us.kbase.common.service.ServerException;
-import us.kbase.common.service.Tuple11;
-import us.kbase.common.service.UObject;
-import us.kbase.common.service.UnauthorizedException;
+import us.kbase.common.service.*;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
@@ -19,8 +16,6 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /*
@@ -184,7 +179,7 @@ public class ConvertGBK {
                     pw.print(readmestr);
                     pw.close();
                 } catch (FileNotFoundException e) {
-                    System.err.println("failed to write output " + outpath);
+                    System.out.println("failed to write output " + outpath);
                     e.printStackTrace();
                 }
             }
@@ -197,15 +192,15 @@ public class ConvertGBK {
             final long max = Math.abs(2 * 1024 * 1024 * 1024);
             if (size > Math.abs(max)) {
                 final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
-                System.err.println("input " + size + "\t" + Math.abs(max));// + "\t" + Math.abs(max) + "\t" + (-max));
-                System.err.println(x);
+                System.out.println("input " + size + "\t" + Math.abs(max));// + "\t" + Math.abs(max) + "\t" + (-max));
+                System.out.println(x);
                 //System.exit(0);
                 throw new IllegalStateException(x);
             } else {
                 for (int i = 0; i < maxfiles; i++) {
                     boolean wasSplit = splitRecord(start, files[i], null);
                     if (wasSplit && files.length > 1) {
-                        System.err.println("Multiple multi-record Genbank files currently not supported.");
+                        System.out.println("Multiple multi-record Genbank files currently not supported.");
                     } else if (wasSplit) {
                         System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
                         splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
@@ -222,8 +217,8 @@ public class ConvertGBK {
             final long max = Math.abs(2 * 1024 * 1024 * 1024);
             if (size > Math.abs(max)) {
                 final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
-                System.err.println("input " + size + "\t" + Math.abs(max));
-                System.err.println(x);
+                System.out.println("input " + size + "\t" + Math.abs(max));
+                System.out.println(x);
                 //System.exit(0);
                 throw new IllegalStateException(x);
             }
@@ -302,8 +297,8 @@ public class ConvertGBK {
                         System.out.println("    wrote: " + outpath);
                         countfiles++;
                     } catch (IOException e) {
-                        System.err.println("Error creating or writing file " + outpath);
-                        System.err.println("IOException: " + e.getMessage());
+                        System.out.println("Error creating or writing file " + outpath);
+                        System.out.println("IOException: " + e.getMessage());
                     }
 
                     sb = new StringBuilder("");
@@ -325,7 +320,7 @@ public class ConvertGBK {
                     pw.print(readmestr);
                     pw.close();
                 } catch (FileNotFoundException e) {
-                    System.err.println("failed to write output " + outpath);
+                    System.out.println("failed to write output " + outpath);
                     e.printStackTrace();
                 }
             }
@@ -353,8 +348,8 @@ public class ConvertGBK {
             final long max = Math.abs(2 * 1024 * 1024 * 1024);
             if (size > Math.abs(max)) {
                 final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
-                System.err.println("input " + size + "\t" + Math.abs(max));
-                System.err.println(x);
+                System.out.println("input " + size + "\t" + Math.abs(max));
+                System.out.println(x);
                 //System.exit(0);
                 throw new IllegalStateException(x);
             } else {
@@ -417,8 +412,8 @@ public class ConvertGBK {
             out.close();
             System.out.println("    wrote: " + outpath);
         } catch (IOException e) {
-            System.err.println("Error creating or writing file " + outpath);
-            System.err.println("IOException: " + e.getMessage());
+            System.out.println("Error creating or writing file " + outpath);
+            System.out.println("IOException: " + e.getMessage());
         }
 
         ContigSet contigSet = (ContigSet) ar.get(4);
@@ -456,8 +451,8 @@ public class ConvertGBK {
             out.close();
             System.out.println("    wrote: " + outpath2);
         } catch (IOException e) {
-            System.err.println("Error creating or writing file " + outpath2);
-            System.err.println("IOException: " + e.getMessage());
+            System.out.println("Error creating or writing file " + outpath2);
+            System.out.println("IOException: " + e.getMessage());
         }
 
         List<Contig> contigs = contigSet.getContigs();
@@ -487,6 +482,8 @@ public class ConvertGBK {
 
         if (wsname != null) {
 
+            System.out.println("wsname " + wsname);
+
             /*ar.add(ws);
             ar.add(id);
             ar.add(genome);
@@ -508,8 +505,9 @@ public class ConvertGBK {
 
             //System.out.println(kbtok);
 
-            try {
+            //try {
 
+            try {
                 if (isTestThis) {
                     System.out.println("using test mode");
                     AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
@@ -517,6 +515,7 @@ public class ConvertGBK {
                 } else {
                     wc = new WorkspaceClient(new URL(http), new AuthToken(kbtok));
                 }
+
 
                 wc.setAuthAllowedForHttp(true);
 
@@ -527,40 +526,74 @@ public class ConvertGBK {
                 }
                 cname = sanitizeObjectName(cname);
 
-                boolean saved2 = false;
-                int retry2 = 0;
-                try {
-                    if (!genome.getGcContent().isNaN()) {
-                        System.out.println("saving ContigSet " + cname);
-                        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                                .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
-                                        .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
-                        saved2 = true;
-                        System.out.println("successfully saved object");
-                    } else {
-                        System.err.println("The provided GenBank data contains no contig sequence.");
-                        System.exit(1);
+                int max_retries = 3;
+                boolean saved = false;
+                int retry = 0;
+                while (!saved && retry < max_retries) {
+                    try {
+                        System.out.println("genome.getGcContent() " + genome.getGcContent());
+                        if (!genome.getGcContent().isNaN()) {
+                            saved = saveContigs(wsname, contigSet, cname);
+                        } else {
+                            System.err.println("The provided GenBank data contains no contig sequence.");
+                            System.exit(1);
+                        }
+                    } catch (ServerException e) {
+                        System.out.println("ServerException ContigSet");
+                        final String msg = e.getData();
+                        if (msg.indexOf("TypedObjectValidationException") != -1) {
+                            System.out.println("ContigSet object failed type validation");
+                            System.out.println(msg);
+                            System.exit(1);
+                        } else {
+                            e.printStackTrace();
+                            retry++;
+                            if (retry < max_retries) {
+                                System.out.println("Error saving ContigSet to workspace.");
+                                System.out.println("Retrying in 2s ...");
+                                Thread.sleep(2000);
+                            }
+                        }
+                    } catch (JsonClientException e) {
+                        System.out.println("JsonClientException ContigSet");
+                        e.printStackTrace();
+                        retry++;
+                        if (retry < max_retries) {
+                            System.out.println("Error saving ContigSet to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Exception ContigSet");
+                        e.printStackTrace();
+                        retry++;
+                        if (retry < max_retries) {
+                            System.out.println("Error saving ContigSet to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
                     }
+
                 /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
-                } catch (ServerException e) {
-                    System.err.println(e.getData());
-                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                    Date date = new Date();
-                    System.err.println(dateFormat.format(date));
-
-                    retry2++;
-                    Thread.sleep(2000);
-                    System.err.println("Error saving ContigSet to workspace.");
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    retry2++;
-                    Thread.sleep(2000);
-                    System.err.println("Error saving ContigSet to workspace.");
-                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                    Date date = new Date();
-                    System.err.println(dateFormat.format(date));
-                    e.printStackTrace();
+                    /*} catch (ServerException e) {
+                        System.err.println(e.getData());
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        Date date = new Date();
+                        System.err.println(dateFormat.format(date));
+                        retry++;
+                        Thread.sleep(2000);
+                        System.err.println("Error saving ContigSet to workspace.");
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        retry++;
+                        Thread.sleep(2000);
+                        System.err.println("Error saving ContigSet to workspace.");
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        Date date = new Date();
+                        System.err.println(dateFormat.format(date));
+                        e.printStackTrace();
+                    }*/
                 }
 
 
@@ -572,36 +605,59 @@ public class ConvertGBK {
                 gname = sanitizeObjectName(gname);
                 System.out.println("saving Genome " + gname + "\t:" + genome.getContigsetRef() + ":");
 
-                boolean saved = false;
-                int retry = 0;
-                while (!saved && retry < 10) {
+                boolean saved2 = false;
+                int retry2 = 0;
+                while (!saved2 && retry2 < max_retries) {
                     try {
-                        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                                .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
-                                        .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
-                        saved = true;
+                        saved2 = saveGenome(wsname, genome, meta, gname);
+                        System.out.println("successfully saved object");
                     } catch (ServerException e) {
-                        System.err.println(e.getData());
-                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                        Date date = new Date();
-                        System.err.println(dateFormat.format(date));
-
-                        retry2++;
-                        Thread.sleep(2000);
-                        System.err.println("Error saving ContigSet to workspace.");
+                        System.out.println("ServerException Genome");
+                        final String msg = e.getData();
                         e.printStackTrace();
+                        if (msg.indexOf("TypedObjectValidationException") != -1) {
+                            System.out.println("Genome object failed type validation");
+                            System.out.println(msg);
+                            System.exit(1);
+                        } else {
+                            retry2++;
+                            if (retry2 < max_retries) {
+                                System.out.println("Error saving Genome to workspace.");
+                                System.out.println("Retrying in 2s ...");
+                                Thread.sleep(2000);
+                            }
+                        }
+                        //
+                    } catch (JsonClientException e) {
+                        System.out.println("JsonClientException Genome");
+                        e.printStackTrace();
+                        retry2++;
+                        if (retry2 < max_retries) {
+                            System.out.println("Error saving Genome to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
+                    } catch (IOException e) {
+                        System.out.println("IOException Genome");
+                        e.printStackTrace();
+                        retry2++;
+                        if (retry2 < max_retries) {
+                            System.out.println("Error saving Genome to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
                     } catch (Exception e) {
-                        retry2++;
-                        Thread.sleep(2000);
-                        System.err.println("Error saving ContigSet to workspace.");
-                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                        Date date = new Date();
-                        System.err.println(dateFormat.format(date));
+                        System.out.println("Exception Genome");
                         e.printStackTrace();
+                        retry2++;
+                        if (retry2 < max_retries) {
+                            System.out.println("Error saving Genome to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
                     }
                 }
 
-                System.out.println("successfully saved object");
 
 /*
                 try {
@@ -635,25 +691,55 @@ public class ConvertGBK {
                     e.printStackTrace();
                 }
 */
-            } catch (UnauthorizedException e) {
-                System.err.println("WS UnauthorizedException");
-                System.err.print(e.getMessage());
-                System.err.print(e.getStackTrace());
+
+            } catch (AuthException e) {
                 e.printStackTrace();
             } catch (IOException e) {
-                System.err.println("WS IOException");
-                System.err.print(e.getMessage());
-                System.err.print(e.getStackTrace());
                 e.printStackTrace();
-            } catch (TokenFormatException e) {
-                System.err.println("WS TokenFormatException");
-                System.err.print(e.getMessage());
-                System.err.print(e.getStackTrace());
+            } catch (UnauthorizedException e) {
                 e.printStackTrace();
             }
         }
 
         System.out.println("    time: " + (double) (System.currentTimeMillis() - time) / (double) 1000 + " s");
+    }
+
+    /**
+     * @param genome
+     * @param meta
+     * @param gname
+     * @return
+     * @throws IOException
+     * @throws JsonClientException
+     */
+    private boolean saveGenome(String wsname, Genome genome, Map<String, String> meta, String gname) throws IOException, JsonClientException {
+        boolean saved2;
+        System.out.println("saving Genome " + gname);
+        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
+                        .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+        saved2 = true;
+        System.out.println("successfully saved object");
+        return saved2;
+    }
+
+    /**
+     * @param wsname
+     * @param contigSet
+     * @param cname
+     * @return
+     * @throws IOException
+     * @throws JsonClientException
+     */
+    private boolean saveContigs(String wsname, ContigSet contigSet, String cname) throws IOException, JsonClientException {
+        boolean saved;
+        System.out.println("saving ContigSet " + cname);
+        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
+                        .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
+        saved = true;
+        System.out.println("successfully saved object");
+        return saved;
     }
 
     /**

@@ -75,7 +75,7 @@ public class ValidateGBK {
                 parseAllInDir(pos, f, wc);
             } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {//if (f.getName().endsWith(".gbk")) {
                 files.add(f);
-                System.err.println("Added " + f);
+                System.out.println("Added " + f);
             }
         }
         }
@@ -111,9 +111,9 @@ public class ValidateGBK {
 
             ContigSet cs = (ContigSet) ar.get(4);
         } catch (Exception e) {
-            System.err.println("parseGenome failure");
-            System.err.print(e.getMessage());
-            System.err.print(e.getStackTrace());
+            System.out.println("parseGenome failure");
+            System.out.print(e.getMessage());
+            System.out.print(e.getStackTrace());
             e.printStackTrace();
         }
 

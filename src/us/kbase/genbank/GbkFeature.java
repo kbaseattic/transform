@@ -78,13 +78,13 @@ public class GbkFeature extends GbkLocation {
         if (error != null) {
             wasError = true;
             if (!params.isIgnoreWrongFeatureLocation())
-                System.err.println("Error parsing location for feataure [" + type + "] on line " + line_num + ": " + error);
+                System.out.println("Error parsing location for feature [" + type + "] on line " + line_num + ": " + error);
             return;
         }
         if (locations.size() == 0) {
             wasError = true;
             if (!params.isIgnoreWrongFeatureLocation())
-                System.err.println("Error detecting location for feataure [" + type + "] on line " + line_num);
+                System.out.println("Error detecting location for feature [" + type + "] on line " + line_num);
             return;
         }
         this.strand = str;

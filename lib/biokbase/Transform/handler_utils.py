@@ -5,10 +5,18 @@ behavior across different taskrunners and reduce code repetition of similar task
 
 import sys
 import os
+import time
+import datetime
 import shutil
 import subprocess
 import base64
 import simplejson
+import pty
+import select
+import itertools
+import tempfile
+import threading
+import Queue
 
 from biokbase.Transform import script_utils
 
@@ -147,22 +155,103 @@ class TaskRunner(object):
         """
 
         command_list = self._build_command_list(arguments,debug)
-    
+
         self.logger.info("Executing {0}".format(" ".join(command_list)))
-    
-        task = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        lines_iterator = iter(task.stdout.readline, b"")
-        for line in lines_iterator:
-            self.callback(line)
 
-        sub_stdout, sub_stderr = task.communicate()
+        # Use pty to provide a workaround for buffering in stdio
+        master_stdout_fd, slave_stdout_fd = pty.openpty()
+        master_stderr_fd, slave_stderr_fd = pty.openpty()
+        task = subprocess.Popen(command_list, stdout=slave_stdout_fd, stderr=slave_stderr_fd, close_fds=True)
 
-        task_output = dict()
-        task_output["stdout"] = sub_stdout
-        task_output["stderr"] = sub_stderr
-        
+        stdout_name = 'task_stdout_{}'.format(datetime.datetime.utcnow().isoformat())
+        stderr_name = 'task_stderr_{}'.format(datetime.datetime.utcnow().isoformat())
+
+        def producer(queue, master_fd, slave_fd, evt, proc):
+            with os.fdopen(master_fd, 'rb', 0) as task_stream:
+                while 1:
+                    ready = select.select([master_fd], [], [])[0]
+
+                    if not ready and proc.poll() is not None:
+                        os.close(slave_fd)
+                        evt.set()
+                        break
+
+                    if master_fd in ready:
+                        data = os.read(master_fd, 512)
+
+                        if not data:
+                            evt.set()
+                            break
+                        else:
+                            queue.put(data)
+                            evt.set()
+
+        def consumer(queue, filename, evt, callback=None):
+            buf = []
+            with open(filename, 'w+') as fileobj:
+                while 1:
+                    evt.wait()
+                    if queue.empty():
+                        break
+
+                    data = queue.get()
+                    queue.task_done()
+
+                    if data.find('\n') > -1:
+                        line = ""
+                        if len(buf) > 0:
+                            line += "".join(buf)
+                            buf = []
+                        line += data
+
+                        if callback:
+                            callback(line)
+
+                        fileobj.write(line)
+                    else:
+                        buf.append(data)
+
+        stdout_queue = Queue.Queue()
+        stdout_data_ready = threading.Event()
+
+        t1 = threading.Thread(target=producer, args=(stdout_queue, master_stdout_fd, slave_stdout_fd, stdout_data_ready, task))
+        t1.daemon = True
+        t1.start()
+
+        t2 = threading.Thread(target=consumer, args=(stdout_queue, stdout_name, stdout_data_ready, self.callback))
+        t2.daemon = True
+        t2.start()
+
+        stderr_queue = Queue.Queue()
+        stderr_data_ready = threading.Event()
+
+        t3 = threading.Thread(target=producer, args=(stderr_queue, master_stderr_fd, slave_stderr_fd, stderr_data_ready, task))
+        t3.daemon = True
+        t3.start()
+
+        t4 = threading.Thread(target=consumer, args=(stderr_queue, stderr_name, stderr_data_ready))
+        t4.daemon = True
+        t4.start()
+
+        t1.join()
+        t2.join()
+        t3.join()
+        t4.join()
+
+        stdout = open(stdout_name, 'rb')
+        stderr = open(stderr_name, 'rb')
+
+        task_output = {}
+        task_output["stdout"] = "".join(stdout.readlines())
+        task_output["stderr"] = "".join(stderr.readlines())
+
+        stdout.close()
+        stderr.close()
+        os.remove(stdout_name)
+        os.remove(stderr_name)
+
         if task.returncode != 0:
+            self.logger.error(task.returncode)
             raise Exception(task_output["stdout"], task_output["stderr"])
         else:
             return task_output

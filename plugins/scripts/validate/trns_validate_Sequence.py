@@ -56,7 +56,7 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
     """
 
     if logger is None:
-        logger = script_utils.stderrlogger(__file__)
+        logger = script_utils.stdoutlogger(__file__, level)
 
     fasta_extensions = [".fa",".fas",".fasta",".fna"]
     fastq_extensions = [".fq",".fastq",".fnq"]
@@ -90,7 +90,7 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
             if line_count % 4 > 0:
                 #cleans out lines that are empty.  SRA Tool box puts newline on the end.
                 cmd_list = ["sed","-i", r"/^$/d",filePath]
-                filtering = subprocess.Popen(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                filtering = subprocess.Popen(cmd_list)
                 stdout, stderr = filtering.communicate()
                 if filtering.returncode != 0:
                     raise Exception("sed execution failed for the file {0}".format(filePath))
@@ -99,7 +99,7 @@ def validate(input_directory, working_directory, level=logging.INFO, logger=None
             else :
                 arguments = ["fastQValidator", "--file", filePath, "--maxErrors", "10"] 
 
-        tool_process = subprocess.Popen(arguments, stderr=subprocess.PIPE)
+        tool_process = subprocess.Popen(arguments)
         stdout, stderr = tool_process.communicate()
     
         if tool_process.returncode != 0:
@@ -132,16 +132,19 @@ if __name__ == "__main__":
 
     args, unknown = parser.parse_known_args()
 
-    logger = script_utils.stderrlogger(__file__)
-    
+    returncode = 0
+
     try:
         validate(input_directory = args.input_directory, 
-                 working_directory = args.working_directory,
-                 level = logging.DEBUG,
-                 logger = logger)
+                 working_directory = args.working_directory)
     except Exception, e:
+        logger = script_utils.stderrlogger(__file__, logging.INFO)
         logger.exception(e)
-        sys.exit(1)
-    
-    sys.exit(0)
+        returncode = 1
+
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os.close(sys.stdout.fileno())
+    os.close(sys.stderr.fileno())    
+    sys.exit(returncode)
 

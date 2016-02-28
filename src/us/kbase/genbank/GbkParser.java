@@ -116,7 +116,7 @@ public class GbkParser {
                     } else if (line.indexOf("/") == 0 && line.indexOf("/ ") != 0 && line.indexOf("=") == -1 && line.indexOf("\"") == -1) {//skips illegal features with no '=' and no quotes
 
                         //System.err.println("qual " + qual);
-                        System.err.println("Warning parsing GBK file: ignoring field [" + line + "], non-standard qualifier not confirming to /X=\"Y\"");
+                        System.out.println("Warning parsing GBK file: ignoring field [" + line + "], non-standard qualifier not confirming to /X=\"Y\"");
                         continue;
 
                         /*if (line.equals("/pseudo") || line.equals("/trans_splicing") || line.equals("/ribosomal_slippage")) {
@@ -156,7 +156,7 @@ public class GbkParser {
                                 (!line.startsWith("/ ")) && // these are continued strings with slashes from previous line
                                 (line.indexOf("=") == -1)) {
                             if (!qual_tm.isType(line.substring(1)))
-                                System.err.println("Warning parsing GBK file: ignoring field B [" + line.substring(1) + "]");
+                                System.out.println("Warning parsing GBK file: ignoring field B [" + line.substring(1) + "]");
                             line += "=";
                         }
                         int slash_pos = line.indexOf("/");
@@ -216,7 +216,7 @@ public class GbkParser {
                 }
             }
         } catch (Throwable t) {
-            System.err.println("Error parsing GBK file " + filename + " at line " + line_num);
+            System.out.println("Error parsing GBK file " + filename + " at line " + line_num);
             throw new IllegalStateException("Error parsing GBK file " + filename + " at line " + line_num + " (" + t.getMessage() + ")", t);
         }
         if ((loc != null) && (loc.isClosed())) loc.close(filename);

@@ -86,6 +86,7 @@ def upload_genome(shock_service_url=None,
                   exclude_feature_types=list(),
 #                  taxon_names_file=None,
                   taxon_reference = None,
+                  release= None,
                   #              fasta_file_directory=None,
                   core_genome_name=None,
                   source=None,
@@ -276,6 +277,7 @@ def upload_genome(shock_service_url=None,
             fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
     else:
         fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
+        source_name = "unknown_source"
 
     print "Core Genome Name :"+ core_genome_name + ":"
     print "FASTA FILE Name :"+ fasta_file_name + ":"
@@ -385,8 +387,8 @@ def upload_genome(shock_service_url=None,
         if ((len(locus_line_info)!= 7) and (len(locus_line_info)!= 8)): 
             fasta_file_handle.close()
             raise Exception("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
-        if locus_line_info[4] != 'DNA':
-            if locus_line_info[4] == 'RNA':
+        if locus_line_info[4].upper() != 'DNA':
+            if locus_line_info[4].upper() == 'RNA':
                 if not tax_lineage.lower().startswith("viruses") and not tax_lineage.lower().startswith("viroids"):
                     fasta_file_handle.close()
                     raise Exception("Error the record with the Locus Name of %s is RNA, but the organism does not belong to Viruses or Viroids." % (locus_line_info[1]))
@@ -1760,6 +1762,8 @@ def upload_genome(shock_service_url=None,
     genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
     genome_annotation['alias_source_counts_map'] = alias_source_counts_map
     genome_annotation['annotation_quality_ref'] = annotation_quality_reference
+    if release is not None:
+        genome_annotation['release'] = release
 
 #    print "Genome Annotation id %s" % (genome_annotation['genome_annotation_id'])
  
@@ -1818,8 +1822,9 @@ if __name__ == "__main__":
     parser.add_argument('--type', 
                         help="data source : examples Reference, Representative, User Upload", 
                         nargs='?', required=False, default="User upload") 
-
-
+    parser.add_argument('--release', 
+                        help="Release or version of the data.  Example Ensembl release 30", 
+                        nargs='?', required=False) 
 #    parser.add_argument('--genome_list_file', action='store', type=str, nargs='?', required=True) 
 
     parser.add_argument('--input_directory', 
@@ -1861,6 +1866,7 @@ if __name__ == "__main__":
                       taxon_reference = args.taxon_reference,
                       core_genome_name = args.object_name,
                       source = args.source,
+                      release = args.release,
                       type = args.type,
                       #                      genome_list_file = args.genome_list_file,
                       logger = logger)

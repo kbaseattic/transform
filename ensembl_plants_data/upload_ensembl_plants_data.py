@@ -17,6 +17,7 @@ import trns_transform_Genbank_Genome_to_KBaseGenomeAnnotations_GenomeAnnotation 
 
 
 def upload_ensembl_plants(release_source = None,
+                          release = None,
                           workspace_name = None,
                           ensembl_ftp_urls_file = None,
                           shock_service_url = None,
@@ -78,6 +79,7 @@ def upload_ensembl_plants(release_source = None,
                                                     taxon_wsname=taxon_wsname,
                                                     exclude_feature_types=["misc_feature","STS"],
                                                     source=release_source, 
+                                                    release=release,
                                                     type="Reference")
                     upload_end_time = datetime.datetime.now()
                     upload_total_time = upload_end_time - uncompress_end_time 
@@ -102,6 +104,7 @@ if __name__ == "__main__":
                                      epilog="Jason Baumohl") 
  
     parser.add_argument('--release_source',action='store', type=str, nargs='?', required=True) 
+    parser.add_argument('--release',action='store', type=str, nargs='?', required=True) 
     parser.add_argument('--workspace_name',action='store', type=str, nargs='?', required=True) 
     parser.add_argument('--ensembl_ftp_urls_file',action='store', type=str, nargs='?', required=True) 
     parser.add_argument('--shock_service_url', action='store', type=str, nargs='?', required=True)
@@ -113,6 +116,7 @@ if __name__ == "__main__":
 
     try:
         upload_ensembl_plants(release_source = args.release_source,
+                              release = args.release,
                               workspace_name = args.workspace_name, 
                               ensembl_ftp_urls_file = args.ensembl_ftp_urls_file,
                               shock_service_url = args.shock_service_url,

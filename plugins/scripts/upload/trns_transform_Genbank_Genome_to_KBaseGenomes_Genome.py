@@ -38,21 +38,18 @@ def transform(shock_service_url=None, workspace_service_url=None,
     """
 
     if logger is None:
-        logger = script_utils.stderrlogger(__file__)
-    
+        logger = script_utils.stdoutlogger(__file__, logging.INFO)
+
     logger.info("Starting transformation of Genbank to KBaseGenomes.Genome")
-    
+
     classpath = ["$KB_TOP/lib/jars/kbase/transform/kbase_transform_deps.jar",
                  "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar",
                  "$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar",
                  "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",
                  "$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar",
                  "$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar",
-                 "$KB_TOP/lib/jars/kbase/transform/kbase-transform-deps.jar",
                  "$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar",
                  "$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"]
-    
-    mc = "us.kbase.genbank.ConvertGBK"
 
     argslist = ["--shock_url {0}".format(shock_service_url),
                 "--workspace_service_url {0}".format(workspace_service_url),
@@ -60,39 +57,27 @@ def transform(shock_service_url=None, workspace_service_url=None,
                 "--object_name {0}".format(object_name),
                 "--working_directory {0}".format(working_directory),
                 "--input_directory {0}".format(input_directory)]
-    
+
     if contigset_object_name is not None:
         argslist.append("--contigset_object_name {0}".format(contigset_object_name))
 
-    arguments = ["java", 
-                 "-classpath", ":".join(classpath), 
-                 "us.kbase.genbank.ConvertGBK", 
+    arguments = ["java",
+                 "-classpath", ":".join(classpath),
+                 "us.kbase.genbank.ConvertGBK",
                  " ".join(argslist)]
 
-    logger.debug(arguments)
-
     # need shell in this case because the java code is depending on finding the KBase token in the environment
-    tool_process = subprocess.Popen(" ".join(arguments), stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = tool_process.communicate()
-
-    if stdout is not None and len(stdout) > 0:
-        logger.info(stdout)
+    tool_process = subprocess.Popen(" ".join(arguments), shell=True)
+    tool_process.communicate()
 
     exit_status = tool_process.returncode
-    logger.debug("Tool execution returned exit status {}".format(exit_status))
+    sys.stderr.write("Tool execution returned exit status {}".format(exit_status))
 
     if exit_status != 0:
-        logger.error("Transformation from Genbank.Genome to KBaseGenomes.Genome failed on {0}".format(input_directory))
-	if stderr is not None:
-	    logger.error(stderr)
-        sys.exit(1)
-    
-    if stderr is not None and len(stderr) > 0:
-        logger.warning("Transformation from Genbank.Genome to KBaseGenomes.Genome on {0} issued diagnostics:".format(input_directory))
-        logger.warning(stderr)
-    
+        raise Exception("Transformation from Genbank.Genome to KBaseGenomes.Genome failed on {0}".format(input_directory))
+
     logger.info("Transformation from Genbank.Genome to KBaseGenomes.Genome completed.")
-    sys.exit(0)
+    return
 
 
 if __name__ == "__main__":
@@ -145,9 +130,8 @@ if __name__ == "__main__":
                         required=True)
     
     args, unknown = parser.parse_known_args()
-    
-    logger = script_utils.stderrlogger(__file__, logging.DEBUG)
-    
+    returncode = 0
+        
     try:
         transform(shock_service_url=args.shock_service_url,
                   workspace_service_url=args.workspace_service_url,
@@ -155,10 +139,15 @@ if __name__ == "__main__":
                   object_name=args.object_name,
                   contigset_object_name=args.contigset_object_name,
                   input_directory=args.input_directory,
-                  working_directory=args.working_directory,
-                  logger = logger)
+                  working_directory=args.working_directory)
     except Exception, e:
+        logger = script_utils.stderrlogger(__file__, logging.INFO)
         logger.exception(e)
-        sys.exit(1)
+        returncode = 1
     
-    sys.exit(0)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os.close(sys.stdout.fileno())
+    os.close(sys.stderr.fileno())
+    sys.exit(returncode)
+    

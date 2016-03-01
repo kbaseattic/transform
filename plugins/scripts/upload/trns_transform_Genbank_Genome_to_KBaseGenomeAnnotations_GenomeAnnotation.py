@@ -1267,7 +1267,12 @@ def upload_genome(shock_service_url=None,
                                (gene_start_boundary is not None) and \
                                (gene_end_boundary is not None):
                                 if (mRNA_start_boundary >= gene_start_boundary) and (mRNA_end_boundary <= gene_end_boundary):
-                                    gene_mRNA_list.append(["mRNA",feature_id])
+                                    needs_to_be_added = True
+                                    for mRNA_tuple in gene_mRNA_list:
+                                        if feature_id == mRNA_tuple[1]:
+                                            needs_to_be_added = False
+                                    if needs_to_be_added:
+                                        gene_mRNA_list.append(["mRNA",feature_id])
                                     if "mRNA_properties" not in features_type_containers_dict["mRNA"][feature_id]:
                                         features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"] = dict()
                                     if "parent_gene" not in features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]:
@@ -1314,8 +1319,7 @@ def upload_genome(shock_service_url=None,
                     elif "children_mRNA" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
                         temp_dict = dict()
                         for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"]:
-                            for e2 in e1:
-                                temp_dict[e2[1]] = 1
+                            temp_dict[e1[1]] = 1
                         for new_child_mRNA in gene_mRNA_list:
                             if new_child_mRNA[1] not in temp_dict:
                                 features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"].append(new_child_mRNA)
@@ -1355,7 +1359,12 @@ def upload_genome(shock_service_url=None,
                                (gene_start_boundary is not None) and \
                                (gene_end_boundary is not None): 
                                 if (CDS_start_boundary >= gene_start_boundary) and (CDS_end_boundary <= gene_end_boundary): 
-                                    gene_CDS_list.append(["CDS",feature_id]) 
+                                    needs_to_be_added = True
+                                    for CDS_tuple in gene_CDS_list:
+                                        if feature_id == CDS_tuple[1]:
+                                            needs_to_be_added = False
+                                    if needs_to_be_added:
+                                        gene_CDS_list.append(["CDS",feature_id])
                                     if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
                                         features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
                                     if "parent_gene" not in features_type_containers_dict["CDS"][feature_id]["CDS_properties"]:
@@ -1401,12 +1410,10 @@ def upload_genome(shock_service_url=None,
                     elif "children_CDS" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
                         temp_dict = dict()
                         for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"]:
-                            for e2 in e1:
-                                temp_dict[e2[1]] = 1
+                            temp_dict[e1[1]] = 1
                         for new_child_CDS in gene_CDS_list:
                             if new_child_CDS[1] not in temp_dict:
                                 features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"].append(new_child_CDS)
-
 
 
         #########################        

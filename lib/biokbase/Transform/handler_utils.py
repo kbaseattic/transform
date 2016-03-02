@@ -13,9 +13,9 @@ import base64
 import simplejson
 import pty
 import select
-import itertools
-import tempfile
+import functools
 import threading
+import signal
 import Queue
 
 from biokbase.Transform import script_utils
@@ -149,97 +149,141 @@ class TaskRunner(object):
     def run(self, arguments=None, debug=False):
         """
         Executes the task while monitoring stdout and stderr for messages.
-        For each line of stdout/stderr, run a callback function that does "something".
-        The default behavior would be to log the message, but other behavior can be swapped in,
+
+        For each line of stdout, run a callback function that does "something".
+        The default behavior for the callback would be to log the message, but other behavior can be swapped in,
         for instance to communicate back to a UJS process what the job status is.
+
+        If the child process exits with an error, collect the stdout and stderr output and report in an exception.
         """
 
-        command_list = self._build_command_list(arguments,debug)
+        # kill the child process if we receive a terminate signal
+        def terminate_child_process(child, signum, frame):
+            try:
+                if child and signum != signal.SIGINT:
+                    child.terminate()
+                    child.wait()
+            finally:
+                sys.exit()
 
-        self.logger.info("Executing {0}".format(" ".join(command_list)))
-
-        # Use pty to provide a workaround for buffering in stdio
-        master_stdout_fd, slave_stdout_fd = pty.openpty()
-        master_stderr_fd, slave_stderr_fd = pty.openpty()
-        task = subprocess.Popen(command_list, stdout=slave_stdout_fd, stderr=slave_stderr_fd, close_fds=True)
-
-        stdout_name = 'task_stdout_{}'.format(datetime.datetime.utcnow().isoformat())
-        stderr_name = 'task_stderr_{}'.format(datetime.datetime.utcnow().isoformat())
-
-        def producer(queue, master_fd, slave_fd, evt, proc):
+        # poll the pty for available data to read, then push to a queue and signal ready
+        def produce_queue(queue, master_fd, slave_fd, evt, proc):
             with os.fdopen(master_fd, 'rb', 0) as task_stream:
                 while 1:
-                    ready = select.select([master_fd], [], [])[0]
+                    ready = select.select([master_fd], [], [], 0)[0]
 
+                    # exit if our process has terminated and no more input
                     if not ready and proc.poll() is not None:
                         os.close(slave_fd)
                         evt.set()
                         break
 
                     if master_fd in ready:
-                        data = os.read(master_fd, 512)
+                        # POSIX.1 requires PIPE_BUF to be at least 512 bytes, but Linux uses 4096 bytes
+                        data = os.read(master_fd, 4096)
 
                         if not data:
+                            # reached EOF, signal data ready in case the queue is not empty, then exit
                             evt.set()
                             break
                         else:
+                            # put data in the queue and signal the consumer thread
                             queue.put(data)
                             evt.set()
 
-        def consumer(queue, filename, evt, callback=None):
-            buf = []
+        # wait for ready signal, then read data from queue and save to a buffer
+        # once the buffer contains an end of line, send that to a callback if defined,
+        # then send the line to a file for later processing
+        def consume_queue(queue, filename, evt, proc, callback=None):
+            streambuffer = []
             with open(filename, 'w+') as fileobj:
                 while 1:
-                    evt.wait()
-                    if queue.empty():
+                    # wait for a signal at most one second at a time so we can check the child process status
+                    evt.wait(1)
+                    if queue.empty() and proc.poll() is not None:
                         break
+                    elif queue.empty():
+                        # the queue is empty, but our child process has not exited yet, so data may show up still
+                        continue
 
-                    data = queue.get()
+                    data = queue.get_nowait()
+                    streambuffer.append(data)
                     queue.task_done()
 
-                    if data.find('\n') > -1:
-                        line = ""
-                        if len(buf) > 0:
-                            line += "".join(buf)
-                            buf = []
-                        line += data
+                    # As soon as we see an end of line from the stream, we should write.
+                    # Since we could receive many lines per queue chunk, we want to pass
+                    # a line at a time to our callback.
+                    if '\n' in data:
+                        merged = "".join(streambuffer)
+                        lines = merged.split('\n')
+
+                        if len(lines) > 1 and '\n' not in lines[-1]:
+                            streambuffer = [lines[-1]]
+                            lines.pop()
+                        else:
+                            streambuffer = []
 
                         if callback:
-                            callback(line)
+                            for x in lines:
+                                if not x:
+                                    continue
+                                callback(x)
 
-                        fileobj.write(line)
-                    else:
-                        buf.append(data)
+                        fileobj.write("".join(lines))
+                        fileobj.flush()
+
+        command_list = self._build_command_list(arguments,debug)
+
+        self.logger.info("Executing {0}".format(" ".join(command_list)))
+
+        stdout_name = 'task_stdout_{}'.format(datetime.datetime.utcnow().isoformat())
+        stderr_name = 'task_stderr_{}'.format(datetime.datetime.utcnow().isoformat())
+
+        stderr = open(stderr_name, 'w+')
+
+        # Use pty to provide a workaround for buffer overflow in stdio when monitoring stdout
+        master_stdout_fd, slave_stdout_fd = pty.openpty()
+        #master_stderr_fd, slave_stderr_fd = pty.openpty()
+        #task = subprocess.Popen(command_list, stdout=slave_stdout_fd, stderr=slave_stderr_fd, close_fds=True)
+        task = subprocess.Popen(command_list, stdout=slave_stdout_fd, stderr=stderr.fileno(), close_fds=True)
+
+        # force termination signal handling of the child process
+        signal_handler = functools.partial(cleanup, task)
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
 
         stdout_queue = Queue.Queue()
         stdout_data_ready = threading.Event()
 
-        t1 = threading.Thread(target=producer, args=(stdout_queue, master_stdout_fd, slave_stdout_fd, stdout_data_ready, task))
+        t1 = threading.Thread(target=produce_queue, args=(stdout_queue, master_stdout_fd, slave_stdout_fd, stdout_data_ready, task))
         t1.daemon = True
         t1.start()
 
-        t2 = threading.Thread(target=consumer, args=(stdout_queue, stdout_name, stdout_data_ready, self.callback))
+        t2 = threading.Thread(target=consume_queue, args=(stdout_queue, stdout_name, stdout_data_ready, task, self.callback))
         t2.daemon = True
         t2.start()
 
-        stderr_queue = Queue.Queue()
-        stderr_data_ready = threading.Event()
+        #stderr_queue = Queue.Queue()
+        #stderr_data_ready = threading.Event()
 
-        t3 = threading.Thread(target=producer, args=(stderr_queue, master_stderr_fd, slave_stderr_fd, stderr_data_ready, task))
-        t3.daemon = True
-        t3.start()
+        #t3 = threading.Thread(target=produce_queue, args=(stderr_queue, master_stderr_fd, slave_stderr_fd, stderr_data_ready, task))
+        #t3.daemon = True
+        #t3.start()
 
-        t4 = threading.Thread(target=consumer, args=(stderr_queue, stderr_name, stderr_data_ready))
-        t4.daemon = True
-        t4.start()
+        #t4 = threading.Thread(target=consume_queue, args=(stderr_queue, stderr_name, stderr_data_ready, task))
+        #t4.daemon = True
+        #t4.start()
+
+        task.wait()
 
         t1.join()
         t2.join()
-        t3.join()
-        t4.join()
+        #t3.join()
+        #t4.join()
 
         stdout = open(stdout_name, 'rb')
-        stderr = open(stderr_name, 'rb')
+        #stderr = open(stderr_name, 'rb')
+        stderr.seek(0)
 
         task_output = {}
         task_output["stdout"] = "".join(stdout.readlines())

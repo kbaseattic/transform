@@ -201,6 +201,13 @@ class TaskRunner(object):
                     # wait for a signal at most one second at a time so we can check the child process status
                     evt.wait(1)
                     if queue.empty() and proc.poll() is not None:
+                        # make sure the last part of the buffer is written out
+                        if streambuffer:
+                            if callback:
+                                callback(streambuffer[0])
+
+                            fileobj.write(streambuffer[0])
+                            fileobj.flush()
                         break
                     elif queue.empty():
                         # the queue is empty, but our child process has not exited yet, so data may show up still

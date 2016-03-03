@@ -3,7 +3,6 @@
 # standard library imports
 import sys
 import os
-import argparse
 import logging
 import subprocess
 
@@ -42,14 +41,23 @@ def transform(shock_service_url=None, workspace_service_url=None,
 
     logger.info("Starting transformation of Genbank to KBaseGenomes.Genome")
 
-    classpath = ["$KB_TOP/lib/jars/kbase/transform/kbase_transform_deps.jar",
-                 "$KB_TOP/lib/jars/kbase/genomes/kbase-genomes-20140411.jar",
-                 "$KB_TOP/lib/jars/kbase/common/kbase-common-0.0.6.jar",
-                 "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",
-                 "$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar",
-                 "$KB_TOP/lib/jars/jackson/jackson-databind-2.2.3.jar",
-                 "$KB_TOP/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar",
-                 "$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"]
+    # TODO get the classpath definition out into the config instead
+    KB_TOP = os.environ["KB_TOP"]
+
+    classpath = ["{}/lib/jars/kbase/transform/kbase_transform_deps.jar".format(KB_TOP),
+                 "{}/lib/jars/kbase/genomes/kbase-genomes-20140411.jar".format(KB_TOP),
+                 "{}/lib/jars/kbase/common/kbase-common-0.0.6.jar".format(KB_TOP),
+                 "{}/lib/jars/jackson/jackson-annotations-2.2.3.jar".format(KB_TOP),
+                 "{}/lib/jars/jackson/jackson-core-2.2.3.jar".format(KB_TOP),
+                 "{}/lib/jars/jackson/jackson-databind-2.2.3.jar".format(KB_TOP),
+                 "{}/lib/jars/kbase/auth/kbase-auth-1398468950-3552bb2.jar".format(KB_TOP),
+                 "{}/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar".format(KB_TOP)]
+
+    for p in classpath:
+        try:
+            assert os.path.exists(p)
+        except AssertionError, e:
+            raise IOError("Unable to find classpath library {}".format(p))
 
     argslist = ["--shock_url {0}".format(shock_service_url),
                 "--workspace_service_url {0}".format(workspace_service_url),
@@ -66,9 +74,9 @@ def transform(shock_service_url=None, workspace_service_url=None,
                  "us.kbase.genbank.ConvertGBK",
                  " ".join(argslist)]
 
-    # need shell in this case because the java code is depending on finding the KBase token in the environment
+    # TODO get this working without shell=True, possibly more at work here than just environment variables
     tool_process = subprocess.Popen(" ".join(arguments), shell=True)
-    tool_process.communicate()
+    tool_process.wait()
 
     exit_status = tool_process.returncode
     sys.stderr.write("Tool execution returned exit status {}".format(exit_status))
@@ -77,7 +85,6 @@ def transform(shock_service_url=None, workspace_service_url=None,
         raise Exception("Transformation from Genbank.Genome to KBaseGenomes.Genome failed on {0}".format(input_directory))
 
     logger.info("Transformation from Genbank.Genome to KBaseGenomes.Genome completed.")
-    return
 
 
 if __name__ == "__main__":

@@ -19,6 +19,7 @@ use strict;
 #PERL USE
 use JSON::XS;
 use Getopt::Long::Descriptive;
+use Try::Tiny;
 
 #KBASE USE
 use Bio::KBase::workspace::Client;
@@ -55,7 +56,7 @@ else
 
 my $ret = $wsclient->get_objects([{ "ref" => $obj->{fbamodel_ref} }]);
 
-eval {
+try {
 	local $SIG{ALRM} = sub { die "Upload timed out! Likely some error encountered during data transformation!" };
 	alarm 600;
 	
@@ -184,9 +185,7 @@ eval {
 		]);
 	}
 	write_tsv_tables($tables);
-	
 	alarm 0;
+} catch {
+	die $_;
 };
-if ($@) {
-	die $@;
-}

@@ -19,6 +19,7 @@ use strict;
 #PERL USE
 use JSON::XS;
 use Getopt::Long::Descriptive;
+use Try::Tiny;
 
 #KBASE USE
 use Bio::KBase::workspace::Client;
@@ -53,7 +54,7 @@ else
     die "Invalid return from get_object for ws=" . $opt->workspace_name . " input=" . $opt->object_name;
 }
 
-eval {
+try {
 	local $SIG{ALRM} = sub { die "Upload timed out! Likely some error encountered during data transformation!" };
 	alarm 600;
 	
@@ -185,7 +186,6 @@ eval {
 	write_excel_tables($tables,$opt->workspace_name."_".$opt->object_name.".xls");
 	
 	alarm 0;
+} catch {
+	die $_;
 };
-if ($@) {
-	die $@;
-}

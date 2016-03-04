@@ -118,7 +118,7 @@ public class GbkFeature extends GbkLocation {
                         if (dotind != -1)
                             taxstring = taxstring.substring(0, dotind - 1);
                         taxId = Integer.parseInt(taxstring);
-                        System.out.println("taxid " + taxId);
+                        //System.out.println("taxid " + taxId);
                     } else {
                         //System.out.println("DBXREF_PREFIX " + value);
                         String alias = value.substring(DBXREF_PREFIX.length()).trim();

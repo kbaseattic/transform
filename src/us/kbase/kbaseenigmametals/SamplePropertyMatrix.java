@@ -12,9 +12,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
 /**
- * <p>Original spec-file type: WellSampleMatrix</p>
+ * <p>Original spec-file type: SamplePropertyMatrix</p>
  * <pre>
- * Well sample data matrix
+ * Sample property data matrix
  *       @optional description
  * </pre>
  * 
@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "metadata",
     "data"
 })
-public class WellSampleMatrix {
+public class SamplePropertyMatrix {
 
     @JsonProperty("name")
     private String name;
@@ -61,7 +61,7 @@ public class WellSampleMatrix {
         this.name = name;
     }
 
-    public WellSampleMatrix withName(String name) {
+    public SamplePropertyMatrix withName(String name) {
         this.name = name;
         return this;
     }
@@ -76,7 +76,7 @@ public class WellSampleMatrix {
         this.description = description;
     }
 
-    public WellSampleMatrix withDescription(String description) {
+    public SamplePropertyMatrix withDescription(String description) {
         this.description = description;
         return this;
     }
@@ -105,7 +105,7 @@ public class WellSampleMatrix {
         this.metadata = metadata;
     }
 
-    public WellSampleMatrix withMetadata(Matrix2DMetadata metadata) {
+    public SamplePropertyMatrix withMetadata(Matrix2DMetadata metadata) {
         this.metadata = metadata;
         return this;
     }
@@ -130,7 +130,7 @@ public class WellSampleMatrix {
         this.data = data;
     }
 
-    public WellSampleMatrix withData(FloatMatrix2D data) {
+    public SamplePropertyMatrix withData(FloatMatrix2D data) {
         this.data = data;
         return this;
     }
@@ -147,7 +147,7 @@ public class WellSampleMatrix {
 
     @Override
     public String toString() {
-        return ((((((((((("WellSampleMatrix"+" [name=")+ name)+", description=")+ description)+", metadata=")+ metadata)+", data=")+ data)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((("SamplePropertyMatrix"+" [name=")+ name)+", description=")+ description)+", metadata=")+ metadata)+", data=")+ data)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

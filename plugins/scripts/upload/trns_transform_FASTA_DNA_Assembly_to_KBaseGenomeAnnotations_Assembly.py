@@ -10,6 +10,7 @@ import time
 import traceback 
 import os.path 
 import datetime
+import collections
 from string import digits
 
 # 3rd party imports
@@ -25,6 +26,7 @@ import biokbase.workspace.client
 # See: https://docs.python.org/2/library/logging.html#logging-levels
 #
 # The default level is set to INFO which includes everything except DEBUG
+#@profile
 def upload_assembly(shock_service_url = None, 
                     handle_service_url = None,
                     input_directory = None,
@@ -135,6 +137,9 @@ def upload_assembly(shock_service_url = None,
     valid_chars = "-AaCcGgTtUuWwSsMmKkRrYyBbDdHhVvNnXx"
     amino_acid_specific_characters = "PpLlIiFfQqEe" 
 
+    #Base_counts - is dict of base characters and their counts.
+    base_counts = dict()
+
     sequence_start = 0
     sequence_stop = 0
 
@@ -158,15 +163,31 @@ def upload_assembly(shock_service_url = None,
                 if not total_sequence :
                     logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
                     raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header))
-                for character in total_sequence:
+#                for character in total_sequence:
+#                    if character not in valid_chars:
+#                        if character in amino_acid_specific_characters:
+#                            raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
+#                        raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
+                seq_count = collections.Counter(total_sequence.upper())
+                seq_dict = dict(seq_count)
+                for character in seq_dict:
+                    if character in base_counts:
+                        base_counts[character] =  base_counts[character] + seq_dict[character]
+                    else:
+                        base_counts[character] =  seq_dict[character]
                     if character not in valid_chars:
                         if character in amino_acid_specific_characters:
                             raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
                         raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
+
+                contig_dict = dict() 
+                Ncount = 0
+                if "N" in seq_dict:
+                    Ncount = seq_dict["N"]
+                contig_dict["Ncount"] = Ncount 
                 length = len(total_sequence)
                 total_length = total_length + length
                 contig_gc_length = len(re.findall('G|g|C|c',total_sequence))
-                contig_dict = dict() 
                 contig_dict["gc_content"] = float(contig_gc_length)/float(length) 
                 gc_length = gc_length + contig_gc_length
                 fasta_key = fasta_header.strip()
@@ -191,7 +212,11 @@ def upload_assembly(shock_service_url = None,
 
 #                print "Sequence Start: " + str(sequence_start) + "Fasta: " + fasta_key
 #                print "Sequence Stop: " + str(sequence_stop) + "Fasta: " + fasta_key
-                fasta_dict[fasta_key] = contig_dict
+
+                if fasta_key in fasta_dict:
+                    raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key))
+                else: 
+                    fasta_dict[fasta_key] = contig_dict
                
                 # get set up for next fasta sequence
                 sequence_list = []
@@ -230,16 +255,27 @@ def upload_assembly(shock_service_url = None,
             logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
             raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
 
-        for character in total_sequence: 
+#        for character in total_sequence: 
+        seq_count = collections.Counter(total_sequence.upper()) 
+        seq_dict = dict(seq_count) 
+        for character in seq_dict:
+            if character in base_counts:
+                base_counts[character] =  base_counts[character] + seq_dict[character]
+            else:
+                base_counts[character] =  seq_dict[character]
             if character not in valid_chars: 
                 if character in amino_acid_specific_characters:
                     raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
                 raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
 
+        contig_dict = dict() 
+        Ncount = 0
+        if "N" in seq_dict:
+            Ncount = seq_dict["N"]
+        contig_dict["Ncount"] = Ncount 
         length = len(total_sequence)
         total_length = total_length + length
         contig_gc_length = len(re.findall('G|g|C|c',total_sequence))
-        contig_dict = dict()
         contig_dict["gc_content"] = float(contig_gc_length)/float(length) 
         gc_length = gc_length + contig_gc_length
         fasta_key = fasta_header.strip()
@@ -262,7 +298,10 @@ def upload_assembly(shock_service_url = None,
         contig_dict["start_position"] = sequence_start
         contig_dict["num_bytes"] = sequence_stop - sequence_start
         
-        fasta_dict[fasta_key] = contig_dict 
+        if fasta_key in fasta_dict:
+            raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key))
+        else: 
+            fasta_dict[fasta_key] = contig_dict
         input_file_handle.close()
 
     contig_set_dict = dict()
@@ -278,10 +317,11 @@ def upload_assembly(shock_service_url = None,
     contig_set_dict["contigs"] = fasta_dict
     contig_set_dict["dna_size"] = total_length
     contig_set_dict["gc_content"] = float(gc_length)/float(total_length)
-    print "Fasta dict Keys :"+",".join(fasta_dict.keys())+":" 
+#    print "Fasta dict Keys :"+",".join(fasta_dict.keys())+":" 
     contig_set_dict["num_contigs"] = len(fasta_dict.keys())
     contig_set_dict["type"] = "Unknown"
     contig_set_dict["notes"] = "Note MD5s are generated from uppercasing the sequences" 
+    contig_set_dict["base_counts"] = base_counts 
     if taxon_reference is not None:
         contig_set_dict["taxon_ref"] = taxon_reference
 

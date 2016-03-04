@@ -35,9 +35,9 @@ public class GbkUploader {
         try {
             ar = (ArrayList) uploadGbk(files, wsName, id, true);
         } catch (Exception e) {
-            System.err.println("uploadGbk");
-            System.err.print(e.getMessage());
-            System.err.print(e.getStackTrace());
+            System.out.println("uploadGbk");
+            System.out.print(e.getMessage());
+            System.out.print(e.getStackTrace());
             e.printStackTrace();
         }
 

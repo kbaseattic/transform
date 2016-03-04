@@ -13,6 +13,10 @@ import datetime
 import shutil
 from string import digits
 from string import maketrans
+#try:
+#    from cStringIO import StringIO
+#except:
+#    from StringIO import StringIO
 
 # 3rd party imports
 import simplejson
@@ -66,6 +70,7 @@ def represents_int(s):
 # See: https://docs.python.org/2/library/logging.html#logging-levels
 #
 # The default level is set to INFO which includes everything except DEBUG
+#@profile
 def upload_genome(shock_service_url=None, 
                   handle_service_url=None, 
                   #output_file_name=None, 
@@ -76,10 +81,12 @@ def upload_genome(shock_service_url=None,
                   #fasta_reference_only=False,
                   workspace_name=None,
                   workspace_service_url=None,
-                  genome_list_file=None,
+#                  genome_list_file=None,
                   taxon_wsname=None,
+                  exclude_feature_types=list(),
 #                  taxon_names_file=None,
                   taxon_reference = None,
+                  release= None,
                   #              fasta_file_directory=None,
                   core_genome_name=None,
                   source=None,
@@ -101,6 +108,9 @@ def upload_genome(shock_service_url=None,
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
     token = os.environ.get('KB_AUTH_TOKEN') 
+
+    if exclude_feature_types is None:
+        exclude_feature_types = list()
 
 #    scientific_names_lookup = make_scientific_names_lookup(taxon_names_file)
 
@@ -140,6 +150,8 @@ def upload_genome(shock_service_url=None,
 
     genbank_file_boundaries = list()  
     #list of tuples: (first value record start byte position, second value record stop byte position)
+
+    exclude_feature_types.append("source")
 
     if os.path.isfile(input_file_name):
         print "Found Genbank_File" 
@@ -201,6 +213,10 @@ def upload_genome(shock_service_url=None,
 
     tax_id = 0;
     tax_lineage = None;
+
+    genome_annotation = dict()
+
+    genomes_without_taxon_refs = list()
     if taxon_reference is None:
         #Get the taxon_lookup_object
         taxon_lookup = ws_client.get_object( {'workspace':taxon_wsname,
@@ -259,6 +275,9 @@ def upload_genome(shock_service_url=None,
         else:
             core_genome_name = "%s_%s" % (str(tax_id),source_name) 
             fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
+    else:
+        fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
+        source_name = "unknown_source"
 
     print "Core Genome Name :"+ core_genome_name + ":"
     print "FASTA FILE Name :"+ fasta_file_name + ":"
@@ -284,7 +303,8 @@ def upload_genome(shock_service_url=None,
     max_date = None
     genbank_time_string = None
     genome_publication_dict = dict()
-    genome_comment = ''
+#    genome_comment = ''
+#    genome_comment_io = StringIO()
 
     #Feature Data structures
 
@@ -367,8 +387,8 @@ def upload_genome(shock_service_url=None,
         if ((len(locus_line_info)!= 7) and (len(locus_line_info)!= 8)): 
             fasta_file_handle.close()
             raise Exception("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
-        if locus_line_info[4] != 'DNA':
-            if locus_line_info[4] == 'RNA':
+        if locus_line_info[4].upper() != 'DNA':
+            if locus_line_info[4].upper() == 'RNA':
                 if not tax_lineage.lower().startswith("viruses") and not tax_lineage.lower().startswith("viroids"):
                     fasta_file_handle.close()
                     raise Exception("Error the record with the Locus Name of %s is RNA, but the organism does not belong to Viruses or Viroids." % (locus_line_info[1]))
@@ -450,7 +470,8 @@ def upload_genome(shock_service_url=None,
                             next_line = metadata_lines[metadata_line_counter + comment_loop_counter]
                         else:
                             break
-                genome_comment = "%s<%s :: %s> " % (genome_comment,accession,comment)
+#                genome_comment = "%s<%s :: %s> " % (genome_comment,accession,comment)
+#                genome_comment_io.write("<%s :: %s> " % (accession,comment))
             elif metadata_line.startswith("REFERENCE   "):
                 #PUBLICATION SECTION (long)
                 authors = ''
@@ -600,7 +621,7 @@ def upload_genome(shock_service_url=None,
         ##################################################################################################
         #FEATURE ANNOTATION PORTION - Build up datastructures to be able to build feature containers.
         ##################################################################################################
-        print "GOT TO FEATURE PORTION"
+        #print "GOT TO FEATURE PORTION"
         features_lines = features_part.split("\n") 
 
         num_feature_lines = len(features_lines)
@@ -635,7 +656,8 @@ def upload_genome(shock_service_url=None,
             coordinates_info = feature_header[21:] 
             feature_type = feature_header[:21] 
             feature_type = feature_type.strip().replace(" ","_")
-            if feature_type == "source":
+            if feature_type in exclude_feature_types:
+#            if feature_type == "source":
                 #skip source feature types.
                 continue
             feature_object["type"] = feature_type
@@ -755,16 +777,19 @@ def upload_genome(shock_service_url=None,
                         dna_sequence_length += segment_length
                         temp_sequence = sequence_part[(int(start_pos)-1):int(end_pos)] 
                         strand = "+"
+                        location_start = int(start_pos)
                         if apply_complement_to_current or apply_complement_to_all: 
                             my_dna = Seq(temp_sequence, IUPAC.ambiguous_dna)
                             my_dna = my_dna.reverse_complement()
                             temp_sequence = str(my_dna).upper()      
                             strand = "-"
+                            location_start = location_start + (segment_length - 1)
                         if apply_complement_to_all:
                             dna_sequence =  temp_sequence + dna_sequence 
                         else:
                             dna_sequence +=  temp_sequence 
-                        locations.append([accession,int(start_pos),strand,segment_length]) 
+
+                        locations.append([accession,location_start,strand,segment_length]) 
                     else:
                         #no valid coordinates
                         print "Feature text : " + feature_text + ":"
@@ -808,6 +833,7 @@ def upload_genome(shock_service_url=None,
             notes = ""
             additional_properties = dict()
             feature_specific_id = None
+            product = None
 
             for feature_key_value_pair in feature_key_value_pairs_list:
                 #the key value pair removing unnecessary white space (including new lines as these often span multiple lines)
@@ -903,6 +929,8 @@ def upload_genome(shock_service_url=None,
                     feature_object["translation"] = value 
                 elif (key == "function"):
                     feature_object["function"] = value
+                elif (key == "product"):
+                    product = value
                 elif (key == "trans_splicing"):
                     feature_object["trans_splicing"] = 1
                 else:
@@ -919,6 +947,8 @@ def upload_genome(shock_service_url=None,
                 feature_object["inference"] = inference
             if len(alias_dict) > 0:
                 feature_object["aliases"] = alias_dict
+            if ("function" not in feature_object) and (product is not None):
+                feature_object["function"] = product
 
             feature_object["quality_warnings"] = quality_warnings
 
@@ -1186,14 +1216,19 @@ def upload_genome(shock_service_url=None,
             gene_id = features_grouping_dict[feature_grouping_id]["gene"][0]
             if "locations" in features_type_containers_dict["gene"][gene_id]:
                 for location in features_type_containers_dict["gene"][gene_id]["locations"]:
+                    temp_start_location = location[1]
+                    temp_end_location = location[1] + location[3]
+                    if location[2] == "-":
+                        temp_start_location = location[1] - location[3]
+                        temp_end_location = location[1]
                     if gene_start_boundary is None:
-                        gene_start_boundary = location[1]
-                    elif location[1] < gene_start_boundary:
-                        gene_start_boundary = location[1]
+                        gene_start_boundary = temp_start_location
+                    elif temp_start_location < gene_start_boundary:
+                        gene_start_boundary = temp_start_location
                     if gene_end_boundary is None:
-                        gene_end_boundary = location[1] + location[3]
-                    elif (location[1] + location[3]) > gene_end_boundary:
-                        gene_end_boundary = location[1] + location[3]
+                        gene_end_boundary = temp_end_location
+                    elif temp_end_location > gene_end_boundary:
+                        gene_end_boundary = temp_end_location
 
                 
 #                gene_start_boundary = features_type_containers_dict["gene"][gene_id]["locations"][0][1]
@@ -1209,14 +1244,19 @@ def upload_genome(shock_service_url=None,
                     mRNA_contig = None
                     if "locations" in  features_type_containers_dict["mRNA"][feature_id]:
                         for location in features_type_containers_dict["mRNA"][feature_id]["locations"]:
+                            temp_start_location = location[1] 
+                            temp_end_location = location[1] + location[3] 
+                            if location[2] == "-": 
+                                temp_start_location = location[1] - location[3] 
+                                temp_end_location = location[1] 
                             if mRNA_start_boundary is None: 
-                                mRNA_start_boundary = location[1]
-                            elif location[1] < mRNA_start_boundary:
-                                mRNA_start_boundary = location[1]
+                                mRNA_start_boundary = temp_start_location
+                            elif temp_start_location < mRNA_start_boundary:
+                                mRNA_start_boundary = temp_start_location
                             if mRNA_end_boundary is None:
-                                mRNA_end_boundary = location[1] + location[3]
-                            elif (location[1] + location[3]) > mRNA_end_boundary:
-                                mRNA_end_boundary = location[1] + location[3]
+                                mRNA_end_boundary = temp_end_location
+                            elif temp_end_location > mRNA_end_boundary:
+                                mRNA_end_boundary = temp_end_location
  
 #                        mRNA_start_boundary = features_type_containers_dict["mRNA"][feature_id]["locations"][0][1]
                         mRNA_contig = features_type_containers_dict["mRNA"][feature_id]["locations"][0][0]
@@ -1232,7 +1272,12 @@ def upload_genome(shock_service_url=None,
                                (gene_start_boundary is not None) and \
                                (gene_end_boundary is not None):
                                 if (mRNA_start_boundary >= gene_start_boundary) and (mRNA_end_boundary <= gene_end_boundary):
-                                    gene_mRNA_list.append(["mRNA",feature_id])
+                                    needs_to_be_added = True
+                                    for mRNA_tuple in gene_mRNA_list:
+                                        if feature_id == mRNA_tuple[1]:
+                                            needs_to_be_added = False
+                                    if needs_to_be_added:
+                                        gene_mRNA_list.append(["mRNA",feature_id])
                                     if "mRNA_properties" not in features_type_containers_dict["mRNA"][feature_id]:
                                         features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"] = dict()
                                     if "parent_gene" not in features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]:
@@ -1279,8 +1324,7 @@ def upload_genome(shock_service_url=None,
                     elif "children_mRNA" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
                         temp_dict = dict()
                         for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"]:
-                            for e2 in e1:
-                                temp_dict[e2[1]] = 1
+                            temp_dict[e1[1]] = 1
                         for new_child_mRNA in gene_mRNA_list:
                             if new_child_mRNA[1] not in temp_dict:
                                 features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"].append(new_child_mRNA)
@@ -1293,14 +1337,19 @@ def upload_genome(shock_service_url=None,
                     CDS_contig = None 
                     if "locations" in  features_type_containers_dict["CDS"][feature_id]:
                         for location in features_type_containers_dict["CDS"][feature_id]["locations"]:
+                            temp_start_location = location[1] 
+                            temp_end_location = location[1] + location[3] 
+                            if location[2] == "-": 
+                                temp_start_location = location[1] - location[3] 
+                                temp_end_location = location[1] 
                             if CDS_start_boundary is None: 
-                                CDS_start_boundary = location[1]
-                            elif location[1] < CDS_start_boundary:
-                                CDS_start_boundary = location[1]
+                                CDS_start_boundary = temp_start_location
+                            elif temp_start_location < CDS_start_boundary:
+                                CDS_start_boundary = temp_start_location
                             if CDS_end_boundary is None:
-                                CDS_end_boundary = location[1] + location[3]
-                            elif (location[1] + location[3]) > CDS_end_boundary:
-                                CDS_end_boundary = location[1] + location[3] 
+                                CDS_end_boundary = temp_end_location
+                            elif temp_end_location > CDS_end_boundary:
+                                CDS_end_boundary = temp_end_location 
 #                        CDS_start_boundary = features_type_containers_dict["CDS"][feature_id]["locations"][0][1] 
                         CDS_contig = features_type_containers_dict["CDS"][feature_id]["locations"][0][0] 
                         CDS_strand = features_type_containers_dict["CDS"][feature_id]["locations"][0][2] 
@@ -1315,7 +1364,12 @@ def upload_genome(shock_service_url=None,
                                (gene_start_boundary is not None) and \
                                (gene_end_boundary is not None): 
                                 if (CDS_start_boundary >= gene_start_boundary) and (CDS_end_boundary <= gene_end_boundary): 
-                                    gene_CDS_list.append(["CDS",feature_id]) 
+                                    needs_to_be_added = True
+                                    for CDS_tuple in gene_CDS_list:
+                                        if feature_id == CDS_tuple[1]:
+                                            needs_to_be_added = False
+                                    if needs_to_be_added:
+                                        gene_CDS_list.append(["CDS",feature_id])
                                     if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
                                         features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
                                     if "parent_gene" not in features_type_containers_dict["CDS"][feature_id]["CDS_properties"]:
@@ -1361,12 +1415,10 @@ def upload_genome(shock_service_url=None,
                     elif "children_CDS" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
                         temp_dict = dict()
                         for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"]:
-                            for e2 in e1:
-                                temp_dict[e2[1]] = 1
+                            temp_dict[e1[1]] = 1
                         for new_child_CDS in gene_CDS_list:
                             if new_child_CDS[1] not in temp_dict:
                                 features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"].append(new_child_CDS)
-
 
 
         #########################        
@@ -1384,14 +1436,19 @@ def upload_genome(shock_service_url=None,
                 mRNA_contig = None 
                 if "locations" in  features_type_containers_dict["mRNA"][mRNA_feature_id]: 
                     for location in features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"]:
+                        temp_start_location = location[1] 
+                        temp_end_location = location[1] + location[3] 
+                        if location[2] == "-": 
+                            temp_start_location = location[1] - location[3] 
+                            temp_end_location = location[1] 
                         if mRNA_start_boundary is None: 
-                            mRNA_start_boundary = location[1]
-                        elif location[1] < mRNA_start_boundary:
-                            mRNA_start_boundary = location[1]
+                            mRNA_start_boundary = temp_start_location
+                        elif temp_start_location < mRNA_start_boundary:
+                            mRNA_start_boundary = temp_start_location
                         if mRNA_end_boundary is None:
-                            mRNA_end_boundary = location[1] + location[3]
-                        elif (location[1] + location[3]) > mRNA_end_boundary:
-                            mRNA_end_boundary = location[1] + location[3]
+                            mRNA_end_boundary = temp_end_location
+                        elif temp_end_location > mRNA_end_boundary:
+                            mRNA_end_boundary = temp_end_location
 
 #                    mRNA_start_boundary = features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"][0][1] 
                     mRNA_contig = features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"][0][0] 
@@ -1408,14 +1465,19 @@ def upload_genome(shock_service_url=None,
 
                             if "locations" in  features_type_containers_dict["CDS"][CDS_feature_id]: 
                                 for location in features_type_containers_dict["CDS"][CDS_feature_id]["locations"]:
+                                    temp_start_location = location[1] 
+                                    temp_end_location = location[1] + location[3] 
+                                    if location[2] == "-": 
+                                        temp_start_location = location[1] - location[3] 
+                                        temp_end_location = location[1] 
                                     if CDS_start_boundary is None: 
-                                        CDS_start_boundary = location[1]
-                                    elif location[1] < CDS_start_boundary:
-                                        CDS_start_boundary = location[1]
+                                        CDS_start_boundary = temp_start_location
+                                    elif temp_start_location < CDS_start_boundary:
+                                        CDS_start_boundary = temp_start_location
                                     if CDS_end_boundary is None:
-                                        CDS_end_boundary = location[1] + location[3]
-                                    elif (location[1] + location[3]) > CDS_end_boundary:
-                                        CDS_end_boundary = location[1] + location[3] 
+                                        CDS_end_boundary = temp_end_location
+                                    elif temp_end_location > CDS_end_boundary:
+                                        CDS_end_boundary = temp_end_location 
 
 #                                CDS_start_boundary = features_type_containers_dict["CDS"][CDS_feature_id]["locations"][0][1] 
                                 CDS_contig = features_type_containers_dict["CDS"][CDS_feature_id]["locations"][0][0] 
@@ -1680,7 +1742,6 @@ def upload_genome(shock_service_url=None,
 
     #Save genome annotation
     #Then Finally store the GenomeAnnotation.                                                                            
-    genome_annotation = dict()
 
     shock_id = None
     handle_id = None
@@ -1713,6 +1774,8 @@ def upload_genome(shock_service_url=None,
     genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
     genome_annotation['alias_source_counts_map'] = alias_source_counts_map
     genome_annotation['annotation_quality_ref'] = annotation_quality_reference
+    if release is not None:
+        genome_annotation['release'] = release
 
 #    print "Genome Annotation id %s" % (genome_annotation['genome_annotation_id'])
  
@@ -1759,7 +1822,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--object_name', 
                         help="genbank file", 
-                        nargs='?', required=False) 
+                        nargs='?', required=False)
+    parser.add_argument('--exclude_feature_types', type=str, nargs='*', required=False,
+                        help='which feature types to exclude.  feature type "source" is always excluded.  Ensembl should exclude "misc_feature"') 
 #    parser.add_argument('--fasta_file_directory', 
 #                        help="fasta_dile_directory", 
 #                        nargs='?', required=False) 
@@ -1769,8 +1834,9 @@ if __name__ == "__main__":
     parser.add_argument('--type', 
                         help="data source : examples Reference, Representative, User Upload", 
                         nargs='?', required=False, default="User upload") 
-
-
+    parser.add_argument('--release', 
+                        help="Release or version of the data.  Example Ensembl release 30", 
+                        nargs='?', required=False) 
 #    parser.add_argument('--genome_list_file', action='store', type=str, nargs='?', required=True) 
 
     parser.add_argument('--input_directory', 
@@ -1807,10 +1873,12 @@ if __name__ == "__main__":
                       workspace_name = args.workspace_name,
                       workspace_service_url = args.workspace_service_url,
                       taxon_wsname = args.taxon_wsname,
+                      exclude_feature_types = args.exclude_feature_types,
 #                      taxon_names_file = args.taxon_names_file,
                       taxon_reference = args.taxon_reference,
                       core_genome_name = args.object_name,
                       source = args.source,
+                      release = args.release,
                       type = args.type,
                       #                      genome_list_file = args.genome_list_file,
                       logger = logger)

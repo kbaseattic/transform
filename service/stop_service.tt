@@ -1,7 +1,8 @@
 #!/bin/sh
 kbtop=[% kb_top %]
 service_name=[% kb_service_name %]
-
+export KB_RUNTIME=[% kb_runtime %]
+export PATH=$KB_TOP/bin:$KB_RUNTIME/bin:$PATH
 pid_file=$kbtop/services/$service_name/service.pid
 
 if [ ! -f $pid_file ] ; then 

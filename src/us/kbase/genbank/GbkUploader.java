@@ -22,6 +22,7 @@ public class GbkUploader {
 
 
     final static boolean debug = false;
+    public final static String[] domains = {"bacteria", "archaea", "eukarya", "eukaryota", "viruses"};
 
     /**
      * @param files
@@ -89,7 +90,7 @@ public class GbkUploader {
 
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
-                .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
+                .withComplete(1L).withDomain("").withGeneticCode(0L).withId(id)
                 .withSource("KBase user upload").withSourceId(id);
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
@@ -333,6 +334,11 @@ public class GbkUploader {
                     continue;
                 genome.setScientificName(contigToOrgName.get(key));
                 String taxonomy = contigToTaxonomy.get(key);
+                //System.out.println("taxonomy "+taxonomy);
+
+                String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
+                //System.out.println("domain "+domain);
+
                 if (taxonomy != null) {
                     if (genome.getTaxonomy() != null && !genome.getTaxonomy().equals(taxonomy)) {
                         System.err.println("Taxonomy path is wrong in file [" + files.get(0).getParent() + ":" +
@@ -341,8 +347,14 @@ public class GbkUploader {
                         nameProblems = true;
                     }
                     //System.out.println("nonplasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                    genome.withTaxonomy(taxonomy);
-                }
+                    if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                        genome.withTaxonomy(taxonomy).withDomain(domain);
+                    else {
+                        System.err.println("Domain not recognized " + domain);
+                        genome.withTaxonomy(taxonomy).withDomain(domain);
+                    }
+                } else
+                    genome.withTaxonomy("").withDomain("");
             }
         } catch (Exception e) {
             System.err.println("non plamids");
@@ -359,10 +371,17 @@ public class GbkUploader {
                 if (genome.getScientificName() == null)
                     genome.setScientificName(contigToOrgName.get(key));
                 String taxonomy = contigToTaxonomy.get(key);
+                String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
                 if (genome.getTaxonomy() == null && taxonomy != null) {
-                    //System.out.println("plasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                    genome.withTaxonomy(taxonomy);
-                }
+                    if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                        //System.out.println("plasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
+                        genome.withTaxonomy(taxonomy).withDomain(domain);
+                    else {
+                        System.err.println("Domain not recognized " + domain);
+                        genome.withTaxonomy(taxonomy).withDomain("");
+                    }
+                } else
+                    genome.withTaxonomy("").withDomain("");
             }
         } catch (Exception e) {
             System.err.println("plamids");
@@ -446,7 +465,7 @@ public class GbkUploader {
                                       Map<String, List<String>> genomeNameToPaths) throws Exception {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
-                .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
+                .withComplete(1L).withDomain("").withGeneticCode(0L).withId(id)
                 .withSource("KBase user upload").withSourceId(id);
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
@@ -592,6 +611,7 @@ public class GbkUploader {
                 continue;
             genome.setScientificName(contigToOrgName.get(key));
             String taxonomy = contigToTaxonomy.get(key);
+            String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
             if (taxonomy != null) {
                 if (genome.getTaxonomy() != null && !genome.getTaxonomy().equals(taxonomy)) {
                     System.err.println("Taxonomy path is wrong in file [" + files.get(0).getParent() + ":" +
@@ -599,8 +619,14 @@ public class GbkUploader {
                     nameProblems = true;
                 }
                 //System.out.println("nonplasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                genome.withTaxonomy(taxonomy);
+                if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                    genome.withTaxonomy(taxonomy).withDomain(domain);
+                else {
+                    System.err.println("Domain not recognized " + domain);
+                    genome.withTaxonomy(taxonomy).withDomain("");
+                }
             }
+            genome.withTaxonomy("").withDomain("");
         }
         // And all plasmids now
         for (String key : contigToOrgName.keySet()) {
@@ -610,10 +636,17 @@ public class GbkUploader {
             if (genome.getScientificName() == null)
                 genome.setScientificName(contigToOrgName.get(key));
             String taxonomy = contigToTaxonomy.get(key);
+            String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
             if (genome.getTaxonomy() == null && taxonomy != null) {
                 //System.out.println("plasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                genome.withTaxonomy(taxonomy);
-            }
+                if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                    genome.withTaxonomy(taxonomy).withDomain(domain);
+                else {
+                    System.err.println("Domain not recognized " + domain);
+                    genome.withTaxonomy(taxonomy).withDomain("");
+                }
+            } else
+                genome.withTaxonomy("").withDomain("");
         }
         if (contigMap.size() == 0) {
             throw new Exception("GBK-file has no DNA-sequence");

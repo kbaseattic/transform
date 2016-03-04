@@ -602,7 +602,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
 
 
 if __name__ == "__main__":
-    logger = script_utils.stderrlogger(__file__)    
+    logger = script_utils.stdoutlogger(__file__)
     script_details = script_utils.parse_docs(upload_taskrunner.__doc__)
         
     parser = script_utils.ArgumentParser(description=script_details["Description"],

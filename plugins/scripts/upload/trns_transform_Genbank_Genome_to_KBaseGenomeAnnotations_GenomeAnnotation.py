@@ -833,6 +833,7 @@ def upload_genome(shock_service_url=None,
             notes = ""
             additional_properties = dict()
             feature_specific_id = None
+            product = None
 
             for feature_key_value_pair in feature_key_value_pairs_list:
                 #the key value pair removing unnecessary white space (including new lines as these often span multiple lines)
@@ -928,6 +929,8 @@ def upload_genome(shock_service_url=None,
                     feature_object["translation"] = value 
                 elif (key == "function"):
                     feature_object["function"] = value
+                elif (key == "product"):
+                    product = value
                 elif (key == "trans_splicing"):
                     feature_object["trans_splicing"] = 1
                 else:
@@ -944,6 +947,8 @@ def upload_genome(shock_service_url=None,
                 feature_object["inference"] = inference
             if len(alias_dict) > 0:
                 feature_object["aliases"] = alias_dict
+            if ("function" not in feature_object) and (product is not None):
+                feature_object["function"] = product
 
             feature_object["quality_warnings"] = quality_warnings
 

@@ -56,7 +56,7 @@ public class ConvertGBK {
     WorkspaceClient wc = null;
 
     int MAX_ALLOWED_FILES = 10000;
-    int MAX_ALLOWED_FILES_SPLIT = 1000;
+    int MAX_ALLOWED_FILES_SPLIT = 10000;
 
 
     boolean isTest = false;

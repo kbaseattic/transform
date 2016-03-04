@@ -232,7 +232,7 @@ public class GenometoGbk {
                                 pw.print(readmestr);
                                 pw.close();
                             } catch (FileNotFoundException e) {
-                                System.err.println("failed to write output " + outpath);
+                                System.out.println("failed to write output " + outpath);
                                 e.printStackTrace();
                             }
                         }
@@ -298,7 +298,7 @@ public class GenometoGbk {
             pw.flush();
             return pw;
         } catch (FileNotFoundException e) {
-            System.err.println("failed to write output " + outpath);
+            System.out.println("failed to write output " + outpath);
             e.printStackTrace();
             return null;
         }
@@ -577,7 +577,7 @@ public class GenometoGbk {
 
         if (genomefile == null && contigfile == null) {
             if (objectname == null && objectid == null) {
-                System.err.println("no object name or id provided and no input files provided");
+                System.out.println("no object name or id provided and no input files provided");
             }
         }
 
@@ -717,7 +717,7 @@ public class GenometoGbk {
 
                 System.out.println("got ContigSet object number " + contigSet.getContigs().size() + ", size " + result4 + "M");
             } catch (Exception e) {
-                System.err.println("ContigSet not found in workspace.");
+                System.out.println("ContigSet not found in workspace.");
 
             /*String outputfile = args[0] + "_ContigSet.json";
             try {

@@ -86,6 +86,7 @@ def upload_genome(shock_service_url=None,
                   exclude_feature_types=list(),
 #                  taxon_names_file=None,
                   taxon_reference = None,
+                  release= None,
                   #              fasta_file_directory=None,
                   core_genome_name=None,
                   source=None,
@@ -276,6 +277,7 @@ def upload_genome(shock_service_url=None,
             fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
     else:
         fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
+        source_name = "unknown_source"
 
     print "Core Genome Name :"+ core_genome_name + ":"
     print "FASTA FILE Name :"+ fasta_file_name + ":"
@@ -385,8 +387,8 @@ def upload_genome(shock_service_url=None,
         if ((len(locus_line_info)!= 7) and (len(locus_line_info)!= 8)): 
             fasta_file_handle.close()
             raise Exception("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
-        if locus_line_info[4] != 'DNA':
-            if locus_line_info[4] == 'RNA':
+        if locus_line_info[4].upper() != 'DNA':
+            if locus_line_info[4].upper() == 'RNA':
                 if not tax_lineage.lower().startswith("viruses") and not tax_lineage.lower().startswith("viroids"):
                     fasta_file_handle.close()
                     raise Exception("Error the record with the Locus Name of %s is RNA, but the organism does not belong to Viruses or Viroids." % (locus_line_info[1]))
@@ -831,6 +833,7 @@ def upload_genome(shock_service_url=None,
             notes = ""
             additional_properties = dict()
             feature_specific_id = None
+            product = None
 
             for feature_key_value_pair in feature_key_value_pairs_list:
                 #the key value pair removing unnecessary white space (including new lines as these often span multiple lines)
@@ -926,6 +929,8 @@ def upload_genome(shock_service_url=None,
                     feature_object["translation"] = value 
                 elif (key == "function"):
                     feature_object["function"] = value
+                elif (key == "product"):
+                    product = value
                 elif (key == "trans_splicing"):
                     feature_object["trans_splicing"] = 1
                 else:
@@ -942,6 +947,8 @@ def upload_genome(shock_service_url=None,
                 feature_object["inference"] = inference
             if len(alias_dict) > 0:
                 feature_object["aliases"] = alias_dict
+            if ("function" not in feature_object) and (product is not None):
+                feature_object["function"] = product
 
             feature_object["quality_warnings"] = quality_warnings
 
@@ -1265,7 +1272,12 @@ def upload_genome(shock_service_url=None,
                                (gene_start_boundary is not None) and \
                                (gene_end_boundary is not None):
                                 if (mRNA_start_boundary >= gene_start_boundary) and (mRNA_end_boundary <= gene_end_boundary):
-                                    gene_mRNA_list.append(["mRNA",feature_id])
+                                    needs_to_be_added = True
+                                    for mRNA_tuple in gene_mRNA_list:
+                                        if feature_id == mRNA_tuple[1]:
+                                            needs_to_be_added = False
+                                    if needs_to_be_added:
+                                        gene_mRNA_list.append(["mRNA",feature_id])
                                     if "mRNA_properties" not in features_type_containers_dict["mRNA"][feature_id]:
                                         features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"] = dict()
                                     if "parent_gene" not in features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]:
@@ -1312,8 +1324,7 @@ def upload_genome(shock_service_url=None,
                     elif "children_mRNA" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
                         temp_dict = dict()
                         for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"]:
-                            for e2 in e1:
-                                temp_dict[e2[1]] = 1
+                            temp_dict[e1[1]] = 1
                         for new_child_mRNA in gene_mRNA_list:
                             if new_child_mRNA[1] not in temp_dict:
                                 features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"].append(new_child_mRNA)
@@ -1353,7 +1364,12 @@ def upload_genome(shock_service_url=None,
                                (gene_start_boundary is not None) and \
                                (gene_end_boundary is not None): 
                                 if (CDS_start_boundary >= gene_start_boundary) and (CDS_end_boundary <= gene_end_boundary): 
-                                    gene_CDS_list.append(["CDS",feature_id]) 
+                                    needs_to_be_added = True
+                                    for CDS_tuple in gene_CDS_list:
+                                        if feature_id == CDS_tuple[1]:
+                                            needs_to_be_added = False
+                                    if needs_to_be_added:
+                                        gene_CDS_list.append(["CDS",feature_id])
                                     if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
                                         features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
                                     if "parent_gene" not in features_type_containers_dict["CDS"][feature_id]["CDS_properties"]:
@@ -1399,12 +1415,10 @@ def upload_genome(shock_service_url=None,
                     elif "children_CDS" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
                         temp_dict = dict()
                         for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"]:
-                            for e2 in e1:
-                                temp_dict[e2[1]] = 1
+                            temp_dict[e1[1]] = 1
                         for new_child_CDS in gene_CDS_list:
                             if new_child_CDS[1] not in temp_dict:
                                 features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"].append(new_child_CDS)
-
 
 
         #########################        
@@ -1760,6 +1774,8 @@ def upload_genome(shock_service_url=None,
     genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
     genome_annotation['alias_source_counts_map'] = alias_source_counts_map
     genome_annotation['annotation_quality_ref'] = annotation_quality_reference
+    if release is not None:
+        genome_annotation['release'] = release
 
 #    print "Genome Annotation id %s" % (genome_annotation['genome_annotation_id'])
  
@@ -1818,8 +1834,9 @@ if __name__ == "__main__":
     parser.add_argument('--type', 
                         help="data source : examples Reference, Representative, User Upload", 
                         nargs='?', required=False, default="User upload") 
-
-
+    parser.add_argument('--release', 
+                        help="Release or version of the data.  Example Ensembl release 30", 
+                        nargs='?', required=False) 
 #    parser.add_argument('--genome_list_file', action='store', type=str, nargs='?', required=True) 
 
     parser.add_argument('--input_directory', 
@@ -1861,6 +1878,7 @@ if __name__ == "__main__":
                       taxon_reference = args.taxon_reference,
                       core_genome_name = args.object_name,
                       source = args.source,
+                      release = args.release,
                       type = args.type,
                       #                      genome_list_file = args.genome_list_file,
                       logger = logger)

@@ -86,7 +86,7 @@ my ($stdout, $stderr, @result) = capture {
 	push(@{$output},'<listOfSpecies>');
 	for (my $i=0; $i < @{$obj->{modelcompounds}}; $i++) {
 		my $cpd = $obj->{modelcompounds}->[$i];
-		$cpd->{msid} = $cpd->{reaction_ref};
+		$cpd->{msid} = $cpd->{compound_ref};
 		$cpd->{msid} =~ s/.+\///g;
 		$cpd->{msid} =~ s/_.+//g;
 		if ($cpd->{msid} eq "cpd00000") {
@@ -96,9 +96,9 @@ my ($stdout, $stderr, @result) = capture {
 		$cpd->{cmplabel} = "c0";
 		if ($cpd->{id} =~ m/_([a-z]+\d+)^/) {
 			$cpd->{cmplabel} = $1;
-		}	
+		}
 		push(@{$output},'<species '.&CleanNames("id",$cpd->{id}).' '.&CleanNames("name",$cpd->{name}).' compartment="'.$cpd->{cmplabel}.'" charge="'.$cpd->{charge}.'" boundaryCondition="false"/>');
-		if ($cpd->{msid} eq "cpd11416" || $cpd->{msid} eq "cpd15302" || $cpd->{msid} eq "cpd08636") {
+		if ($cpd->{msid} eq "cpd11416" || $cpd->{msid} eq "cpd15302" || $cpd->{msid} eq "cpd08636" || $cpd->{msid} eq "cpd02701") {
 			push(@{$output},'<species '.&CleanNames("id",$cpd->{msid}."_b").' '.&CleanNames("name",$cpd->{name}."_b").' compartment="'.$cpd->{cmplabel}.'" charge="'.$cpd->{charge}.'" boundaryCondition="true"/>');
 		}
 	}
@@ -262,7 +262,7 @@ my ($stdout, $stderr, @result) = capture {
 		my $cpd = $cpds->[$i];
 		my $lb = -1000;
 		my $ub = 1000;
-		if ($cpd->{cmplabel} =~ m/^e/ || $cpd->{msid} eq "cpd08636" || $cpd->{msid} eq "cpd11416" || $cpd->{msid} eq "cpd15302") {
+		if ($cpd->{cmplabel} =~ m/^e/ || $cpd->{msid} eq "cpd08636" || $cpd->{msid} eq "cpd11416" || $cpd->{msid} eq "cpd15302" || $cpd->{msid} eq "cpd02701") {
 			push(@{$output},'<reaction '.&CleanNames("id",'EX_'.$cpd->{id}).' '.&CleanNames("name",'EX_'.$cpd->{name}).' reversible="true">');
 			push(@{$output},"\t".'<notes>');
 			push(@{$output},"\t\t".'<html:p>GENE_ASSOCIATION: </html:p>');

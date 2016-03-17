@@ -213,7 +213,7 @@ public class GbkUploader {
                             for (GbkQualifier prop : props) {
                                 if (debug)
                                     System.out.println("addFeatureTrackFile " + prop.type);
-                                if (prop.type.equals("locus_tag")) {
+                                if (prop.type.equalsIgnoreCase("locus_tag")) {
                                     try {
                                         f.setId(prop.getValue());
                                     } catch (Exception e) {
@@ -222,7 +222,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("translation")) {
+                                } else if (prop.type.equalsIgnoreCase("translation")) {
                                     try {
                                         String seq = prop.getValue();
                                         f.withProteinTranslation(seq).withProteinTranslationLength((long) seq.length());
@@ -232,7 +232,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("note")) {
+                                } /*else if (prop.type.equals("note")) {
                                     try {
                                         f.setFunction(prop.getValue());
                                     } catch (Exception e) {
@@ -241,9 +241,23 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("product")) {
+                                }*/
+                                //use function field if has info
+                                else if (prop.type.equalsIgnoreCase("function")) {
                                     try {
-                                        if (f.getFunction() == null)
+                                        if (prop.getValue() != null && prop.getValue().length() > 0)
+                                            f.setFunction(prop.getValue());
+                                    } catch (Exception e) {
+                                        System.err.println("note error " + filename);
+                                        System.err.print(e.getMessage());
+                                        System.err.print(e.getStackTrace());
+                                        e.printStackTrace();
+                                    }
+                                }
+                                //only use product field if function field is empty
+                                else if (prop.type.equalsIgnoreCase("product")) {
+                                    try {
+                                        if (f.getFunction() == null || f.getFunction().length() == 0)
                                             f.setFunction(prop.getValue());
                                     } catch (Exception e) {
                                         System.err.println("product error " + filename);
@@ -251,7 +265,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("gene")) {
+                                } else if (prop.type.equalsIgnoreCase("gene")) {
                                     try {
                                         final String pg = prop.getValue();
                                         //System.out.println("addFeatureTrackFile gene "+pg);
@@ -265,7 +279,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("protein_id")) {
+                                } else if (prop.type.equalsIgnoreCase("protein_id")) {
                                     try {
                                         final String pg = prop.getValue();
                                         ArrayList aliases = (ArrayList) f.getAliases();
@@ -283,7 +297,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("db_xref")) {//protein id
+                                } else if (prop.type.equalsIgnoreCase("db_xref")) {//protein id
                                     try {
                                         final String pg = prop.getValue();
                                         ArrayList aliases = (ArrayList) f.getAliases();

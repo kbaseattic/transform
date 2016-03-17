@@ -56,6 +56,8 @@ public class ConvertGBK {
     WorkspaceClient wc = null;
 
     int MAX_ALLOWED_FILES = 10000;
+    int MAX_ALLOWED_FILES_SPLIT = 10000;
+
 
     boolean isTest = false;
 
@@ -174,8 +176,9 @@ public class ConvertGBK {
                     File outf = new File(outpath2);
                     PrintWriter pw = new PrintWriter(outf);
 
-                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " files. This download had " + files.length
-                            + " files, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " separate GenBank files (contigs). " +
+                            "This download had " + files.length
+                            + " files, only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
                     pw.print(readmestr);
                     pw.close();
                 } catch (FileNotFoundException e) {
@@ -271,7 +274,7 @@ public class ConvertGBK {
             Scanner fileScanner2 = new Scanner(path);
             List<String> loci = new ArrayList<String>();
             StringBuilder sb = new StringBuilder("");
-            while (fileScanner2.hasNextLine() && countfiles < MAX_ALLOWED_FILES) {
+            while (fileScanner2.hasNextLine() && countfiles < MAX_ALLOWED_FILES_SPLIT) {
                 String cur = fileScanner2.nextLine();
                 //if (!cur.startsWith(" "))
                 //    System.out.println(cur);
@@ -308,15 +311,16 @@ public class ConvertGBK {
             }
 
 
-            if (countfiles == MAX_ALLOWED_FILES && fileScanner2.hasNextLine()) {
+            if (countfiles == MAX_ALLOWED_FILES_SPLIT && fileScanner2.hasNextLine()) {
                 final String outpath2 = (workdir != null ? workdir + "/" : "") + "README.txt";
                 System.out.println("writing " + outpath2);
                 try {
                     File outf = new File(outpath2);
                     PrintWriter pw = new PrintWriter(outf);
 
-                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " contigs. This download had more than " + MAX_ALLOWED_FILES
-                            + " contigs, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    String readmestr = "The limit for uploading multiple contigs from a single GenBank file is " + MAX_ALLOWED_FILES_SPLIT + " contigs. " +
+                            "This download had more than " + MAX_ALLOWED_FILES_SPLIT
+                            + " contigs, only the first " + MAX_ALLOWED_FILES_SPLIT + " contigs will be uploaded.";
                     pw.print(readmestr);
                     pw.close();
                 } catch (FileNotFoundException e) {

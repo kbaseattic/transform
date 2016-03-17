@@ -245,7 +245,7 @@ public class GenometoGbk {
         //hack for plant transcripts
         if (contigSet == null || contigSet.getContigs() == null || contigSet.getContigs().size() == 0) {
 
-            genome.setComplete(0L);
+            genome.setComplete(1L);
             StringBuffer out2 = createHeader(genome.getId(), 0, 0, "");
 
             out2.append("ORIGIN\n");
@@ -381,10 +381,10 @@ public class GenometoGbk {
 
         System.out.println(genome.getNumContigs());
 
-        Long completeness = genome.getComplete();
-        if (completeness == null)
-            completeness = new Long(0);
-        out.append(" COMMENT            COMPLETENESS: " + (completeness == 1 ? "full length" : "incomplete") + ".\n");
+        //Long completeness = genome.getComplete();
+        //if (completeness == null)
+        //    completeness = new Long(0);
+        //out.append(" COMMENT            COMPLETENESS: " + (completeness == 1 ? "full length" : "incomplete") + ".\n");
 
         out.append("                    Exported from the DOE KnowledgeBase.\n");
 

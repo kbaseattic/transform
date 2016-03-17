@@ -22,6 +22,7 @@ public class GbkUploader {
 
 
     final static boolean debug = false;
+    public final static String[] domains = {"bacteria", "archaea", "eukarya", "eukaryota", "viruses"};
 
     /**
      * @param files
@@ -89,7 +90,7 @@ public class GbkUploader {
 
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
-                .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
+                .withComplete(1L).withDomain("").withGeneticCode(0L).withId(id)
                 .withSource("KBase user upload").withSourceId(id);
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
@@ -212,7 +213,7 @@ public class GbkUploader {
                             for (GbkQualifier prop : props) {
                                 if (debug)
                                     System.out.println("addFeatureTrackFile " + prop.type);
-                                if (prop.type.equals("locus_tag")) {
+                                if (prop.type.equalsIgnoreCase("locus_tag")) {
                                     try {
                                         f.setId(prop.getValue());
                                     } catch (Exception e) {
@@ -221,7 +222,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("translation")) {
+                                } else if (prop.type.equalsIgnoreCase("translation")) {
                                     try {
                                         String seq = prop.getValue();
                                         f.withProteinTranslation(seq).withProteinTranslationLength((long) seq.length());
@@ -231,7 +232,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("note")) {
+                                } /*else if (prop.type.equals("note")) {
                                     try {
                                         f.setFunction(prop.getValue());
                                     } catch (Exception e) {
@@ -240,9 +241,23 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("product")) {
+                                }*/
+                                //use function field if has info
+                                else if (prop.type.equalsIgnoreCase("function")) {
                                     try {
-                                        if (f.getFunction() == null)
+                                        if (prop.getValue() != null && prop.getValue().length() > 0)
+                                            f.setFunction(prop.getValue());
+                                    } catch (Exception e) {
+                                        System.err.println("note error " + filename);
+                                        System.err.print(e.getMessage());
+                                        System.err.print(e.getStackTrace());
+                                        e.printStackTrace();
+                                    }
+                                }
+                                //only use product field if function field is empty
+                                else if (prop.type.equalsIgnoreCase("product")) {
+                                    try {
+                                        if (f.getFunction() == null || f.getFunction().length() == 0)
                                             f.setFunction(prop.getValue());
                                     } catch (Exception e) {
                                         System.err.println("product error " + filename);
@@ -250,7 +265,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("gene")) {
+                                } else if (prop.type.equalsIgnoreCase("gene")) {
                                     try {
                                         final String pg = prop.getValue();
                                         //System.out.println("addFeatureTrackFile gene "+pg);
@@ -264,7 +279,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("protein_id")) {
+                                } else if (prop.type.equalsIgnoreCase("protein_id")) {
                                     try {
                                         final String pg = prop.getValue();
                                         ArrayList aliases = (ArrayList) f.getAliases();
@@ -282,7 +297,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("db_xref")) {//protein id
+                                } else if (prop.type.equalsIgnoreCase("db_xref")) {//protein id
                                     try {
                                         final String pg = prop.getValue();
                                         ArrayList aliases = (ArrayList) f.getAliases();
@@ -333,6 +348,11 @@ public class GbkUploader {
                     continue;
                 genome.setScientificName(contigToOrgName.get(key));
                 String taxonomy = contigToTaxonomy.get(key);
+                //System.out.println("taxonomy "+taxonomy);
+
+                String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
+                //System.out.println("domain "+domain);
+
                 if (taxonomy != null) {
                     if (genome.getTaxonomy() != null && !genome.getTaxonomy().equals(taxonomy)) {
                         System.err.println("Taxonomy path is wrong in file [" + files.get(0).getParent() + ":" +
@@ -341,8 +361,14 @@ public class GbkUploader {
                         nameProblems = true;
                     }
                     //System.out.println("nonplasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                    genome.withTaxonomy(taxonomy);
-                }
+                    if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                        genome.withTaxonomy(taxonomy).withDomain(domain);
+                    else {
+                        System.err.println("Domain not recognized " + domain);
+                        genome.withTaxonomy(taxonomy).withDomain(domain);
+                    }
+                } else
+                    genome.withTaxonomy("").withDomain("");
             }
         } catch (Exception e) {
             System.err.println("non plamids");
@@ -359,10 +385,17 @@ public class GbkUploader {
                 if (genome.getScientificName() == null)
                     genome.setScientificName(contigToOrgName.get(key));
                 String taxonomy = contigToTaxonomy.get(key);
+                String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
                 if (genome.getTaxonomy() == null && taxonomy != null) {
-                    //System.out.println("plasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                    genome.withTaxonomy(taxonomy);
-                }
+                    if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                        //System.out.println("plasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
+                        genome.withTaxonomy(taxonomy).withDomain(domain);
+                    else {
+                        System.err.println("Domain not recognized " + domain);
+                        genome.withTaxonomy(taxonomy).withDomain("");
+                    }
+                } else
+                    genome.withTaxonomy("").withDomain("");
             }
         } catch (Exception e) {
             System.err.println("plamids");
@@ -446,7 +479,7 @@ public class GbkUploader {
                                       Map<String, List<String>> genomeNameToPaths) throws Exception {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
-                .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
+                .withComplete(1L).withDomain("").withGeneticCode(0L).withId(id)
                 .withSource("KBase user upload").withSourceId(id);
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
@@ -592,6 +625,7 @@ public class GbkUploader {
                 continue;
             genome.setScientificName(contigToOrgName.get(key));
             String taxonomy = contigToTaxonomy.get(key);
+            String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
             if (taxonomy != null) {
                 if (genome.getTaxonomy() != null && !genome.getTaxonomy().equals(taxonomy)) {
                     System.err.println("Taxonomy path is wrong in file [" + files.get(0).getParent() + ":" +
@@ -599,8 +633,14 @@ public class GbkUploader {
                     nameProblems = true;
                 }
                 //System.out.println("nonplasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                genome.withTaxonomy(taxonomy);
+                if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                    genome.withTaxonomy(taxonomy).withDomain(domain);
+                else {
+                    System.err.println("Domain not recognized " + domain);
+                    genome.withTaxonomy(taxonomy).withDomain("");
+                }
             }
+            genome.withTaxonomy("").withDomain("");
         }
         // And all plasmids now
         for (String key : contigToOrgName.keySet()) {
@@ -610,10 +650,17 @@ public class GbkUploader {
             if (genome.getScientificName() == null)
                 genome.setScientificName(contigToOrgName.get(key));
             String taxonomy = contigToTaxonomy.get(key);
+            String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
             if (genome.getTaxonomy() == null && taxonomy != null) {
                 //System.out.println("plasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                genome.withTaxonomy(taxonomy);
-            }
+                if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                    genome.withTaxonomy(taxonomy).withDomain(domain);
+                else {
+                    System.err.println("Domain not recognized " + domain);
+                    genome.withTaxonomy(taxonomy).withDomain("");
+                }
+            } else
+                genome.withTaxonomy("").withDomain("");
         }
         if (contigMap.size() == 0) {
             throw new Exception("GBK-file has no DNA-sequence");

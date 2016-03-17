@@ -927,10 +927,11 @@ def upload_genome(shock_service_url=None,
                     #
                     value = re.sub('\s+',' ',value)
                     feature_object["translation"] = value 
-                elif (key == "function"):
+                elif ((key == "function") and (value is not None) and (value.strip() == "") :
                     feature_object["function"] = value
                 elif (key == "product"):
                     product = value
+                    additional_properties[key] = value
                 elif (key == "trans_splicing"):
                     feature_object["trans_splicing"] = 1
                 else:

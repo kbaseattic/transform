@@ -116,7 +116,7 @@ public class GbkParser {
                     } else if (line.indexOf("/") == 0 && line.indexOf("/ ") != 0 && line.indexOf("=") == -1 && line.indexOf("\"") == -1) {//skips illegal features with no '=' and no quotes
 
                         //System.err.println("qual " + qual);
-                        System.out.println("Warning parsing GBK file: ignoring field [" + line + "], non-standard qualifier not confirming to /X=\"Y\"");
+                        System.out.println("Warning parsing GBK file: ignoring field [" + line + "], qualifier not confirming to /X=\"Y\"");
                         continue;
 
                         /*if (line.equals("/pseudo") || line.equals("/trans_splicing") || line.equals("/ribosomal_slippage")) {

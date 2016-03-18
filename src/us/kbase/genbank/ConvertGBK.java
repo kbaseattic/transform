@@ -403,12 +403,17 @@ public class ConvertGBK {
         }*/
 
         genome.setAdditionalProperties("SOURCE", "KBASE_USER_UPLOAD");
-        String outpath = workdir + "/" + out_object_g + ".jsonp";
+        String outpath = workdir + "/" + out_object_g;
+        if (!out_object_g.endsWith(".json") && !out_object_g.endsWith(".jsonp"))
+            outpath += ".jsonp";
 
         System.out.println("workdir " + workdir + "\nout_object_g " + out_object_g + "\tout_object_c " + out_object_c);
         if (out_object_g == null) {
             out_object_g = genome.getId();
-            outpath = workdir + "/" + out_object_g + ".jsonp";
+
+            outpath = workdir + "/" + out_object_g;
+            if (!out_object_g.endsWith(".json") && !out_object_g.endsWith(".jsonp"))
+                outpath += ".jsonp";
         }
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
@@ -437,12 +442,9 @@ public class ConvertGBK {
             }
         }
 
-        if (out_object_c.indexOf("ContigSet") == -1)
+        if (!out_object_c.endsWith(".json") && !out_object_c.endsWith(".jsonp")
+        && !out_object_c.endsWith("ContigSet.json") && !out_object_c.endsWith("ContigSet.jsonp"))
             outpath2 = workdir + "/" + out_object_c + "_ContigSet.jsonp";
-        else if (!out_object_c.endsWith(".json") && !out_object_c.endsWith(".jsonp"))
-            outpath2 = workdir + "/" + out_object_c + ".jsonp";
-        else
-            outpath2 = workdir + "/" + out_object_c;
 
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));

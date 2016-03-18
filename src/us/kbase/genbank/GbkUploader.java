@@ -213,7 +213,7 @@ public class GbkUploader {
                             for (GbkQualifier prop : props) {
                                 if (debug)
                                     System.out.println("addFeatureTrackFile " + prop.type);
-                                if (prop.type.equalsIgnoreCase("locus_tag")) {
+                                if (prop.type.equals("locus_tag")) {
                                     try {
                                         f.setId(prop.getValue());
                                     } catch (Exception e) {
@@ -222,7 +222,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equalsIgnoreCase("translation")) {
+                                } else if (prop.type.equals("translation")) {
                                     try {
                                         String seq = prop.getValue();
                                         f.withProteinTranslation(seq).withProteinTranslationLength((long) seq.length());
@@ -243,7 +243,7 @@ public class GbkUploader {
                                     }
                                 }*/
                                 //use function field if has info
-                                else if (prop.type.equalsIgnoreCase("function")) {
+                                else if (prop.type.equals("function")) {
                                     try {
                                         if (prop.getValue() != null && prop.getValue().length() > 0)
                                             f.setFunction(prop.getValue());
@@ -255,7 +255,7 @@ public class GbkUploader {
                                     }
                                 }
                                 //only use product field if function field is empty
-                                else if (prop.type.equalsIgnoreCase("product")) {
+                                else if (prop.type.equals("product")) {
                                     try {
                                         if (f.getFunction() == null || f.getFunction().length() == 0)
                                             f.setFunction(prop.getValue());
@@ -265,7 +265,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equalsIgnoreCase("gene")) {
+                                } else if (prop.type.equals("gene")) {
                                     try {
                                         final String pg = prop.getValue();
                                         //System.out.println("addFeatureTrackFile gene "+pg);
@@ -279,7 +279,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equalsIgnoreCase("protein_id")) {
+                                } else if (prop.type.equals("protein_id")) {
                                     try {
                                         final String pg = prop.getValue();
                                         ArrayList aliases = (ArrayList) f.getAliases();
@@ -297,7 +297,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equalsIgnoreCase("db_xref")) {//protein id
+                                } else if (prop.type.equals("db_xref")) {//protein id
                                     try {
                                         final String pg = prop.getValue();
                                         ArrayList aliases = (ArrayList) f.getAliases();

@@ -165,7 +165,7 @@ public class ConvertGBK {
                 }
             });
 
-            if (files.length == 0) {
+            if (files == null || files.length == 0) {
                 System.err.println("The provided file does not have a valid GenBank file extension: gb|gbk|genbank|gbf|gbff.");
                 System.exit(1);
             } else

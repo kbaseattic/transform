@@ -164,7 +164,12 @@ public class ConvertGBK {
                     return name.matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$");
                 }
             });
-            System.out.println("testing name matches " + files.length + "\t" + files[0]);
+
+            if (files.length == 0) {
+                System.err.println("The provided file does not have a valid GenBank file extension: gb|gbk|genbank|gbf|gbff.");
+                System.exit(1);
+            } else
+                System.out.println("testing name matches " + files.length + "\t" + files[0]);
 
             String outpath = workdir.getAbsolutePath();
 
@@ -443,7 +448,7 @@ public class ConvertGBK {
         }
 
         if (!out_object_c.endsWith(".json") && !out_object_c.endsWith(".jsonp")
-        && !out_object_c.endsWith("ContigSet.json") && !out_object_c.endsWith("ContigSet.jsonp"))
+                && !out_object_c.endsWith("ContigSet.json") && !out_object_c.endsWith("ContigSet.jsonp"))
             outpath2 = workdir + "/" + out_object_c + "_ContigSet.jsonp";
 
         try {

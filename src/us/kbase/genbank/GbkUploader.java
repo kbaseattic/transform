@@ -203,6 +203,8 @@ public class GbkUploader {
                                 f = new Feature().withType("CDS");
                             } else if (featureType.toUpperCase().endsWith("RNA")) {
                                 f = new Feature().withType("RNA");
+                            } else if (featureType.endsWith("gene")) {
+                                f = new Feature().withType("gene");
                             }
                             if (f == null)
                                 return;

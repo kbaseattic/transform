@@ -302,7 +302,7 @@ public class ConvertGBK {
                         out.print(sb);
                         out.close();
                         split = true;
-                        System.out.println("    wrote: " + outpath);
+                        System.out.println("    wrote: " + curoutpath);
                         countfiles++;
                     } catch (IOException e) {
                         System.out.println("Error creating or writing file " + outpath);
@@ -366,7 +366,7 @@ public class ConvertGBK {
                     //System.out.println("parseAllInDir file " + f.getAbsolutePath());
                     if (f.isDirectory()) {
                         parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
+                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff|dat)$")) {
                         files.add(f);
                         System.out.println("Added from dir " + f + "\ttotal " + files.size());
                     }
@@ -396,7 +396,7 @@ public class ConvertGBK {
         String name = gbkFiles.get(0).getName();
         final int endIndex = name.lastIndexOf(".");
         name = name.substring(0, endIndex != -1 ? endIndex : name.length());
-        System.out.println("parseGenome " + name);
+        System.out.println("parseGenome " + gbkFiles.get(0) + "\t" + name);
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, name, true);
 
         Genome genome = (Genome) ar.get(2);

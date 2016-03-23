@@ -108,9 +108,9 @@ public class GbkFeature extends GbkLocation {
             ArrayList aliases = new ArrayList();
             for (GbkQualifier qualifier : qualifiers) {
                 //System.out.println("qualifier " + qualifier);
-                if (qualifier.type.equals("organism")) {
+                if (qualifier.type.equalsIgnoreCase("organism")) {
                     genomeName = qualifier.getValue();
-                } else if (qualifier.type.equals("db_xref")) {
+                } else if (qualifier.type.equalsIgnoreCase("db_xref")) {
                     String value = qualifier.getValue();
                     if (value.startsWith(TAXON_PREFIX)) {
                         String taxstring = value.substring(TAXON_PREFIX.length()).trim();
@@ -124,11 +124,11 @@ public class GbkFeature extends GbkLocation {
                         String alias = value.substring(DBXREF_PREFIX.length()).trim();
                         aliases.add(alias);
                     }
-                } else if (qualifier.type.equals("plasmid")) {
+                } else if (qualifier.type.equalsIgnoreCase("plasmid")) {
                     plasmid = qualifier.getValue();
                 }
             }
-            //System.out.println("taxid " + taxId);
+            //System.out.println("save genomeName " + genomeName);
             ret.setGenomeTrackFile(locus.name, genomeName, taxId, plasmid, filename);
         } else {
             ret.addFeatureTrackFile(locus.name, type, strand, start, stop, locations, qualifiers, filename);

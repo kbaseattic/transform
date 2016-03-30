@@ -164,7 +164,12 @@ public class ConvertGBK {
                     return name.matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$");
                 }
             });
-            System.out.println("testing name matches " + files.length + "\t" + files[0]);
+
+            if (files == null || files.length == 0) {
+                System.err.println("The provided file does not have a valid GenBank file extension: gb|gbk|genbank|gbf|gbff.");
+                System.exit(1);
+            } else
+                System.out.println("testing name matches " + files.length + "\t" + files[0]);
 
             String outpath = workdir.getAbsolutePath();
 
@@ -297,7 +302,7 @@ public class ConvertGBK {
                         out.print(sb);
                         out.close();
                         split = true;
-                        System.out.println("    wrote: " + outpath);
+                        System.out.println("    wrote: " + curoutpath);
                         countfiles++;
                     } catch (IOException e) {
                         System.out.println("Error creating or writing file " + outpath);
@@ -361,7 +366,7 @@ public class ConvertGBK {
                     //System.out.println("parseAllInDir file " + f.getAbsolutePath());
                     if (f.isDirectory()) {
                         parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
+                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff|dat)$")) {
                         files.add(f);
                         System.out.println("Added from dir " + f + "\ttotal " + files.size());
                     }
@@ -391,7 +396,7 @@ public class ConvertGBK {
         String name = gbkFiles.get(0).getName();
         final int endIndex = name.lastIndexOf(".");
         name = name.substring(0, endIndex != -1 ? endIndex : name.length());
-        System.out.println("parseGenome " + name);
+        System.out.println("parseGenome " + gbkFiles.get(0) + "\t" + name);
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, name, true);
 
         Genome genome = (Genome) ar.get(2);
@@ -443,7 +448,7 @@ public class ConvertGBK {
         }
 
         if (!out_object_c.endsWith(".json") && !out_object_c.endsWith(".jsonp")
-        && !out_object_c.endsWith("ContigSet.json") && !out_object_c.endsWith("ContigSet.jsonp"))
+                && !out_object_c.endsWith("ContigSet.json") && !out_object_c.endsWith("ContigSet.jsonp"))
             outpath2 = workdir + "/" + out_object_c + "_ContigSet.jsonp";
 
         try {

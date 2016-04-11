@@ -161,7 +161,7 @@ public class ConvertGBK {
             File[] files = indir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
-                    return name.matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$");
+                    return name.matches("^.*\\.(gb|gbk|genbank|gbf|gbff|dat)$");
                 }
             });
 

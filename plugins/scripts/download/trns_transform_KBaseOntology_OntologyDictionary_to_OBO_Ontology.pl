@@ -45,5 +45,6 @@ if($help || !$input || !$output){
 }
 $logger->info("Mandatory Data passed = ".join(" | ", ($input,$output)));
 
-$logger->info("Running core OBO transform script");
-system("$Command --from-json $input > $output");
+$logger->info("Running OBO transform script");
+eval { !system("$Command --from-json $input > $output") or die $ERRNO };
+$logger->warn("Unable to run OBO transform script: $Command --from-json $input > $output");

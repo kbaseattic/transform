@@ -39,9 +39,8 @@ if ($to_json || $ftype eq 'obo' && !$from_json) {
 sub obo_to_json {
     my ($input) = @_;
     open(OBO, "<$input") or die "Could not open $input";
-    my $obj;
     my ($stanza, $type) = parse_stanza(\*OBO, 'Header');
-    $obj->{header} = $stanza;
+    my $obj = $stanza;
     while ($type) {
         my ($stanza, $section, $next_type);
         ($stanza, $next_type) = parse_stanza(\*OBO, $type);
@@ -56,7 +55,7 @@ sub obo_to_json {
 sub json_to_obo {
     my ($input) = @_;
     my $obj = from_json(slurp($input));
-    write_stanza($obj->{header}, 'Header');
+    write_stanza($obj, 'Header');
     my @types = qw(Term Typedef Instance);
     for my $type (@types) {
         my $key = lc($type)."_hash";
@@ -71,7 +70,8 @@ sub json_to_obo {
 
 sub write_stanza {
     my ($hash, $type) = @_;
-    my @tags = sort { tag_order($type, $a) <=> tag_order($type, $b) } keys %$hash;
+    my @tags = sort { tag_order($type, $a) <=> tag_order($type, $b) }
+               grep { tag_order($type, $_) } keys %$hash;
     for my $k (@tags) {
         my $v = $hash->{$k};
         my $key = $type eq 'Header' ? json_key_to_header_tag($k) : $k;
@@ -113,13 +113,17 @@ sub tag_order {
     my ($type, $tag) = @_;
     $tag_info ||= get_tag_info();
     # print STDERR '$tag_info = '. Dumper($tag_info);
-
     return $tag_info->{$type}->{$tag}->[0];
 }
 sub tag_multi {
     my ($type, $tag) = @_;
     $tag_info ||= get_tag_info();
     return $tag_info->{$type}->{$tag}->[1];
+}
+sub tag_required {
+    my ($type, $tag) = @_;
+    $tag_info ||= get_tag_info();
+    return $tag_info->{$type}->{$tag}->[2];
 }
 sub header_tag_to_json_key {
     my ($tag) = @_;
@@ -134,7 +138,7 @@ sub json_key_to_header_tag {
 }
 
 
-# https://oboformat.googlecode.com/svn/trunk/doc/GO.format.obo-1_2.html#S.2
+# ftp://ftp.geneontology.org/pub/go/www/GO.format.obo-1_4.shtml
 sub get_tag_info {
     my @header_tag_order = qw(
                                  format-version
@@ -159,7 +163,6 @@ sub get_tag_info {
                                  import
                                  subsetdef
                                  synonymtypedef
-                                 default-namespace
                                  namespace-id-rule
                                  idspace
                                  treat-xrefs-as-equivalent
@@ -168,6 +171,7 @@ sub get_tag_info {
                                  treat-xrefs-as-is_a
                                  remark
                             );
+    my @header_tag_required = qw(format-version);
 
     my @term_tag_order = qw(
                                id
@@ -212,6 +216,8 @@ sub get_tag_info {
                                replaced_by
                                consider
                           );
+    my @term_tag_required = qw(id);
+
 
     my @typedef_tag_order = qw(
                                   id
@@ -283,6 +289,7 @@ sub get_tag_info {
                                   expand_assertion_to
                                   expand_expression_to
                              );
+    my @typedef_tag_required = qw(id);
 
     my @instance_tag_order = qw(
                                    id
@@ -317,11 +324,12 @@ sub get_tag_info {
                                    replaced_by
                                    consider
                               );
+    my @instance_tag_required = qw(id);
 
-    my $header_tags   = make_tag_info_hash(\@header_tag_order, \@header_tag_multi);
-    my $term_tags     = make_tag_info_hash(\@term_tag_order, \@term_tag_multi);
-    my $typedef_tags  = make_tag_info_hash(\@typedef_tag_order, \@typedef_tag_multi);
-    my $instance_tags = make_tag_info_hash(\@instance_tag_order, \@instance_tag_multi);
+    my $header_tags   = make_tag_info_hash(\@header_tag_order,  \@header_tag_multi,    \@header_tag_required);
+    my $term_tags     = make_tag_info_hash(\@term_tag_order,     \@term_tag_multi,     \@term_tag_required);
+    my $typedef_tags  = make_tag_info_hash(\@typedef_tag_order,  \@typedef_tag_multi,  \@typedef_tag_required);
+    my $instance_tags = make_tag_info_hash(\@instance_tag_order, \@instance_tag_multi, \@instance_tag_required);
 
     return { Header   => $header_tags,
              Term     => $term_tags,
@@ -331,47 +339,66 @@ sub get_tag_info {
 }
 
 sub make_tag_info_hash {
-    my ($order_list, $multi_list) = @_;
+    my ($order_list, $multi_list, $required_list) = @_;
     my (%hash, $i);
     $hash{$_} = [++$i] for map { s/-/_/g; $_ } @$order_list;
     $hash{$_}->[1] = 1 for map { s/-/_/g; $_ } @$multi_list;
+    $hash{$_}->[2] = 1 for map { s/-/_/g; $_ } @$required_list;
     return \%hash;
 }
 
 sub print_spec {
     $tag_info ||= get_tag_info();
-    print "module Ontology {\n\n";
-    my @types = qw(Header Term Typedef Instance);
+    print "module KBaseOntology {\n\n";
+    my @types = qw(Term Typedef Instance);
     for my $type (@types) {
-        my @record;
-        my @tags = sort { tag_order($type, $a) <=> tag_order($type, $b) } keys %{$tag_info->{$type}};
-        for my $tag (@tags) {
-            my $multi = tag_multi($type, $tag);
-            my $var = $tag;
-            my $def = $multi ? 'list<string>' : 'string';
-            push @record, [$def, $var];
-        }
-        print_record('Ontology'.$type, \@record, 4);
+        my ($record, $optionals) = get_spec_record_for_type($type);
+        print_record('Ontology'.$type, $record, 4, $optionals);
     }
-    my @record;
-    push @record, [ 'OntologyHeader', 'header' ];
-    shift @types;
+    my ($base, $optionals) = get_spec_record_for_type('Header');
+    push @$optionals, ('typedef_hash', 'instance_hash');
     for my $type (@types) {
-        push @record, [ "mapping<string, Ontology$type>", lc($type).'_hash' ];
+        push @$base, [ "mapping<string, Ontology$type>", lc($type).'_hash' ];
     }
-    print_record('OntologyDictionary', \@record, 4);
+    print_record('OntologyDictionary', $base, 4, $optionals);
     print "};\n";
 }
 
+sub get_spec_record_for_type {
+    my ($type) = @_;
+    $tag_info ||= get_tag_info();
+    my @record;
+    my @tags = sort { tag_order($type, $a) <=> tag_order($type, $b) } keys %{$tag_info->{$type}};
+    my @optionals = grep { ! tag_required($type, $_) } @tags;
+    for my $tag (@tags) {
+        my $multi = tag_multi($type, $tag);
+        my $var = $tag;
+        my $def = $multi ? 'list<string>' : 'string';
+        push @record, [$def, $var];
+    }
+    return (\@record, \@optionals);
+}
+
 sub print_record {
-    my ($struct, $record, $indent) = @_;
+    my ($struct, $record, $indent, $optionals) = @_;
     my @lines;
+    print_record_optional_fields($optionals, $indent) if $optionals;
     push @lines, 'typedef structure {';
     push @lines, '    '. $_->[0].' '. $_->[1].';' for @$record;
     push @lines, "} $struct;";
     print join('', ' 'x$indent, $_, "\n") for @lines;
     print "\n";
 }
+
+sub print_record_optional_fields {
+    my ($optionals, $indent) = @_;
+    my $space = ' 'x$indent;
+    print $space."/*\n";
+    print $space.'    @optional '.join(' ', @$optionals);
+    print "\n";
+    print $space."*/\n";
+}
+
 
 sub guess_file_type {
     my ($fname) = @_;

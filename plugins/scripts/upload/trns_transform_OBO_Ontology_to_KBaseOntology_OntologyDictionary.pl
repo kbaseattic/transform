@@ -28,7 +28,7 @@ trns_transform_OBO_Ontology_to_KBaseOntology_OntologyDictionary.pl --input_file_
 
 =cut
 
-my $Command = "../core/obo.pl";
+my $Command = "../../../lib/obo.pl";
 
 my ($help, $input, $output);
 GetOptions("h|help"      => \$help,

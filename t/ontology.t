@@ -11,7 +11,7 @@ use JSON;
 
 my $usage = "$0 [options] [test1 test2 ...]\n";
 
-my $command = "../plugins/scripts/core/obo.pl";
+my $command = "../lib/obo.pl";
 my ($help, $dir, $dry);
 
 my $rc = GetOptions("h|help"  => \$help,

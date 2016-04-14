@@ -1,9 +1,9 @@
 #! /usr/bin/env perl
 #PERL USE
 use strict;
-use Data::Dumper;
-use JSON;
 use Getopt::Long;
+use Try::Tiny;
+use JSON;
 
 #KBASE USE
 use Bio::KBase::Transform::ScriptHelpers qw( getStderrLogger );
@@ -45,9 +45,13 @@ if($help || !$input || !$output){
 }
 $logger->info("Mandatory Data passed = ".join(" | ", ($input,$output)));
 
-$logger->info("Running OBO transform script");
-eval { !system("$Command --to-json $input > $output") or die $ERRNO };
-$logger->warn("Unable to run OBO transform script: $Command --to-json $input > $output");
 
+try {
+    $logger->info("Running OBO transform script");
+    system("$Command --to-json $input > $output")
+} catch {
+    $logger->warn("Unable to run OBO transform script: $Command --to-json $input > $output");
+    die $_;
+};
 
 

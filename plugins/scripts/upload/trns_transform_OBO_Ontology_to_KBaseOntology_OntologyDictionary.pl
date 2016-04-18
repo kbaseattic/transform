@@ -14,7 +14,7 @@ trns_transform_OBO_Ontology_to_KBaseOntology_OntologyDictionary.pl
 
 =head1 SYNOPSIS
 
-trns_transform_OBO_Ontology_to_KBaseOntology_OntologyDictionary.pl --input_file_name fasta-file --output_file_name genome-id
+trns_transform_OBO_Ontology_to_KBaseOntology_OntologyDictionary.pl --input_file_name obo-file --output_file_name ontology-dictionary
 
 =head1 DESCRIPTION
 
@@ -28,7 +28,7 @@ trns_transform_OBO_Ontology_to_KBaseOntology_OntologyDictionary.pl --input_file_
 
 =cut
 
-my $Command = "./obo.pl";
+my $Command = "./ont.pl";
 
 my ($help, $input, $output);
 GetOptions("h|help"      => \$help,
@@ -39,8 +39,8 @@ GetOptions("h|help"      => \$help,
 my $logger = getStderrLogger();
 
 if($help || !$input || !$output){
-    print($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseOntology.OntologyDictionary JSON Flat File>");
-    $logger->warn($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseOntology.OntologyDictionary JSON Flat File>");
+    print($0." --input_file_name|-i <Input OBO File> --output_file_name|-o <Output KBaseOntology.OntologyDictionary JSON Flat File>");
+    $logger->warn($0." --input_file_name|-i <Input OBO File> --output_file_name|-o <Output KBaseOntology.OntologyDictionary JSON Flat File>");
     exit();
 }
 $logger->info("Mandatory Data passed = ".join(" | ", ($input,$output)));
@@ -48,10 +48,8 @@ $logger->info("Mandatory Data passed = ".join(" | ", ($input,$output)));
 
 try {
     $logger->info("Running OBO transform script");
-    system("$Command --to-json $input > $output")
+    system("$Command --from-obo $input > $output")
 } catch {
-    $logger->warn("Unable to run OBO transform script: $Command --to-json $input > $output");
+    $logger->warn("Unable to run OBO transform script: $Command --from-obo $input > $output");
     die $_;
 };
-
-

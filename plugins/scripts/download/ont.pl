@@ -6,17 +6,21 @@ use JSON;
 use Getopt::Long;
 
 my $usage = <<"End_of_Usage";
-Usage: $0 --to-json   ontology.obo  > ontology.json
-       $0 --from-json ontology.json > ontology.obo
+Usage: $0 --from-obo ontology.obo  > ontology.json
+       $0 --to-obo ontology.json > ontology.obo
+       $0 --from-trans translation.txt > translation.json
+       $0 --to-trans translation.json > translation.txt
 
 End_of_Usage
 
-my ($help, $to_json, $from_json, $print_spec);
+my ($help, $print_spec, $from_obo, $to_obo, $from_trans, $to_trans);
 
-GetOptions("h|help"      => \$help,
-           "t|to-json"   => \$to_json,
-           "f|from-json" => \$from_json,
-           "s|spec"      => \$print_spec
+GetOptions("h|help"     => \$help,
+           "spec"       => \$print_spec,
+           "from-obo"   => \$from_obo,
+           "to-obo"     => \$to_obo,
+           "from-trans" => \$from_trans,
+           "to-trans"   => \$to_trans,
 	  ) or die("Error in command line arguments\n");
 
 if ($print_spec) {
@@ -28,10 +32,14 @@ $help and die $usage;
 my $input = shift @ARGV or die $usage;
 my $ftype = guess_file_type($input);
 
-if ($to_json || $ftype eq 'obo' && !$from_json) {
+if ($from_obo && $ftype eq 'obo') {
     obo_to_json($input);
-} elsif ($from_json || $ftype eq 'json' && !$to_json) {
+} elsif ($to_obo && $ftype eq 'json') {
     json_to_obo($input);
+} elsif ($from_trans && $ftype eq 'trans') {
+    trans_to_json($input);
+} elsif ($to_trans && $ftype eq 'json') {
+    json_to_trans($input);
 } else {
     die "Unrecognized input file.\n";
 }
@@ -66,6 +74,71 @@ sub json_to_obo {
             write_stanza($obj->{$key}->{$id}, $type);
         }
     }
+}
+
+sub trans_to_json {
+    my ($input) = @_;
+    my @lines = split(/\n/, slurp($input));
+    my @comment;
+    my $trans;
+    my ($ont1, $ont2);
+    for (@lines) {
+        if (/^\!\s*(.*?)/) {
+            push @comment, $1;
+            next;
+        }
+        next unless /\S+:\S+.* > .*\S+:\S+/;
+        my ($term1, $name1, $name2, $term2) = /(^\S+:\S+)( \S.*?|) > (\S.*) ; (\S+:\S+$)/;
+        if (!$ont1) {
+            ($ont1) = $term1 =~ /(\S+):/;
+            $ont1 = lc $ont1;
+            $ont1 =~ s/-/_/g;
+        }
+        if (!$ont2) {
+            ($ont2) = $term2 =~ /(\S+):/;
+            $ont2 = lc $ont2;
+            $ont2 =~ s/-/_/g;
+        }
+        $name1 =~ s/^\s*//;
+        $trans->{$term1}->{name} = $name1 if $name1;
+        my $equiv;
+        $equiv->{equiv_term} = $term2;
+        $equiv->{equiv_name} = $name2 if $name2;
+        push @{$trans->{$term1}->{equiv_terms}}, $equiv;
+    }
+    my $obj;
+    $obj->{comment} = join("\n", @comment) if @comment;
+    $obj->{ontology1} = $ont1;
+    $obj->{ontology2} = $ont2;
+    $obj->{translation} = $trans;
+    print to_json($obj);
+}
+
+sub json_to_trans {
+    my ($input) = @_;
+    my $obj = from_json(slurp($input));
+    my $comment = $obj->{comment};
+    if ($comment) {
+        my @lines = split(/\n/, $comment);
+        print map { "!$_\n" } @lines;
+        print "!\n";
+    }
+    my $trans = $obj->{translation};
+    my @terms = sort { cmp_ontology_terms($a, $b) } keys %$trans;
+    for my $t (@terms) {
+        for (@{$trans->{$t}->{equiv_terms}}) {
+            print $t;
+            print ' '.$trans->{$t}->{name} if $trans->{$t}->{name};
+            print ' > ';
+            print $_->{equiv_name}.' ; ' if $_->{equiv_name};
+            print $_->{equiv_term}."\n";
+        }
+    }
+}
+
+sub cmp_ontology_terms {
+    my ($t1, $t2) = @_;
+    return $t1 cmp $t2;
 }
 
 sub write_stanza {
@@ -358,10 +431,42 @@ sub print_spec {
     my ($base, $optionals) = get_spec_record_for_type('Header');
     push @$optionals, ('typedef_hash', 'instance_hash');
     for my $type (@types) {
-        push @$base, [ "mapping<string, Ontology$type>", lc($type).'_hash' ];
+        push @$base, [ "mapping<string, list<Ontology$type>>", lc($type).'_hash' ];
     }
     print_record('OntologyDictionary', $base, 4, $optionals);
+    print get_ontology_translation_spec()."\n";
     print "};\n";
+}
+
+sub get_ontology_translation_spec {
+    return <<'End_Translation';
+
+    /*
+       @optional equiv_name
+    */
+    typedef structure {
+        string equiv_term;
+        string equiv_name;
+    } EquivalentTerm;
+
+    /*
+       @optional name
+    */
+    typedef structure {
+        string name;
+        list<EquivalentTerm> equiv_terms;
+    } TranslationRecord;
+
+    /*
+       @optional comment
+    */
+    typedef structure {
+        string comment;
+        string ontology1;
+        string ontology2;
+        mapping<string, TranslationRecord> translation;
+    } OntologyTranslation;
+End_Translation
 }
 
 sub get_spec_record_for_type {
@@ -410,6 +515,8 @@ sub guess_file_type {
         return 'obo';
     } elsif ($fname =~ /\.json$/ || $head =~ /\s*{/) {
         return 'json';
+    } elsif ($head =~ /\S+:\S+.* > .*\S+:\S+/ ) {
+        return 'trans';
     }
 }
 

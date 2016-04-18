@@ -11,7 +11,7 @@ use JSON;
 
 my $usage = "$0 [options] [test1 test2 ...]\n";
 
-my $command = "../plugins/scripts/upload/obo.pl";
+my $command = "./ont.pl";
 my ($help, $dir, $dry);
 
 my $rc = GetOptions("h|help"  => \$help,
@@ -43,19 +43,34 @@ foreach my $testname (@tests) {
 }
 done_testing($testCount);
 
-sub test_transformation {
+sub test_ontologydictionary_transformation {
     transform_from_and_back_to_obo("Toy_Ontology");
+}
+
+sub test_ontologytranslation_transformation {
+    transform_from_and_back_to_trans("Toy_OntologyTranslation");
 }
 
 sub transform_from_and_back_to_obo {
     my ($filebase) = @_;
     my $obo = "$filebase.obo";
     my $json = "$filebase.json";
-    sysrun("$command --to-json $obo >$json");
-    sysrun("$command --from-json $json >$obo.2");
+    sysrun("$command --from-obo $obo > $json");
+    sysrun("$command --to-obo $json > $obo.2");
     system("diff $obo $obo.2 > $obo.diff");
     my $out = sysout("cat $obo.diff");
     ok($out eq '', "No diff between $obo and $obo.2"); $testCount++;
+}
+
+sub transform_from_and_back_to_trans {
+    my ($filebase) = @_;
+    my $tsv = "$filebase.tsv";
+    my $json = "$filebase.json";
+    sysrun("$command --from-trans $tsv > $json");
+    sysrun("$command --to-trans $json > $tsv.2");
+    system("diff $tsv $tsv.2 > $tsv.diff");
+    my $out = sysout("cat $tsv.diff");
+    ok($out eq '', "No diff between $tsv and $tsv.2"); $testCount++;
 }
 
 sub discover_own_tests {

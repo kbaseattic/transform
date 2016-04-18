@@ -5,7 +5,6 @@ use Getopt::Long;
 use Try::Tiny;
 use JSON;
 
-
 #KBASE USE
 use Bio::KBase::Transform::ScriptHelpers qw( getStderrLogger );
 
@@ -15,7 +14,7 @@ trns_transform_KBaseOntology_OntologyDictionary_to_OBO_Ontology.pl
 
 =head1 SYNOPSIS
 
-trns_transform_KBaseOntology_OntologyDictionary_to_OBO_Ontology.pl --input_file_name json-file --output_file_name obo-file
+trns_transform_KBaseOntology_OntologyDictionary_to_OBO_Ontology.pl --input_file_name ontology-translation --output_file_name tsv-file
 
 =head1 DESCRIPTION
 
@@ -29,7 +28,7 @@ trns_transform_KBaseOntology_OntologyDictionary_to_OBO_Ontology.pl --input_file_
 
 =cut
 
-my $Command = "./obo.pl";
+my $Command = "./ont.pl";
 
 my ($help, $input, $output);
 GetOptions("h|help"      => \$help,
@@ -40,16 +39,17 @@ GetOptions("h|help"      => \$help,
 my $logger = getStderrLogger();
 
 if($help || !$input || !$output){
-    print($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseOntology.OntologyDictionary JSON Flat File>");
-    $logger->warn($0." --input_file_name|-i <Input Fasta File> --output_file_name|-o <Output KBaseOntology.OntologyDictionary JSON Flat File>");
+    print($0." --input_file_name|-i <Input KBaseOntology.OntologyDictionary JSON Flat File> --output_file_name|-o <Output OBO File>");
+    $logger->warn($0." --input_file_name|-i <Input KBaseOntology.OntologyDictionary JSON Flat File> --output_file_name|-o <Output OBO File>");
     exit();
 }
 $logger->info("Mandatory Data passed = ".join(" | ", ($input,$output)));
 
+
 try {
     $logger->info("Running OBO transform script");
-    system("$Command --from-json $input > $output")
+    system("$Command --to-obo $input > $output")
 } catch {
-    $logger->warn("Unable to run OBO transform script: $Command --from-json $input > $output");
+    $logger->warn("Unable to run OBO transform script: $Command --to-obo $input > $output");
     die $_;
 };

@@ -58,7 +58,7 @@ class TransformVirtualEnv(object):
         global requests
         # these imports are actually used since they're made global by the
         # above lines; the pep8 checker is just stupid in this case
-        import git  # @UnusedImport
+        import git  # @UnusedImport @UnresolvedImport
         import requests  # @UnusedImport
         if not keep_current_venv:
             self._build_dependencies(transform_repo)
@@ -85,15 +85,28 @@ class TransformVirtualEnv(object):
 
         scripts_dir = os.path.join(transform_dir, "plugins/scripts/")
         bin_dir = os.path.join(self.venv_dir, "bin/")
+        warnings = []
         for root, _, files in os.walk(scripts_dir):
             for file_ in files:
-                filepath = os.path.join(root, file_)
-                symlink_to = os.path.join(os.path.relpath(root, bin_dir), file_)
+                symlink_to = os.path.join(os.path.relpath(root, bin_dir),
+                                          file_)
                 symlink_from = os.path.join(bin_dir, file_)
-                print("symlink from {0} {1}".format(symlink_to, symlink_from))
-                os.symlink(symlink_to, symlink_from)
-                self._make_executable_for_all(os.path.join(bin_dir, file_))
-                self._make_wrapper(bin_dir, file_)
+                # ont.pl is in the upload and download dirs (identical) and
+                # causes os.symlink to fail when it tries to link the second
+                # time
+                if os.path.exists(symlink_from):
+                    warnings.append((symlink_from, symlink_to))
+                else:
+                    print("symlink from {} to {}".format(
+                        symlink_from, symlink_to))
+                    # os.symlink(source, link_name)
+                    os.symlink(symlink_to, symlink_from)
+                    self._make_executable_for_all(os.path.join(bin_dir, file_))
+                    self._make_wrapper(bin_dir, file_)
+        print()
+        for symlink_from, symlink_to in warnings:
+            print(('*** WARNING: cannot symlink from {} to {}: link ' +
+                   'already exists ***').format(symlink_from, symlink_to))
 
     def _copy_deps(self, gitdir):
         libdir = os.path.join(gitdir, 'lib/biokbase')

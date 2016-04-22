@@ -4,7 +4,7 @@ Created on Jan 30, 2015
 @author: gaprice@lbl.gov
 '''
 import os
-from biokbase.Transform import script_utils, drivers
+from biokbase.Transform import script_utils
 from bzrlib.config import ConfigObj
 import random
 import sys
@@ -13,11 +13,11 @@ import inspect
 
 KEEP_VENV = 'KB_KEEP_TEST_VENV'
 
-#CLIENT_SHORTCUTS = {drivers.WS_CLIENT: 'ws',
+# CLIENT_SHORTCUTS = {drivers.WS_CLIENT: 'ws',
 #                    drivers.HANDLE_CLIENT: 'handle',
 #                    drivers.UJS_CLIENT: 'ujs'}
 
-#URL_SHORTCUTS = {drivers.WS_URL: 'ws_url',
+# URL_SHORTCUTS = {drivers.WS_URL: 'ws_url',
 #                 drivers.UJS_URL: 'ujs_url',
 #                 drivers.SHOCK_URL: 'shock_url'}
 
@@ -27,7 +27,7 @@ FILE_LOC = os.path.split(__file__)[0]
 
 sys.path.append(os.path.join(FILE_LOC, '../'))  # to import demo/setup
 # this import is both resolved and used
-from demo.setup import TransformVirtualEnv  # @UnresolvedImport @UnusedImport
+from demo.setup import TransformVirtualEnv  # @UnresolvedImport @UnusedImport @IgnorePep8
 
 TRANSFORM_LOC = os.path.join(FILE_LOC, '../../')
 # maybe this should be configurable...?
@@ -48,20 +48,22 @@ class ScriptCheckFramework(object):
         cls.token = script_utils.get_token()
 
         cfg = ConfigObj(TEST_CFG_LOC)
-                
+
         cls.runner = TransformTaskRunnerDriver(cfg, PLUGIN_CFG_LOC)
 
         mapping = cls.runner.get_service_mapping()
 
         # TODO discuss why we would need different names here than what is used
-        # by the transform service, client code, and all scripts, why is this necessary at all?
+        # by the transform service, client code, and all scripts, why is this
+        # necessary at all?
+        # G - it's just quicker to type.
         cls.ws_url = mapping["workspace"]["url"]
         cls.ujs_url = mapping["ujs"]["url"]
         cls.shock_url = mapping["shock"]["url"]
 
         cls.ws = mapping["workspace"]["client"]
         cls.handle = mapping["handle"]["client"]
-        cls.ujs = mapping["ujs"]["client"]        
+        cls.ujs = mapping["ujs"]["client"]
 
         keep_venv = cls._keep_venv
         if os.environ.get(KEEP_VENV):
@@ -142,6 +144,9 @@ class ScriptCheckFramework(object):
         to 0.
         '''
         stdo, stde, code = cls.run_taskrunner(method, args)
+#         print('****stderr****')
+#         print(stde)
+#         print('****done***')
         if not expect_out and stdo:
             raise TestException('Got unexpected data in standard out:\n' +
                                 stdo)

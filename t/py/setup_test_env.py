@@ -11,7 +11,7 @@ FILE_LOC = os.path.split(__file__)[0]
 
 sys.path.append(os.path.join(FILE_LOC, '../'))  # to import demo/setup
 # this import is both resolved and used
-from demo.setup import TransformVirtualEnv  # @UnresolvedImport @UnusedImport
+from demo.setup import TransformVirtualEnv  # @UnresolvedImport @UnusedImport @IgnorePep8
 
 TRANSFORM_LOC = os.path.join(FILE_LOC, '../../')
 

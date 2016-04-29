@@ -394,7 +394,7 @@ if __name__ == "__main__":
                 show_job_progress(args.ujs_service_url, ujs_job_id, token)
                 task.wait()
             except:
-                print sys.exc_info()[0]
+                print sys.exc_info()
 
             stdout.seek(0)
             sub_stdout = stdout.readlines()

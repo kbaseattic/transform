@@ -28,7 +28,9 @@ trns_transform_KBaseOntology_OntologyDictionary_to_OBO_Ontology.pl --input_file_
 
 =cut
 
-my $Command = "./ont.pl";
+use File::Basename;
+my $Working_Dir=dirname($0);
+my $Command = $Working_Dir."/ont.pl";
 
 my ($help, $input, $output);
 GetOptions("h|help"      => \$help,

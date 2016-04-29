@@ -50,7 +50,7 @@ def get_token():
     if token is None:
         try:
             task = subprocess.Popen(["kbase-whoami", "-t"],
-                                    stdout=subprocess.PIPE, shell=True)
+                                    stdout=subprocess.PIPE)
             stdout, stderr = task.communicate()
 
             if stderr is not None:

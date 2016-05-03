@@ -5,7 +5,8 @@
 #http://gmod.org/wiki/GFF3
 
 # Standard imports
-import sys,os
+import sys,os,time,datetime
+import itertools,hashlib
 
 # 3rd party imports
 import simplejson
@@ -16,40 +17,71 @@ import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
 logger = script_utils.stderrlogger(__file__)
 
+#For reverse strand
+complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
+
 if __name__ == "__main__":
-    input_directory = "/homes/seaver/Software/KBase_Repos/transform/t/"
+    shock_service_url="https://ci.kbase.us/services/shock-api/"
+    handle_service_url="https://ci.kbase.us/services/handle_service/"
+    workspace_service_url="https://ci.kbase.us/services/ws/"
+
+    #No time string stored in GFF
+    #Fasta file headers have time strings
+    time_string = str(datetime.datetime.fromtimestamp(time.time()).strftime('%Y_%m_%d_%H_%M_%S'))
+
+    input_directory = "/homes/seaver/Software/KBase_Repos/transform/t/test-gff/"
     tax_id = "Athaliana"
     genome_type = "Reference"
     source_name = "Phytozome"
     core_genome_name = "%s_%s" % (tax_id,source_name) 
-    workspace_name = "GFF_Test"
+    workspace_name = "Transform_Test"
 
     logger.info("Uploading Assembly")
-    assembly_reference = "%s/%s_assembly" % (workspace_name,core_genome_name)
+    assembly_name = "%s_assembly" % (core_genome_name)
+    assembly_reference = "%s/%s" % (workspace_name,assembly_name)
 #    try:
-#        fasta_working_dir = str(os.getcwd()) + "/temp_fasta_file_dir"
-
-#        print "HANDLE SERVICE URL " + handle_service_url
 #        assembly.upload_assembly(shock_service_url = shock_service_url,
 #                                 handle_service_url = handle_service_url,
-#                                 input_directory = fasta_working_dir,
-                                 #                  shock_id = args.shock_id,
-                                 #                  handle_id = args.handle_id,
-                                 #                  input_mapping = args.input_mapping, 
-#                                 workspace_name = workspace_name,
 #                                 workspace_service_url = workspace_service_url,
-#                                 taxon_reference = taxon_id,
-#                                 assembly_name = "%s_assembly" % (core_genome_name),
+#                                 input_directory = input_directory,
+#                                 input_mapping = "{\"FASTA.DNA.Assembly\":\"Athaliana_167_TAIR9.fa\"}",
+#                                 workspace_name = workspace_name,
+#                                 assembly_name = assembly_name,
 #                                 source = source_name,
-#                                 contig_information_dict = contig_information_dict,
-#                                 date_string = genbank_time_string,
+#                                 date_string = time_string,
 #                                 logger = logger)
-#        shutil.rmtree(fasta_working_dir)
+
+#                                 taxon_reference = taxon_id,
+#                                 contig_information_dict = contig_information_dict,
 #    except Exception, e: 
 #        logger.exception(e) 
 #        sys.exit(1) 
 
-    logger.info("Assembly Uploaded")
+    logger.info("Assembly Uploaded as "+assembly_reference)
+
+    ##########################################
+    #Reading in Fasta file, Code taken from https://www.biostars.org/p/710/
+    ##########################################
+
+    contigs_sequences = dict()
+    fasta_file_name = input_directory+"FASTA.DNA.Assembly/Athaliana_167_TAIR9.fa"
+    input_file_handle = open(fasta_file_name)
+    # ditch the boolean (x[0]) and just keep the header or sequence since
+    # we know they alternate.
+    faiter = (x[1] for x in itertools.groupby(input_file_handle, lambda line: line[0] == ">"))
+    for header in faiter:
+        # drop the ">"
+        header = header.next()[1:].strip()
+        # join all sequence lines to one.
+        seq = "".join(s.strip() for s in faiter.next())
+
+        try:
+            fasta_header,fasta_description = header.split(' ',1)
+        except:
+            fasta_header = fasta_header_line
+            fasta_description = None
+
+        contigs_sequences[fasta_header]= {'description':fasta_description,'sequence':seq}
 
     logger.info("Scanning for Genbank Format files.") 
  
@@ -74,9 +106,8 @@ if __name__ == "__main__":
 
     print "INPUT FILE NAME :" + input_file_name + ":"
 
-    header = []
-    contigs = {}
-    contig_list = []
+    header = list()
+    feature_list = dict()
 
     gff_file_handle = TextFileDecoder.open_textdecoder(input_file_name, 'ISO-8859-1')
     current_line = gff_file_handle.readline()
@@ -86,19 +117,17 @@ if __name__ == "__main__":
         if(current_line.startswith("##")):
             header.append(current_line)
         else:
-            seqid, source, type, start, end, score, strand, phase, attributes = current_line.split('\t')
-            if(seqid not in contigs):
-                contigs[seqid]={'id':seqid,'source':source,'features':[]}
-                contig_list.append(seqid)
+            contig_id, source, feature_type, start, end, score, strand, phase, attributes = current_line.split('\t')
+            if(contig_id not in contigs_sequences):
+                logger.warn("Missing contig: "+contig_id)
 
-            feature = {'type':type,'start':start,'end':end,'score':score,'strand':strand,'phase':phase,'attributes':attributes}
-            contigs[seqid]['features'].append(feature)
+            if(contig_id not in feature_list):
+                feature_list[contig_id]=list()
+
+            feature = {'type':feature_type,'start':int(start),'end':int(end),'score':score,'strand':strand,'phase':phase,'attributes':attributes}
+            feature_list[contig_id].append(feature)
 
         current_line = gff_file_handle.readline()
-
-    genome_annotation = dict()
-
-#    print "FASTA FILE Name :"+ fasta_file_name + ":"
 
     features_type_containers_dict = dict()
     features_type_id_counter_dict = dict()
@@ -109,13 +138,11 @@ if __name__ == "__main__":
     protein_container_dict = dict()
     protein_id_counter = 1;
 
-    for contig in contig_list:
+    for contig in feature_list:
     ##################################################################################################
     #FEATURE ANNOTATION PORTION - Build up datastructures to be able to build feature containers.
     ##################################################################################################
-        print contig,len(contigs[contig]['features'])
-
-        for feature in contigs[contig]['features']:
+        for feature in feature_list[contig]:
             #feature_object["type"] = feature_type
             #feature_object["feature_id"] = feature_id
             #feature_object["locations"]=locations
@@ -150,10 +177,40 @@ if __name__ == "__main__":
                 feature_id = "%s_%s" % (feature['type'],str(features_type_id_counter_dict[feature['type']]))
 
             feature_object["feature_id"]=feature_id
-            feature_object["dna_sequence"]=""
-            feature_object["dna_sequence_length"]=0
-            feature_object["md5"]=""
-            feature_object["locations"]=list()
+
+#            print contig,feature["attributes"],feature["type"],feature["start"],feature["end"],feature["strand"],feature["phase"]
+
+            #GFF use 1-based integers
+            substr_start = feature["start"]-1 
+            substr_end = feature["end"]
+            if(feature["strand"] == "-"):
+                substr_start = feature["end"]-1
+                substr_end = feature["start"]
+
+            dna_sequence = contigs_sequences[contig]["sequence"][feature["start"]-1:feature["end"]]
+            dna_sequence = dna_sequence.upper()
+
+            if(feature["strand"] == "-"):
+                #reverse complement
+                dna_sequence = dna_sequence[::-1]
+                dna_sequence = "".join(complement[base] for base in dna_sequence)
+
+#            print feature["attributes"],dna_sequence
+
+            #Right now, this assumes that the GFF file contains CDS sequences in the right order
+            #Will double-check, or write code to correct, when translating for protein objects
+            if("CDS" in feature["attributes"] and "dna_sequence" in feature_object):
+                feature_object["dna_sequence"]=feature_object["dna_sequence"]+dna_sequence
+            else:
+                feature_object["dna_sequence"]=dna_sequence
+
+            feature_object["dna_sequence_length"]=len(dna_sequence)
+            feature_object["md5"]=hashlib.md5(dna_sequence).hexdigest()
+
+            if("locations" not in feature_object):
+                feature_object["locations"]=list()
+            feature_object["locations"].append([contig,feature["start"],feature["strand"],len(dna_sequence)])
+
             feature_object["quality_warnings"]=list()
 
             features_type_containers_dict[feature["type"]][feature_id] = feature_object
@@ -297,7 +354,7 @@ if __name__ == "__main__":
     genome_annotation['genome_annotation_id'] = genome_annotation_object_name
 
     genome_annotation['taxon_ref'] = "" #taxon_id
-    genome_annotation['assembly_ref'] = "" #assembly_reference
+    genome_annotation['assembly_ref'] = assembly_reference
 
 #genome_annotation['external_source'] = source_name
 #genome_annotation['external_source_id'] = ",".join(locus_name_order)

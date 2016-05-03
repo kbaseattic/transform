@@ -927,7 +927,7 @@ def upload_genome(shock_service_url=None,
                     #
                     value = re.sub('\s+',' ',value)
                     feature_object["translation"] = value 
-                elif ((key == "function") and (value is not None) and (value.strip() == "") :
+                elif (key == "function") and (value is not None) and (value.strip() == ""):
                     feature_object["function"] = value
                 elif (key == "product"):
                     product = value

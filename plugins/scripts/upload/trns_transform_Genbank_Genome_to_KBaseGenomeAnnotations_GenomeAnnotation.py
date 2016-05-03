@@ -1654,6 +1654,7 @@ def upload_genome(shock_service_url=None,
                                                           "objects":[ { "type":"KBaseGenomeAnnotations.ProteinContainer",
                                                                         "data":protein_container,
                                                                         "name": protein_container_object_name,
+                                                                        "hidden":1,
                                                                         "provenance":protein_container_provenance}]})
         logger.info("Protein Container saved for %s" % (protein_container_object_name))  
 #                protein_container_not_saved = False 
@@ -1760,6 +1761,7 @@ def upload_genome(shock_service_url=None,
                                                                   "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
                                                                                 "data":feature_container,
                                                                                 "name": feature_container_object_name,
+                                                                                "hidden":1,
                                                                                 "provenance":feature_container_provenance}]}) 
 #                    feature_container_not_saved = False 
                 logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
@@ -1786,7 +1788,8 @@ def upload_genome(shock_service_url=None,
     annotation_quality_object_info =  ws_client.save_objects({"workspace":workspace_name, 
                                                               "objects":[ { "type":"KBaseGenomeAnnotations.AnnotationQuality",
                                                                             "data": annotation_quality_object,
-                                                                            "name": annotation_quality_object_name, 
+                                                                            "name": annotation_quality_object_name,
+                                                                            "hidden":1, 
                                                                             "provenance":annotation_quality_provenance}]}) 
     logger.info("Annotation Quality saved for %s" % (annotation_quality_object_name)) 
 

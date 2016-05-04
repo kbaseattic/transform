@@ -78,113 +78,135 @@ def convert_to_contigs(shock_service_url, handle_service_url, input_file_name,
         contig_set_has_sequences = False
 
     fasta_filesize = os.stat(input_file_name).st_size
-    if fasta_filesize > 1000000000:
+    if fasta_filesize > 900000000:
         # Fasta file too large to save sequences into the ContigSet object.
-        contigset_warn = 'The FASTA input file seems to be too large. A ' +\
-            'ContigSet object will be created without sequences, but will ' +\
-            'contain a reference to the file.'
-        logger.warning(contigset_warn)
+        logger.warning(
+            'The FASTA input file is too large to fit in the workspace. ' +
+            'A ContigSet object will be created without sequences, but ' +
+            'will contain a reference to the file.')
         contig_set_has_sequences = False
 
-    input_file_handle = open(input_file_name, 'r')
-    fasta_header = None
-    sequence_list = []
-    fasta_dict = dict()
-    first_header_found = False
-    contig_set_md5_list = []
-    # Pattern for replacing white space
-    pattern = re.compile(r'\s+')
-    for current_line in input_file_handle:
-        if (current_line[0] == ">"):
-            # found a header line
-            # Wrap up previous fasta sequence
-            if (not sequence_list) and first_header_found:
-                raise Exception(
-                    "There is no sequence related to FASTA record: {0}".format(
-                        fasta_header))
-            if not first_header_found:
-                first_header_found = True
-            else:
-                # build up sequence and remove all white space
-                total_sequence = ''.join(sequence_list)
-                total_sequence = re.sub(pattern, '', total_sequence)
-                if not total_sequence:
-                    raise Exception(
-                        "There is no sequence related to FASTA record: " +
-                        fasta_header)
-                contig_dict = dict()
-                contig_dict["id"] = fasta_header
-                contig_dict["length"] = len(total_sequence)
-                contig_dict["name"] = fasta_header
-                contig_dict["description"] = "Note MD5 is generated from " +\
-                    "uppercasing the sequence"
-                contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest()
-                contig_dict["md5"] = contig_md5
-                contig_set_md5_list.append(contig_md5)
-                if contig_set_has_sequences:
-                    contig_dict["sequence"] = total_sequence
+        with open(input_file_name, 'r') as input_file_handle:
+            fasta_header = None
+            sequence_list = []
+            fasta_dict = dict()
+            first_header_found = False
+            contig_set_md5_list = []
+            # Pattern for replacing white space
+            pattern = re.compile(r'\s+')
+            for current_line in input_file_handle:
+                if (current_line[0] == '>'):
+                    # found a header line
+                    # Wrap up previous fasta sequence
+                    if (not sequence_list) and first_header_found:
+                        raise Exception(
+                            'There is no sequence related to FASTA record: {0}'
+                            .format(fasta_header))
+                    if not first_header_found:
+                        first_header_found = True
+                    else:
+                        # build up sequence and remove all white space
+                        total_sequence = ''.join(sequence_list)
+                        total_sequence = re.sub(pattern, '', total_sequence)
+                        if not total_sequence:
+                            raise Exception(
+                                'There is no sequence related to FASTA ' +
+                                'record: ' + fasta_header)
+                        try:
+                            fasta_key, fasta_description = \
+                                fasta_header.strip().split(' ', 1)
+                        except:
+                            fasta_key = fasta_header.strip()
+                            fasta_description = None
+                        contig_dict = dict()
+                        contig_dict['id'] = fasta_key
+                        contig_dict['length'] = len(total_sequence)
+                        contig_dict['name'] = fasta_key
+                        md5wrds = 'Note MD5 is generated from uppercasing ' + \
+                            'the sequence'
+                        if fasta_description:
+                            fasta_description += '. ' + md5wrds
+                        else:
+                            fasta_description = md5wrds
+                        contig_dict['description'] = fasta_description
+                        contig_md5 = hashlib.md5(
+                            total_sequence.upper()).hexdigest()
+                        contig_dict['md5'] = contig_md5
+                        contig_set_md5_list.append(contig_md5)
+                        if contig_set_has_sequences:
+                            contig_dict['sequence'] = total_sequence
+                        else:
+                            contig_dict['sequence'] = None
+                        fasta_dict[fasta_header] = contig_dict
+
+                        # get set up for next fasta sequence
+                        sequence_list = []
+                    fasta_header = current_line.replace('>', '').strip()
                 else:
-                    contig_dict["sequence"] = ""
-                fasta_dict[fasta_header] = contig_dict
+                    sequence_list.append(current_line)
 
-                # get set up for next fasta sequence
-                sequence_list = []
-            fasta_header = current_line.replace('>', '').strip()
-        else:
-            sequence_list.append(current_line)
-
-    input_file_handle.close()
-
-    # wrap up last fasta sequence
-    if (not sequence_list) and first_header_found:
-        raise Exception(
-            "There is no sequence related to FASTA record: {0}".format(
-                fasta_header))
-    elif not first_header_found:
-        raise Exception("There are no contigs in this file")
-    else:
-        # build up sequence and remove all white space
-        total_sequence = ''.join(sequence_list)
-        total_sequence = re.sub(pattern, '', total_sequence)
-        if not total_sequence:
+        # wrap up last fasta sequence, should really make this a method
+        if (not sequence_list) and first_header_found:
             raise Exception(
-                "There is no sequence related to FASTA record: " +
-                fasta_header)
-        contig_dict = dict()
-        contig_dict["id"] = fasta_header
-        contig_dict["length"] = len(total_sequence)
-        contig_dict["name"] = fasta_header
-        contig_dict["description"] = "Note MD5 is generated from " +\
-            "uppercasing the sequence"
-        contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest()
-        contig_dict["md5"] = contig_md5
-        contig_set_md5_list.append(contig_md5)
-        if contig_set_has_sequences:
-            contig_dict["sequence"] = total_sequence
+                "There is no sequence related to FASTA record: {0}".format(
+                    fasta_header))
+        elif not first_header_found:
+            raise Exception("There are no contigs in this file")
         else:
-            contig_dict["sequence"] = ""
-        fasta_dict[fasta_header] = contig_dict
+            # build up sequence and remove all white space
+            total_sequence = ''.join(sequence_list)
+            total_sequence = re.sub(pattern, '', total_sequence)
+            if not total_sequence:
+                raise Exception(
+                    "There is no sequence related to FASTA record: " +
+                    fasta_header)
+            try:
+                fasta_key, fasta_description = \
+                    fasta_header.strip().split(' ', 1)
+            except:
+                fasta_key = fasta_header.strip()
+                fasta_description = None
+            contig_dict = dict()
+            contig_dict['id'] = fasta_key
+            contig_dict['length'] = len(total_sequence)
+            contig_dict['name'] = fasta_key
+            md5wrds = 'Note MD5 is generated from uppercasing ' + \
+                'the sequence'
+            if fasta_description:
+                fasta_description += '. ' + md5wrds
+            else:
+                fasta_description = md5wrds
+            contig_dict['description'] = fasta_description
+            contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest()
+            contig_dict['md5'] = contig_md5
+            contig_set_md5_list.append(contig_md5)
+            if contig_set_has_sequences:
+                contig_dict['sequence'] = total_sequence
+            else:
+                contig_dict['sequence'] = None
+            fasta_dict[fasta_header] = contig_dict
 
-    contig_set_dict = dict()
-    contig_set_dict["md5"] = hashlib.md5(",".join(sorted(
-        contig_set_md5_list))).hexdigest()
-    contig_set_dict["id"] = contigset_id
-    contig_set_dict["name"] = contigset_id
-    s = 'unknown'
-    if source and source['source']:
-        s = source['source']
-    contig_set_dict["source"] = s
-    sid = os.path.basename(input_file_name)
-    if source and source['source_id']:
-        sid = source['source_id']
-    contig_set_dict["source_id"] = sid
-    contig_set_dict["contigs"] = [fasta_dict[x] for x in sorted(
-        fasta_dict.keys())]
+        contig_set_dict = dict()
+        # joining by commas is goofy, but keep consistency with the uploader
+        contig_set_dict['md5'] = hashlib.md5(','.join(sorted(
+            contig_set_md5_list))).hexdigest()
+        contig_set_dict['id'] = contigset_id
+        contig_set_dict['name'] = contigset_id
+        s = 'unknown'
+        if source and source['source']:
+            s = source['source']
+        contig_set_dict['source'] = s
+        sid = os.path.basename(input_file_name)
+        if source and source['source_id']:
+            sid = source['source_id']
+        contig_set_dict['source_id'] = sid
+        contig_set_dict['contigs'] = [fasta_dict[x] for x in sorted(
+            fasta_dict.keys())]
 
-    contig_set_dict["fasta_ref"] = shock_id
+        contig_set_dict['fasta_ref'] = shock_id
 
-    logger.info("Conversion completed.")
-    return contig_set_dict
+        logger.info('Conversion completed.')
+        return contig_set_dict
 
 
 def download_workspace_data(ws_url, source_ws, source_obj, working_dir,

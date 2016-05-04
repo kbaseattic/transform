@@ -164,13 +164,15 @@ sub write_csv_tables {
 sub write_tsv_tables {
 	my($tables) = @_;
 	foreach my $tbl (keys(%{$tables})) {
-		open(OUT, "> $tbl.tsv");
+		open(OUT, "> $tbl.tsv") || Bio::KBase::ObjectAPI::utilities::ERROR("Failure to open file: $tbl.tsv, $!");
 		for (my $j=0; $j < @{$tables->{$tbl}}; $j++) {
 			for (my $k=0; $k < @{$tables->{$tbl}->[0]}; $k++) {
 				if ($k > 0) {
 					print OUT "\t";
 				}
-				print OUT $tables->{$tbl}->[$j]->[$k];
+				if (defined($tables->{$tbl}->[$j]->[$k])) {
+					print OUT $tables->{$tbl}->[$j]->[$k];
+				}
 			}
 			print OUT "\n";
 		}
@@ -181,17 +183,20 @@ sub write_tsv_tables {
 sub write_excel_tables {
 	my($tables,$filename) = @_;
 	require "Spreadsheet/WriteExcel.pm";
-	my $wkbk = Spreadsheet::WriteExcel->new($filename);
+	my $wkbk = Spreadsheet::WriteExcel->new($filename) or die "can not create workbook: $!";
 	foreach my $tbl (keys(%{$tables})) {
 		my $sheet = $wkbk->add_worksheet($tbl);
 		my $data = $tables->{$tbl};
 		for (my $i=0; $i < @{$data}; $i++) {
 			for (my $j=0; $j < @{$data->[$i]}; $j++) {
-				$data->[$i]->[$j] =~ s/=/-/g;
+				if (defined($data->[$i]->[$j])) {
+					$data->[$i]->[$j] =~ s/=/-/g;
+				}
 			}
 			$sheet->write_row($i,0,$data->[$i]);
 		}
 	}
+	$wkbk->close();
 }
 
 sub write_output

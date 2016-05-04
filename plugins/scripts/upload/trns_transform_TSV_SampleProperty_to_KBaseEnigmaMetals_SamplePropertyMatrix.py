@@ -22,10 +22,10 @@ if sys.version.startswith('3'):
 
 def transform(workspace_service_url=None, workspace_name=None,
               object_name=None, output_file_name=None, input_directory=None, 
-              working_directory=None, input_mapping=None, format_type=None, 
+              working_directory=None, has_replicates=None, input_mapping=None, format_type=None, 
               level=logging.INFO, logger=None):
     """
-    Converts WellSample TSV file to json string of KBaseEnigmaMetals.WellSampleMatrix type.
+    Converts SampleProperty TSV file to json string of KBaseEnigmaMetals.SamplePropertyMatrix type.
 
     Args:
         workspace_service_url: URL for a KBase Workspace service where KBase objects.
@@ -39,6 +39,9 @@ def transform(workspace_service_url=None, workspace_name=None,
         input_directory: The directory where files will be read from.
         working_directory: The directory the resulting json file will be
                            written to.
+        has_replicates: 0 if the input file contains marked series of replicates, 
+        				1 if the input file contains non-marked series of replicates, 
+                        2 if the input file contains no replicates.
         input_mapping: JSON string mapping of input files to expected types.
                        If you don't get this you need to scan the input
                        directory and look for your files.
@@ -54,7 +57,7 @@ def transform(workspace_service_url=None, workspace_name=None,
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
 
-    logger.info("Starting conversion of WellSample TSV to KBaseEnigmaMetals.WellSampleMatrix")
+    logger.info("Starting conversion of SampleProperty TSV to KBaseEnigmaMetals.SamplePropertyMatrix")
     # token = os.environ.get('KB_AUTH_TOKEN')
 
     if not working_directory or not os.path.isdir(working_directory):
@@ -63,6 +66,7 @@ def transform(workspace_service_url=None, workspace_name=None,
 
     classpath = ["$KB_TOP/lib/jars/kbase/transform/kbase_transform_deps.jar",
                  "$KB_TOP/lib/jars/apache_commons/commons-cli-1.2.jar",
+                 "$KB_TOP/lib/jars/apache_commons/commons-lang3-3.1.jar",
                  "$KB_TOP/lib/jars/ini4j/ini4j-0.5.2.jar",
                  "$KB_TOP/lib/jars/jackson/jackson-annotations-2.2.3.jar",
                  "$KB_TOP/lib/jars/jackson/jackson-core-2.2.3.jar",
@@ -75,12 +79,13 @@ def transform(workspace_service_url=None, workspace_name=None,
                  "$KB_TOP/lib/jars/syslog4j/syslog4j-0.9.46.jar",
                  "$KB_TOP/lib/jars/kbase/workspace/WorkspaceClient-0.2.0.jar"]
     
-    mc = "us.kbase.kbaseenigmametals.WellSampleMatrixUploader"
+    mc = "us.kbase.kbaseenigmametals.SamplePropertyMatrixUploader"
 
     argslist = ["--workspace_service_url {0}".format(workspace_service_url),
                 "--workspace_name {0}".format(workspace_name),
                 "--object_name {0}".format(object_name),
                 "--input_directory {0}".format(input_directory),
+                "--has_replicates {0}".format(has_replicates),
                 "--working_directory {0}".format(working_directory)]
     if output_file_name:
         argslist.append("--output_file_name {0}".format(output_file_name))
@@ -102,7 +107,7 @@ def transform(workspace_service_url=None, workspace_name=None,
     if stderr is not None and len(stderr) > 0:
         logger.error(stderr)
     if tool_process.returncode:
-        logger.error("Transformation from TSV.WellSample to KBaseEnigmaMetals.WellSampleMatrix failed on {0}".format(input_directory))
+        logger.error("Transformation from TSV.SampleProperty to KBaseEnigmaMetals.SamplePropertyMatrix failed on {0}".format(input_directory))
         sys.exit(1)
 
     logger.info("Conversion completed.")
@@ -134,6 +139,9 @@ def main():
     parser.add_argument("--working_directory", 
                         help=script_details["Args"]["working_directory"], 
                         action='store', type=str, nargs='?', required=True)
+    parser.add_argument("--has_replicates", 
+                        help=script_details["Args"]["has_replicates"], 
+                        action='store', type=str, nargs='?', required=True)
     parser.add_argument('--input_mapping',
                         help=script_details["Args"]["input_mapping"],
                         action='store', type=unicode, nargs='?', default=None,
@@ -156,6 +164,7 @@ def main():
                   output_file_name=args.output_file_name,
                   input_directory=args.input_directory,
                   working_directory=args.working_directory,
+                  has_replicates=args.has_replicates,
                   input_mapping=args.input_mapping,
                   format_type=args.format_type,
                   logger=logger)

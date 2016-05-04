@@ -19,9 +19,10 @@ import org.apache.commons.cli.ParseException;
 
 import us.kbase.common.service.UObject;
 
-public class ChromatographyMatrixUploader {
+public class SamplePropertyMatrixUploader {
 
 	static Options options = new Options();
+	static String replicatesOption = "2";
 
 	/**
 	 * @param args
@@ -29,11 +30,11 @@ public class ChromatographyMatrixUploader {
 	 */
 	public static void main(String[] args) throws Exception {
 		MetadataProperties.startup();
-		ChromatographyMatrixUploader uploader = new ChromatographyMatrixUploader();
+		SamplePropertyMatrixUploader uploader = new SamplePropertyMatrixUploader();
 		uploader.upload(args);
 	}
 
-	public ChromatographyMatrixUploader() {
+	public SamplePropertyMatrixUploader() {
 
 		OptionBuilder.withLongOpt("help");
 		OptionBuilder.withDescription("print this message");
@@ -88,6 +89,12 @@ public class ChromatographyMatrixUploader {
 		OptionBuilder.withArgName("input_mapping");
 		options.addOption(OptionBuilder.create("im"));
 
+		OptionBuilder.withLongOpt("has_replicates");
+		OptionBuilder.withDescription("0 if data has marked replicates, 1 if data has non-marked replicates, 2 if data has no replicates");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withArgName("has_replicates");
+		options.addOption(OptionBuilder.create("hr"));
+
 		OptionBuilder.withLongOpt("format_type");
 		OptionBuilder.withDescription("Format type");
 		OptionBuilder.hasArg(true);
@@ -95,14 +102,7 @@ public class ChromatographyMatrixUploader {
 		options.addOption(OptionBuilder.create("ft"));
 
 	}
-/*
-	private static WorkspaceClient getWsClient(String wsUrl, AuthToken token)
-			throws Exception {
-		WorkspaceClient wsClient = new WorkspaceClient(new URL(wsUrl), token);
-		wsClient.setAuthAllowedForHttp(true);
-		return wsClient;
-	}
-*/
+
 	public void upload(String[] args) throws Exception {
 		CommandLineParser parser = new GnuParser();
 
@@ -114,7 +114,7 @@ public class ChromatographyMatrixUploader {
 				HelpFormatter formatter = new HelpFormatter();
 				formatter
 						.printHelp(
-								"java -cp /kb/deployment/lib/jars/kbase/enigma_metals/kbase-enigma-metals-0.1.jar [parameters]",
+								"java -jar /kb/deployment/lib/jars/kbase/enigma_metals/kbase-enigma-metals-0.1.jar [parameters]",
 								options);
 
 			} else if (line.hasOption("test")) {
@@ -123,14 +123,16 @@ public class ChromatographyMatrixUploader {
 			} else {
 
 				if (validateInput(line)) {
+					
+					replicatesOption = line.getOptionValue("hr");
 
 					File inputFile = findTabFile(new File(
 							line.getOptionValue("id")));
 
-					ChromatographyMatrix matrix = new ChromatographyMatrix();
+					SamplePropertyMatrix matrix = new SamplePropertyMatrix();
 					matrix.setName(line.getOptionValue("on"));
-
-					matrix = generateChromatographyMatrix(inputFile, matrix);
+					
+					matrix = generateSamplePropertyMatrix(inputFile, matrix);
 
 					// System.out.println(matrix.toString());
 					String outputFileName = line.getOptionValue("of");
@@ -146,22 +148,6 @@ public class ChromatographyMatrixUploader {
 			        File outputFile = new File(workDir, outputFileName);
 			        UObject.getMapper().writeValue(outputFile, matrix);
 
-/*					WorkspaceClient cl = getWsClient(line.getOptionValue("ws"),
-							token);
-					List<ObjectSaveData> saveData = new ArrayList<ObjectSaveData>();
-					saveData.add(new ObjectSaveData()
-							.withData(
-									UObject.transformObjectToObject(matrix,
-											UObject.class))
-							.withType("KBaseEnigmaMetals.GrowthMatrix")
-							.withName(line.getOptionValue("on"))
-							.withMeta(new HashMap<String, String>()));
-					SaveObjectsParams params = new SaveObjectsParams()
-							.withWorkspace(line.getOptionValue("wn"))
-							.withObjects(saveData);
-
-					cl.saveObjects(params);
-*/
 				} else {
 					HelpFormatter formatter = new HelpFormatter();
 					formatter
@@ -179,7 +165,7 @@ public class ChromatographyMatrixUploader {
 
 	}
 
-	public ChromatographyMatrix generateChromatographyMatrix(File inputFile, ChromatographyMatrix matrix)
+	public SamplePropertyMatrix generateSamplePropertyMatrix(File inputFile, SamplePropertyMatrix matrix)
 			throws Exception {
 
 		List<String> data = new ArrayList<String>();
@@ -187,11 +173,10 @@ public class ChromatographyMatrixUploader {
 
 		try {
 			String line = null;
-			int index = 0;
 			boolean metaDataFlag = false;
 			boolean dataFlag = false;
 			BufferedReader br = new BufferedReader(new FileReader(inputFile));
-
+			int index = 0;
 			while ((line = br.readLine()) != null) {
 				index++;
 				if (line.equals("")) {
@@ -209,7 +194,7 @@ public class ChromatographyMatrixUploader {
 					} else if (!dataFlag && metaDataFlag) {
 						metaData.add(line);
 					} else {
-						System.out.println("Warning: line " + index + "will be missed");
+						System.out.println("Warning: line" + index + " will be missed");
 					}
 				}
 			}
@@ -218,15 +203,15 @@ public class ChromatographyMatrixUploader {
 				printErrorStatus("Data parsing");
 				throw new IllegalStateException("Sorry, file format not recognized. Neither data nor metadata sections were found. Please check input file.");
 			}
-			
+
 		} catch (IOException e) {
 			System.err.println(e.getLocalizedMessage());
 		}
 		
-		
 		matrix.setData(DataMatrixUploader.parseData(data));
+
+		matrix.setMetadata(parseWellSampleMetadata(metaData, matrix.getData().getColIds(), matrix.getData().getRowIds(), replicatesOption));
 		
-		matrix.setMetadata(parseChromatographyMetadata(metaData, matrix.getData().getColIds(), matrix.getData().getRowIds()));
 		
 		List<PropertyValue> properties = matrix.getMetadata().getMatrixMetadata();
 		matrix.setDescription("");
@@ -240,61 +225,57 @@ public class ChromatographyMatrixUploader {
 		return matrix;
 	}
 
-	private Matrix2DMetadata parseChromatographyMetadata (List<String> metaData, List<String> sampleNames, List<String> rowNames) {
+
+	private Matrix2DMetadata parseWellSampleMetadata (List<String> metaData, List<String> sampleNames, List<String> rowNames, String repOption) {
 		
-		Matrix2DMetadata returnVal = DataMatrixUploader.parseMetadata(metaData, sampleNames, rowNames, "3");//"3" is a dirty hack to avoid auto-generation of data series
+		Matrix2DMetadata returnVal = DataMatrixUploader.parseMetadata(metaData, sampleNames, rowNames, repOption);//"3" is a dirty hack to avoid auto-generation of data series
 		
 		validateMetadata(returnVal, sampleNames, rowNames);
-
+				
 		return returnVal;
 	};
-
-	
 	
 	private void validateMetadata(Matrix2DMetadata m, List<String> columnNames, List<String> rowNames) {
 		
 		int flag = 0;
+		//boolean errorFlag = false;
 		int errorCount = 0;
-		String timeUnit = "";
 		
+		boolean statValues = false;
+		
+		for (PropertyValue p: m.getMatrixMetadata()) {
+			if (p.getCategory().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT)&&p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES)&& p.getPropertyValue().equals(MetadataProperties.DATAMATRIX_METADATA_TABLE_MEASUREMENT_VALUES_VALUE_STATVALUES)) {
+				statValues = true;
+			}
+		}
+
 		for (String rowName : rowNames){
 			flag = 0;
 			try {
 				for (PropertyValue p: m.getRowMetadata().get(rowName)){
-					if (p.getCategory().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES)){
-						if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME.contains(p.getPropertyName())) {
+					if (p.getCategory().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE)&&p.getPropertyName().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME)){
+						if (p.getPropertyValue().equals("")) {
 							if (errorCount == 0) printErrorStatus("Metadata validation");
-							if (errorCount < 50) System.err.println(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + " metadata entry for row " + rowName + " contains illegal property name " + p.getPropertyName());
-							errorCount ++;
-						}
-						
-						if (timeUnit.equals("")) timeUnit = p.getPropertyUnit();
-						if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT.contains(p.getPropertyUnit())){
-							if (errorCount == 0) printErrorStatus("Metadata validation");
-							if (errorCount < 50) System.err.println(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + p.getPropertyName() + " metadata entry for row " + rowName + " contains illegal unit " + p.getPropertyUnit());
-							errorCount ++;
-						} else if (!p.getPropertyUnit().equals(timeUnit)) {
-							if (errorCount == 0) printErrorStatus("Metadata validation");
-							if (errorCount < 50) System.err.println(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + p.getPropertyName() + " metadata entry for row " + rowName + " contains unit " + p.getPropertyUnit() + ", which is different from " + timeUnit + " in other entries" );
-							errorCount ++;
+							if (errorCount < 50) System.err.println(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME + " metadata entry for row " + rowName + " must have a value");
+							errorCount++;
 						}
 						flag++;
-						
 					}
 				}
 			} catch (NullPointerException e) {
 				if (errorCount == 0) printErrorStatus("Metadata validation");
-				if (errorCount < 50) System.err.println("Metadata entries for row " + rowName + " are missing");
-				errorCount ++;
+				if (errorCount < 50) System.err.println ("Metadata entries for row " + rowName + " are missing");
+				errorCount++;
 			}
+
 			if (flag == 0) {
 				if (errorCount == 0) printErrorStatus("Metadata validation");
-				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + " entry");
-				errorCount ++;
+				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have a " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME + " entry");
+				errorCount++;
 			} else if (flag > 1) {
 				if (errorCount == 0) printErrorStatus("Metadata validation");
-				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have only one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + " entry, but it contains " + flag);
-				errorCount ++;
+				if (errorCount < 50) System.err.println("Metadata for row " + rowName + " must have only one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE + "_" + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_ROW_SAMPLE_NAME + " entry, but it contains " + flag);
+				errorCount++;
 			}
 		}
 
@@ -302,51 +283,81 @@ public class ChromatographyMatrixUploader {
 		Map<String,String> units = new HashMap<String, String>();
 		
 		for (String colName : columnNames) {
-			boolean measurementFlag = false;
-			boolean substanceFlag = false;
+			int seriesCount = 0;
+			int namesCount = 0;
+			int measurementsCount = 0;
 			
 			try {
 				for (PropertyValue p : m.getColumnMetadata().get(colName)){
-					if (p.getCategory().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT)) {
-						measurementFlag = true;
-						if (p.getPropertyName().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE)){
-							substanceFlag = true;
-							/*if (MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_INTENSITY_UNIT.contains(p.getPropertyUnit())){
-								String key = p.getCategory() + p.getPropertyName() + p.getPropertyValue();
-								if (units.containsKey(key)) {
-									if (!units.get(key).equals(p.getPropertyUnit())) {
-										if (errorCount == 0) printErrorStatus("Metadata validation");
-										if (errorCount < 50) System.err.println(p.getCategory() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
-										errorCount ++;
-									}
-								} else {
-									units.put(key, p.getPropertyUnit());
+					if (p.getCategory().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY)) {
+						if (p.getPropertyName().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_MEASUREMENT)){
+							measurementsCount++;
+							String key = p.getCategory() + p.getPropertyName() + p.getPropertyValue();
+							if (units.containsKey(key)) {
+								if (!units.get(key).equals(p.getPropertyUnit())) {
+									if (errorCount == 0) printErrorStatus("Metadata validation");
+									if (errorCount < 50) System.err.println(p.getCategory() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains unit " + p.getPropertyUnit() + ", which is different from " + units.get(key) + " in other entries" );
+									errorCount++;
 								}
 							} else {
-								if (errorCount == 0) printErrorStatus("Metadata validation");
-								if (errorCount < 50) System.err.println(p.getCategory() + "_" + p.getPropertyName() + " metadata entry for column " + colName + " contains illegal unit " + p.getPropertyUnit() );
-								errorCount ++;
-							}*/
+								units.put(key, p.getPropertyUnit());
+							}
+						} else if (p.getPropertyName().equals(MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_NAME)) {
+							namesCount++;
 						}
+					} else if ((p.getCategory().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES)) && (p.getPropertyName().equals(MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES_SERIESID))) {
+						seriesCount++;
 					}
 				}
-				if (!measurementFlag) {
-					if (errorCount == 0) printErrorStatus("Metadata validation");
-					if (errorCount < 50) System.err.println("Metadata for column " + colName + " must have at least one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT + " entry");
-					errorCount ++;
-				}
-				if (!substanceFlag) {
-					if (errorCount == 0) printErrorStatus("Metadata validation");
-					if (errorCount < 50) System.err.println("Metadata for column " + colName + " must have at least one " + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT + "." + MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE + " entry");
-					errorCount ++;
-				}
+
 			} catch (NullPointerException e) {
 				if (errorCount == 0) printErrorStatus("Metadata validation");
-				if (errorCount < 50) System.err.println("Metadata entries for column " + colName + " are missing");
-				errorCount ++;
+				if (errorCount < 50) System.err.println ("Metadata entries for column " + colName + " are missing");
+				errorCount++;
 			}
+
+			if (seriesCount != 1) {
+				if (!statValues && replicatesOption.equals("0")){
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println ("Metadata for column " + colName + " should have one and only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " entry");
+					errorCount ++;
+				} else if (!statValues && replicatesOption.equals("1")){
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println ("Metadata for column " + colName + " should have one and only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " entry, but " + seriesCount + " entries were auto-generated " );
+					errorCount ++;
+				} else if (!statValues && replicatesOption.equals("2")) {
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println (MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " metadata entry found for column " + colName + ", but no data series were expected" );
+					errorCount ++;
+				} else if (statValues) {
+					if (errorCount == 0) printErrorStatus("Metadata validation");
+					if (errorCount < 50) System.err.println ("Metadata for column " + colName + " should have one and only one " + MetadataProperties.DATAMATRIX_METADATA_COLUMN_DATASERIES + " entry" );
+					errorCount ++;
+				}
+			}
+
+			if (measurementsCount == 0) {
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for column " + colName + " should have at least one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY + "." + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_MEASUREMENT + " entry");
+				errorCount++;
+			} else if (measurementsCount > 1) {
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for column " + colName + " should have only one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY + "." + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_MEASUREMENT + " entry");
+				errorCount++;
+			}
+
+			if (namesCount == 0) {
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for column " + colName + " should have at least one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY + "." + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_NAME + " entry");
+				errorCount++;
+			} else if (namesCount > 1) {
+				if (errorCount == 0) printErrorStatus("Metadata validation");
+				if (errorCount < 50) System.err.println("Metadata for column " + colName + " should have only one " + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY + "." + MetadataProperties.SAMPLEPROPERTYMATRIX_METADATA_COLUMN_PROPERTY_NAME + " entry");
+				errorCount++;
+			}
+
 		}
-		
+
 		if (errorCount > 50) {
 			throw new IllegalStateException("Cannot proceed with upload: metadata validation failed. " + errorCount + " errors were found, but only first 50 were displayed");
 		} else if (errorCount > 0) {
@@ -354,6 +365,7 @@ public class ChromatographyMatrixUploader {
 		}
 
 	}
+
 
 	private static boolean validateInput(CommandLine line) {
 		boolean returnVal = true;
@@ -379,6 +391,17 @@ public class ChromatographyMatrixUploader {
 
 		if (!line.hasOption("wd")) {
 			System.err.println("Working directory required");
+			returnVal = false;
+		}
+
+		if (!line.hasOption("hr")) {
+			System.err.println("Has_replicates option required");
+			returnVal = false;
+		}
+		
+		String repOption = line.getOptionValue("hr");
+		if  (!(repOption.equals("0")||repOption.equals("1")||repOption.equals("2"))){
+			System.err.println("Has_replicates option must have value 0, 1 or 2 but it has " + repOption);
 			returnVal = false;
 		}
 

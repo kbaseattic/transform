@@ -9,17 +9,18 @@
     "handler_options": {        
         "must_own_validation": true,
         "must_own_saving_to_workspace": true,
-        "max_runtime": 360,
+        "max_runtime": 12000,
         "required_fields": 
         [
+	    "handle_service_url",
+            "shock_service_url",
             "input_directory",
             "workspace_name",
-            "workspace_service_url",
-            "working_directory"
+            "workspace_service_url"
         ], 
         "optional_fields": 
         [
-            "shock_service_url",
+	    "object_name",
             "source"
         ],
         

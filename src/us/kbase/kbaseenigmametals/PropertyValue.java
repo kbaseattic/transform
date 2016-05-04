@@ -22,15 +22,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Generated("com.googlecode.jsonschema2pojo")
 @JsonPropertyOrder({
-    "entity",
+    "category",
     "property_name",
     "property_unit",
     "property_value"
 })
 public class PropertyValue {
 
-    @JsonProperty("entity")
-    private String entity;
+    @JsonProperty("category")
+    private String category;
     @JsonProperty("property_name")
     private String propertyName;
     @JsonProperty("property_unit")
@@ -39,18 +39,18 @@ public class PropertyValue {
     private String propertyValue;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
-    @JsonProperty("entity")
-    public String getEntity() {
-        return entity;
+    @JsonProperty("category")
+    public String getCategory() {
+        return category;
     }
 
-    @JsonProperty("entity")
-    public void setEntity(String entity) {
-        this.entity = entity;
+    @JsonProperty("category")
+    public void setCategory(String category) {
+        this.category = category;
     }
 
-    public PropertyValue withEntity(String entity) {
-        this.entity = entity;
+    public PropertyValue withCategory(String category) {
+        this.category = category;
         return this;
     }
 
@@ -111,7 +111,7 @@ public class PropertyValue {
 
     @Override
     public String toString() {
-        return ((((((((((("PropertyValue"+" [entity=")+ entity)+", propertyName=")+ propertyName)+", propertyUnit=")+ propertyUnit)+", propertyValue=")+ propertyValue)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((("PropertyValue"+" [category=")+ category)+", propertyName=")+ propertyName)+", propertyUnit=")+ propertyUnit)+", propertyValue=")+ propertyValue)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

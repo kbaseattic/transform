@@ -124,7 +124,11 @@ if __name__ == "__main__":
             if(contig_id not in feature_list):
                 feature_list[contig_id]=list()
 
-            feature = {'type':feature_type,'start':int(start),'end':int(end),'score':score,'strand':strand,'phase':phase,'attributes':attributes}
+            feature = {'type':feature_type,'start':int(start),'end':int(end),'score':score,'strand':strand,'phase':phase}
+            for attribute in attributes.split(";"):
+                key, value = attribute.split("=")
+                feature[key]=value
+            
             feature_list[contig_id].append(feature)
 
         current_line = gff_file_handle.readline()
@@ -132,37 +136,29 @@ if __name__ == "__main__":
     features_type_containers_dict = dict()
     features_type_id_counter_dict = dict()
     features_container_references = dict()
-    features_grouping_dict = dict() 
+    feature_grouping_dict = { "gene_with_mRNA" : {}, "mRNA_with_gene" : {}, "mRNA_with_CDS" : {},
+                              "gene_with_CDS" : {}, "CDS_with_gene" : {}, "CDS_with_mRNA" : {} }
+
+    feature_id_map_dict = dict()
     features_type_counts = dict()
  
     protein_container_dict = dict()
     protein_id_counter = 1;
+
+    alias_source_counts_map = dict()
 
     for contig in feature_list:
     ##################################################################################################
     #FEATURE ANNOTATION PORTION - Build up datastructures to be able to build feature containers.
     ##################################################################################################
         for feature in feature_list[contig]:
-            #feature_object["type"] = feature_type
-            #feature_object["feature_id"] = feature_id
+            #To consider:
             #feature_object["locations"]=locations
-            #feature_object["dna_sequence_length"] = dna_sequence_length
-            #feature_object["dna_sequence"] = dna_sequence
-            #feature_object["md5"] = hashlib.md5(dna_sequence).hexdigest() 
-
             #feature_object["function"] = value
             #feature_object["trans_splicing"] = 1
             #feature_object["additional_properties"] = additional_properties
             #feature_object["notes"] = notes
             #feature_object["inference"] = inference
-            #feature_object["aliases"] = alias_dict
-            #feature_object["quality_warnings"] = quality_warnings
-            #features_type_containers_dict[feature_type][feature_id] = feature_object
-
-            #!feature_object["gene"] = value 
-            #!feature_object["locus_tag"] = value 
-            #!feature_object["feature_specific_id"] = value
-            #!feature_object["translation"] = value
 
             feature_object = dict()
             feature_object["type"]=feature["type"]
@@ -199,7 +195,7 @@ if __name__ == "__main__":
 
             #Right now, this assumes that the GFF file contains CDS sequences in the right order
             #Will double-check, or write code to correct, when translating for protein objects
-            if("CDS" in feature["attributes"] and "dna_sequence" in feature_object):
+            if(feature["type"]=="CDS" and "dna_sequence" in feature_object):
                 feature_object["dna_sequence"]=feature_object["dna_sequence"]+dna_sequence
             else:
                 feature_object["dna_sequence"]=dna_sequence
@@ -212,6 +208,39 @@ if __name__ == "__main__":
             feature_object["locations"].append([contig,feature["start"],feature["strand"],len(dna_sequence)])
 
             feature_object["quality_warnings"]=list()
+
+            alias_dict = { feature["ID"] : [ "Original "+feature["type"]+" ID" ] }
+            feature_id_map_dict[feature["ID"]] = feature_id
+            if("Name" in feature):
+                alias_dict[feature["Name"]] = ["Original "+feature["type"]+" Name"]
+            if("pacid" in feature):
+                alias_dict[feature["pacid"]] = ["Original "+feature["type"]+" PAC ID"]
+            feature_object["aliases"]=alias_dict
+    
+            for alias in alias_dict:
+                for source in alias_dict[alias]:
+                    if(source not in alias_source_counts_map):
+                        alias_source_counts_map[source]=1
+                    else:
+                        alias_source_counts_map[source]+=1
+
+            if("Parent" in feature and feature["type"] in ["mRNA","CDS"]):
+                if(feature["type"] == "mRNA"):
+                    grouping_tuples = [("gene_with_mRNA",feature["Parent"],feature["ID"]),("mRNA_with_gene",feature["ID"],feature["Parent"])]
+                if(feature["type"] == "CDS"):
+                    grouping_tuples = [("mRNA_with_CDS",feature["Parent"],feature["ID"]),("CDS_with_mRNA",feature["ID"],feature["Parent"])]
+
+                for group in grouping_tuples:
+                    if(group[1] not in feature_grouping_dict[group[0]]):
+                        feature_grouping_dict[group[0]][group[1]] = {}
+                    feature_grouping_dict[group[0]][group[1]][group[2]]=1
+
+            if(feature["type"] == "gene"):
+                feature_object["gene_properties"]={ "children_CDS" : [], "children_mRNA" : [] }
+            if(feature["type"] == "mRNA"):
+                feature_object["mRNA_properties"]={ "parent_gene" : ('gene',feature["Parent"]), "associated_CDS" : ("CDS","") }
+            if(feature["type"] == "CDS"):
+                feature_object["CDS_properties"]= { "parent_gene" : ("gene",""), "associated_mRNA" : ("mRNA",feature["Parent"]), "codes_for_protein_ref" : ("","") }
 
             features_type_containers_dict[feature["type"]][feature_id] = feature_object
 
@@ -248,11 +277,49 @@ if __name__ == "__main__":
                 protein_object["md5"] = "" #hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
                 protein_container_dict[protein_object["protein_id"]] = protein_object
                 protein_container_object_name = "%s_protein_container" % (core_genome_name)
+                protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
 
                 if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
                     features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
-                    protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
-                    features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
+                features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
+
+    #####################################################
+    #Process relationships (to and from gene, mRNA, and CDS)
+    #####################################################
+    interfeature_relationship_counts_map = { "gene_with_mRNA" : len(feature_grouping_dict["gene_with_mRNA"]), "mRNA_with_CDS" : len(feature_grouping_dict["mRNA_with_CDS"]),
+                                             "mRNA_with_gene" : len(feature_grouping_dict["mRNA_with_gene"]), "CDS_with_mRNA" : len(feature_grouping_dict["CDS_with_mRNA"]),
+                                             "gene_with_CDS" : 0, "CDS_with_gene" : 0 }
+
+    for gene in feature_grouping_dict["gene_with_mRNA"]:
+        gene_id = feature_id_map_dict[gene]
+        for mRNA in feature_grouping_dict["gene_with_mRNA"][gene]:
+            mRNA_id = feature_id_map_dict[mRNA]
+            features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"].append( ["mRNA",mRNA_id] )
+            features_type_containers_dict["mRNA"][mRNA_id]["mRNA_properties"]["parent_gene"] = ["gene",gene_id]
+    
+    for mRNA in feature_grouping_dict["mRNA_with_CDS"]:
+        mRNA_id = feature_id_map_dict[mRNA]
+        for CDS in feature_grouping_dict["mRNA_with_CDS"][mRNA]:
+            CDS_id = feature_id_map_dict[CDS]
+            features_type_containers_dict["CDS"][CDS_id]["CDS_properties"]["associated_mRNA"] = ["mRNA",mRNA_id]
+            features_type_containers_dict["mRNA"][mRNA_id]["mRNA_properties"]["associated_CDS"] = ["CDS",CDS_id]
+
+            for gene in feature_grouping_dict["mRNA_with_gene"][mRNA]:
+                gene_id = feature_id_map_dict[gene]
+    
+                if(CDS not in feature_grouping_dict["CDS_with_gene"]):
+                    feature_grouping_dict["CDS_with_gene"][CDS]={}
+                feature_grouping_dict["CDS_with_gene"][CDS][gene]=1
+
+                if(gene not in feature_grouping_dict["gene_with_CDS"]):
+                    feature_grouping_dict["gene_with_CDS"][gene]={}
+                feature_grouping_dict["gene_with_CDS"][gene][CDS]=1
+
+                features_type_containers_dict["CDS"][CDS_id]["CDS_properties"]["parent_gene"] = ["gene",gene_id]
+                features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"].append( ["CDS",CDS_id] )
+
+    interfeature_relationship_counts_map["gene_with_CDS"] = len(feature_grouping_dict["gene_with_CDS"])
+    interfeature_relationship_counts_map["CDS_with_gene"] = len(feature_grouping_dict["CDS_with_gene"])
 
     counts_map = dict() #dict of feature type and number of occurrences.
     if len(features_type_containers_dict) > 0:
@@ -356,11 +423,14 @@ if __name__ == "__main__":
     genome_annotation['taxon_ref'] = "" #taxon_id
     genome_annotation['assembly_ref'] = assembly_reference
 
+    genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
+    print interfeature_relationship_counts_map
+
+    genome_annotation['alias_source_counts_map'] = alias_source_counts_map
+
 #genome_annotation['external_source'] = source_name
 #genome_annotation['external_source_id'] = ",".join(locus_name_order)
 #genome_annotation['external_source_origination_date'] = genbank_time_string
-#genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
-#genome_annotation['alias_source_counts_map'] = alias_source_counts_map
 #genome_annotation['annotation_quality_ref'] = annotation_quality_reference
 
     genome_annotation_string = simplejson.dumps(genome_annotation, sort_keys=True, indent=4)

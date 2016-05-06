@@ -6,66 +6,63 @@
 
 # Standard imports
 import sys,os,time,datetime
-import itertools,hashlib
+import itertools,hashlib,logging
 
 # 3rd party imports
 import simplejson
 
 # KBase imports
+import biokbase.workspace.client 
 import biokbase.Transform.script_utils as script_utils
 import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
-logger = script_utils.stderrlogger(__file__)
 
 #For reverse strand
 complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
 
-if __name__ == "__main__":
-    shock_service_url="https://ci.kbase.us/services/shock-api/"
-    handle_service_url="https://ci.kbase.us/services/handle_service/"
-    workspace_service_url="https://ci.kbase.us/services/ws/"
+def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=None,
+                  shock_service_url=None, handle_service_url=None, workspace_service_url=None,
+                  taxon_reference = None, source=None, release=None, core_genome_name=None, genome_type=None,
+                  level=logging.INFO, logger=None):
+
+    ws_client = biokbase.workspace.client.Workspace(workspace_service_url)
 
     #No time string stored in GFF
     #Fasta file headers have time strings
     time_string = str(datetime.datetime.fromtimestamp(time.time()).strftime('%Y_%m_%d_%H_%M_%S'))
 
-    input_directory = "/homes/seaver/Software/KBase_Repos/transform/t/test-gff/"
-    tax_id = "Athaliana"
-    genome_type = "Reference"
-    source_name = "Phytozome"
-    core_genome_name = "%s_%s" % (tax_id,source_name) 
-    workspace_name = "Transform_Test"
-
     logger.info("Uploading Assembly")
     assembly_name = "%s_assembly" % (core_genome_name)
     assembly_reference = "%s/%s" % (workspace_name,assembly_name)
-#    try:
-#        assembly.upload_assembly(shock_service_url = shock_service_url,
-#                                 handle_service_url = handle_service_url,
-#                                 workspace_service_url = workspace_service_url,
-#                                 input_directory = input_directory,
-#                                 input_mapping = "{\"FASTA.DNA.Assembly\":\"Athaliana_167_TAIR9.fa\"}",
-#                                 workspace_name = workspace_name,
-#                                 assembly_name = assembly_name,
-#                                 source = source_name,
-#                                 date_string = time_string,
-#                                 logger = logger)
+    input_directory = "/".join(input_fasta_file.split("/")[0:-1])
+    print input_directory
+    try:
+        assembly.upload_assembly(shock_service_url = shock_service_url,
+                                 handle_service_url = handle_service_url,
+                                 workspace_service_url = workspace_service_url,
+                                 input_directory = input_directory,
+                                 workspace_name = workspace_name,
+                                 assembly_name = assembly_name,
+                                 source = source,
+                                 date_string = time_string,
+                                 taxon_reference = taxon_reference,
+                                 logger = logger)
 
-#                                 taxon_reference = taxon_id,
 #                                 contig_information_dict = contig_information_dict,
-#    except Exception, e: 
-#        logger.exception(e) 
-#        sys.exit(1) 
+
+    except Exception, e: 
+        logger.exception(e) 
+        sys.exit(1) 
 
     logger.info("Assembly Uploaded as "+assembly_reference)
 
     ##########################################
     #Reading in Fasta file, Code taken from https://www.biostars.org/p/710/
     ##########################################
+    logger.info("Reading FASTA file.") 
 
     contigs_sequences = dict()
-    fasta_file_name = input_directory+"FASTA.DNA.Assembly/Athaliana_167_TAIR9.fa"
-    input_file_handle = open(fasta_file_name)
+    input_file_handle = open(input_fasta_file,'r')
     # ditch the boolean (x[0]) and just keep the header or sequence since
     # we know they alternate.
     faiter = (x[1] for x in itertools.groupby(input_file_handle, lambda line: line[0] == ">"))
@@ -83,33 +80,12 @@ if __name__ == "__main__":
 
         contigs_sequences[fasta_header]= {'description':fasta_description,'sequence':seq}
 
-    logger.info("Scanning for Genbank Format files.") 
- 
-    valid_extensions = [".gff",".gff3"] 
- 
-    files = os.listdir(os.path.abspath(input_directory)) 
-    gff_files = [x for x in files if os.path.splitext(x)[-1] in valid_extensions] 
- 
-    if (len(gff_files) == 0): 
-        raise Exception("The input directory does not have one of the following extensions %s." % (",".join(valid_extensions))) 
-  
-    logger.info("Found {0}".format(str(gff_files))) 
- 
-    input_file_name = os.path.join(input_directory,gff_files[0]) 
-
-    if not os.path.isfile(input_file_name):
-        logger.warning("{0} is not a recognizable file".format(input_file_name))
-
-    if len(gff_files) > 1: 
-        # TODO if multiple files - CONCATENATE FILES HERE (sort by name)? OR Change how the byte coordinates work.
-        logger.warning("Not sure how to handle multiple GFF files in this context. Using {0}".format(input_file_name))
-
-    print "INPUT FILE NAME :" + input_file_name + ":"
+    logger.info("Reading GFF file.") 
 
     header = list()
     feature_list = dict()
 
-    gff_file_handle = TextFileDecoder.open_textdecoder(input_file_name, 'ISO-8859-1')
+    gff_file_handle = TextFileDecoder.open_textdecoder(input_gff_file, 'ISO-8859-1')
     current_line = gff_file_handle.readline()
     while ( current_line != '' ):
         current_line=current_line.strip()
@@ -340,8 +316,8 @@ if __name__ == "__main__":
             counts_map[feature_type] = len(features_type_containers_dict[feature_type])
 
             #Provenance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
-            #provenance_description = "features from upload from %s includes accession(s) : " % (source_name,",".join(locus_name_order))
-            feature_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source_name)}]
+            #provenance_description = "features from upload from %s includes accession(s) : " % (source,",".join(locus_name_order))
+            feature_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source)}]
 
             print feature_container_object_name,len(feature_container['features'])
             feature_container_string = simplejson.dumps(feature_container, sort_keys=True, indent=4)
@@ -349,20 +325,20 @@ if __name__ == "__main__":
             feature_container_file.write(feature_container_string)
             feature_container_file.close()
 
-#            logger.info("Attempting save of Feature Container %s" % (feature_container_object_name))
-#            feature_container_not_saved = True
-#            while feature_container_not_saved:
-#                try:
-#            feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
-#                                                              "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
-#                                                                            "data":feature_container,
-#                                                                            "name": feature_container_object_name,
-#                                                                            "provenance":feature_container_provenance}]}) 
-#                    feature_container_not_saved = False 
-#            logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
-#                except biokbase.workspace.client.ServerError as err: 
-#                    #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
-#                    raise 
+            logger.info("Attempting save of Feature Container %s" % (feature_container_object_name))
+            feature_container_not_saved = True
+            while feature_container_not_saved:
+                try:
+                    feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
+                                                                      "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
+                                                                                    "data":feature_container,
+                                                                                    "name": feature_container_object_name,
+                                                                                    "provenance":feature_container_provenance}]}) 
+                    feature_container_not_saved = False 
+                    logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
+                except biokbase.workspace.client.ServerError as err: 
+                    #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
+                    raise
 
     protein_container_object_name = "%s_protein_container" % (core_genome_name)
     protein_reference = None
@@ -370,7 +346,7 @@ if __name__ == "__main__":
         protein_container = dict()
         protein_container['protein_container_id'] = protein_container_object_name 
         protein_container['name'] = protein_container_object_name
-        protein_container['notes'] = "Proteins uploaded from %s" % (source_name)
+        protein_container['notes'] = "Proteins uploaded from %s" % (source)
 
         protein_reference = "%s/%s" % (workspace_name, protein_container_object_name)
 
@@ -383,30 +359,35 @@ if __name__ == "__main__":
         protein_container_file.close()
 
         #Provencance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
-        #provenance_description = "proteins from upload from %s includes accession(s) : " % (source_name,",".join(locus_name_order))
-        protein_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "proteins from upload from %s" % (source_name)}]
-
-#        while protein_container_not_saved:
-#            try: 
-
-#        print "PROTEIN CONTAINER : \n\n\n\n" + str(protein_container)
-
-#        logger.info("Attempting Protein Container save for %s" % (protein_container_object_name))  
-#        protein_container_info =  ws_client.save_objects({"workspace": workspace_name,
-#                                                          "objects":[ { "type":"KBaseGenomeAnnotations.ProteinContainer",
-#                                                                        "data":protein_container,
-#                                                                        "name": protein_container_object_name,
-#                                                                        "provenance":protein_container_provenance}]})
-#        logger.info("Protein Container saved for %s" % (protein_container_object_name))  
-#                protein_container_not_saved = False 
-#            except biokbase.workspace.client.ServerError as err:
+        #provenance_description = "proteins from upload from %s includes accession(s) : " % (source,",".join(locus_name_order))
+        protein_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "proteins from upload from %s" % (source)}]
+        protein_container_not_saved=True
+        while protein_container_not_saved:
+            try: 
+                logger.info("Attempting Protein Container save for %s" % (protein_container_object_name))  
+                protein_container_info =  ws_client.save_objects({"workspace": workspace_name,
+                                                                  "objects":[ { "type":"KBaseGenomeAnnotations.ProteinContainer",
+                                                                                "data":protein_container,
+                                                                                "name": protein_container_object_name,
+                                                                                "provenance":protein_container_provenance}]})
+                logger.info("Protein Container saved for %s" % (protein_container_object_name))  
+                protein_container_not_saved = False 
+            except biokbase.workspace.client.ServerError as err:
 #                #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
-#                raise 
-#    else:
-#        raise Exception("No CDS annotations exist in this Genbank file.  This appears not to be a genome.  If this is just an assembly, you should upload it as an assembly using a fasta file.")
+                raise 
 
     genome_annotation = dict()
+
+
+#shock_id = None
+#handle_id = None
+#if shock_id is None:
+#    shock_info = script_utils.upload_file_to_shock(logger, shock_service_url, input_file_name, token=token)
+#    shock_id = shock_info["id"]
+#    handles = script_utils.getHandles(logger, shock_service_url, handle_service_url, [shock_id], [handle_id], token)   
+#    handle_id = handles[0]
 #genome_annotation['genbank_handle_ref'] = handle_id
+
     genome_annotation['feature_lookup'] = dict() #feature_lookup_dict
     genome_annotation['protein_container_ref'] = protein_reference
     genome_annotation['feature_container_references'] = features_container_references 
@@ -420,17 +401,17 @@ if __name__ == "__main__":
     genome_annotation_object_name = core_genome_name
     genome_annotation['genome_annotation_id'] = genome_annotation_object_name
 
-    genome_annotation['taxon_ref'] = "" #taxon_id
+    genome_annotation['taxon_ref'] = taxon_reference
     genome_annotation['assembly_ref'] = assembly_reference
 
     genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
     print interfeature_relationship_counts_map
 
     genome_annotation['alias_source_counts_map'] = alias_source_counts_map
+    genome_annotation['external_source'] = source
+    genome_annotation['external_source_origination_date'] = time_string
 
-#genome_annotation['external_source'] = source_name
 #genome_annotation['external_source_id'] = ",".join(locus_name_order)
-#genome_annotation['external_source_origination_date'] = genbank_time_string
 #genome_annotation['annotation_quality_ref'] = annotation_quality_reference
 
     genome_annotation_string = simplejson.dumps(genome_annotation, sort_keys=True, indent=4)
@@ -438,13 +419,73 @@ if __name__ == "__main__":
     genome_annotation_file.write(genome_annotation_string)
     genome_annotation_file.close()
 
-#genome_annotation_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source_name)}]
+    #Provencance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
+    genome_annotation_provenance = [{"script": __file__, "script_ver": "0.1", "description": "GenomeAnnotation from upload from %s" % (source)}]
 
-#shock_id = None
-#handle_id = None
-#if shock_id is None:
-#    shock_info = script_utils.upload_file_to_shock(logger, shock_service_url, input_file_name, token=token)
-#    shock_id = shock_info["id"]
-#    handles = script_utils.getHandles(logger, shock_service_url, handle_service_url, [shock_id], [handle_id], token)   
-#    handle_id = handles[0]
+    logger.info("Attempting Genome Annotation save for %s" % (genome_annotation_object_name))
+    genome_annotation_not_saved = True
+    while genome_annotation_not_saved:
+        try:
+            genome_annotation_info =  ws_client.save_objects({"workspace":workspace_name,
+                                                              "objects":[ { "type":"KBaseGenomeAnnotations.GenomeAnnotation",
+                                                                            "data":genome_annotation,
+                                                                            "name": genome_annotation_object_name,
+                                                                            "provenance":genome_annotation_provenance}]}) 
+            genome_annotation_not_saved = False 
+            logger.info("Genome Annotation saved for %s" % (genome_annotation_object_name))
+        except biokbase.workspace.client.ServerError as err: 
+            raise
 
+if __name__ == "__main__":
+
+    import argparse
+
+    parser = argparse.ArgumentParser(prog=__file__)
+
+    parser.add_argument('--input_gff_file', nargs='?', help='GFF file', required=True)
+    parser.add_argument('--input_fasta_file', nargs='?', help='FASTA file', required=True)
+    parser.add_argument('--workspace_name', nargs='?', help='Workspace to populate', required=True)
+
+    parser.add_argument('--shock_service_url', type=str, nargs='?', required=False, default='https://ci.kbase.us/services/shock-api/')
+    parser.add_argument('--handle_service_url', type=str, nargs='?', required=False, default='https://ci.kbase.us/services/handle_service/')
+    parser.add_argument('--workspace_service_url', type=str, nargs='?', required=False, default='https://ci.kbase.us/services/ws/')
+
+    parser.add_argument('--taxon_wsname', nargs='?', help='Taxon Workspace', required=False, default='ReferenceTaxons')
+    parser.add_argument('--taxon_names_file', nargs='?', help='Taxon Mappings', required=False, default="Phytozome_Mapping")
+
+    parser.add_argument('--source', help="data source : examples Refseq, Genbank, Pythozyme, Gramene, etc", nargs='?', required=False, default="Phytozome") 
+    parser.add_argument('--release', help="Release or version of the data.  Example Ensembl release 30", nargs='?', required=False, default = "11") 
+
+    args, unknown = parser.parse_known_args()
+
+    logger = script_utils.stderrlogger(__file__)
+    logger.debug(args)
+
+    if not os.path.isfile(args.input_gff_file):
+        logger.warning("{0} is not a recognizable file".format(args.input_gff_file))
+
+    if not os.path.isfile(args.input_fasta_file):
+        logger.warning("{0} is not a recognizable file".format(args.input_fasta_file))
+
+    ws_client = biokbase.workspace.client.Workspace(args.workspace_service_url)
+
+    #Get the taxon_lookup_object
+    #Organism retrieved from lookup file
+    organism = "Arabidopsis thaliana"
+    taxon_lookup = ws_client.get_object( {'workspace':args.taxon_wsname,
+                                          'id':"taxon_lookup"})['data']['taxon_lookup']
+    tax_id=0
+    taxon_object_name = "unknown_taxon"
+    if(organism[0:3] in taxon_lookup and organism in taxon_lookup[organism[0:3]]):
+           tax_id=taxon_lookup[organism[0:3]][organism]
+           tax_object_name = "%s_taxon" % (str(tax_id))
+
+    taxon_info = ws_client.get_objects([{"workspace": args.taxon_wsname, 
+                                         "name": taxon_object_name}])[0]['info'] 
+    taxon_ref = "%s/%s/%s" % (taxon_info[6], taxon_info[0], taxon_info[4])
+    core_genome_name = "%s_%s" % (tax_id,args.source) 
+    genome_type="Reference"
+    upload_genome(input_gff_file=args.input_gff_file,input_fasta_file=args.input_fasta_file,workspace_name=args.workspace_name,
+                  shock_service_url=args.shock_service_url,handle_service_url=args.handle_service_url,workspace_service_url=args.workspace_service_url,
+                  taxon_reference=taxon_ref,source=args.source,release=args.release,core_genome_name=core_genome_name,genome_type=genome_type,logger=logger)
+    sys.exit(0)

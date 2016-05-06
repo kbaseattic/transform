@@ -20,6 +20,26 @@ import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as a
 #For reverse strand
 complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
 
+#For translation
+#Taken from http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/index.cgi?chapter=tgencodes#SG1
+#However plant mitochondrial (2) and plastidial genomes (11) have different translation codes
+dna_aa_map = {"TTT":"F", "TTC":"F", "TTA":"L", "TTG":"L",
+              "TCT":"S", "TCC":"S", "TCA":"S", "TCG":"S",
+              "TAT":"Y", "TAC":"Y", "TAA":"*", "TAG":"*",
+              "TGT":"C", "TGC":"C", "TGA":"*", "TGG":"W",
+              "CTT":"L", "CTC":"L", "CTA":"L", "CTG":"L",
+              "CCT":"P", "CCC":"P", "CCA":"P", "CCG":"P",
+              "CAT":"H", "CAC":"H", "CAA":"Q", "CAG":"Q",
+              "CGT":"R", "CGC":"R", "CGA":"R", "CGG":"R",
+              "ATT":"I", "ATC":"I", "ATA":"I", "ATG":"M",
+              "ACT":"T", "ACC":"T", "ACA":"T", "ACG":"T",
+              "AAT":"N", "AAC":"N", "AAA":"K", "AAG":"K",
+              "AGT":"S", "AGC":"S", "AGA":"R", "AGG":"R",
+              "GTT":"V", "GTC":"V", "GTA":"V", "GTG":"V",
+              "GCT":"A", "GCC":"A", "GCA":"A", "GCG":"A",
+              "GAT":"D", "GAC":"D", "GAA":"E", "GAG":"E",
+              "GGT":"G", "GGC":"G", "GGA":"G", "GGG":"G"}
+
 def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=None,
                   shock_service_url=None, handle_service_url=None, workspace_service_url=None,
                   taxon_reference = None, source=None, release=None, core_genome_name=None, genome_type=None,
@@ -35,7 +55,6 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     assembly_name = "%s_assembly" % (core_genome_name)
     assembly_reference = "%s/%s" % (workspace_name,assembly_name)
     input_directory = "/".join(input_fasta_file.split("/")[0:-1])
-    print input_directory
     try:
         assembly.upload_assembly(shock_service_url = shock_service_url,
                                  handle_service_url = handle_service_url,
@@ -116,12 +135,11 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                               "gene_with_CDS" : {}, "CDS_with_gene" : {}, "CDS_with_mRNA" : {} }
 
     feature_id_map_dict = dict()
-    features_type_counts = dict()
+    features_type_counts_map = dict()
  
-    protein_container_dict = dict()
-    protein_id_counter = 1;
-
     alias_source_counts_map = dict()
+
+    aggregated_cds_map = dict()
 
     for contig in feature_list:
     ##################################################################################################
@@ -142,10 +160,10 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 features_type_containers_dict[feature['type']] = dict()
 
             if feature['type'] not in features_type_id_counter_dict:
-                features_type_id_counter_dict[feature['type']] = 1;
+                features_type_id_counter_dict[feature['type']] = 1
                 feature_id = "%s_%s" % (feature['type'],str(1)) 
             else: 
-                features_type_id_counter_dict[feature['type']] += 1; 
+                features_type_id_counter_dict[feature['type']] += 1 
                 feature_id = "%s_%s" % (feature['type'],str(features_type_id_counter_dict[feature['type']]))
 
             feature_object["feature_id"]=feature_id
@@ -169,24 +187,16 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
 
 #            print feature["attributes"],dna_sequence
 
-            #Right now, this assumes that the GFF file contains CDS sequences in the right order
-            #Will double-check, or write code to correct, when translating for protein objects
-            if(feature["type"]=="CDS" and "dna_sequence" in feature_object):
-                feature_object["dna_sequence"]=feature_object["dna_sequence"]+dna_sequence
-            else:
-                feature_object["dna_sequence"]=dna_sequence
-
+            feature_object["dna_sequence"]=dna_sequence
             feature_object["dna_sequence_length"]=len(dna_sequence)
             feature_object["md5"]=hashlib.md5(dna_sequence).hexdigest()
-
-            if("locations" not in feature_object):
-                feature_object["locations"]=list()
-            feature_object["locations"].append([contig,feature["start"],feature["strand"],len(dna_sequence)])
+            feature_object["locations"]=[[contig,feature["start"],feature["strand"],len(dna_sequence)]]
 
             feature_object["quality_warnings"]=list()
 
             alias_dict = { feature["ID"] : [ "Original "+feature["type"]+" ID" ] }
             feature_id_map_dict[feature["ID"]] = feature_id
+            feature_id_map_dict[feature_id] = feature["ID"]
             if("Name" in feature):
                 alias_dict[feature["Name"]] = ["Original "+feature["type"]+" Name"]
             if("pacid" in feature):
@@ -214,16 +224,55 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
             if(feature["type"] == "gene"):
                 feature_object["gene_properties"]={ "children_CDS" : [], "children_mRNA" : [] }
             if(feature["type"] == "mRNA"):
-                feature_object["mRNA_properties"]={ "parent_gene" : ('gene',feature["Parent"]), "associated_CDS" : ("CDS","") }
+                feature_object["mRNA_properties"]={ "parent_gene" : ('gene',feature_id_map_dict[feature["Parent"]]), "associated_CDS" : ("CDS","") }
             if(feature["type"] == "CDS"):
-                feature_object["CDS_properties"]= { "parent_gene" : ("gene",""), "associated_mRNA" : ("mRNA",feature["Parent"]), "codes_for_protein_ref" : ("","") }
+                feature_object["CDS_properties"]= { "parent_gene" : ("gene",""), "associated_mRNA" : ("mRNA",feature_id_map_dict[feature["Parent"]]) }
+#                                                    "codes_for_protein_ref" : ("","") }
+                if(feature["Parent"] not in aggregated_cds_map):
+                    aggregated_cds_map[feature["Parent"]]=list()
+                aggregated_cds_map[feature["Parent"]].append(feature_id)
 
             features_type_containers_dict[feature["type"]][feature_id] = feature_object
 
-            #############################
-            #build up protein object
-            #############################
-            if feature['type'] == 'CDS' and "dna_sequence" in feature_object:
+    #####################################################
+    #Aggregate CDS
+    #####################################################
+    aggregated_cds=dict()
+    for mRNA in aggregated_cds_map:
+        mRNA_id = feature_id_map_dict[mRNA]
+
+#        Checked ordering of CDS in Phytozome, all correct       
+#        Original_List = "|".join(aggregated_cds_map[mRNA])
+#        New_List = "|".join(sorted(aggregated_cds_map[mRNA], key=lambda x: (int(x.split('_')[1]))))
+#        if Original_List != New_List:
+#            print mRNA,Original_List
+
+        for cds_id in sorted(aggregated_cds_map[mRNA], key = lambda x: int(x.split('_')[1])):
+            CDS_Object = features_type_containers_dict["CDS"][cds_id]
+
+            #Save first object, otherwise append sequence and location
+            if(mRNA not in aggregated_cds):
+                aggregated_cds[mRNA_id]=CDS_Object
+            else:
+                aggregated_cds[mRNA_id]["dna_sequence"]+=CDS_Object["dna_sequence"]
+                aggregated_cds[mRNA_id]["locations"].append(CDS_Object["locations"][0])
+
+    #############################
+    #Refill features_type_containers_dict["CDS"]
+    #and build up protein objects
+    #############################
+
+    protein_container_dict = dict()
+    protein_id_counter = 1;
+
+    features_type_containers_dict["CDS"]=dict()
+    features_type_id_counter_dict["CDS"]=0
+
+    for mRNA in sorted(aggregated_cds, key=lambda x: int(x.split('_')[1])):
+        features_type_id_counter_dict["CDS"] += 1
+        feature_id = "CDS_%s" % (str(features_type_id_counter_dict["CDS"]))
+
+        if("dna_sequence" in aggregated_cds[mRNA]):
 
                 #Build up the protein object for the protein container
                 protein_object = dict()
@@ -232,32 +281,37 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 protein_object["protein_id"] = protein_id
                 protein_object["amino_acid_sequence"] = ""
 
-                #Translate feature_object["dna_sequence"]
-                #Add it to feature_object["translation"]
-                #Add it to protein_object["amino_acid_sequence"]
-                #Make sure its upper class
-                #from Bio.Seq import Seq
-                #from Bio.Alphabet import IUPAC, generic_dna
-                #if "dna_sequence" in feature_object:
-                #    coding_dna = Seq(feature_object["dna_sequence"], generic_dna)
-                #    aa_seq = coding_dna.translate()
-                #    protein_object["amino_acid_sequence"] = str(aa_seq[0:].upper())
+                sequence_length = len(aggregated_cds[mRNA]["dna_sequence"])
+                if( sequence_length % 3 != 0 ):
+                    print "Warning, length of dna_sequence is not a multiple of 3 for "+mRNA
 
-                if "function" in feature_object:
-                    protein_object["function"] = feature_object["function"]
+                amino_acids=list()
+                for i in range(0, sequence_length - sequence_length % 3, 3):
+                    codon = aggregated_cds[mRNA]["dna_sequence"][i:i + 3]
+                    amino_acid = "*"
+                    if(codon in dna_aa_map):
+                        amino_acid = dna_aa_map[codon]
+                    else:
+                        print "Warning, codon %s not recognized for CDS %s" % (codon,mRNA)
+                    amino_acids.append(amino_acid)
+                protein_object["amino_acid_sequence"]="".join(amino_acids)
+                protein_object["md5"] = hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
+
+                if "function" in aggregated_cds[mRNA]:
+                    protein_object["function"] = aggregated_cds[mRNA]["function"]
 
                 protein_object["aliases"]=dict()
-                if "aliases" in feature_object:
-                    protein_object["aliases"] = feature_object["aliases"]
+                if "aliases" in aggregated_cds[mRNA]:
+                    protein_object["aliases"] = aggregated_cds[mRNA]["aliases"]
 
-                protein_object["md5"] = "" #hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
                 protein_container_dict[protein_object["protein_id"]] = protein_object
                 protein_container_object_name = "%s_protein_container" % (core_genome_name)
                 protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
+#                aggregated_cds[mRNA]["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
 
-                if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
-                    features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
-                features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
+        features_type_containers_dict["CDS"][feature_id]=aggregated_cds[mRNA]
+        feature_id_map_dict[mRNA+".CDS"]=feature_id
+        feature_grouping_dict["mRNA_with_CDS"][feature_id_map_dict[mRNA]]={mRNA+".CDS":1}
 
     #####################################################
     #Process relationships (to and from gene, mRNA, and CDS)
@@ -297,7 +351,6 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     interfeature_relationship_counts_map["gene_with_CDS"] = len(feature_grouping_dict["gene_with_CDS"])
     interfeature_relationship_counts_map["CDS_with_gene"] = len(feature_grouping_dict["CDS_with_gene"])
 
-    counts_map = dict() #dict of feature type and number of occurrences.
     if len(features_type_containers_dict) > 0:
         for feature_type in features_type_containers_dict:
 
@@ -312,8 +365,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
             feature_container['features'] = features_type_containers_dict[feature_type]
             feature_container['assembly_ref'] = assembly_reference
 
-            features_type_counts[feature_type] = len(features_type_containers_dict[feature_type])
-            counts_map[feature_type] = len(features_type_containers_dict[feature_type])
+            features_type_counts_map[feature_type] = len(features_type_containers_dict[feature_type])
 
             #Provenance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
             #provenance_description = "features from upload from %s includes accession(s) : " % (source,",".join(locus_name_order))
@@ -350,7 +402,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
 
         protein_reference = "%s/%s" % (workspace_name, protein_container_object_name)
 
-        features_type_counts['protein'] = len(protein_container_dict)
+        features_type_counts_map['protein'] = len(protein_container_dict)
         protein_container['proteins'] = protein_container_dict
 
         protein_container_string = simplejson.dumps(protein_container, sort_keys=True, indent=4)
@@ -391,7 +443,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     genome_annotation['feature_lookup'] = dict() #feature_lookup_dict
     genome_annotation['protein_container_ref'] = protein_reference
     genome_annotation['feature_container_references'] = features_container_references 
-    genome_annotation['counts_map'] = counts_map
+    genome_annotation['counts_map'] = features_type_counts_map
     genome_annotation['type'] = genome_type
     if genome_type == "Reference":
         genome_annotation['reference_annotation'] = 1

@@ -1,0 +1,49 @@
+{
+    "script_name": "trns_transform_TSV_SampleProperty_to_KBaseEnigmaMetals_SamplePropertyMatrix.py",
+    "script_type": "upload",
+    "external_type": "TSV.SampleProperty",
+    "kbase_type": "KBaseEnigmaMetals.SamplePropertyMatrix",
+    "user_description": "Converts sample properties TSV file to SamplePropertyMatrix object in Narrative.",
+    "url_mapping": ["TSV.SampleProperty"],
+    "handler_options": {
+        "must_own_validation": true,
+        "must_own_saving_to_workspace": false,
+        "max_runtime": 360,
+        "custom_options": [],
+        "required_fields": [
+            "input_directory",
+            "workspace_name",
+            "workspace_service_url",
+            "working_directory",
+		    "has_replicates",
+            "object_name"
+        ],
+        "optional_fields": [
+            "input_file_name",
+            "output_file_name",
+            "format_type"
+        ],
+        "input_mapping": {"TSV.SampleProperty": "input_directory"}
+    },
+    "user_options": [
+        {
+            "name": "has_replicates",
+            "type": "string",
+            "required": true,
+            "help": "0 or 1 if data contains replicates or 2 if no replicates."
+        },
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "ID for output SamplePropertyMatrix in Narrative."
+        },
+        {
+            "name": "format_type",
+            "type": "string",
+            "required": false,
+            "help": "Manually defined type of TSV file format."
+        }
+    ],
+    "user_option_groups": []
+}

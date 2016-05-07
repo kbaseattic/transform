@@ -1,12 +1,10 @@
 package us.kbase.genbank;
 
+import us.kbase.auth.AuthException;
 import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.auth.AuthUser;
-import us.kbase.auth.TokenFormatException;
-import us.kbase.common.service.Tuple11;
-import us.kbase.common.service.UObject;
-import us.kbase.common.service.UnauthorizedException;
+import us.kbase.common.service.*;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Genome;
@@ -57,6 +55,7 @@ public class ConvertGBK {
 
     WorkspaceClient wc = null;
 
+    int MAX_ALLOWED_FILES = 10000;
 
     boolean isTest = false;
 
@@ -78,6 +77,8 @@ public class ConvertGBK {
         init(args);
 
         run();
+
+        System.out.println("finished");
     }
 
     /**
@@ -152,6 +153,8 @@ public class ConvertGBK {
 
         int start = "LOCUS       ".length();
 
+        System.out.println("input " + indir);
+
         if (indir.isDirectory()) {
             File[] files = indir.listFiles(new FilenameFilter() {
                 @Override
@@ -162,20 +165,66 @@ public class ConvertGBK {
             System.out.println("testing name matches " + files.length + "\t" + files[0]);
 
             String outpath = workdir.getAbsolutePath();
-            for (int i = 0; i < files.length; i++) {
-                boolean wasSplit = splitRecord(start, files[i], null);
-                if (wasSplit && files.length > 1) {
-                    System.err.println("Multiple multi-record Genbank files currently not supported.");
-                } else if (wasSplit) {
-                    System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
-                    splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
-                    indir = splitdir;
-                } else {
-                    System.out.println("Single input file was not split");
+
+            int maxfiles = Math.min(files.length, MAX_ALLOWED_FILES);
+            if (maxfiles < files.length) {
+                final String outpath2 = (workdir != null ? workdir + "/" : "") + "README.txt";
+                System.out.println("writing " + outpath2);
+                try {
+                    File outf = new File(outpath2);
+                    PrintWriter pw = new PrintWriter(outf);
+
+                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " files. This download had " + files.length
+                            + " files, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    pw.print(readmestr);
+                    pw.close();
+                } catch (FileNotFoundException e) {
+                    System.out.println("failed to write output " + outpath);
+                    e.printStackTrace();
+                }
+            }
+
+
+            long size = 0;
+            for (int i = 0; i < maxfiles; i++) {
+                size += Math.abs(files[i].length());
+            }
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
+            if (size > Math.abs(max)) {
+                final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.out.println("input " + size + "\t" + Math.abs(max));// + "\t" + Math.abs(max) + "\t" + (-max));
+                System.out.println(x);
+                //System.exit(0);
+                throw new IllegalStateException(x);
+            } else {
+                for (int i = 0; i < maxfiles; i++) {
+                    boolean wasSplit = splitRecord(start, files[i], null);
+                    if (wasSplit && files.length > 1) {
+                        System.out.println("Multiple multi-record Genbank files currently not supported.");
+                    } else if (wasSplit) {
+                        System.out.println("Split single input file " + files[i].getName() + " into multiple records? " + wasSplit);
+                        splitdir = new File(workdir.getAbsolutePath() + "/split_" + files[0].getName());
+                        indir = splitdir;
+                    } else {
+                        System.out.println("Single input file was not split");
+                    }
                 }
             }
         } else {
+            long size = Math.abs(indir.length());
+            //System.out.println(size / (1024 * 1024));
+            //System.exit(0);
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
+            if (size > Math.abs(max)) {
+                final String x = "Input file " + indir + " is too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.out.println("input " + size + "\t" + Math.abs(max));
+                System.out.println(x);
+                //System.exit(0);
+                throw new IllegalStateException(x);
+            }
+
             boolean wasSplit = splitRecord(start, indir, null);
+
             System.out.println("Split single input file into multiple records? " + wasSplit);
             if (wasSplit) {
                 splitdir = new File(workdir.getAbsolutePath() + "/split_" + indir.getName());
@@ -191,12 +240,13 @@ public class ConvertGBK {
      */
     private boolean splitRecord(int start, File path, String outpath) throws FileNotFoundException {
 
+        int countfiles = 0;
         boolean split = false;
         Scanner fileScanner = new Scanner(path);
         List<String> locitest = new ArrayList<String>();
         while (fileScanner.hasNextLine()) {
             String cur = fileScanner.nextLine();
-            if (!cur.startsWith(" "))
+            if (!cur.startsWith(" ") && isTest)
                 System.out.println("curtest " + cur);
             if (cur.indexOf("LOCUS") == 0) {
                 String curlocus = cur.substring(start, cur.indexOf(" ", start + 1));
@@ -221,20 +271,23 @@ public class ConvertGBK {
             Scanner fileScanner2 = new Scanner(path);
             List<String> loci = new ArrayList<String>();
             StringBuilder sb = new StringBuilder("");
-            while (fileScanner2.hasNextLine()) {
+            while (fileScanner2.hasNextLine() && countfiles < MAX_ALLOWED_FILES) {
                 String cur = fileScanner2.nextLine();
-                if (!cur.startsWith(" "))
-                    System.out.println(cur);
+                //if (!cur.startsWith(" "))
+                //    System.out.println(cur);
                 if (cur.indexOf("LOCUS") == 0) {
                     String curlocus = cur.substring(start, cur.indexOf(" ", start + 1));
-                    System.out.println("loci add " + curlocus);
+                    if (isTest)
+                        System.out.println("loci add " + curlocus);
                     loci.add(curlocus);
                     sb.append(cur).append("\n");
                 } else if (cur.indexOf("//") == 0) {
                     sb.append(cur).append("\n");
-                    System.out.println("loci2 " + loci.size());
+                    if (isTest)
+                        System.out.println("loci2 " + loci.size());
                     final int index = loci.size() - 1;
-                    System.out.println("loci2 " + loci.size() + "\t" + index);
+                    if (isTest)
+                        System.out.println("loci2 " + loci.size() + "\t" + index);
                     String curoutpath = outpath + "/" + loci.get(index) + ".gbk";
                     try {
                         PrintWriter out = new PrintWriter(new FileWriter(curoutpath));
@@ -242,9 +295,10 @@ public class ConvertGBK {
                         out.close();
                         split = true;
                         System.out.println("    wrote: " + outpath);
+                        countfiles++;
                     } catch (IOException e) {
-                        System.err.println("Error creating or writing file " + outpath);
-                        System.err.println("IOException: " + e.getMessage());
+                        System.out.println("Error creating or writing file " + outpath);
+                        System.out.println("IOException: " + e.getMessage());
                     }
 
                     sb = new StringBuilder("");
@@ -252,6 +306,25 @@ public class ConvertGBK {
                     sb.append(cur).append("\n");
                 }
             }
+
+
+            if (countfiles == MAX_ALLOWED_FILES && fileScanner2.hasNextLine()) {
+                final String outpath2 = (workdir != null ? workdir + "/" : "") + "README.txt";
+                System.out.println("writing " + outpath2);
+                try {
+                    File outf = new File(outpath2);
+                    PrintWriter pw = new PrintWriter(outf);
+
+                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " contigs. This download had more than " + MAX_ALLOWED_FILES
+                            + " contigs, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    pw.print(readmestr);
+                    pw.close();
+                } catch (FileNotFoundException e) {
+                    System.out.println("failed to write output " + outpath);
+                    e.printStackTrace();
+                }
+            }
+
             fileScanner.close();
         }
         return split;
@@ -268,13 +341,26 @@ public class ConvertGBK {
         List<File> files = new ArrayList<File>();
         System.out.println("parseAllInDir " + dir.getAbsolutePath());
         if (dir.isDirectory()) {
+            long size = 0;
             for (File f : dir.listFiles()) {
-                //System.out.println("parseAllInDir file " + f.getAbsolutePath());
-                if (f.isDirectory()) {
-                    parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-                } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
-                    files.add(f);
-                    System.out.println("Added from dir " + f + "\ttotal " + files.size());
+                size += Math.abs(f.length());
+            }
+            final long max = Math.abs(2 * 1024 * 1024 * 1024);
+            if (size > Math.abs(max)) {
+                final String x = "Inputs are too large " + (size / (double) (1024 * 1024) + "G. Max allowed size is 2G.");
+                System.out.println("input " + size + "\t" + Math.abs(max));
+                System.out.println(x);
+                //System.exit(0);
+                throw new IllegalStateException(x);
+            } else {
+                for (File f : dir.listFiles()) {
+                    //System.out.println("parseAllInDir file " + f.getAbsolutePath());
+                    if (f.isDirectory()) {
+                        parseAllInDir(pos, f, wc, wsname, http, isTestThis);
+                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
+                        files.add(f);
+                        System.out.println("Added from dir " + f + "\ttotal " + files.size());
+                    }
                 }
             }
         } else {
@@ -293,7 +379,8 @@ public class ConvertGBK {
      * @throws Exception
      */
     public void parseGenome(int[] pos, File dir, List<File> gbkFiles, String wsname, String http, boolean isTestThis) throws Exception {
-        System.out.println("[" + (pos[0]++) + "] input dir " + dir.getName() + "\tfirst file " + gbkFiles.get(0));
+        if (isTest)
+            System.out.println("[" + (pos[0]++) + "] input dir " + dir.getName() + "\tfirst file " + gbkFiles.get(0));
         long time = System.currentTimeMillis();
         //System.out.println("parseGenome "+wsname);
         //ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, dir.getName(), true);
@@ -325,8 +412,8 @@ public class ConvertGBK {
             out.close();
             System.out.println("    wrote: " + outpath);
         } catch (IOException e) {
-            System.err.println("Error creating or writing file " + outpath);
-            System.err.println("IOException: " + e.getMessage());
+            System.out.println("Error creating or writing file " + outpath);
+            System.out.println("IOException: " + e.getMessage());
         }
 
         ContigSet contigSet = (ContigSet) ar.get(4);
@@ -355,19 +442,24 @@ public class ConvertGBK {
 
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));
+
+            //try {
             out.print(UObject.transformObjectToString(contigSet));
+            //} catch (OutOfMemoryError E) {
+            //    System.err.println("out of memory error");
+            //}
             out.close();
             System.out.println("    wrote: " + outpath2);
         } catch (IOException e) {
-            System.err.println("Error creating or writing file " + outpath2);
-            System.err.println("IOException: " + e.getMessage());
+            System.out.println("Error creating or writing file " + outpath2);
+            System.out.println("IOException: " + e.getMessage());
         }
 
         List<Contig> contigs = contigSet.getContigs();
         ArrayList md5s = new ArrayList();
         for (int j = 0; j < contigs.size(); j++) {
             Contig curcontig = contigs.get(j);
-            final String md5 = MD5(curcontig.getSequence().toUpperCase());
+            final String md5 = MD5(curcontig.getSequence().toUpperCase(), this.isTest);
             md5s.add(md5);
             curcontig.setMd5(md5);
             contigs.set(j, curcontig);
@@ -381,13 +473,16 @@ public class ConvertGBK {
             out.append(o.toString());
             out.append(",");
         }
-        out.deleteCharAt(out.length() - 1);
+        if (out.length() > 0)
+            out.deleteCharAt(out.length() - 1);
 
         String globalmd5 = out.toString();
 
-        genome.setMd5(MD5(globalmd5));
+        genome.setMd5(MD5(globalmd5, this.isTest));
 
         if (wsname != null) {
+
+            System.out.println("wsname " + wsname);
 
             /*ar.add(ws);
             ar.add(id);
@@ -408,11 +503,11 @@ public class ConvertGBK {
 
             String kbtok = System.getenv("KB_AUTH_TOKEN");
 
-            //System.out.println(http);
+            //System.out.println(kbtok);
+
+            //try {
 
             try {
-
-
                 if (isTestThis) {
                     System.out.println("using test mode");
                     AuthToken at = ((AuthUser) AuthService.login(user, pwd)).getToken();
@@ -420,6 +515,7 @@ public class ConvertGBK {
                 } else {
                     wc = new WorkspaceClient(new URL(http), new AuthToken(kbtok));
                 }
+
 
                 wc.setAuthAllowedForHttp(true);
 
@@ -430,22 +526,74 @@ public class ConvertGBK {
                 }
                 cname = sanitizeObjectName(cname);
 
-                boolean saved2 = false;
-                int retry2 = 0;
-                try {
-                    System.out.println("saving ContigSet " + cname);
-                    wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                            .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
-                                    .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
-                    saved2 = true;
-                    System.out.println("successfully saved object");
+                int max_retries = 3;
+                boolean saved = false;
+                int retry = 0;
+                while (!saved && retry < max_retries) {
+                    try {
+                        System.out.println("genome.getGcContent() " + genome.getGcContent());
+                        if (!genome.getGcContent().isNaN()) {
+                            saved = saveContigs(wsname, contigSet, cname);
+                        } else {
+                            System.err.println("The provided GenBank data contains no contig sequence.");
+                            System.exit(1);
+                        }
+                    } catch (ServerException e) {
+                        System.out.println("ServerException ContigSet");
+                        final String msg = e.getData();
+                        if (msg.indexOf("TypedObjectValidationException") != -1) {
+                            System.out.println("ContigSet object failed type validation");
+                            System.out.println(msg);
+                            System.exit(1);
+                        } else {
+                            e.printStackTrace();
+                            retry++;
+                            if (retry < max_retries) {
+                                System.out.println("Error saving ContigSet to workspace.");
+                                System.out.println("Retrying in 2s ...");
+                                Thread.sleep(2000);
+                            }
+                        }
+                    } catch (JsonClientException e) {
+                        System.out.println("JsonClientException ContigSet");
+                        e.printStackTrace();
+                        retry++;
+                        if (retry < max_retries) {
+                            System.out.println("Error saving ContigSet to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Exception ContigSet");
+                        e.printStackTrace();
+                        retry++;
+                        if (retry < max_retries) {
+                            System.out.println("Error saving ContigSet to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
+                    }
+
                 /*TODO add shock reference*/
                     //genome.setContigsetRef(contignode.getId().getId());
-                } catch (Exception e) {
-                    retry2++;
-                    Thread.sleep(2000);
-                    System.err.println("Error saving ContigSet to workspace.");
-                    e.printStackTrace();
+                    /*} catch (ServerException e) {
+                        System.err.println(e.getData());
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        Date date = new Date();
+                        System.err.println(dateFormat.format(date));
+                        retry++;
+                        Thread.sleep(2000);
+                        System.err.println("Error saving ContigSet to workspace.");
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        retry++;
+                        Thread.sleep(2000);
+                        System.err.println("Error saving ContigSet to workspace.");
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        Date date = new Date();
+                        System.err.println(dateFormat.format(date));
+                        e.printStackTrace();
+                    }*/
                 }
 
 
@@ -457,23 +605,59 @@ public class ConvertGBK {
                 gname = sanitizeObjectName(gname);
                 System.out.println("saving Genome " + gname + "\t:" + genome.getContigsetRef() + ":");
 
-                boolean saved = false;
-                int retry = 0;
-                while (!saved && retry < 10) {
+                boolean saved2 = false;
+                int retry2 = 0;
+                while (!saved2 && retry2 < max_retries) {
                     try {
-                        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
-                                .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
-                                        .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
-                        saved = true;
+                        saved2 = saveGenome(wsname, genome, meta, gname);
+                        System.out.println("successfully saved object");
+                    } catch (ServerException e) {
+                        System.out.println("ServerException Genome");
+                        final String msg = e.getData();
+                        e.printStackTrace();
+                        if (msg.indexOf("TypedObjectValidationException") != -1) {
+                            System.out.println("Genome object failed type validation");
+                            System.out.println(msg);
+                            System.exit(1);
+                        } else {
+                            retry2++;
+                            if (retry2 < max_retries) {
+                                System.out.println("Error saving Genome to workspace.");
+                                System.out.println("Retrying in 2s ...");
+                                Thread.sleep(2000);
+                            }
+                        }
+                        //
+                    } catch (JsonClientException e) {
+                        System.out.println("JsonClientException Genome");
+                        e.printStackTrace();
+                        retry2++;
+                        if (retry2 < max_retries) {
+                            System.out.println("Error saving Genome to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
                     } catch (IOException e) {
-                        retry++;
-                        Thread.sleep(2000);
-                        System.err.println("Error saving object " + outpath2);
-                        System.err.println("IOException: " + e.getMessage());
+                        System.out.println("IOException Genome");
+                        e.printStackTrace();
+                        retry2++;
+                        if (retry2 < max_retries) {
+                            System.out.println("Error saving Genome to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Exception Genome");
+                        e.printStackTrace();
+                        retry2++;
+                        if (retry2 < max_retries) {
+                            System.out.println("Error saving Genome to workspace.");
+                            System.out.println("Retrying in 2s ...");
+                            Thread.sleep(2000);
+                        }
                     }
                 }
 
-                System.out.println("successfully saved object");
 
 /*
                 try {
@@ -507,25 +691,55 @@ public class ConvertGBK {
                     e.printStackTrace();
                 }
 */
-            } catch (UnauthorizedException e) {
-                System.err.println("WS UnauthorizedException");
-                System.err.print(e.getMessage());
-                System.err.print(e.getStackTrace());
+
+            } catch (AuthException e) {
                 e.printStackTrace();
             } catch (IOException e) {
-                System.err.println("WS IOException");
-                System.err.print(e.getMessage());
-                System.err.print(e.getStackTrace());
                 e.printStackTrace();
-            } catch (TokenFormatException e) {
-                System.err.println("WS TokenFormatException");
-                System.err.print(e.getMessage());
-                System.err.print(e.getStackTrace());
+            } catch (UnauthorizedException e) {
                 e.printStackTrace();
             }
         }
 
         System.out.println("    time: " + (double) (System.currentTimeMillis() - time) / (double) 1000 + " s");
+    }
+
+    /**
+     * @param genome
+     * @param meta
+     * @param gname
+     * @return
+     * @throws IOException
+     * @throws JsonClientException
+     */
+    private boolean saveGenome(String wsname, Genome genome, Map<String, String> meta, String gname) throws IOException, JsonClientException {
+        boolean saved2;
+        System.out.println("saving Genome " + gname);
+        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                .withObjects(Arrays.asList(new ObjectSaveData().withName(gname).withMeta(meta)
+                        .withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+        saved2 = true;
+        System.out.println("successfully saved object");
+        return saved2;
+    }
+
+    /**
+     * @param wsname
+     * @param contigSet
+     * @param cname
+     * @return
+     * @throws IOException
+     * @throws JsonClientException
+     */
+    private boolean saveContigs(String wsname, ContigSet contigSet, String cname) throws IOException, JsonClientException {
+        boolean saved;
+        System.out.println("saving ContigSet " + cname);
+        wc.saveObjects(new SaveObjectsParams().withWorkspace(wsname)
+                .withObjects(Arrays.asList(new ObjectSaveData().withName(cname)
+                        .withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
+        saved = true;
+        System.out.println("successfully saved object");
+        return saved;
     }
 
     /**
@@ -547,11 +761,12 @@ public class ConvertGBK {
      * @return
      */
 
-    public static String MD5(String s) throws NoSuchAlgorithmException {
+    public static String MD5(String s, boolean isTest) throws NoSuchAlgorithmException {
         MessageDigest m = MessageDigest.getInstance("MD5");
         m.update(s.getBytes(), 0, s.length());
         final String s1 = new BigInteger(1, m.digest()).toString(16);
-        System.out.println("MD5: " + s1);
+        if (isTest)
+            System.out.println("MD5: " + s1);
         return s1;
     }
 
@@ -563,8 +778,10 @@ public class ConvertGBK {
         if (args.length == 2 || args.length == 4 || args.length == 6 || args.length == 8 || args.length == 10 || args.length == 12 || args.length == 14) {
             try {
                 ConvertGBK clt = new ConvertGBK(args);
+                System.exit(0);
             } catch (Exception e) {
                 e.printStackTrace();
+                System.exit(1);
             }
         } else {
             System.out.println("usage: java us.kbase.genbank.ConvertGBK " +

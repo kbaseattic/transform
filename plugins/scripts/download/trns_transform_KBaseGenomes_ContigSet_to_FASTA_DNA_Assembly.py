@@ -79,15 +79,23 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
         raise 
 
     shock_id = None 
+    build_up_object = False
     if "fasta_ref" in contig_set["data"]: 
         shock_id = contig_set["data"]["fasta_ref"] 
-        logger.info("Retrieving data from Shock.")
-        script_utils.download_file_from_shock(logger = logger, 
-                                              shock_service_url = shock_service_url, 
-                                              shock_id = shock_id, 
-                                              directory = working_directory, 
-                                              token = token)
+        logger.info("Trying to Retrieve data from Shock.")
+        try:
+            script_utils.download_file_from_shock(logger = logger, 
+                                                  shock_service_url = shock_service_url, 
+                                                  shock_id = shock_id, 
+                                                  directory = working_directory, 
+                                                  token = token)
+        except Exception, e:
+            logger.warning("Unable to retrive the contig set from shock.  Trying to build from the object")
+            build_up_object = True 
     else: 
+        build_up_object = True
+
+    if build_up_object:
         ws_object_name = contig_set["info"][1]
         valid_chars = "-_.(){0}{1}".format(string.ascii_letters, string.digits)
         temp_file_name = ""
@@ -113,7 +121,10 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
 
         with open(output_file, "w") as outFile:
             for contig in contig_set["data"]["contigs"]:
-                outFile.write(">{}\n".format(contig["id"]))
+                if "description" in contig:
+                    outFile.write(">{} {}\n".format(contig["id"],contig["description"]))
+                else:
+                    outFile.write(">{}\n".format(contig["id"]))
             
                 #write 80 nucleotides per line
                 if contig["sequence"] != "":

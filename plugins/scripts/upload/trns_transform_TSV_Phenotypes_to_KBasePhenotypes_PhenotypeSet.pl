@@ -47,8 +47,8 @@ GetOptions("input_file_name|i=s"  => \$In_File,
 	   "object_name|o=s" => \$Out_Object,
 	   "workspace_name|w=s" => \$Out_WS,
 	   "genome|g=s" => \$Genome,
-	   "workspace_service_url=s" => $wsurl,
-	   "fba_service_url=s" => $fbaurl,
+	   "workspace_service_url=s" => \$wsurl,
+	   "fba_service_url=s" => \$fbaurl,
 	   "help|h"     => \$Help);
 
 if (length($fbaurl) == 0) {
@@ -67,19 +67,20 @@ if($Help || !$In_File || !$Out_Object || !$Out_WS){
 $logger->info("Mandatory Data passed = ".join(" | ", ($In_File,$Out_Object,$Out_WS)));
 $logger->info("Optional Data passed = ".join(" | ", ("Genome:".$Genome)));
 
+#Parsing table from TSV or CSV file based on specs inserted for table columns
 my $phenodata = parse_input_table($In_File,[
-	["geneko",0,[],";"],
+	["geneko",0,"",";"],
 	["media",1,""],
 	["mediaws",1,""],
-	["addtlCpd",0,[],";"],
+	["addtlCpd",0,"",";"],
 	["growth",1]
 ]);
 
 for (my $i=0; $i < @{$phenodata}; $i++) {
-	if ($phenodata->[$i]->[0]->[0] eq "none") {
+	if (defined($phenodata->[$i]->[0]->[0]) && $phenodata->[$i]->[0]->[0] eq "none") {
 		$phenodata->[$i]->[0] = [];
 	}
-	if ($phenodata->[$i]->[3]->[0] eq "none") {
+	if (defined($phenodata->[$i]->[3]->[0]) && $phenodata->[$i]->[3]->[0] eq "none") {
 		$phenodata->[$i]->[3] = [];
 	}
 }

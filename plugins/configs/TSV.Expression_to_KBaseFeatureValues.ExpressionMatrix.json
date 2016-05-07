@@ -1,0 +1,70 @@
+{
+    "script_name": "trns_transform_TSV_Exspression_to_KBaseFeatureValues_ExpressionMatrix.py",
+    "script_type": "upload",
+    "external_type": "TSV.Expression",
+    "kbase_type": "KBaseFeatureValues.ExpressionMatrix",
+    "user_description": "Converts Expression TSV file to ExpressionMatrix object in Narrative.",
+    "url_mapping": ["TSV.Expression"],    
+    "handler_options": {
+        "must_own_validation": true,
+        "must_own_saving_to_workspace": false,
+        "max_runtime": 360,
+        "custom_options": [],
+        "required_fields": [
+            "input_directory",
+            "workspace_name",
+            "workspace_service_url",
+            "working_directory",
+            "object_name"
+        ],
+        "optional_fields": [
+            "input_file_name",
+            "output_file_name",
+            "format_type",
+            "genome_object_name",
+            "fill_missing_values",
+            "data_type",
+            "data_scale"
+        ],
+        "input_mapping": {"TSV.Expression": "input_directory"}
+    },
+    "user_options": [
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "ID for output ExpressionMatrix in Narrative."
+        },
+        {
+            "name": "format_type",
+            "type": "string",
+            "required": false,
+            "help": "Manually defined type of TSV file format."
+        },
+        {
+            "name": "genome_object_name",
+            "type": "string",
+            "required": false,
+            "help": "Optional reference to a Genome object that will be used for mapping feature IDs to."
+        },
+        {
+            "name": "fill_missing_values",
+            "type": "int",
+            "required": false,
+            "help": "Flag for filling in missing values in matrix (0-false, 1-true)."
+        },
+        {
+            "name": "data_type",
+            "type": "string",
+            "required": false,
+            "help": "Data type (default value is 'log-ratio')."
+        },
+        {
+            "name": "data_scale",
+            "type": "string",
+            "required": false,
+            "help": "Data scale (default value is '1.0')."
+        }
+    ],
+    "user_option_groups": []
+}

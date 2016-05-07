@@ -1,0 +1,42 @@
+{
+    "script_name": "trns_transform_TSV_Chromatography_to_KBaseEnigmaMetals_ChromatographyMatrix.py",
+    "script_type": "upload",
+    "external_type": "TSV.Chromatography",
+    "kbase_type": "KBaseEnigmaMetals.ChromatographyMatrix",
+    "user_description": "Converts Chromatography TSV file to ChromatographyMatrix object in Narrative.",
+    "url_mapping": ["TSV.Chromatography"],    
+    "handler_options": {
+        "must_own_validation": true,
+        "must_own_saving_to_workspace": false,
+        "max_runtime": 360,
+        "custom_options": [],
+        "required_fields": [
+            "input_directory",
+            "workspace_name",
+            "workspace_service_url",
+            "working_directory",
+            "object_name"
+        ],
+        "optional_fields": [
+            "input_file_name",
+            "output_file_name",
+            "format_type"
+        ],
+        "input_mapping": {"TSV.Chromatography": "input_directory"}
+    },
+    "user_options": [
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "ID for output ChromatographyMatrix in Narrative."
+        },
+        {
+            "name": "format_type",
+            "type": "string",
+            "required": false,
+            "help": "Manually defined type of TSV file format."
+        }
+    ],
+    "user_option_groups": []
+}

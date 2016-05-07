@@ -304,7 +304,9 @@ def download_file_from_shock(logger = stderrlogger(__file__),
     f = io.open(filePath, 'wb')
     try:
         for chunk in data.iter_content(chunkSize):
-            f.write(chunk)
+            if chunk:                
+                f.write(chunk)
+                f.flush()            
     finally:
         data.close()
         f.close()      
@@ -332,7 +334,7 @@ def upload_file_to_shock(logger = stderrlogger(__file__),
     if filePath is None:
         raise Exception("No file given for upload to SHOCK!")
 
-    dataFile = open(os.path.abspath(filePath), 'r')
+    dataFile = open(os.path.abspath(filePath), 'rb')
     m = MultipartEncoder(fields={'upload': (os.path.split(filePath)[-1], dataFile)})
     header['Content-Type'] = m.content_type
 
@@ -458,6 +460,12 @@ def download_from_urls(logger = stderrlogger(__file__),
     a config file per upload conversion.
     """
     
+    def _gen_ftp_file_list(root):
+        for root, directories, files in ftputil.walk(d):
+            for file in files:
+                yield os.path.join(root, file)
+            
+    
     if token is None:
         raise Exception("Unable to find token!")
     
@@ -493,6 +501,8 @@ def download_from_urls(logger = stderrlogger(__file__),
                 file_list = ftp_connection.listdir(path)
             elif ftp_connection.path.isfile(path):
                 file_list = [path]
+            else:
+                raise Exception('File not found for FTP URL "{0}"'.format(url))
 
             if len(file_list) > 1:            
                 if len(file_list) > threshold:
@@ -507,6 +517,11 @@ def download_from_urls(logger = stderrlogger(__file__),
                 check = file_list[:]
                 while len(check) > 0:
                     x = check.pop()
+
+                    if ftp_connection.path.isdir(path):
+                        file_list = ftp_connection.listdir(path)
+                    elif ftp_connection.path.isfile(path):
+                        file_list = [path]
             
                     new_files = ftp_connection.listdir(x)
                 
@@ -544,8 +559,8 @@ def download_from_urls(logger = stderrlogger(__file__),
 
             # check for a shock url
             try:
-                shock_id = re.search('^http[s]://.*/node/([a-fA-f0-9\-]+).*', url).group(1)
-                shock_download_url = re.search('^(http[s]://.*)/node/[a-fA-f0-9\-]+.*', url).group(1)
+                shock_id = re.search('^https?://.*/node/([a-fA-F0-9\-]+).*', url).group(1)
+                shock_download_url = re.search('^(https?://.*)/node/[a-fA-F0-9\-]+.*', url).group(1)
             except Exception, e:
                 shock_id = None
 

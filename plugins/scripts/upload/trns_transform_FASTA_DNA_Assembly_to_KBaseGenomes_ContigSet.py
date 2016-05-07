@@ -6,6 +6,7 @@ import sys
 import logging
 import re
 import hashlib
+import collections
 
 # 3rd party imports
 import simplejson
@@ -62,12 +63,14 @@ def transform(shock_service_url=None, handle_service_url=None,
     if input_mapping is None:
         logger.info("Scanning for FASTA files.")
     
-        valid_extensions = [".fa",".fasta",".fna"]
+        valid_extensions = [".fa",".fasta",".fna",".fas"]
     
         files = os.listdir(input_directory)
         fasta_files = [x for x in files if os.path.splitext(x)[-1] in valid_extensions]
             
-        assert len(fasta_files) != 0
+        if (len(fasta_files) == 0):
+            raise Exception("The input file does not have one of the following extensions .fa, .fasta, .fas or .fna")        
+
     
         logger.info("Found {0}".format(str(fasta_files)))
 
@@ -84,7 +87,7 @@ def transform(shock_service_url=None, handle_service_url=None,
     if not os.path.isfile(input_file_name):
         raise Exception("The input file name {0} is not a file!".format(input_file_name))        
 
-    if not os.path.isdir(args.working_directory):
+    if not os.path.isdir(working_directory):
         raise Exception("The working directory {0} is not a valid directory!".format(working_directory))        
 
     logger.debug(fasta_reference_only)
@@ -133,17 +136,31 @@ def transform(shock_service_url=None, handle_service_url=None,
                 if not total_sequence :
                     logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
                     raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header))
-                for character in total_sequence:
+#                for character in total_sequence:
+                seq_count = collections.Counter(total_sequence)
+                seq_dict = dict(seq_count)
+                for character in seq_dict:
                     if character not in valid_chars:
                         if character in amino_acid_specific_characters:
                             raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
                         raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
-                fasta_key = fasta_header.strip()
+#                fasta_key = fasta_header.strip()
+                try:
+                    fasta_key , fasta_description = fasta_header.strip().split(' ',1)
+                except:
+                    fasta_key = fasta_header.strip()
+                    fasta_description = None
+
+                if fasta_key == '':
+                    raise Exception("One fasta header lines '>' does not have an identifier associated with it")
                 contig_dict = dict() 
                 contig_dict["id"] = fasta_key 
                 contig_dict["length"] = len(total_sequence) 
-                contig_dict["name"] = fasta_key 
-                contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+                contig_dict["name"] = fasta_key
+                if fasta_description is None:
+                    contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+                else:
+                    contig_dict["description"] = "%s.  Note MD5 is generated from uppercasing the sequence" % (fasta_description)
                 contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest() 
                 contig_dict["md5"] = contig_md5 
                 contig_set_md5_list.append(contig_md5)
@@ -153,7 +170,10 @@ def transform(shock_service_url=None, handle_service_url=None,
                 else: 
                     contig_dict["sequence"]= ""
                 
-                fasta_dict[fasta_key] = contig_dict
+                if fasta_key in fasta_dict:
+                    raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key)) 
+                else:
+                    fasta_dict[fasta_key] = contig_dict                 
                
                 # get set up for next fasta sequence
                 sequence_list = []
@@ -181,18 +201,33 @@ def transform(shock_service_url=None, handle_service_url=None,
             logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
             raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
 
-        for character in total_sequence: 
+#        for character in total_sequence: 
+        seq_count = collections.Counter(total_sequence)
+        seq_dict = dict(seq_count)
+        for character in seq_dict:
             if character not in valid_chars: 
                 if character in amino_acid_specific_characters:
                     raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
                 raise Exception("This FASTA file has non nucleic acid characters : {0}".format(character))
 
-        fasta_key = fasta_header.strip()
+#        fasta_key = fasta_header.strip()
+        try: 
+            fasta_key , fasta_description = fasta_header.strip().split(' ',1)
+        except:
+            fasta_key = fasta_header.strip()
+            fasta_description = None
+ 
+        if fasta_key == '':
+            raise Exception("One fasta header lines '>' does not have an identifier associated with it")
         contig_dict = dict()
         contig_dict["id"] = fasta_key 
         contig_dict["length"] = len(total_sequence)
         contig_dict["name"] = fasta_key
-        contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+ 
+        if fasta_description is None: 
+            contig_dict["description"] = "Note MD5 is generated from uppercasing the sequence" 
+        else: 
+            contig_dict["description"] = "%s.  Note MD5 is generated from uppercasing the sequence" % (fasta_description) 
         contig_md5 = hashlib.md5(total_sequence.upper()).hexdigest()
         contig_dict["md5"]= contig_md5
         contig_set_md5_list.append(contig_md5)
@@ -201,8 +236,10 @@ def transform(shock_service_url=None, handle_service_url=None,
             contig_dict["sequence"] = total_sequence 
         else:
             contig_dict["sequence"]= ""
-         
-        fasta_dict[fasta_key] = contig_dict 
+        if fasta_key in fasta_dict:
+            raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key)) 
+        else:
+            fasta_dict[fasta_key] = contig_dict 
 
 
     if output_file_name is None:
@@ -228,6 +265,14 @@ def transform(shock_service_url=None, handle_service_url=None,
 
     # This generates the json for the object
     objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
+    if len(contig_set_dict["contigs"]) == 0:
+        raise Exception("There appears to be no FASTA DNA Sequences in the input file.") 
+    #The workspace has a 1GB limit
+    if sys.getsizeof(objectString) > 1E9 :
+        contig_set_dict["contigs"] = []
+        objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
+        logger.warning("The fasta file has a very large number of contigs thus resulting in an object being too large if " 
+                       "the contigs are to have metadata. The resulting contigset will not have individual metadata for the contigs.")
 
     logger.info("ContigSet data structure creation completed.  Writing out JSON.")
 

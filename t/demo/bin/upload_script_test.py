@@ -1,16 +1,9 @@
 #!/usr/bin/env python
 
 import sys
-import time
 import datetime
 import os
 import os.path
-import io
-import bz2
-import gzip
-import zipfile
-import tarfile
-import pprint
 import subprocess
 import base64
 
@@ -20,11 +13,10 @@ if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
 
 # make sure the 3rd party and kbase modules are in the path for importing
-#sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
+sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
 
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import requests
-import magic
 import blessings
 import dateutil.parser
 import dateutil.tz
@@ -72,7 +64,7 @@ def show_workspace_object_contents(workspace_url, workspace_name, object_name, t
     print object_contents
 
 
-def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
+def show_job_progress(ujs_url, ujs_id, token):
     c = biokbase.userandjobstate.client.UserAndJobState(url=ujs_url, token=token)
 
     completed = ["complete", "success"]
@@ -95,12 +87,7 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             print term.red("\t\tIssue connecting to UJS!")
             status[1] = "ERROR"
             status[2] = "Caught Exception"
-        
-        if (datetime.datetime.utcnow() - start).seconds > time_limit:
-            print "\t\tJob is taking longer than it should, check debugging messages for more information."
-            status[1] = "ERROR"
-            status[2] = "Timeout"            
-        
+
         if last_status != status[2]:
             print "\t\t{0} status update: {1}".format(status[0], status[2])
             last_status = status[2]
@@ -114,17 +101,17 @@ def show_job_progress(ujs_url, awe_url, awe_id, ujs_id, token):
             print term.red("{0}".format(c.get_detailed_error(ujs_id)))
             print term.red("{0}".format(c.get_results(ujs_id)))
             
-            print term.bold("Additional AWE job details for debugging")
+            #print term.bold("Additional AWE job details for debugging")
             # check awe job output
-            awe_details = requests.get("{0}/job/{1}".format(awe_url,awe_id), headers=header, verify=True)
-            job_info = awe_details.json()["data"]
-            print term.red(simplejson.dumps(job_info, sort_keys=True, indent=4))
+            #awe_details = requests.get("{0}/job/{1}".format(awe_url,awe_id), headers=header, verify=True)
+            #job_info = awe_details.json()["data"]
+            #print term.red(simplejson.dumps(job_info, sort_keys=True, indent=4))
             
-            awe_stdout = requests.get("{0}/work/{1}?report=stdout".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
-            print term.red("STDOUT : " + simplejson.dumps(awe_stdout.json()["data"], sort_keys=True, indent=4))
+            #awe_stdout = requests.get("{0}/work/{1}?report=stdout".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
+            #print term.red("STDOUT : " + simplejson.dumps(awe_stdout.json()["data"], sort_keys=True, indent=4))
             
-            awe_stderr = requests.get("{0}/work/{1}?report=stderr".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
-            print term.red("STDERR : " + simplejson.dumps(awe_stderr.json()["data"], sort_keys=True, indent=4))
+            #awe_stderr = requests.get("{0}/work/{1}?report=stderr".format(awe_url,job_info["tasks"][0]["taskid"]+"_0"), headers=header, verify=True)
+            #print term.red("STDERR : " + simplejson.dumps(awe_stderr.json()["data"], sort_keys=True, indent=4))
             
             break
     
@@ -293,14 +280,10 @@ if __name__ == "__main__":
         inputs = config["upload"]
 
     uc = biokbase.userandjobstate.client.UserAndJobState(url=args.ujs_service_url, token=token)
-
-
-
     
     stamp = datetime.datetime.now().isoformat()
     os.mkdir(stamp)
     
-    #task_driver = biokbase.Transform.drivers.TransformTaskRunnerDriver(services, args.plugin_directory)
     task_driver = biokbase.Transform.drivers.TransformClientTerminalDriver(services)
     plugins = biokbase.Transform.handler_utils.PlugIns(args.plugin_directory)
     
@@ -379,7 +362,7 @@ if __name__ == "__main__":
             input_object["workspace_name"] = workspace
             input_object["object_name"] = object_name
             input_object["url_mapping"] = inputs[x]["url_mapping"]
-            input_object["working_directory"] = stamp
+            input_object["working_directory"] = os.path.join(stamp, x)
             input_object.update(services)
             if input_object.has_key("awe_service_url"): del input_object["awe_service_url"] 
             if input_object.has_key("transform_service_url"): del input_object["transform_service_url"] 
@@ -396,7 +379,7 @@ if __name__ == "__main__":
                 if type(input_object[x]) == type(dict()):
                     input_object[x] = base64.urlsafe_b64encode(simplejson.dumps(input_object[x]))
 
-            command_list = ["trns_upload_taskrunner", "--ujs_job_id", ujs_job_id]
+            command_list = ["trns_upload_taskrunner", "--ujs_job_id", ujs_job_id, "--keep_working_directory"]
             
             for k in input_object:
                command_list.append("--{0}".format(k))
@@ -404,11 +387,26 @@ if __name__ == "__main__":
 
             print "\n\nHandler invocation {0}".format(" ".join(command_list))
 
-            task = subprocess.Popen(command_list, stderr=subprocess.PIPE)
-            sub_stdout, sub_stderr = task.communicate()
-            
+            stdout = open('stdout.txt', 'w+')
+            stderr = open('stderr.txt', 'w+')
+            try:
+                task = subprocess.Popen(command_list, stdout=stdout.fileno(), stderr=stderr.fileno(), close_fds=True)
+                show_job_progress(args.ujs_service_url, ujs_job_id, token)
+                task.wait()
+            except:
+                print sys.exc_info()[0]
+
+            stdout.seek(0)
+            sub_stdout = stdout.readlines()
+            stdout.close()
+
             if sub_stdout is not None:
                 print sub_stdout
+
+            stderr.seek(0)
+            sub_stderr = stderr.readlines()
+            stdout.close()
+
             if sub_stderr is not None:
                 print >> sys.stderr, sub_stderr
             

@@ -96,7 +96,7 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
         
         assert type(kb_token) == type(str())
     except Exception, e:
-        logger.debug("Unable to get token!")
+        logger.error("Unable to get token!")
         logger.exception(e)
         sys.exit(1)
 
@@ -106,8 +106,9 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
             ujs = UserAndJobState(url=ujs_service_url, token=kb_token)
             ujs.get_job_status(ujs_job_id)
     except Exception, e:
-        logger.debug("Unable to connect to UJS service!")
-        raise
+        logger.error("Unable to connect to UJS service!")
+        logger.exception(e)
+        sys.exit(1)
 
     # used for cleaning up the job if an exception occurs
     cleanup_details = {"keep_working_directory": keep_working_directory,
@@ -157,13 +158,6 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                 error_object["error_message"] = traceback.format_exc()
                 
                 handler_utils.report_exception(logger, error_object, cleanup_details)
-
-                ujs.complete_job(ujs_job_id, 
-                                 kb_token, 
-                                 "Upload to {0} failed.".format(workspace_name), 
-                                 traceback.format_exc(), 
-                                 None)
-                
                 sys.exit(1)
             else:
                 logger.error("Input data download")
@@ -258,15 +252,43 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
 
                     filename = os.path.split(files[0])[-1]
 
-                    if ujs_job_id is not None:
-                        # Update on validation steps
-                        logger.info("UJS message : " + "Attempting to validate {0}".format(filename)[:handler_utils.UJS_STATUS_MAX])
-                        ujs.update_job_progress(ujs_job_id, kb_token, "Attempting to validate {0}".format(filename)[:handler_utils.UJS_STATUS_MAX], 
-                                                1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
-                    else:
-                        logger.info("Attempting to validate {0}".format(filename))
+                    try:
+                        if ujs_job_id is not None:
+                            # Update on validation steps
+                            logger.info("UJS message : " + "Attempting to validate {0}".format(filename)[:handler_utils.UJS_STATUS_MAX])
+                            ujs.update_job_progress(ujs_job_id, kb_token, "Attempting to validate {0}".format(filename)[:handler_utils.UJS_STATUS_MAX], 
+                                                    1, est.strftime('%Y-%m-%dT%H:%M:%S+0000'))
 
-                    task_output = handler_utils.run_task(logger, validation_args)
+                            task_output = handler_utils.run_task(logger, validation_args, callback=lambda msg: \
+                                ujs.update_job_progress(ujs_job_id, kb_token, msg[:handler_utils.UJS_STATUS_MAX], 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000')))
+                        else:
+                            logger.info("Attempting to validate {0}".format(filename))
+                            task_output = handler_utils.run_task(logger, validation_args)
+                    except Exception, e:
+                        logger.debug("Caught exception while validating!")
+
+                        if ujs_job_id is not None:
+                            task_output = dict()
+                            task_output["stdout"] = e.args[0]
+                            task_output["stderr"] = e.args[1]
+
+                            if task_output["stderr"] != None and len(task_output["stderr"].strip()) > 0:
+                                error_object["status"] = "ERROR : Validation of input data - {0}".format(task_output["stderr"][-handler_utils.UJS_STATUS_MAX:])[:handler_utils.UJS_STATUS_MAX]
+                                error_object["error_message"] = task_output["stderr"]
+                            elif task_output["stdout"] != None and len(task_output["stdout"].strip()) > 0:
+                                error_object["status"] = "ERROR : Validation of input data - {0}".format(task_output["stdout"][-handler_utils.UJS_STATUS_MAX:])[:handler_utils.UJS_STATUS_MAX]
+                                error_object["error_message"] = task_output["stdout"]
+                            else:
+                                error_object["status"] = "ERROR : Validation of input data - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
+                                error_object["error_message"] = traceback.format_exc()
+                
+                            handler_utils.report_exception(logger, error_object, cleanup_details)
+                            sys.exit(1)
+                        else:
+                            logger.error("Validation of input data")
+                            logger.error("Upload to {0} failed.".format(workspace_name))
+                            raise
+
                 
                     if task_output["stdout"] is not None:
                         logger.debug("STDOUT : " + str(task_output["stdout"]))
@@ -289,12 +311,6 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                     error_object["error_message"] = traceback.format_exc()
                 
                     handler_utils.report_exception(logger, error_object, cleanup_details)
-
-                    ujs.complete_job(ujs_job_id, 
-                                     kb_token, 
-                                     "Upload to {0} failed.".format(workspace_name), 
-                                     traceback.format_exc(), 
-                                     None)
                     sys.exit(1)
                 else:
                     logger.error("Validation of input data")
@@ -407,7 +423,35 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
             logger.debug(transformation_args)
             os.mkdir(transform_directory)            
 
-            task_output = handler_utils.run_task(logger, transformation_args, debug=debug)
+            try:
+                if ujs_job_id is not None:
+                    task_output = handler_utils.run_task(logger, transformation_args, debug=debug, callback=lambda msg: \
+                        ujs.update_job_progress(ujs_job_id, kb_token, msg[-handler_utils.UJS_STATUS_MAX:], 1, est.strftime('%Y-%m-%dT%H:%M:%S+0000')))
+                else:
+                    task_output = handler_utils.run_task(logger, transformation_args, debug=debug)
+            except Exception, e:
+                if ujs_job_id is not None:                    
+                    task_output = dict()
+                    task_output["stdout"] = e.args[0]
+                    task_output["stderr"] = e.args[1]
+                    
+                    if task_output["stderr"] != None and len(task_output["stderr"].strip()) > 0:
+                        error_object["status"] = "ERROR : Creating objects - {0}".format(task_output["stderr"][-handler_utils.UJS_STATUS_MAX:])[:handler_utils.UJS_STATUS_MAX]
+                        error_object["error_message"] = task_output["stderr"]
+                    elif task_output["stdout"] != None and len(task_output["stdout"].strip()) > 0:
+                        error_object["status"] = "ERROR : Creating objects - {0}".format(task_output["stdout"][-handler_utils.UJS_STATUS_MAX:])[:handler_utils.UJS_STATUS_MAX]
+                        error_object["error_message"] = task_output["stdout"]
+                    else:
+                        error_object["status"] = "ERROR : Creating objects - {0}".format(e.message)[:handler_utils.UJS_STATUS_MAX]
+                        error_object["error_message"] = traceback.format_exc()
+            
+                    handler_utils.report_exception(logger, error_object, cleanup_details)
+                    sys.exit(1)                             
+                else:
+                    logger.error("Creating an object from {0}".format(url_mapping))
+                    logger.error("Upload to {0} failed.".format(workspace_name))
+                    raise
+                
         
             if task_output["stdout"] is not None:
                 logger.debug("STDOUT : " + str(task_output["stdout"]))
@@ -422,12 +466,6 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                 error_object["error_message"] = traceback.format_exc()
             
                 handler_utils.report_exception(logger, error_object, cleanup_details)
-
-                ujs.complete_job(ujs_job_id, 
-                                 kb_token, 
-                                 "Upload to {0} failed.".format(workspace_name)[:handler_utils.UJS_STATUS_MAX], 
-                                 traceback.format_exc(), 
-                                 None)     
                 sys.exit(1)                             
             else:
                 logger.error("Creating an object from {0}".format(url_mapping))
@@ -502,12 +540,6 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
                     error_object["error_message"] = traceback.format_exc()
             
                     handler_utils.report_exception(logger, error_object, cleanup_details)
-
-                    ujs.complete_job(ujs_job_id, 
-                                     kb_token, 
-                                     "Upload to {0} failed.".format(workspace_name), 
-                                     traceback.format_exc(), 
-                                     None)                                  
                     sys.exit(1)
                 else:
                     logger.error("Saving object {0} to {1}".format(object_name, workspace_name))
@@ -564,19 +596,13 @@ def upload_taskrunner(ujs_service_url = None, workspace_service_url = None,
         error_object["error_message"] = traceback.format_exc()
 
         handler_utils.report_exception(logger, error_object, cleanup_details)
-
-        ujs.complete_job(ujs_job_id, 
-                         kb_token, 
-                         "Upload to {0} failed.".format(workspace_name), 
-                         traceback.format_exc(), 
-                         None)
-        raise                                  
+        sys.exit(1)
 
 
 
 
 if __name__ == "__main__":
-    logger = script_utils.stderrlogger(__file__)    
+    logger = script_utils.stdoutlogger(__file__)
     script_details = script_utils.parse_docs(upload_taskrunner.__doc__)
         
     parser = script_utils.ArgumentParser(description=script_details["Description"],
@@ -713,6 +739,8 @@ if __name__ == "__main__":
         logger.debug("Upload taskrunner threw an exception!")
         logger.exception(e)
         
+        # this is here just in case there is something wrong
+        # with an input to the upload function
         ujs = UserAndJobState(url=args.ujs_service_url, token=os.environ.get("KB_AUTH_TOKEN"))
         ujs.complete_job(args.ujs_job_id, 
                          os.environ.get("KB_AUTH_TOKEN"), 

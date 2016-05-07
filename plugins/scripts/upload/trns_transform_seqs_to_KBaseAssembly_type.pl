@@ -131,7 +131,7 @@ sub validate_seq_file {
     my $abs_file = $file;
     $name =~ s/\.(gz|gzip|bzip|bzip2|bz|bz2|zip)$//;
     $name =~ s/\.tar$//;
-    $name =~ /\.(fasta|fastq|fa|fq|fna|bas\.h5|bax\.h5)$/ or die "Unrecognized file type: $file\n";
+    $name =~ /\.(fasta|fastq|fas|fa|fq|fna|bas\.h5|bax\.h5)$/ or die "Unrecognized file type: $file\n";
     $file =~ s|.*/||;
     #return { file_name => $file, type => '_handle_to_be_' };
     return { full_path_file => $abs_file, file_name => $file, type => '_handle_to_be_' };

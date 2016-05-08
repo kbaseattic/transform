@@ -94,7 +94,7 @@ my ($stdout, $stderr, @result) = capture {
 			$cpd->{msid} =~ s/_.+//g;
 		}
 		$cpd->{cmplabel} = "c0";
-		if ($cpd->{id} =~ m/_([a-z]+\d+)^/) {
+		if ($cpd->{id} =~ m/_([a-z]+\d+)$/) {
 			$cpd->{cmplabel} = $1;
 		}
 		push(@{$output},'<species '.&CleanNames("id",$cpd->{id}).' '.&CleanNames("name",$cpd->{name}).' compartment="'.$cpd->{cmplabel}.'" charge="'.$cpd->{charge}.'" boundaryCondition="false"/>');
@@ -105,6 +105,7 @@ my ($stdout, $stderr, @result) = capture {
 	for (my $i=0; $i < @{$obj->{modelcompounds}}; $i++) {
 		my $cpd = $obj->{modelcompounds}->[$i];
 		if ($cpd->{cmplabel} =~ m/^e/) {
+			#print "Boundary species:".$cpd->{msid}."\n";
 			push(@{$output},'<species '.&CleanNames("id",$cpd->{msid}."_b").' '.&CleanNames("name",$cpd->{name}."_b").' compartment="'.$cpd->{cmplabel}.'" charge="'.$cpd->{charge}.'" boundaryCondition="true"/>');
 		}
 	}
@@ -263,6 +264,7 @@ my ($stdout, $stderr, @result) = capture {
 		my $lb = -1000;
 		my $ub = 1000;
 		if ($cpd->{cmplabel} =~ m/^e/ || $cpd->{msid} eq "cpd08636" || $cpd->{msid} eq "cpd11416" || $cpd->{msid} eq "cpd15302" || $cpd->{msid} eq "cpd02701") {
+			#print "Exchange:".$cpd->{msid}."\n";
 			push(@{$output},'<reaction '.&CleanNames("id",'EX_'.$cpd->{id}).' '.&CleanNames("name",'EX_'.$cpd->{name}).' reversible="true">');
 			push(@{$output},"\t".'<notes>');
 			push(@{$output},"\t\t".'<html:p>GENE_ASSOCIATION: </html:p>');

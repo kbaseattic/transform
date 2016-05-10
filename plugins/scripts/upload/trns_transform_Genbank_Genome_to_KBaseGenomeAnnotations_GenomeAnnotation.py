@@ -600,15 +600,21 @@ def upload_genome(shock_service_url=None,
                                     publication_date = potential_date
                                     break       
                             except ValueError:
-                                record_time = datetime.datetime.strptime(potential_date, '%Y')
-                                if now_date > record_time:
-                                    publication_date = potential_date
-                                    break
+                                try:
+                                    record_time = datetime.datetime.strptime(potential_date, '%Y')
+                                    if now_date > record_time:
+                                        publication_date = potential_date
+                                        break
+                                except ValueError:
+                                    next
                 publication = [pubmed,publication_source,title,pubmed_link,publication_date,authors,journal]
                 genome_publication_dict[publication_key] = publication
                 #END OF PUBLICATION SECTION
 
             metadata_line_counter += 1
+
+        if len(genome_publication_dict) > 0 :
+            genome_annotation["publications"] = genome_publication_dict.values() 
 
         ##################################################################################################
         #MAKE SEQUENCE PART INTO CONTIG WITH NO INTERVENING SPACES OR NUMBERS

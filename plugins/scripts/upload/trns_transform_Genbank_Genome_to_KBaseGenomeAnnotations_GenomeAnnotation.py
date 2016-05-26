@@ -11,6 +11,11 @@ import traceback
 import os.path 
 import datetime
 import shutil
+import sqlite3 
+try: 
+    import cPickle as cPickle 
+except: 
+    import pickle as cPickle 
 from string import digits
 from string import maketrans
 from collections import OrderedDict
@@ -157,8 +162,8 @@ def upload_genome(shock_service_url=None,
 
     if os.path.isfile(input_file_name):
         print "Found Genbank_File" 
+        make_sql_in_memory = True
         dir_name = os.path.dirname(input_file_name)
-#        print "Prefix : " + str(dir_name)
 
         #take in Genbank file and remove all empty lines from it.
         os.rename(input_file_name,"%s/temp_file_name" % (dir_name))
@@ -166,12 +171,17 @@ def upload_genome(shock_service_url=None,
 
         with open(temp_file) as f_in:
             with open(input_file_name, 'w') as f_out:
-                lines = f_in.readlines()
-                for i, line in enumerate(lines):
+                line = f_in.readline()
+                while line:
                     if line.strip():
                         f_out.write(line)
+                    line = f_in.readline()
         os.remove(temp_file)
 
+        #If file is over a 1GB need to do SQLLite on disc
+        if os.stat(input_file_name) > 1073741824 :
+            make_sql_in_memory = True
+            
         genbank_file_handle = TextFileDecoder.open_textdecoder(input_file_name, 'ISO-8859-1') 
         start_position = 0
         current_line = genbank_file_handle.readline()
@@ -235,6 +245,7 @@ def upload_genome(shock_service_url=None,
             genomes_without_taxon_refs.append(organism)
             taxon_object_name = "unknown_taxon"
             genome_annotation['notes'] = "Unable to find taxon for this organism : %s ." % (organism ) 
+        del taxon_lookup
         try: 
 #            taxon_info = ws_client.get_object_info_new({"objects":[{"wsid": str(taxon_workspace_id), 
 #                                                                    "name": taxon_object_name}],
@@ -308,6 +319,25 @@ def upload_genome(shock_service_url=None,
 #    genome_comment = ''
 #    genome_comment_io = StringIO()
 
+    #Create a SQLLite database and connection.
+    if make_sql_in_memory:
+        sql_conn = sqlite3.connect(':memory:') 
+    else:
+        db_name = "GenomeAnnotation_{}.db".format(time_string) 
+        sql_conn = sqlite3.connect(db_name) 
+
+    sql_cursor = sql_conn.cursor() 
+
+    #Create a protein and feature table.
+    sql_cursor.execute('''CREATE TABLE features (feature_id text, feature_type text, sequence_length integer, feature_data blob)''')
+    sql_cursor.execute('''CREATE INDEX feature_id_idx ON features (feature_id)''')
+    sql_cursor.execute('''CREATE INDEX feature_type_idx ON features (feature_type)''')
+    sql_cursor.execute('''CREATE INDEX seq_len_idx ON features (sequence_length)''')
+    sql_cursor.execute('''CREATE TABLE proteins (protein_id text, protein_data blob)''') 
+    sql_cursor.execute('''CREATE TABLE annotation_quality_warnings (warning text)''')
+    sql_cursor.execute('''CREATE TABLE annotation_metadata_warnings (warning text)''')
+    sql_cursor.execute('''PRAGMA synchronous=OFF''') 
+
     #Feature Data structures
 
     #Key is the gene tag (ex: gene="NAC001"), the value is a dict with feature type as the key. The value is a list of maps (one for each feature with that gene value).  
@@ -315,7 +345,7 @@ def upload_genome(shock_service_url=None,
     features_grouping_dict = dict() 
     
     #Key is the feature type.  The value is a mapping of feature specific id (may need to be auto generated) to a feature object
-    features_type_containers_dict = dict()
+#    features_type_containers_dict = dict()
 
     #Key is the protein id (may need to be auto generated, same as CDS) to a protein object
     protein_container_dict = dict()
@@ -336,10 +366,6 @@ def upload_genome(shock_service_url=None,
 
     #Dict used if need to cleanup aliases
     reverse_feature_container_ref_lookup = dict()
-
-    #LIST OF WARNINGS TO PUT INTO THE AnnotationQualityObject.
-    annotation_quality_warnings = list()
-    annotation_metadata_warnings = list()
 
     #Dict of alias source and the count
     alias_source_counts_map = dict()
@@ -680,8 +706,8 @@ def upload_genome(shock_service_url=None,
             ############################################
             #DETERMINE ID TO USE FOR THE FEATURE OBJECT
             ############################################                                                                                                                                      
-            if feature_type not in features_type_containers_dict:
-                features_type_containers_dict[feature_type] = dict()
+#            if feature_type not in features_type_containers_dict:
+#                features_type_containers_dict[feature_type] = dict()
             feature_id = None 
             #MAKING ALL IDS UNIQUE ACROSS THE GENOME.
             if feature_type not in feature_type_id_counter_dict:
@@ -722,7 +748,8 @@ def upload_genome(shock_service_url=None,
                 has_odd_coordinates = True
                 temp_warning = "%s has the rare 'order' coordinate. The sequence was joined together because KBase does not allow for a non contiguous resulting sequence with multiple locations for a feature." % (feature_id)
                 quality_warnings.append(temp_warning)
-                annotation_metadata_warnings.append(temp_warning)
+                #annotation_metadata_warnings.append(temp_warning)
+                sql_cursor.execute("insert into annotation_metadata_warnings values(:warning)",(temp_warning,))
             coordinates_list = coordinates_info.split(",")
             last_coordinate = 0
             dna_sequence_length = 0
@@ -738,7 +765,8 @@ def upload_genome(shock_service_url=None,
                     has_odd_coordinates = True
                     temp_warning = "%s has a '<' or a '>' in the coordinates.  This means the feature starts or ends beyond the known sequence." % (feature_id)
                     quality_warnings.append(temp_warning)
-                    annotation_metadata_warnings.append(temp_warning)
+                    #annotation_metadata_warnings.append(temp_warning)
+                    sql_cursor.execute("insert into annotation_metadata_warnings values(:warning)",(temp_warning,))
                     coordinates= re.sub('<', '', coordinates)
                     coordinates= re.sub('>', '', coordinates)
 
@@ -754,7 +782,8 @@ def upload_genome(shock_service_url=None,
                     has_odd_coordinates = True
                     temp_warning = "%s has a single period in the original coordinate this indicates that the exact location is unknown but that it is one of the bases between bases %s and %s, inclusive.  Note the entire sequence range has been put into this feature." % (feature_id, str(start_pos),str(end_pos))
                     quality_warnings.append(temp_warning)
-                    annotation_metadata_warnings.append(temp_warning)
+                    #annotation_metadata_warnings.append(temp_warning)
+                    sql_cursor.execute("insert into annotation_metadata_warnings values(:warning)",(temp_warning,))
                 elif period_count > 2 :
                     can_not_process_feature = True
                 else:
@@ -764,8 +793,8 @@ def upload_genome(shock_service_url=None,
                     has_odd_coordinates = True
                     temp_warning = "%s is between bases.  It points to a site between bases %s and %s, inclusive.  Note the entire sequence range has been put into this feature." % (feature_id, str(start_pos),str(end_pos))
                     quality_warnings.append(temp_warning)
-                    annotation_metadata_warnings.append(temp_warning)       
-
+                    #annotation_metadata_warnings.append(temp_warning)       
+                    sql_cursor.execute("insert into annotation_metadata_warnings values(:warning)",(temp_warning,))
 
                 if not can_not_process_feature:
                     if (represents_int(start_pos) and represents_int(end_pos)):
@@ -857,7 +886,8 @@ def upload_genome(shock_service_url=None,
                     if temp_string != "trans_splicing":
                         temp_warning = "%s has the following feature property does not follow the expected key=value format : %s" % (feature_id, temp_string) 
                         quality_warnings.append(temp_warning)
-                        annotation_metadata_warnings.append(temp_warning)       
+                        #annotation_metadata_warnings.append(temp_warning)
+                        sql_cursor.execute("insert into annotation_metadata_warnings values(:warning)",(temp_warning,))       
                     key = temp_string 
                     value = "" 
 
@@ -1005,11 +1035,11 @@ def upload_genome(shock_service_url=None,
 #                feature_id = "%s_%s" % (feature_type,str(feature_type_id_counter_dict[feature_type]))
 ##END NEW WAY
 
-            if feature_type not in features_type_containers_dict:
-                features_type_containers_dict[feature_type]=dict()
+#            if feature_type not in features_type_containers_dict:
+#                features_type_containers_dict[feature_type]=dict()
             feature_object["feature_id"] = feature_id
 
-            features_type_containers_dict[feature_type][feature_id] = feature_object
+#            features_type_containers_dict[feature_type][feature_id] = feature_object
 
             feature_container_object_name = "%s_feature_container_%s" % (core_genome_name, feature_type)
             feature_container_ref = "%s/%s" % (workspace_name,feature_container_object_name)
@@ -1100,27 +1130,35 @@ def upload_genome(shock_service_url=None,
                     protein_object["md5"] = hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
                     protein_container_dict[protein_object["protein_id"]] = protein_object
                     protein_container_object_name = "%s_protein_container" % (core_genome_name)
-                    if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
-                        features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
+#                    if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
+#                        features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
+                    if "CDS_properties" not in feature_object: 
+                        feature_object["CDS_properties"] = dict() 
                     protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
-                    features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
-                    
-                                        
-
+                    feature_object["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
+                    #NEED TO MAKE PICKLED PROTEIN ENTRY IN DB
+                    pickled_protein = cPickle.dumps(protein_object, cPickle.HIGHEST_PROTOCOL) 
+                    sql_cursor.execute("insert into proteins values(:protein_id, :protein_data)", 
+                                       (protein_id, sqlite3.Binary(pickled_protein),)) 
 
             ########################################
             #CLEAN UP UNWANTED FEATURE KEYS
             #######################################
             if "locus_tag" in feature_object: 
-                del features_type_containers_dict[feature_type][feature_id]["locus_tag"]
+                del feature_object["locus_tag"]
             if "gene" in feature_object: 
-                del features_type_containers_dict[feature_type][feature_id]["gene"]
+                del feature_object["gene"]
             if "feature_specific_id" in feature_object: 
-                del features_type_containers_dict[feature_type][feature_id]["feature_specific_id"]
+                del feature_object["feature_specific_id"]
             if "translation" in feature_object: 
-                del features_type_containers_dict[feature_type][feature_id]["translation"]
+                del feature_object["translation"]
             
 
+            #MAKE ENTRY INTO THE FEATURE TABLE
+            pickled_feature = cPickle.dumps(feature_object, cPickle.HIGHEST_PROTOCOL) 
+            sql_cursor.execute("insert into features values(:feature_id, :feature_type , :sequence_length, :feature_data)", 
+                               (feature_id, feature_type, feature_object["dna_sequence_length"], sqlite3.Binary(pickled_feature),))
+            
 #        for feature_type in feature_type_counts:
 #            print "Feature " + feature_type + "  count: " + str(feature_type_counts[feature_type])
 
@@ -1181,7 +1219,7 @@ def upload_genome(shock_service_url=None,
     #The value is a list of feature_ids  
     ###################################
 
-#    print "Total Groupings length : " + str(len(features_grouping_dict))
+    print "Total Groupings length : " + str(len(features_grouping_dict))
     running_grouping_elements_count = 0
     groupings_without_three_levels = 0
 
@@ -1190,17 +1228,44 @@ def upload_genome(shock_service_url=None,
     inner_unequal_cds_mrna_count = 0
 
     #GO through each grouping id and determine the interfeature relationships
+#    sql_cursor.execute("select count(*) from features") 
+#    for row in sql_cursor: 
+#        print "Total feature count in sql : " + str(row[0])
+
     for feature_grouping_id in features_grouping_dict:
         num_genes_present = 0
         num_cds_present = 0
         num_mrna_present = 0
+        
+        cds_features = dict()
+        mrna_features = dict()
+        gene_features = dict()
+
         if "CDS" in features_grouping_dict[feature_grouping_id]:
             num_cds_present = len(features_grouping_dict[feature_grouping_id]["CDS"])
+            if num_cds_present > 0:
+                sql_cursor.execute("select feature_id, feature_data from features where feature_id IN (" + 
+                                   ",".join(["?"]*num_cds_present)+")",
+                                   (features_grouping_dict[feature_grouping_id]["CDS"]),)
+                for row in sql_cursor:
+                    cds_features[row[0]] =  cPickle.loads(str(row[1]))
         if "mRNA" in features_grouping_dict[feature_grouping_id]:
             num_mrna_present = len(features_grouping_dict[feature_grouping_id]["mRNA"])
+            if num_mrna_present > 0:
+                sql_cursor.execute("select feature_id, feature_data from features where feature_id IN (" + 
+                                   ",".join(["?"]*num_mrna_present)+")",
+                                   (features_grouping_dict[feature_grouping_id]["mRNA"]),)
+                for row in sql_cursor:
+                    mrna_features[row[0]] =  cPickle.loads(str(row[1]))
         if "gene" in features_grouping_dict[feature_grouping_id]:
             num_genes_present = len(features_grouping_dict[feature_grouping_id]["gene"])
-        
+            if num_genes_present > 0:
+                sql_cursor.execute("select feature_id, feature_data from features where feature_id IN (" + 
+                                   ",".join(["?"]*num_genes_present)+")",
+                                   (features_grouping_dict[feature_grouping_id]["gene"]),)
+                for row in sql_cursor:
+                    gene_features[row[0]] =  cPickle.loads(str(row[1]))        
+
 
         #####################################################
         #DO Gene relationships (to and from the mRNA and CDS)
@@ -1208,13 +1273,23 @@ def upload_genome(shock_service_url=None,
         if num_genes_present > 1:
             #THIS COULD CHANGE THE DOWN THE LINE (NOT GOING TO IMPLEMENT THE LOGIC NOW)
             general_warning = "Multiple genes shared the same LocusTag or GeneID : %s. The interfeature relationships will not be determined." % (feature_grouping_id)
-            annotation_quality_warnings.append(general_warning) 
-            for feature_type in features_grouping_dict[feature_grouping_id]:
-                for feature_id in features_grouping_dict[feature_grouping_id][feature_type]:
-                    if "quality_warnings" in features_type_containers_dict[feature_type][feature_id]: 
-                        features_type_containers_dict[feature_type][feature_id]["quality_warnings"].append(general_warning)
-                    else: 
-                        features_type_containers_dict[feature_type][feature_id]["quality_warnings"] = [general_warning]
+#            annotation_quality_warnings.append(general_warning)
+            sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(general_warning,))
+            for gene_id in gene_features:
+                if "quality_warnings" in gene_features[gene_id]:
+                    gene_features[gene_id]["quality_warnings"].append(general_warning)
+                else:
+                    gene_features[gene_id]["quality_warnings"] = [general_warning]    
+            for mrna_id in mrna_features:
+                if "quality_warnings" in mrna_features[mrna_id]:
+                    mrna_features[mrna_id]["quality_warnings"].append(general_warning)
+                else:                                                                                                                      
+                    mrna_features[mrna_id]["quality_warnings"] = [general_warning]    
+            for cds_id in cds_features:
+                if "quality_warnings" in cds_features[cds_id]:
+                    cds_features[cds_id]["quality_warnings"].append(general_warning)
+                else:
+                    cds_features[cds_id]["quality_warnings"] = [general_warning]    
         elif num_genes_present == 1:
             #determine interfeature relationships
             #make sure all locations are on the same the contig
@@ -1227,8 +1302,9 @@ def upload_genome(shock_service_url=None,
             gene_contig = None
             gene_strand = None
             gene_id = features_grouping_dict[feature_grouping_id]["gene"][0]
-            if "locations" in features_type_containers_dict["gene"][gene_id]:
-                for location in features_type_containers_dict["gene"][gene_id]["locations"]:
+
+            if "locations" in gene_features[gene_id]:
+                for location in gene_features[gene_id]["locations"]:
                     temp_start_location = location[1]
                     temp_end_location = location[1] + location[3]
                     if location[2] == "-":
@@ -1243,20 +1319,16 @@ def upload_genome(shock_service_url=None,
                     elif temp_end_location > gene_end_boundary:
                         gene_end_boundary = temp_end_location
 
-                
-#                gene_start_boundary = features_type_containers_dict["gene"][gene_id]["locations"][0][1]
-                gene_contig = features_type_containers_dict["gene"][gene_id]["locations"][0][0]
-                gene_strand = features_type_containers_dict["gene"][gene_id]["locations"][0][2]
-#                end_location =  features_type_containers_dict["gene"][gene_id]["locations"][-1]
-#                gene_end_boundary = end_location[1] + end_location[3]
+                gene_contig = gene_features[gene_id]["locations"][0][0]
+                gene_strand = gene_features[gene_id]["locations"][0][2]
                     
             if "mRNA" in features_grouping_dict[feature_grouping_id]:
                 for feature_id in features_grouping_dict[feature_grouping_id]["mRNA"]:
                     mRNA_start_boundary = None
                     mRNA_end_boundary = None
                     mRNA_contig = None
-                    if "locations" in  features_type_containers_dict["mRNA"][feature_id]:
-                        for location in features_type_containers_dict["mRNA"][feature_id]["locations"]:
+                    if "locations" in  mrna_features[feature_id]:
+                        for location in mrna_features[feature_id]["locations"]:
                             temp_start_location = location[1] 
                             temp_end_location = location[1] + location[3] 
                             if location[2] == "-": 
@@ -1271,11 +1343,9 @@ def upload_genome(shock_service_url=None,
                             elif temp_end_location > mRNA_end_boundary:
                                 mRNA_end_boundary = temp_end_location
  
-#                        mRNA_start_boundary = features_type_containers_dict["mRNA"][feature_id]["locations"][0][1]
-                        mRNA_contig = features_type_containers_dict["mRNA"][feature_id]["locations"][0][0]
-                        mRNA_strand = features_type_containers_dict["mRNA"][feature_id]["locations"][0][2]
-#                        end_location = features_type_containers_dict["mRNA"][feature_id]["locations"][-1]
-#                        mRNA_end_boundary = end_location[1] + end_location[3]
+                        mRNA_contig = mrna_features[feature_id]["locations"][0][0]
+                        mRNA_strand = mrna_features[feature_id]["locations"][0][2]
+
                         if (mRNA_contig is not None) and \
                            (gene_contig is not None) and \
                            (mRNA_contig == gene_contig) and \
@@ -1291,56 +1361,57 @@ def upload_genome(shock_service_url=None,
                                             needs_to_be_added = False
                                     if needs_to_be_added:
                                         gene_mRNA_list.append(["mRNA",feature_id])
-                                    if "mRNA_properties" not in features_type_containers_dict["mRNA"][feature_id]:
-                                        features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"] = dict()
-                                    if "parent_gene" not in features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]:
-                                        features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]["parent_gene"] = ["gene",gene_id]
+                                    if "mRNA_properties" not in mrna_features[feature_id]:
+                                        mrna_features[feature_id]["mRNA_properties"] = dict()
+                                    if "parent_gene" not in mrna_features[feature_id]["mRNA_properties"]:
+                                        mrna_features[feature_id]["mRNA_properties"]["parent_gene"] = ["gene",gene_id]
                                         if "mRNA_with_gene" not in interfeature_relationship_counts_map:
                                             interfeature_relationship_counts_map["mRNA_with_gene"] = 1
                                         else:
                                             interfeature_relationship_counts_map["mRNA_with_gene"] = interfeature_relationship_counts_map["mRNA_with_gene"] + 1
-                                        if "function" not in features_type_containers_dict["mRNA"][feature_id] and \
-                                           "function" in features_type_containers_dict["gene"][gene_id]:
+                                        if "function" not in mrna_features[feature_id] and \
+                                           "function" in gene_features[gene_id]:
                                             #inherit function from gene if mRNA has not function
-                                            features_type_containers_dict["mRNA"][feature_id]["function"] = features_type_containers_dict["gene"][gene_id]["function"]
+                                            mrna_features[feature_id]["function"] = gene_features[gene_id]["function"]
                                     else:
-                                        existing_gene_id = features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]["parent_gene"][1]
+                                        existing_gene_id = mrna_features[feature_id]["mRNA_properties"]["parent_gene"][1]
                                         if existing_gene_id != gene_id:
                                             general_warning = "mRNA %s ambiguously is associated with two different gene ids (%s and %s), no association can be made" % (feature_id,existing_gene_id,gene_id)
-                                            annotation_quality_warnings.append(general_warning) 
-                                            del features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]["parent_gene"]
+                                            #annotation_quality_warnings.append(general_warning) 
+                                            sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(general_warning,))
+                                            del mrna_features[feature_id]["mRNA_properties"]["parent_gene"]
                                             interfeature_relationship_counts_map["gene_with_mRNA"] = interfeature_relationship_counts_map["gene_with_mRNA"] - 1
                                             interfeature_relationship_counts_map["mRNA_with_gene"] = interfeature_relationship_counts_map["mRNA_with_gene"] - 1
-                                            del features_type_containers_dict["gene"][existing_gene_id]["gene_properties"]["children_mRNA"] 
+                                            del gene_features[existing_gene_id]["gene_properties"]["children_mRNA"] 
                                             gene_mRNA_list = list()
-                                            if not features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]:
-                                                del features_type_containers_dict["mRNA"][feature_id]["mRNA_properties"]
-                                            if "quality_warnings" in features_type_containers_dict[feature_type][feature_id]: 
-                                                features_type_containers_dict["mRNA"][feature_id]["quality_warnings"].append(general_warning) 
+                                            if not mrna_features[feature_id]["mRNA_properties"]:
+                                                del mrna_features[feature_id]["mRNA_properties"]
+                                            if "quality_warnings" in mrna_features[feature_id]: 
+                                                mrna_features[feature_id]["quality_warnings"].append(general_warning) 
                                             else: 
-                                                features_type_containers_dict["mRNA"][feature_id]["quality_warnings"] = [general_warning] 
+                                                mrna_features[feature_id]["quality_warnings"] = [general_warning] 
                 if len(gene_mRNA_list) > 0:
                     if gene_id not in genes_with_mRNA:
-                        if "gene_properties" not in features_type_containers_dict["gene"][gene_id]:
-                            features_type_containers_dict["gene"][gene_id]["gene_properties"] = dict()
+                        if "gene_properties" not in gene_features[gene_id]:
+                            gene_features[gene_id]["gene_properties"] = dict()
                         temp_dict = dict()
                         for e1 in gene_mRNA_list:
                             temp_dict[e1[1]] = 1
                         new_list = list()
                         for temp_key in temp_dict.keys():
                             new_list.append(["mRNA",temp_key])
-                        features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"]=new_list 
+                        gene_features[gene_id]["gene_properties"]["children_mRNA"]=new_list 
                         if "gene_with_mRNA" not in interfeature_relationship_counts_map:
                             interfeature_relationship_counts_map["gene_with_mRNA"] = 0
                         interfeature_relationship_counts_map["gene_with_mRNA"] = interfeature_relationship_counts_map["gene_with_mRNA"] + 1
                         genes_with_mRNA[gene_id] = 1
-                    elif "children_mRNA" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
+                    elif "children_mRNA" in gene_features[gene_id]["gene_properties"]:
                         temp_dict = dict()
-                        for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"]:
+                        for e1 in gene_features[gene_id]["gene_properties"]["children_mRNA"]:
                             temp_dict[e1[1]] = 1
                         for new_child_mRNA in gene_mRNA_list:
                             if new_child_mRNA[1] not in temp_dict:
-                                features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_mRNA"].append(new_child_mRNA)
+                                gene_features[gene_id]["gene_properties"]["children_mRNA"].append(new_child_mRNA)
 
 
             if "CDS" in features_grouping_dict[feature_grouping_id]: 
@@ -1348,8 +1419,8 @@ def upload_genome(shock_service_url=None,
                     CDS_start_boundary = None 
                     CDS_end_boundary = None 
                     CDS_contig = None 
-                    if "locations" in  features_type_containers_dict["CDS"][feature_id]:
-                        for location in features_type_containers_dict["CDS"][feature_id]["locations"]:
+                    if "locations" in cds_features[feature_id]:
+                        for location in cds_features[feature_id]["locations"]:
                             temp_start_location = location[1] 
                             temp_end_location = location[1] + location[3] 
                             if location[2] == "-": 
@@ -1363,11 +1434,9 @@ def upload_genome(shock_service_url=None,
                                 CDS_end_boundary = temp_end_location
                             elif temp_end_location > CDS_end_boundary:
                                 CDS_end_boundary = temp_end_location 
-#                        CDS_start_boundary = features_type_containers_dict["CDS"][feature_id]["locations"][0][1] 
-                        CDS_contig = features_type_containers_dict["CDS"][feature_id]["locations"][0][0] 
-                        CDS_strand = features_type_containers_dict["CDS"][feature_id]["locations"][0][2] 
-#                        end_location = features_type_containers_dict["CDS"][feature_id]["locations"][-1] 
-#                        CDS_end_boundary = end_location[1] + end_location[3] 
+                        CDS_contig = cds_features[feature_id]["locations"][0][0] 
+                        CDS_strand = cds_features[feature_id]["locations"][0][2] 
+
                         if (CDS_contig is not None) and \
                            (gene_contig is not None) and \
                            (CDS_contig == gene_contig) and \
@@ -1383,55 +1452,56 @@ def upload_genome(shock_service_url=None,
                                             needs_to_be_added = False
                                     if needs_to_be_added:
                                         gene_CDS_list.append(["CDS",feature_id])
-                                    if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
-                                        features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
-                                    if "parent_gene" not in features_type_containers_dict["CDS"][feature_id]["CDS_properties"]:
-                                        features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["parent_gene"] = ["gene",gene_id] 
+                                    if "CDS_properties" not in cds_features[feature_id]: 
+                                        cds_features[feature_id]["CDS_properties"] = dict() 
+                                    if "parent_gene" not in cds_features[feature_id]["CDS_properties"]:
+                                        cds_features[feature_id]["CDS_properties"]["parent_gene"] = ["gene",gene_id] 
                                         if "CDS_with_gene" not in interfeature_relationship_counts_map:
                                             interfeature_relationship_counts_map["CDS_with_gene"] = 1
                                         else:
                                             interfeature_relationship_counts_map["CDS_with_gene"] = interfeature_relationship_counts_map["CDS_with_gene"] + 1
-                                        if "function" not in features_type_containers_dict["CDS"][feature_id] and \
-                                           "function" in features_type_containers_dict["gene"][gene_id]:
+                                        if "function" not in cds_features[feature_id] and \
+                                           "function" in gene_features[gene_id]:
                                             #inherit function from gene if CDS has not function
-                                            features_type_containers_dict["CDS"][feature_id]["function"] = features_type_containers_dict["gene"][gene_id]["function"]
+                                            cds_features[feature_id]["function"] = gene_features[gene_id]["function"]
                                     else:
-                                        existing_gene_id = features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["parent_gene"][1]
+                                        existing_gene_id = cds_features[feature_id]["CDS_properties"]["parent_gene"][1]
                                         if existing_gene_id != gene_id:
                                             general_warning = "CDS %s ambiguously is associated with two different gene ids (%s and %s), no association can be made" % (feature_id,existing_gene_id,gene_id)
-                                            annotation_quality_warnings.append(general_warning) 
+                                            #annotation_quality_warnings.append(general_warning) 
+                                            sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(general_warning,))
                                             interfeature_relationship_counts_map["gene_with_CDS"] = interfeature_relationship_counts_map["gene_with_CDS"] - 1
                                             interfeature_relationship_counts_map["CDS_with_gene"] = interfeature_relationship_counts_map["CDS_with_gene"] - 1
-                                            del features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["parent_gene"]
+                                            del cds_features[feature_id]["CDS_properties"]["parent_gene"]
                                             gene_CDS_list = list()
-                                            if not features_type_containers_dict["CDS"][feature_id]["CDS_properties"]:
-                                                del features_type_containers_dict["CDS"][feature_id]["CDS_properties"]
-                                            if "quality_warnings" in features_type_containers_dict[feature_type][feature_id]: 
-                                                features_type_containers_dict["CDS"][feature_id]["quality_warnings"].append(general_warning) 
+                                            if not cds_features[feature_id]["CDS_properties"]:
+                                                del cds_features[feature_id]["CDS_properties"]
+                                            if "quality_warnings" in cds_features[feature_id]: 
+                                                cds_features[feature_id]["quality_warnings"].append(general_warning) 
                                             else: 
-                                                features_type_containers_dict["CDS"][feature_id]["quality_warnings"] = [general_warning] 
+                                                cds_features[feature_id]["quality_warnings"] = [general_warning] 
                 if len(gene_CDS_list) > 0: 
                     if gene_id not in genes_with_CDS:
-                        if "gene_properties" not in features_type_containers_dict["gene"][gene_id]: 
-                            features_type_containers_dict["gene"][gene_id]["gene_properties"] = dict()
+                        if "gene_properties" not in gene_features[gene_id]: 
+                            gene_features[gene_id]["gene_properties"] = dict()
                         temp_dict = dict()
                         for e1 in gene_CDS_list:
                             temp_dict[e1[1]] = 1
                         new_list = list()
                         for temp_key in temp_dict.keys():
                             new_list.append(["CDS",temp_key])
-                        features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"]=new_list 
+                        gene_features[gene_id]["gene_properties"]["children_CDS"]=new_list 
                         if "gene_with_CDS" not in interfeature_relationship_counts_map:
                             interfeature_relationship_counts_map["gene_with_CDS"] = 0 
                         interfeature_relationship_counts_map["gene_with_CDS"] = interfeature_relationship_counts_map["gene_with_CDS"] + 1
                         genes_with_CDS[gene_id] = 1
-                    elif "children_CDS" in features_type_containers_dict["gene"][gene_id]["gene_properties"]:
+                    elif "children_CDS" in gene_features[gene_id]["gene_properties"]:
                         temp_dict = dict()
-                        for e1 in features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"]:
+                        for e1 in gene_features[gene_id]["gene_properties"]["children_CDS"]:
                             temp_dict[e1[1]] = 1
                         for new_child_CDS in gene_CDS_list:
                             if new_child_CDS[1] not in temp_dict:
-                                features_type_containers_dict["gene"][gene_id]["gene_properties"]["children_CDS"].append(new_child_CDS)
+                                gene_features[gene_id]["gene_properties"]["children_CDS"].append(new_child_CDS)
 
 
         #########################        
@@ -1447,8 +1517,8 @@ def upload_genome(shock_service_url=None,
                 mRNA_start_boundary = None 
                 mRNA_end_boundary = None 
                 mRNA_contig = None 
-                if "locations" in  features_type_containers_dict["mRNA"][mRNA_feature_id]: 
-                    for location in features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"]:
+                if "locations" in mrna_features[mRNA_feature_id]: 
+                    for location in mrna_features[mRNA_feature_id]["locations"]:
                         temp_start_location = location[1] 
                         temp_end_location = location[1] + location[3] 
                         if location[2] == "-": 
@@ -1463,21 +1533,18 @@ def upload_genome(shock_service_url=None,
                         elif temp_end_location > mRNA_end_boundary:
                             mRNA_end_boundary = temp_end_location
 
-#                    mRNA_start_boundary = features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"][0][1] 
-                    mRNA_contig = features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"][0][0] 
-                    mRNA_strand = features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"][0][2] 
-#                    end_location = features_type_containers_dict["mRNA"][mRNA_feature_id]["locations"][-1] 
-#                    mRNA_end_boundary = end_location[1] + end_location[3] 
+                    mRNA_contig = mrna_features[mRNA_feature_id]["locations"][0][0] 
+                    mRNA_strand = mrna_features[mRNA_feature_id]["locations"][0][2] 
 
-                    if "dna_sequence" in features_type_containers_dict["mRNA"][mRNA_feature_id]:
-                        mRNA_sequence = features_type_containers_dict["mRNA"][mRNA_feature_id]["dna_sequence"]
+                    if "dna_sequence" in mrna_features[mRNA_feature_id]:
+                        mRNA_sequence = mrna_features[mRNA_feature_id]["dna_sequence"]
                         for CDS_feature_id in features_grouping_dict[feature_grouping_id]["CDS"]:
                             CDS_start_boundary = None 
                             CDS_end_boundary = None 
                             CDS_contig = None 
 
-                            if "locations" in  features_type_containers_dict["CDS"][CDS_feature_id]: 
-                                for location in features_type_containers_dict["CDS"][CDS_feature_id]["locations"]:
+                            if "locations" in cds_features[CDS_feature_id]: 
+                                for location in cds_features[CDS_feature_id]["locations"]:
                                     temp_start_location = location[1] 
                                     temp_end_location = location[1] + location[3] 
                                     if location[2] == "-": 
@@ -1492,11 +1559,9 @@ def upload_genome(shock_service_url=None,
                                     elif temp_end_location > CDS_end_boundary:
                                         CDS_end_boundary = temp_end_location 
 
-#                                CDS_start_boundary = features_type_containers_dict["CDS"][CDS_feature_id]["locations"][0][1] 
-                                CDS_contig = features_type_containers_dict["CDS"][CDS_feature_id]["locations"][0][0] 
-                                CDS_strand = features_type_containers_dict["CDS"][CDS_feature_id]["locations"][0][2] 
-#                                end_location = features_type_containers_dict["CDS"][CDS_feature_id]["locations"][-1] 
-#                                CDS_end_boundary = end_location[1] + end_location[3] 
+                                CDS_contig = cds_features[CDS_feature_id]["locations"][0][0] 
+                                CDS_strand = cds_features[CDS_feature_id]["locations"][0][2] 
+
                                 if (CDS_contig is not None) and (mRNA_contig is not None) and \
                                    (CDS_contig == mRNA_contig) and (CDS_strand == mRNA_strand) : 
                                     if (CDS_start_boundary is not None) and \
@@ -1506,8 +1571,8 @@ def upload_genome(shock_service_url=None,
                                         if (CDS_start_boundary >= mRNA_start_boundary) and \
                                            (CDS_end_boundary <= mRNA_end_boundary):
 
-                                            if "dna_sequence" in features_type_containers_dict["CDS"][CDS_feature_id]:
-                                                CDS_sequence = features_type_containers_dict["CDS"][CDS_feature_id]["dna_sequence"]
+                                            if "dna_sequence" in cds_features[CDS_feature_id]:
+                                                CDS_sequence = cds_features[CDS_feature_id]["dna_sequence"]
                                                 if CDS_sequence in mRNA_sequence:
                                                     if CDS_feature_id not in CDS_mRNA_match_dict :
                                                         CDS_mRNA_match_dict[CDS_feature_id] = dict()
@@ -1545,19 +1610,21 @@ def upload_genome(shock_service_url=None,
                         #Means that mRNA has been paired with a CDS already the 1 to 1 relationship is ambiguous
                         CDS_warning = "This CDS %s can not be definitively matched to just one mRNA; it hits %s" % \
                                       (CDS_feature_id,",".join(mRNA_hits))
-                        annotation_quality_warnings.append(CDS_warning)
+                        #annotation_quality_warnings.append(CDS_warning)
+                        sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(CDS_warning,))
                         mRNA_warning = "This mRNA %s can not be definitively matched to just one CDS; it hits %s and %s" % \
                                        (mRNA_feature_id,CDS_feature_id,mRNA_to_CDS_pairings_made[mRNA_feature_id])
-                        annotation_quality_warnings.append(mRNA_warning)
-                        if "quality_warnings" in features_type_containers_dict["CDS"][CDS_feature_id]:
-                            features_type_containers_dict["CDS"][CDS_feature_id]["quality_warnings"].append(CDS_warning)
+                        #annotation_quality_warnings.append(mRNA_warning)
+                        sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(mRNA_warning,))
+                        if "quality_warnings" in cds_features[CDS_feature_id]:
+                            cds_features[CDS_feature_id]["quality_warnings"].append(CDS_warning)
                         else: 
-                            features_type_containers_dict["CDS"][CDS_feature_id]["quality_warnings"]=[CDS_warning]
+                            cds_features[CDS_feature_id]["quality_warnings"]=[CDS_warning]
 
-                        if "quality_warnings" in features_type_containers_dict["mRNA"][mRNA_feature_id]:
-                            features_type_containers_dict["mRNA"][mRNA_feature_id]["quality_warnings"].append(mRNA_warning)
+                        if "quality_warnings" in mrna_features[mRNA_feature_id]:
+                            mrna_features[mRNA_feature_id]["quality_warnings"].append(mRNA_warning)
                         else: 
-                            features_type_containers_dict["mRNA"][mRNA_feature_id]["quality_warnings"]=[mRNA_warning]
+                            mrna_features[mRNA_feature_id]["quality_warnings"]=[mRNA_warning]
                         
                         pairings_are_ambiguous = True
                     else :
@@ -1566,45 +1633,47 @@ def upload_genome(shock_service_url=None,
             if pairings_are_ambiguous == False:
                 #Add the information to the CDS and mRNA properties
                 for CDS_feature_id in CDS_to_mRNA_pairings_made:
-                    if "CDS_properties" not in features_type_containers_dict["CDS"][CDS_feature_id]: 
-                        features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"] = dict() 
-                    if "asssociated_mRNA" in features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]:
-                        existing_mRNA_id = features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]["associated_mRNA"][1]
+                    if "CDS_properties" not in cds_features[CDS_feature_id]: 
+                        cds_features[CDS_feature_id]["CDS_properties"] = dict() 
+                    if "asssociated_mRNA" in cds_features[CDS_feature_id]["CDS_properties"]:
+                        existing_mRNA_id = cds_features[CDS_feature_id]["CDS_properties"]["associated_mRNA"][1]
                         if CDS_to_mRNA_pairings_made[CDS_feature_id] != existing_mRNA_id:
                             #REMOVE THE OLD ONE ASSOCIATION, POTENTIALLY REMOVE THE PROPERTIES, ADD A WARNING
                             general_warning = "CDS %s ambiguously is associated with two different mRNA ids (%s and %s), no association can be made" % (feature_id,existing_mRNA_id,CDS_to_mRNA_pairings_made[CDS_feature_id])
-                            annotation_quality_warnings.append(general_warning)
-                            del features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]["associated_mRNA"]
+                            #annotation_quality_warnings.append(general_warning)
+                            sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(general_warning,))
+                            del cds_features[CDS_feature_id]["CDS_properties"]["associated_mRNA"]
 
-                            if not features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]:
-                                del features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]
-                                if "quality_warnings" in features_type_containers_dict["CDS"][CDS_feature_id]:
-                                    features_type_containers_dict["CDS"][CDS_feature_id]["quality_warnings"].append(general_warning)
+                            if not cds_features[CDS_feature_id]["CDS_properties"]:
+                                del cds_features[CDS_feature_id]["CDS_properties"]
+                                if "quality_warnings" in cds_features[CDS_feature_id]:
+                                    cds_features[CDS_feature_id]["quality_warnings"].append(general_warning)
                                 else: 
-                                    features_type_containers_dict["CDS"][CDS_feature_id]["quality_warnings"] = [general_warning]
+                                    cds_features[CDS_feature_id]["quality_warnings"] = [general_warning]
                     else:
-                        features_type_containers_dict["CDS"][CDS_feature_id]["CDS_properties"]["associated_mRNA"] \
+                        cds_features[CDS_feature_id]["CDS_properties"]["associated_mRNA"] \
                             = ["mRNA",CDS_to_mRNA_pairings_made[CDS_feature_id]] 
                 for mRNA_feature_id in mRNA_to_CDS_pairings_made:
 #                    print " mRNA_to_CDS_pairings_made : \n" + str( mRNA_to_CDS_pairings_made)
-                    if "mRNA_properties" not in features_type_containers_dict["mRNA"][mRNA_feature_id]: 
-                        features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"] = dict() 
-                    if "asssociated_CDS" in features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]:
-                        existing_CDS_id = features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]["associated_CDS"][1]
+                    if "mRNA_properties" not in mrna_features[mRNA_feature_id]: 
+                        mrna_features[mRNA_feature_id]["mRNA_properties"] = dict() 
+                    if "asssociated_CDS" in mrna_features[mRNA_feature_id]["mRNA_properties"]:
+                        existing_CDS_id = mrna_features[mRNA_feature_id]["mRNA_properties"]["associated_CDS"][1]
                         if mRNA_to_CDS_pairings_made[mRNA_feature_id] != existing_CDS_id:
                             #REMOVE THE OLD ONE ASSOCIATION, POTENTIALLY REMOVE THE PROPERTIES, ADD A WARNING
                             general_warning = "mRNA %s ambiguously is associated with two different CDS ids (%s and %s), no association can be made" % (feature_id,existing_CDS_id,mRNA_to_CDS_pairings_made[mRNA_feature_id])
-                            annotation_quality_warnings.append(general_warning)
-                            del features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]["associated_CDS"]
+                            #annotation_quality_warnings.append(general_warning)
+                            sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(general_warning,))
+                            del mrna_features[mRNA_feature_id]["mRNA_properties"]["associated_CDS"]
 
-                            if not features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]:
-                                del features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]
-                                if "quality_warnings" in features_type_containers_dict["mRNA"][mRNA_feature_id]:
-                                    features_type_containers_dict["mRNA"][mRNA_feature_id]["quality_warnings"].append(general_warning)
+                            if not mrna_features[mRNA_feature_id]["mRNA_properties"]:
+                                del mrna_features[mRNA_feature_id]["mRNA_properties"]
+                                if "quality_warnings" in mrna_features[mRNA_feature_id]:
+                                    mrna_features[mRNA_feature_id]["quality_warnings"].append(general_warning)
                                 else: 
-                                    features_type_containers_dict["CDS"][mRNA_feature_id]["quality_warnings"] = [general_warning]
+                                    mrna_features[mRNA_feature_id]["quality_warnings"] = [general_warning]
                     else:
-                        features_type_containers_dict["mRNA"][mRNA_feature_id]["mRNA_properties"]["associated_CDS"] \
+                        mrna_features[mRNA_feature_id]["mRNA_properties"]["associated_CDS"] \
                             = ["CDS",mRNA_to_CDS_pairings_made[mRNA_feature_id]] 
 
 
@@ -1618,6 +1687,16 @@ def upload_genome(shock_service_url=None,
         if num_cds_present != num_mrna_present:
             unequal_cds_mrna_count += 1
 
+        #NEED TO RESAVE ALL THE FEATURES IN THE GROUPINGS BACK INTO SQLLITE 
+        for cds_id in cds_features:
+            pdata = cPickle.dumps(cds_features[cds_id], cPickle.HIGHEST_PROTOCOL) 
+            sql_cursor.execute("update features set feature_data = ? where feature_id = ?", (sqlite3.Binary(pdata),cds_id,)) 
+        for mrna_id in mrna_features:
+            pdata = cPickle.dumps(mrna_features[mrna_id], cPickle.HIGHEST_PROTOCOL) 
+            sql_cursor.execute("update features set feature_data = ? where feature_id = ?", (sqlite3.Binary(pdata),mrna_id,)) 
+        for cds_id in cds_features:
+            pdata = cPickle.dumps(gene_features[gene_id], cPickle.HIGHEST_PROTOCOL) 
+            sql_cursor.execute("update features set feature_data = ? where feature_id = ?", (sqlite3.Binary(pdata),gene_id,)) 
 
     print "Total Groupings length : " + str(len(features_grouping_dict))
     print "Running group elements count : " + str(running_grouping_elements_count)
@@ -1626,9 +1705,6 @@ def upload_genome(shock_service_url=None,
     print "Number of inner unequal cds mrna : " + str(inner_unequal_cds_mrna_count)
 
 #    sys.exit(1)
-
-
-
 
     #build up protein container
     #Save protein container.
@@ -1648,11 +1724,15 @@ def upload_genome(shock_service_url=None,
 
         protein_reference = "%s/%s" % (workspace_name, protein_container_object_name)
 
+        protein_container_dict = dict()
+        sql_cursor.execute("select protein_id, protein_data from proteins")
+        for row in sql_cursor: 
+            protein_container_dict[row[0]] =  cPickle.loads(str(row[1]))
+        
         feature_type_counts['protein'] = len(protein_container_dict)
         protein_container['proteins'] = protein_container_dict
 #        while protein_container_not_saved:
 #            try: 
-
 #        print "PROTEIN CONTAINER : \n\n\n\n" + str(protein_container)
 
         logger.info("Attempting Protein Container save for %s" % (protein_container_object_name))  
@@ -1675,110 +1755,142 @@ def upload_genome(shock_service_url=None,
 
     #Go through each feature type and build up the feature objects for the feature containers
     #Save feature containers
-#    print "FEATURES_TYPE_CONTAINERS_DICT : \n\n\n\n" + str(features_type_containers_dict)
-    if len(features_type_containers_dict) > 0:
-        for feature_type in features_type_containers_dict:
-            print "TYPE IN : " + feature_type
-            feature_container_object_name = "%s_feature_container_%s" % (core_genome_name,feature_type)
-            feature_container_object_ref = "%s/%s" % (workspace_name,feature_container_object_name)
-            feature_container_references[feature_type] = feature_container_object_ref
+    sql_cursor.execute("select distinct feature_type from features")
+    feature_type_list = list()
+    for row in sql_cursor:
+        feature_type_list.append(row[0])
+
+    for feature_type in feature_type_list:
+        print "TYPE IN : " + feature_type
+        feature_container_object_name = "%s_feature_container_%s" % (core_genome_name,feature_type)
+        feature_container_object_ref = "%s/%s" % (workspace_name,feature_container_object_name)
+        feature_container_references[feature_type] = feature_container_object_ref
  
-            feature_container = dict()
- 
-            feature_container['feature_container_id']= feature_container_object_name
-            feature_container['name']= feature_container_object_name
-            feature_container['type']= feature_type
-            feature_container['features'] = features_type_containers_dict[feature_type]
-            feature_container['assembly_ref'] = assembly_reference
 
-            #Provenance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
-            #provenance_description = "features from upload from %s includes accession(s) : " % (source_name,",".join(locus_name_order))
-            feature_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source_name)}]
-            logger.info("Attempting save of Feature Container %s" % (feature_container_object_name)) 
+        features_dict = dict()
+        feature_container = dict()
+        feature_container['features'] = dict()
+        container_feature_lengths = OrderedDict() 
 
-            do_feature_container_save = True
+        #Retrieve the features from the sqllite DB
+        sql_cursor.execute("select feature_id, sequence_length, feature_data from features where feature_type = ? order by sequence_length asc", 
+                           (feature_type,))
+        for row in sql_cursor: 
+            feature_id = row[0]
+            sequence_length = row[1]
+            feature_data = cPickle.loads(str(row[2])) 
+            container_feature_lengths[feature_id] = sequence_length 
+            feature_container['features'][feature_id] = feature_data
 
-            container_byte_estimate = len(simplejson.dumps(feature_container))  
+        #Build up container object
+        feature_container['feature_container_id']= feature_container_object_name
+        feature_container['name']= feature_container_object_name
+        feature_container['type']= feature_type
+        feature_container['assembly_ref'] = assembly_reference
 
-            container_feature_lengths = OrderedDict()
-            features_with_sequences_removed_list = list()
-            #1073741824 bytes is a GB.  This gives ~7%cushion for potential unicode 16 characters
-            if container_byte_estimate > 1000000000 : 
-                #Create an ordered dict of features and lengths
-                temp_dict = dict()
-                for feature in feature_container['features']:
-                    temp_dict[feature] = feature_container['features'][feature]['dna_sequence_length']
-                container_feature_lengths = OrderedDict(sorted(temp_dict.items(), key=lambda t: t[1]))
-            while container_byte_estimate > 1000000000 :
-                remove_count = 10
-                container_length = len(container_feature_lengths)
-                if container_length < 10 :
-                    remove_count = container_length
-                if container_length == 0:
-                    #IF CORE TYPE THROW AN ERROR
-                    if feature_container['type'] in ['gene','CDS','mRNA']:
-                        raise Exception("The resulting %s feature type container is above the workspace 1GB limit." % (feature_container['type']))
-                    else:
-                        #REMOVE FEATURE TYPE AND CLEANUP ALIASES (IF NOT CORE FEATURE TYPE) AND DO WARNING  (DONT SAVE CONTAINER)
-                        do_feature_container_save = False
-                        for alias in feature_lookup_dict:
-                            f_counter = 0
-                            for temp_fc_ref, temp_fc_id in feature_lookup_dict[alias]:
-                                if feature_container['type'] == reverse_feature_container_ref_lookup[temp_fc_ref]:
-                                    #HOW TO REMOVE TUPLE FROM LIST IN PLACE?
-                                    del( feature_lookup_dict[alias][f_counter])
-                                else:
-                                    # important because the positions of all values will be decremented on a delete
-                                    # so only increment if you did not delete                   
-                                    f_counter += 1
-                            if len(feature_lookup_dict[alias]) == 0:
-                                #Need to remove the alias.
-                                del( feature_lookup_dict[alias]) 
-                        annotation_quality_warnings.append("The feature type {} was unable to be saved due to workspace size limitations".format(feature_container['type']))
-                        break
+        #Provenance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
+        #provenance_description = "features from upload from %s includes accession(s) : " % (source_name,",".join(locus_name_order))
+        feature_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source_name)}]
+        logger.info("Attempting save of Feature Container %s" % (feature_container_object_name)) 
 
-                #remove 10 sequences at a time and retry (or what's left)
-                for i in range(container_length):
-                    removed_sequence_feature_id = container_feature_lengths.popitem()[0]
-                    features_with_sequences_removed_list.append(removed_sequence_feature_id)
-                    feature_container['features'][removed_sequence_feature_id]['dna_sequence']=""
-                container_byte_estimate = len(simplejson.dumps(feature_container))
+        do_feature_container_save = True
 
-                #Need to remove sequences from largest sequences first until it fits.
-                #Keep track of sequences removed and do warning
-                #If all sequences removed and still will not fit
-                #Then if core feature type (Gene,CDS,mRNA) throw an error. 
-                #If not core feature type Drop the feature type and do a warning log (and cleanup all the alliases pointing to this feature type)
+        container_byte_estimate = len(simplejson.dumps(feature_container))  
+
+        container_feature_lengths = OrderedDict()
+        features_with_sequences_removed_list = list()
+        #1073741824 bytes is a GB.  This gives ~7%cushion for potential unicode 16 characters
+#        if container_byte_estimate > 1000000000 : 
+#            #Create an ordered dict of features and lengths
+#            temp_dict = dict()
+#            for feature in feature_container['features']:
+#                temp_dict[feature] = feature_container['features'][feature]['dna_sequence_length']
+#            container_feature_lengths = OrderedDict(sorted(temp_dict.items(), key=lambda t: t[1]))
+        while container_byte_estimate > 1000000000 :
+            remove_count = 10
+            container_length = len(container_feature_lengths)
+            if container_length < 10 :
+                remove_count = container_length
+            if container_length == 0:
+                #IF CORE TYPE THROW AN ERROR
+                if feature_container['type'] in ['gene','CDS','mRNA']:
+                    raise Exception("The resulting %s feature type container is above the workspace 1GB limit." % (feature_container['type']))
+                else:
+                    #REMOVE FEATURE TYPE AND CLEANUP ALIASES (IF NOT CORE FEATURE TYPE) AND DO WARNING  (DONT SAVE CONTAINER)
+                    do_feature_container_save = False
+                    for alias in feature_lookup_dict:
+                        f_counter = 0
+                        for temp_fc_ref, temp_fc_id in feature_lookup_dict[alias]:
+                            if feature_container['type'] == reverse_feature_container_ref_lookup[temp_fc_ref]:
+                                #HOW TO REMOVE TUPLE FROM LIST IN PLACE?
+                                del( feature_lookup_dict[alias][f_counter])
+                            else:
+                                # important because the positions of all values will be decremented on a delete
+                                # so only increment if you did not delete                   
+                                f_counter += 1
+                        if len(feature_lookup_dict[alias]) == 0:
+                            #Need to remove the alias.
+                            del( feature_lookup_dict[alias]) 
+                    #annotation_quality_warnings.append("The feature type {} was unable to be saved due to workspace size limitations".format(feature_container['type']))
+                    sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",("The feature type {} was unable to be saved due to workspace size limitations".format(feature_container['type']),))
+                    break
+
+            #remove 10 sequences at a time and retry (or what's left)
+            for i in range(container_length):
+                removed_sequence_feature_id = container_feature_lengths.popitem()[0]
+                features_with_sequences_removed_list.append(removed_sequence_feature_id)
+                feature_container['features'][removed_sequence_feature_id]['dna_sequence']=""
+            container_byte_estimate = len(simplejson.dumps(feature_container))
+
+            #Need to remove sequences from largest sequences first until it fits.
+            #Keep track of sequences removed and do warning
+            #If all sequences removed and still will not fit
+            #Then if core feature type (Gene,CDS,mRNA) throw an error. 
+            #If not core feature type Drop the feature type and do a warning log (and cleanup all the alliases pointing to this feature type)
 
 
-#            feature_container_not_saved = True
-#            while feature_container_not_saved:
-#                try:
+#        feature_container_not_saved = True
+#        while feature_container_not_saved:
+#            try:
 
-            if len(features_with_sequences_removed_list) > 0 :
-                #ADD WARNING TO THE QUALITY WARNINGS OBJECT
-                temp_warning = "The following features for feature type {} do not have an included sequence due to workspace size limitations : {} ".format(
-                    feature_container['type'],
-                    ",".join(features_with_sequences_removed_list))
-                annotation_quality_warnings.append(temp_warning)
-            if do_feature_container_save:
-                counts_map[feature_type] = len(features_type_containers_dict[feature_type])
-                feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
-                                                                  "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
-                                                                                "data":feature_container,
-                                                                                "name": feature_container_object_name,
-                                                                                "hidden":1,
-                                                                                "provenance":feature_container_provenance}]}) 
+        if len(features_with_sequences_removed_list) > 0 :
+            #ADD WARNING TO THE QUALITY WARNINGS OBJECT
+            temp_warning = "The following features for feature type {} do not have an included sequence due to workspace size limitations : {} ".format(
+                feature_container['type'],
+                ",".join(features_with_sequences_removed_list))
+            #annotation_quality_warnings.append(temp_warning)
+            sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(temp_warning,))
+        if do_feature_container_save:
+            counts_map[feature_type] = len(feature_container['features'])
+            feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
+                                                              "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
+                                                                            "data":feature_container,
+                                                                            "name": feature_container_object_name,
+                                                                            "hidden":1,
+                                                                            "provenance":feature_container_provenance}]}) 
 #                    feature_container_not_saved = False 
-                logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
+            logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
 #                except biokbase.workspace.client.ServerError as err: 
 #                    #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
 #                    raise 
-    else:
-        raise Exception("This genome appears to have no annotations.")
+#    else:
+#        raise Exception("This genome appears to have no annotations.")
 
 
     #MAKE THE BAREBONES ANNOTATION QUALITY OBJECT:
+    #LIST OF WARNINGS TO PUT INTO THE AnnotationQualityObject.
+    annotation_quality_warnings = list()
+    annotation_metadata_warnings = list()
+
+    #Retrieve the warnings from the sqllite DB                                                                                                                                                                                       
+    sql_cursor.execute("select warning from annotation_quality_warnings")
+    for row in sql_cursor: 
+        annotation_quality_warnings.append(row[0]) 
+
+    sql_cursor.execute("select warning from annotation_metadata_warnings")
+    for row in sql_cursor: 
+        annotation_metadata_warnings.append(row[0]) 
+
     annotation_quality_object = dict()
     annotation_quality_object["metadata_completeness"] = 0
     annotation_quality_object["metadata_completeness_warnings"] = annotation_metadata_warnings
@@ -1804,18 +1916,20 @@ def upload_genome(shock_service_url=None,
 
     #determine mRNA to CDS relationship counts
     CDS_to_mRNA_count = 0
-    if "CDS" in features_type_containers_dict:
-        for feature in features_type_containers_dict["CDS"]:
-            if "CDS_properties" in features_type_containers_dict["CDS"][feature]:
-                if "associated_mRNA" in features_type_containers_dict["CDS"][feature]["CDS_properties"]:
+    if len(cds_features) > 0:
+#    if "CDS" in features_type_containers_dict:
+        for feature in cds_features:
+            if "CDS_properties" in cds_features[feature]:
+                if "associated_mRNA" in cds_features[feature]["CDS_properties"]:
                     CDS_to_mRNA_count += 1
     interfeature_relationship_counts_map["CDS_with_mRNA"] = CDS_to_mRNA_count
 
     mRNA_to_CDS_count = 0
-    if "mRNA" in features_type_containers_dict:
-        for feature in features_type_containers_dict["mRNA"]:
-            if "mRNA_properties" in features_type_containers_dict["mRNA"][feature]:
-                if "associated_CDS" in features_type_containers_dict["mRNA"][feature]["mRNA_properties"]:
+#    if "mRNA" in features_type_containers_dict:
+    if len(mrna_features) > 0:
+        for feature in mrna_features:
+            if "mRNA_properties" in mrna_features[feature]:
+                if "associated_CDS" in mrna_features[feature]["mRNA_properties"]:
                     mRNA_to_CDS_count += 1
     interfeature_relationship_counts_map["mRNA_with_CDS"] = mRNA_to_CDS_count
 
@@ -1870,6 +1984,9 @@ def upload_genome(shock_service_url=None,
     logger.info("Genome Annotation saved for %s" % (genome_annotation_object_name))
 #        except biokbase.workspace.client.ServerError as err: 
 #            raise 
+
+    if not make_sql_in_memory:
+        os.remove(db_name) 
 
     logger.info("Conversions completed.")
 

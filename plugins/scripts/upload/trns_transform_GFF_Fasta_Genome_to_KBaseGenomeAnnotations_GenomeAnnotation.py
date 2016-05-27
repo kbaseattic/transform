@@ -141,13 +141,9 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
 
     aggregated_cds_map = dict()
 
-    for contig in feature_list:
-    ##################################################################################################
-    #FEATURE ANNOTATION PORTION - Build up datastructures to be able to build feature containers.
-    ##################################################################################################
+    for contig in sorted(feature_list):
         for feature in feature_list[contig]:
             #To consider:
-            #feature_object["locations"]=locations
             #feature_object["function"] = value
             #feature_object["trans_splicing"] = 1
             #feature_object["additional_properties"] = additional_properties
@@ -227,10 +223,10 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 feature_object["mRNA_properties"]={ "parent_gene" : ('gene',feature_id_map_dict[feature["Parent"]]), "associated_CDS" : ("CDS","") }
             if(feature["type"] == "CDS"):
                 feature_object["CDS_properties"]= { "parent_gene" : ("gene",""), "associated_mRNA" : ("mRNA",feature_id_map_dict[feature["Parent"]]) }
-#                                                    "codes_for_protein_ref" : ("","") }
-                if(feature["Parent"] not in aggregated_cds_map):
-                    aggregated_cds_map[feature["Parent"]]=list()
-                aggregated_cds_map[feature["Parent"]].append(feature_id)
+
+                if(feature_id_map_dict[feature["Parent"]] not in aggregated_cds_map):
+                    aggregated_cds_map[feature_id_map_dict[feature["Parent"]]]=list()
+                aggregated_cds_map[feature_id_map_dict[feature["Parent"]]].append(feature_id)
 
             features_type_containers_dict[feature["type"]][feature_id] = feature_object
 
@@ -238,8 +234,8 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     #Aggregate CDS
     #####################################################
     aggregated_cds=dict()
-    for mRNA in aggregated_cds_map:
-        mRNA_id = feature_id_map_dict[mRNA]
+    for mRNA_id in aggregated_cds_map:
+#        Original_mRNA_id = feature_id_map_dict[mRNA_id]
 
 #        Checked ordering of CDS in Phytozome, all correct       
 #        Original_List = "|".join(aggregated_cds_map[mRNA])
@@ -247,11 +243,11 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
 #        if Original_List != New_List:
 #            print mRNA,Original_List
 
-        for cds_id in sorted(aggregated_cds_map[mRNA], key = lambda x: int(x.split('_')[1])):
+        for cds_id in sorted(aggregated_cds_map[mRNA_id], key = lambda x: int(x.split('_')[1])):
             CDS_Object = features_type_containers_dict["CDS"][cds_id]
 
             #Save first object, otherwise append sequence and location
-            if(mRNA not in aggregated_cds):
+            if(mRNA_id not in aggregated_cds):
                 aggregated_cds[mRNA_id]=CDS_Object
             else:
                 aggregated_cds[mRNA_id]["dna_sequence"]+=CDS_Object["dna_sequence"]
@@ -282,9 +278,6 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 protein_object["amino_acid_sequence"] = ""
 
                 sequence_length = len(aggregated_cds[mRNA]["dna_sequence"])
-                if( sequence_length % 3 != 0 ):
-                    print "Warning, length of dna_sequence is not a multiple of 3 for "+mRNA
-
                 amino_acids=list()
                 for i in range(0, sequence_length - sequence_length % 3, 3):
                     codon = aggregated_cds[mRNA]["dna_sequence"][i:i + 3]
@@ -292,8 +285,12 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                     if(codon in dna_aa_map):
                         amino_acid = dna_aa_map[codon]
                     else:
-                        print "Warning, codon %s not recognized for CDS %s" % (codon,mRNA)
+                        print "Warning, codon %s not recognized for CDS %s (%s)" % (codon,feature_id_map_dict[mRNA],mRNA)
                     amino_acids.append(amino_acid)
+
+                if( sequence_length % 3 != 0 ):
+                    print "Warning, length of dna_sequence is not a multiple of 3 for CDS %s (%s)" % (mRNA,feature_id_map_dict[mRNA])
+
                 protein_object["amino_acid_sequence"]="".join(amino_acids)
                 protein_object["md5"] = hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
 

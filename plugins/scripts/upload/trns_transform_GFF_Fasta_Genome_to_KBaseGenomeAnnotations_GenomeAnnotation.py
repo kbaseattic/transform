@@ -499,8 +499,9 @@ if __name__ == "__main__":
     parser.add_argument('--handle_service_url', type=str, nargs='?', required=False, default='https://ci.kbase.us/services/handle_service/')
     parser.add_argument('--workspace_service_url', type=str, nargs='?', required=False, default='https://ci.kbase.us/services/ws/')
 
+    parser.add_argument('--organism', nargs='?', help='Taxon', required=True)
     parser.add_argument('--taxon_wsname', nargs='?', help='Taxon Workspace', required=False, default='ReferenceTaxons')
-    parser.add_argument('--taxon_names_file', nargs='?', help='Taxon Mappings', required=False, default="Phytozome_Mapping")
+    parser.add_argument('--taxon_names_file', nargs='?', help='Taxon Mappings', required=False)
 
     parser.add_argument('--source', help="data source : examples Refseq, Genbank, Pythozyme, Gramene, etc", nargs='?', required=False, default="Phytozome") 
     parser.add_argument('--release', help="Release or version of the data.  Example Ensembl release 30", nargs='?', required=False, default = "11") 
@@ -519,19 +520,34 @@ if __name__ == "__main__":
     ws_client = biokbase.workspace.client.Workspace(args.workspace_service_url)
 
     #Get the taxon_lookup_object
-    #Organism retrieved from lookup file
-    organism = "Arabidopsis thaliana"
     taxon_lookup = ws_client.get_object( {'workspace':args.taxon_wsname,
                                           'id':"taxon_lookup"})['data']['taxon_lookup']
+    
+    #Taxon lookup dependent on full genus
+    #Can use a file that has two columns, and will translate the organism text into what's in the second column
+    #In order to match what's in the taxon lookup
+    #Example: Athaliana    Arabidopsis thaliana
+    if(args.taxon_names_file is not None):
+        if(os.path.isfile(args.taxon_names_file)):
+            for line in open(args.taxon_names_file):
+                line=line.strip()
+                array=line.split('\t')
+                if(args.organism in array[0]):
+                    args.organism = array[1]
+                    break
+        else:
+            print "Warning taxon_names_file argument (%s) doesn't exist" % args.taxon_names_file
+
     tax_id=0
     taxon_object_name = "unknown_taxon"
-    if(organism[0:3] in taxon_lookup and organism in taxon_lookup[organism[0:3]]):
-           tax_id=taxon_lookup[organism[0:3]][organism]
+    if(args.organism[0:3] in taxon_lookup and args.organism in taxon_lookup[args.organism[0:3]]):
+           tax_id=taxon_lookup[args.organism[0:3]][args.organism]
            tax_object_name = "%s_taxon" % (str(tax_id))
 
     taxon_info = ws_client.get_objects([{"workspace": args.taxon_wsname, 
-                                         "name": taxon_object_name}])[0]['info'] 
+                                         "name": taxon_object_name}])[0]['info']
     taxon_ref = "%s/%s/%s" % (taxon_info[6], taxon_info[0], taxon_info[4])
+
     core_genome_name = "%s_%s" % (tax_id,args.source) 
     genome_type="Reference"
     upload_genome(input_gff_file=args.input_gff_file,input_fasta_file=args.input_fasta_file,workspace_name=args.workspace_name,

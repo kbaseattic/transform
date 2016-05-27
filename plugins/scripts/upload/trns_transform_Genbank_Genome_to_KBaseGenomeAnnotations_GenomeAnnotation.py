@@ -169,13 +169,11 @@ def upload_genome(shock_service_url=None,
         os.rename(input_file_name,"%s/temp_file_name" % (dir_name))
         temp_file = "%s/temp_file_name" % (dir_name)
 
-        with open(temp_file) as f_in:
-            with open(input_file_name, 'w') as f_out:
-                line = f_in.readline()
-                while line:
+        with open(temp_file,'r') as f_in:
+            with open(input_file_name,'w', buffering=2**20 ) as f_out:
+                for line in f_in:
                     if line.strip():
                         f_out.write(line)
-                    line = f_in.readline()
         os.remove(temp_file)
 
         #If file is over a 1GB need to do SQLLite on disc
@@ -936,17 +934,11 @@ def upload_genome(shock_service_url=None,
                     else:
                         alias_dict[value]=["Genbank Protein ID"]
                 elif (key == "db_xref"):
-#                    if "locus_tag" in feature_object and  feature_object["locus_tag"] == "AT3G01100":
-#                        print "DB Xref top value %s " % (value)
                     try:
                         db_xref_source, db_xref_value = value.strip().split(':',1)
                     except Exception, e: 
                         db_xref_source = "Unknown"
                         db_xref_value = value.strip()
-
-#                    if "locus_tag" in feature_object and  feature_object["locus_tag"] == "AT3G01100":
-#                        print "DB Xref true value %s  :: DB_xref source % s " % (db_xref_value, db_xref_source) 
-                    
                     if db_xref_value.strip() in alias_dict: 
                         if (db_xref_source.strip() not in alias_dict[db_xref_value.strip()]) :
                             alias_dict[db_xref_value.strip()].append(db_xref_source.strip())
@@ -1795,7 +1787,8 @@ def upload_genome(shock_service_url=None,
 
         do_feature_container_save = True
 
-        container_byte_estimate = len(simplejson.dumps(feature_container))  
+#        container_byte_estimate = len(simplejson.dumps(feature_container))  
+        container_byte_estimate = sys.getsizeof(feature_container)
 
         container_feature_lengths = OrderedDict()
         features_with_sequences_removed_list = list()
@@ -1807,9 +1800,9 @@ def upload_genome(shock_service_url=None,
 #                temp_dict[feature] = feature_container['features'][feature]['dna_sequence_length']
 #            container_feature_lengths = OrderedDict(sorted(temp_dict.items(), key=lambda t: t[1]))
         while container_byte_estimate > 1000000000 :
-            remove_count = 10
+            remove_count = 100
             container_length = len(container_feature_lengths)
-            if container_length < 10 :
+            if container_length < remove_count :
                 remove_count = container_length
             if container_length == 0:
                 #IF CORE TYPE THROW AN ERROR
@@ -1835,12 +1828,13 @@ def upload_genome(shock_service_url=None,
                     sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",("The feature type {} was unable to be saved due to workspace size limitations".format(feature_container['type']),))
                     break
 
-            #remove 10 sequences at a time and retry (or what's left)
-            for i in range(container_length):
+            #remove remove count (100) sequences at a time and retry (or what's left)
+            for i in range(remove_count):
                 removed_sequence_feature_id = container_feature_lengths.popitem()[0]
                 features_with_sequences_removed_list.append(removed_sequence_feature_id)
                 feature_container['features'][removed_sequence_feature_id]['dna_sequence']=""
-            container_byte_estimate = len(simplejson.dumps(feature_container))
+            #container_byte_estimate = len(simplejson.dumps(feature_container))
+            container_byte_estimate = sys.getsizeof(feature_container)
 
             #Need to remove sequences from largest sequences first until it fits.
             #Keep track of sequences removed and do warning
@@ -1860,6 +1854,25 @@ def upload_genome(shock_service_url=None,
                 ",".join(features_with_sequences_removed_list))
             #annotation_quality_warnings.append(temp_warning)
             sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(temp_warning,))
+
+
+        #determine mRNA to CDS relationship counts
+        if feature_type == "CDS":
+            CDS_to_mRNA_count = 0 
+            for feature in feature_container['features']:
+                if "CDS_properties" in feature_container['features'][feature]:
+                    if "associated_mRNA" in feature_container['features'][feature]["CDS_properties"]:
+                        CDS_to_mRNA_count += 1 
+            interfeature_relationship_counts_map["CDS_with_mRNA"] = CDS_to_mRNA_count
+ 
+        if feature_type == "mRNA":
+            mRNA_to_CDS_count = 0 
+            for feature in feature_container['features']:
+                if "mRNA_properties" in feature_container['features'][feature]:
+                    if "associated_CDS" in feature_container['features'][feature]["mRNA_properties"]:
+                        mRNA_to_CDS_count += 1 
+            interfeature_relationship_counts_map["mRNA_with_CDS"] = mRNA_to_CDS_count
+
         if do_feature_container_save:
             counts_map[feature_type] = len(feature_container['features'])
             feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
@@ -1910,28 +1923,6 @@ def upload_genome(shock_service_url=None,
                                                                             "hidden":1, 
                                                                             "provenance":annotation_quality_provenance}]}) 
     logger.info("Annotation Quality saved for %s" % (annotation_quality_object_name)) 
-
-    
-
-
-    #determine mRNA to CDS relationship counts
-    CDS_to_mRNA_count = 0
-    if len(cds_features) > 0:
-#    if "CDS" in features_type_containers_dict:
-        for feature in cds_features:
-            if "CDS_properties" in cds_features[feature]:
-                if "associated_mRNA" in cds_features[feature]["CDS_properties"]:
-                    CDS_to_mRNA_count += 1
-    interfeature_relationship_counts_map["CDS_with_mRNA"] = CDS_to_mRNA_count
-
-    mRNA_to_CDS_count = 0
-#    if "mRNA" in features_type_containers_dict:
-    if len(mrna_features) > 0:
-        for feature in mrna_features:
-            if "mRNA_properties" in mrna_features[feature]:
-                if "associated_CDS" in mrna_features[feature]["mRNA_properties"]:
-                    mRNA_to_CDS_count += 1
-    interfeature_relationship_counts_map["mRNA_with_CDS"] = mRNA_to_CDS_count
 
     #Save genome annotation
     #Then Finally store the GenomeAnnotation.                                                                            

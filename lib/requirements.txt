@@ -1,0 +1,11 @@
+pip
+ftputil
+requests
+httplib2
+requests_toolbelt
+gitpython
+filemagic
+blessings
+python-dateutil
+simplejson
+bzr

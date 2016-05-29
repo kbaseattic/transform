@@ -9,3 +9,4 @@ blessings
 python-dateutil
 simplejson
 bzr
+biopython

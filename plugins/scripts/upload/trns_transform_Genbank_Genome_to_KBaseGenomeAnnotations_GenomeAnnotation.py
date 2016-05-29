@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-
+"""
+Upload GenomeAnnotation objects from Genbank files.
+"""
 # standard library imports
-import os
-import sys
-import logging
-import re
-import hashlib
-import time 
-import traceback 
-import os.path 
-import datetime
-import shutil
-from string import digits
-from string import maketrans
+import argparse
 from collections import OrderedDict
+import datetime
+import hashlib
+import logging
+import os
+import os.path
+import re
+import shutil
+import sys
+import time
 
 #try:
 #    from cStringIO import StringIO
@@ -95,7 +95,8 @@ def upload_genome(shock_service_url=None,
                   type=None,
                   level=logging.INFO, logger=None):
     """
-    Uploads CondensedGenomeAssembly
+    Uploads CondensedGenomeAssembly.
+
     Args:
         shock_service_url: A url for the KBase SHOCK service.
         input_fasta_directory: The directory where files will be read from.
@@ -1874,27 +1875,35 @@ def upload_genome(shock_service_url=None,
     logger.info("Conversions completed.")
     return genome_annotation_object_name
 
-class ConversionError(Exception):
-    pass
+#####################################################################
+# Convert new type to old type
+#####################################################################
+
+class ConvertOldTypeException(Exception):
+    def __init__(self, err, ws_url=None, source_ref=None):
+        msg = 'Convert to old type. ref={ref} workspace={ws}: {err}'.format(
+            ref=source_ref, ws=ws_url, err=err)
+        Exception.__init__(self, msg)
 
 def convert_genome(shock_url=None, handle_url=None, ws_url=None, obj_name=None, ws_name=None):
     """Convert uploaded GenomeAnnotation to a Genome + ContigSet object.
 
     Args:
-        shock_url:
-        handle_url:
-        ws_url:
-        obj_name:
-        ws_name:
-
+        shock_url (str): Shock service URL
+        handle_url (str): Handle service URL
+        ws_url (str): Workspace service URL
+        obj_name (str): Name of source object
+        ws_name (str): Name of source object's workspace
     Returns:
         (str) Object reference of Genome object
     Raises:
         ConversionError, if conversion fails
     """
-
-    # add custom set of service URLs
-    base.Converter.all_services['upload'] = dict(
+    log = script_utils.stderrlogger(__file__)
+    # Add custom set of service URLs,
+    # since the Converter is invoked with a named group of URLs.
+    kb_services = 'upload'
+    base.Converter.all_services[kb_services] = dict(
         workspace_service_url=ws_url, shock_service_url=shock_url,
         handle_service_url=handle_url)
 
@@ -1902,21 +1911,24 @@ def convert_genome(shock_url=None, handle_url=None, ws_url=None, obj_name=None, 
     source_ref = '{}/{}'.format(ws_name, obj_name)
 
     # perform the conversion
+    log.info('Begin: Convert to old type. ref={}'.format(source_ref))
     try:
-        converter = genome.GenomeConverter(kbase_instance='upload', ref=source_ref)
+        converter = genome.GenomeConverter(kbase_instance=kb_services, ref=source_ref)
         target_ref = converter.convert(ws_name)
     except Exception as e:
-        raise ConversionError(e)
-
+        log.error('Failed: Convert to old type. ref={}'.format(source_ref))
+        raise ConvertOldTypeException(e, ws_url=ws_url, source_ref=source_ref)
+    log.info('Success: Convert to old type. ref={}'.format(source_ref))
     return target_ref
 
-# called only if script is run from command line
+#####################################################################
+# Command-line entry point
+#####################################################################
+
 if __name__ == "__main__":
     script_details = script_utils.parse_docs(upload_genome.__doc__)    
 
-    import argparse
-
-    parser = argparse.ArgumentParser(prog=__file__, 
+    parser = argparse.ArgumentParser(prog=__file__,
                                      description=script_details["Description"],
                                      epilog=script_details["Authors"])
                                      
@@ -1958,8 +1970,9 @@ if __name__ == "__main__":
                         help="directory the genbank file is in", 
                         action='store', type=str, nargs='?', required=True)
     parser.add_argument('--convert', action='store_true', dest='convert_to_old_type',
-                        help='After upload, convert and add new Genome and ContigSet for '
-                        'backwards-compatibility with methods that use the old object types.')
+                        help='After upload, add equivalent Genome/ContigSet objects,'
+                        'in the same workspace, for '
+                        'backwards compatibility')
 #   parser.add_argument('--output_file_name',
 #                        help=script_details["Args"]["output_file_name"],
 #                        action='store', type=str, nargs='?', default=None, required=False)
@@ -2010,7 +2023,7 @@ if __name__ == "__main__":
             convert_genome(shock_url=args.shock_service_url, handle_url=args.handle_service_url,
                            ws_url=args.workspace_service_url, obj_name=obj_name,
                            ws_name=args.workspace_name)
-        except ConversionError as e:
+        except ConvertOldTypeException as e:
             logger.exception(e)
             sys.exit(2)
     

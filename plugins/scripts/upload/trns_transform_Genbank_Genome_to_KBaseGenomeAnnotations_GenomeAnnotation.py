@@ -1899,7 +1899,8 @@ def convert_genome(shock_url=None, handle_url=None, ws_url=None, obj_name=None, 
     Raises:
         ConversionError, if conversion fails
     """
-    log = script_utils.stderrlogger(__file__)
+    log = script_utils.stderrlogger(__file__ + '.convert_genome')
+    log.propagate = False
     # Add custom set of service URLs,
     # since the Converter is invoked with a named group of URLs.
     kb_services = 'upload'
@@ -1911,14 +1912,14 @@ def convert_genome(shock_url=None, handle_url=None, ws_url=None, obj_name=None, 
     source_ref = '{}/{}'.format(ws_name, obj_name)
 
     # perform the conversion
-    log.info('Begin: Convert to old type. ref={}'.format(source_ref))
+    log.info('Begin: Convert source={}'.format(source_ref))
     try:
         converter = genome.GenomeConverter(kbase_instance=kb_services, ref=source_ref)
         target_ref = converter.convert(ws_name)
     except Exception as e:
-        log.error('Failed: Convert to old type. ref={}'.format(source_ref))
+        log.error('Failed: Convert source={}: {}'.format(source_ref, str(e)))
         raise ConvertOldTypeException(e, ws_url=ws_url, source_ref=source_ref)
-    log.info('Success: Convert to old type. ref={}'.format(source_ref))
+    log.info('Success: Convert source={} output={}'.format(source_ref, target_ref))
     return target_ref
 
 #####################################################################

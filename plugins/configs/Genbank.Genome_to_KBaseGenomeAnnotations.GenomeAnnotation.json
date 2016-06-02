@@ -20,8 +20,9 @@
         ], 
         "optional_fields": 
         [
-	    "object_name",
-            "source"
+	        "object_name",
+            "source",
+            "no_convert"
         ],
         
         "input_mapping":{"Genbank.Genome":"input_directory"},

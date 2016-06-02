@@ -26,7 +26,8 @@
             "shock_id", 
             "handle_id",
             "input_mapping",
-            "source"
+            "source",
+            "no_convert"
         ],
         "custom_options": [],
 	"input_mapping": {"FASTA.DNA.Assembly":"input_directory"}

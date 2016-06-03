@@ -30,7 +30,6 @@ import biokbase.Transform.script_utils as script_utils
 import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import biokbase.workspace.client 
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
-from doekbase.data_api.converters import genome as cvt
 
 
 def make_scientific_names_lookup(taxon_names_file=None):
@@ -1975,6 +1974,7 @@ if __name__ == "__main__":
     if args.no_convert_to_old_type:
         logger.info('Conversion to legacy types skipped by request')
     else:
+        from doekbase.data_api.converters import genome as cvt
         logger.info('Converting to legacy type, object={}'.format(obj_name))
         try:
             cvt.convert_genome(shock_url=args.shock_service_url,

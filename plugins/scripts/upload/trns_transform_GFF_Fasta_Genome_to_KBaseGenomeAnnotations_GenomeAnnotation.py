@@ -540,12 +540,14 @@ if __name__ == "__main__":
 
     tax_id=0
     taxon_object_name = "unknown_taxon"
+
     if(args.organism[0:3] in taxon_lookup and args.organism in taxon_lookup[args.organism[0:3]]):
-           tax_id=taxon_lookup[args.organism[0:3]][args.organism]
-           tax_object_name = "%s_taxon" % (str(tax_id))
+        tax_id=taxon_lookup[args.organism[0:3]][args.organism]
+        taxon_object_name = "%s_taxon" % (str(tax_id))
 
     taxon_info = ws_client.get_objects([{"workspace": args.taxon_wsname, 
                                          "name": taxon_object_name}])[0]['info']
+
     taxon_ref = "%s/%s/%s" % (taxon_info[6], taxon_info[0], taxon_info[4])
 
     core_genome_name = "%s_%s" % (tax_id,args.source) 

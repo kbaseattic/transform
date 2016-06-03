@@ -20,7 +20,6 @@ import simplejson
 import biokbase.Transform.script_utils as script_utils
 import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import biokbase.workspace.client 
-from doekbase.data_api.converters import genome as cvt
 
 # transformation method that can be called if this module is imported
 # Note the logger has different levels it could be run.  
@@ -428,6 +427,7 @@ if __name__ == "__main__":
     if args.no_convert_to_old_type:
         logger.info('Conversion to legacy types skipped by request')
     else:
+        from doekbase.data_api.converters import genome as cvt
         logger.info('Converting to legacy type, object={}'.format(obj_name))
         try:
             cvt.convert_assembly(shock_url=args.shock_service_url,

@@ -176,7 +176,7 @@ deploy-client: deploy-libs deploy-scripts deploy-docs deploy-data-api
 
 deploy-data-api:
 	git clone https://github.com/kbase/data_api -b $(BRANCH)
-	cd data_api;pip install . --root $(TARGET);cd ..
+	cd data_api;pip install . --target $(TARGET)/lib;cd ..
 	rm -rf data_api
 
 # Deploy command line scripts.  The scripts are "wrapped" so users do not

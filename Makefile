@@ -10,7 +10,7 @@ SERVICE_PORT = 7778
 
 BRANCH = $(shell git symbolic-ref HEAD 2>/dev/null)
 
-ifneq ($(filter $(BRANCH),"develop staging master"),)
+ifneq ($(filter $(BRANCH),refs/heads/develop refs/heads/staging refs/heads/master),)
 # if one of the develop/staging/master branches, strip the refs/heads/ portion
 BRANCH := $(subst refs/heads/,,$(BRANCH))
 else

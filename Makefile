@@ -8,6 +8,16 @@ SERVICE_DIR_NAME = transform
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
 SERVICE_PORT = 7778
 
+BRANCH = $(shell git symbolic-ref HEAD 2>/dev/null)
+
+ifneq ($(filter $(BRANCH),"develop staging master"),)
+# if one of the develop/staging/master branches, strip the refs/heads/ portion
+BRANCH := $(subst refs/heads/,,$(BRANCH))
+else
+# else if using an unknown branch of transform, default to master branch of data_api
+BRANCH = master
+endif
+
 DIR = $(shell pwd)
 
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
@@ -165,11 +175,8 @@ deploy-jars:
 deploy-client: deploy-libs deploy-scripts deploy-docs deploy-data-api
 
 deploy-data-api:
-        branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
-	git clone https://github.com/kbase/data_api -b $branch
-	cd data_api
-	pip install .
-	cd ..
+	git clone https://github.com/kbase/data_api -b $(BRANCH)
+	cd data_api;pip install .;cd ..
 	rm -rf data_api
 
 # Deploy command line scripts.  The scripts are "wrapped" so users do not

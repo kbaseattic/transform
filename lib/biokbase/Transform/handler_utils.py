@@ -167,13 +167,13 @@ class TaskRunner(object):
                 sys.exit()
 
         # poll the pty for available data to read, then push to a queue and signal ready
-        def produce_queue(queue, master_fd, slave_fd, evt, proc):
+        def produce_queue(queue, master_fd, slave_fd, evt, process_completed):
             with os.fdopen(master_fd, 'rb', 0) as task_stream:
                 while 1:
                     ready = select.select([master_fd], [], [], 0)[0]
 
                     # exit if our process has terminated and no more input
-                    if not ready and proc.poll() is not None:
+                    if not ready and process_completed.isSet():
                         os.close(slave_fd)
                         evt.set()
                         break
@@ -194,13 +194,13 @@ class TaskRunner(object):
         # wait for ready signal, then read data from queue and save to a buffer
         # once the buffer contains an end of line, send that to a callback if defined,
         # then send the line to a file for later processing
-        def consume_queue(queue, filename, evt, proc, callback=None):
+        def consume_queue(queue, filename, evt, process_completed, callback=None):
             streambuffer = []
             with open(filename, 'w+') as fileobj:
                 while 1:
                     # wait for a signal at most one second at a time so we can check the child process status
                     evt.wait(1)
-                    if queue.empty() and proc.poll() is not None:
+                    if queue.empty() and process_completed.isSet():
                         # make sure the last part of the buffer is written out
                         if streambuffer:
                             if callback:
@@ -261,12 +261,13 @@ class TaskRunner(object):
 
         stdout_queue = Queue.Queue()
         stdout_data_ready = threading.Event()
+        process_completed = threading.Event()
 
-        t1 = threading.Thread(target=produce_queue, args=(stdout_queue, master_stdout_fd, slave_stdout_fd, stdout_data_ready, task))
+        t1 = threading.Thread(target=produce_queue, args=(stdout_queue, master_stdout_fd, slave_stdout_fd, stdout_data_ready, process_completed))
         t1.daemon = True
         t1.start()
 
-        t2 = threading.Thread(target=consume_queue, args=(stdout_queue, stdout_name, stdout_data_ready, task, self.callback))
+        t2 = threading.Thread(target=consume_queue, args=(stdout_queue, stdout_name, stdout_data_ready, process_completed, self.callback))
         t2.daemon = True
         t2.start()
 
@@ -282,6 +283,7 @@ class TaskRunner(object):
         #t4.start()
 
         task.wait()
+        process_completed.set()
 
         t1.join()
         t2.join()

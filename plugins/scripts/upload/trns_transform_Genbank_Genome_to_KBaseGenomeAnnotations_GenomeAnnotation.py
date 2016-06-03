@@ -13,6 +13,8 @@ import datetime
 import shutil
 from string import digits
 from string import maketrans
+from collections import OrderedDict
+
 #try:
 #    from cStringIO import StringIO
 #except:
@@ -28,7 +30,6 @@ import biokbase.Transform.script_utils as script_utils
 import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import biokbase.workspace.client 
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
-
 
 
 def make_scientific_names_lookup(taxon_names_file=None):
@@ -332,6 +333,9 @@ def upload_genome(shock_service_url=None,
     #Key is the feature type, value is the object reference to the feature container object.
     feature_container_references = dict()
 
+    #Dict used if need to cleanup aliases
+    reverse_feature_container_ref_lookup = dict()
+
     #LIST OF WARNINGS TO PUT INTO THE AnnotationQualityObject.
     annotation_quality_warnings = list()
     annotation_metadata_warnings = list()
@@ -595,15 +599,21 @@ def upload_genome(shock_service_url=None,
                                     publication_date = potential_date
                                     break       
                             except ValueError:
-                                record_time = datetime.datetime.strptime(potential_date, '%Y')
-                                if now_date > record_time:
-                                    publication_date = potential_date
-                                    break
+                                try:
+                                    record_time = datetime.datetime.strptime(potential_date, '%Y')
+                                    if now_date > record_time:
+                                        publication_date = potential_date
+                                        break
+                                except ValueError:
+                                    next
                 publication = [pubmed,publication_source,title,pubmed_link,publication_date,authors,journal]
                 genome_publication_dict[publication_key] = publication
                 #END OF PUBLICATION SECTION
 
             metadata_line_counter += 1
+
+        if len(genome_publication_dict) > 0 :
+            genome_annotation["publications"] = genome_publication_dict.values() 
 
         ##################################################################################################
         #MAKE SEQUENCE PART INTO CONTIG WITH NO INTERVENING SPACES OR NUMBERS
@@ -927,10 +937,11 @@ def upload_genome(shock_service_url=None,
                     #
                     value = re.sub('\s+',' ',value)
                     feature_object["translation"] = value 
-                elif (key == "function"):
+                elif ((key == "function") and (value is not None) and (value.strip() == "")) :
                     feature_object["function"] = value
                 elif (key == "product"):
                     product = value
+                    additional_properties[key] = value
                 elif (key == "trans_splicing"):
                     feature_object["trans_splicing"] = 1
                 else:
@@ -1001,6 +1012,7 @@ def upload_genome(shock_service_url=None,
 
             feature_container_object_name = "%s_feature_container_%s" % (core_genome_name, feature_type)
             feature_container_ref = "%s/%s" % (workspace_name,feature_container_object_name)
+            reverse_feature_container_ref_lookup[feature_container_ref]=feature_type
 
             if feature_id not in feature_lookup_dict: 
                 feature_lookup_dict[feature_id] = list() 
@@ -1647,6 +1659,7 @@ def upload_genome(shock_service_url=None,
                                                           "objects":[ { "type":"KBaseGenomeAnnotations.ProteinContainer",
                                                                         "data":protein_container,
                                                                         "name": protein_container_object_name,
+                                                                        "hidden":1,
                                                                         "provenance":protein_container_provenance}]})
         logger.info("Protein Container saved for %s" % (protein_container_object_name))  
 #                protein_container_not_saved = False 
@@ -1676,23 +1689,87 @@ def upload_genome(shock_service_url=None,
             feature_container['type']= feature_type
             feature_container['features'] = features_type_containers_dict[feature_type]
             feature_container['assembly_ref'] = assembly_reference
-            counts_map[feature_type] = len(features_type_containers_dict[feature_type])
-            #Provencance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
+
+            #Provenance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
             #provenance_description = "features from upload from %s includes accession(s) : " % (source_name,",".join(locus_name_order))
             feature_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source_name)}]
-
             logger.info("Attempting save of Feature Container %s" % (feature_container_object_name)) 
+
+            do_feature_container_save = True
+
+            container_byte_estimate = len(simplejson.dumps(feature_container))  
+
+            container_feature_lengths = OrderedDict()
+            features_with_sequences_removed_list = list()
+            #1073741824 bytes is a GB.  This gives ~7%cushion for potential unicode 16 characters
+            if container_byte_estimate > 1000000000 : 
+                #Create an ordered dict of features and lengths
+                temp_dict = dict()
+                for feature in feature_container['features']:
+                    temp_dict[feature] = feature_container['features'][feature]['dna_sequence_length']
+                container_feature_lengths = OrderedDict(sorted(temp_dict.items(), key=lambda t: t[1]))
+            while container_byte_estimate > 1000000000 :
+                remove_count = 10
+                container_length = len(container_feature_lengths)
+                if container_length < 10 :
+                    remove_count = container_length
+                if container_length == 0:
+                    #IF CORE TYPE THROW AN ERROR
+                    if feature_container['type'] in ['gene','CDS','mRNA']:
+                        raise Exception("The resulting %s feature type container is above the workspace 1GB limit." % (feature_container['type']))
+                    else:
+                        #REMOVE FEATURE TYPE AND CLEANUP ALIASES (IF NOT CORE FEATURE TYPE) AND DO WARNING  (DONT SAVE CONTAINER)
+                        do_feature_container_save = False
+                        for alias in feature_lookup_dict:
+                            f_counter = 0
+                            for temp_fc_ref, temp_fc_id in feature_lookup_dict[alias]:
+                                if feature_container['type'] == reverse_feature_container_ref_lookup[temp_fc_ref]:
+                                    #HOW TO REMOVE TUPLE FROM LIST IN PLACE?
+                                    del( feature_lookup_dict[alias][f_counter])
+                                else:
+                                    # important because the positions of all values will be decremented on a delete
+                                    # so only increment if you did not delete                   
+                                    f_counter += 1
+                            if len(feature_lookup_dict[alias]) == 0:
+                                #Need to remove the alias.
+                                del( feature_lookup_dict[alias]) 
+                        annotation_quality_warnings.append("The feature type {} was unable to be saved due to workspace size limitations".format(feature_container['type']))
+                        break
+
+                #remove 10 sequences at a time and retry (or what's left)
+                for i in range(container_length):
+                    removed_sequence_feature_id = container_feature_lengths.popitem()[0]
+                    features_with_sequences_removed_list.append(removed_sequence_feature_id)
+                    feature_container['features'][removed_sequence_feature_id]['dna_sequence']=""
+                container_byte_estimate = len(simplejson.dumps(feature_container))
+
+                #Need to remove sequences from largest sequences first until it fits.
+                #Keep track of sequences removed and do warning
+                #If all sequences removed and still will not fit
+                #Then if core feature type (Gene,CDS,mRNA) throw an error. 
+                #If not core feature type Drop the feature type and do a warning log (and cleanup all the alliases pointing to this feature type)
+
 
 #            feature_container_not_saved = True
 #            while feature_container_not_saved:
 #                try:
-            feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
-                                                              "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
-                                                                            "data":feature_container,
-                                                                            "name": feature_container_object_name,
-                                                                            "provenance":feature_container_provenance}]}) 
+
+            if len(features_with_sequences_removed_list) > 0 :
+                #ADD WARNING TO THE QUALITY WARNINGS OBJECT
+                temp_warning = "The following features for feature type {} do not have an included sequence due to workspace size limitations : {} ".format(
+                    feature_container['type'],
+                    ",".join(features_with_sequences_removed_list))
+                annotation_quality_warnings.append(temp_warning)
+            if do_feature_container_save:
+                counts_map[feature_type] = len(features_type_containers_dict[feature_type])
+                feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
+                                                                  "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
+                                                                                "data":feature_container,
+                                                                                "name": feature_container_object_name,
+                                                                                "hidden":1,
+                                                                                "provenance":feature_container_provenance}]}) 
 #                    feature_container_not_saved = False 
-            logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
+                logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
 #                except biokbase.workspace.client.ServerError as err: 
 #                    #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
 #                    raise 
@@ -1716,7 +1793,8 @@ def upload_genome(shock_service_url=None,
     annotation_quality_object_info =  ws_client.save_objects({"workspace":workspace_name, 
                                                               "objects":[ { "type":"KBaseGenomeAnnotations.AnnotationQuality",
                                                                             "data": annotation_quality_object,
-                                                                            "name": annotation_quality_object_name, 
+                                                                            "name": annotation_quality_object_name,
+                                                                            "hidden":1, 
                                                                             "provenance":annotation_quality_provenance}]}) 
     logger.info("Annotation Quality saved for %s" % (annotation_quality_object_name)) 
 
@@ -1794,6 +1872,7 @@ def upload_genome(shock_service_url=None,
 
     logger.info("Conversions completed.")
 
+    return genome_annotation_object_name
 
 # called only if script is run from command line
 if __name__ == "__main__":
@@ -1842,7 +1921,10 @@ if __name__ == "__main__":
     parser.add_argument('--input_directory', 
                         help="directory the genbank file is in", 
                         action='store', type=str, nargs='?', required=True)
-#    parser.add_argument('--output_file_name', 
+    parser.add_argument('--no_convert',
+                        help="Dont convert", action='store_true',
+                        dest='no_convert_to_old_type')
+#    parser.add_argument('--output_file_name',
 #                        help=script_details["Args"]["output_file_name"],
 #                        action='store', type=str, nargs='?', default=None, required=False)
 #    parser.add_argument('--shock_id', 
@@ -1862,7 +1944,7 @@ if __name__ == "__main__":
 
     logger.debug(args)
     try:
-        upload_genome(shock_service_url = args.shock_service_url, 
+        obj_name = upload_genome(shock_service_url = args.shock_service_url,
                       handle_service_url = args.handle_service_url, 
                       #                  output_file_name = args.output_file_name, 
                       #                      input_file_name = args.input_file_name, 
@@ -1885,7 +1967,22 @@ if __name__ == "__main__":
     except Exception, e:
         logger.exception(e)
         sys.exit(1)
-    
+
+    if args.no_convert_to_old_type:
+        logger.info('Conversion to legacy types skipped by request')
+    else:
+        from doekbase.data_api.converters import genome as cvt
+        logger.info('Converting to legacy type, object={}'.format(obj_name))
+        try:
+            cvt.convert_genome(shock_url=args.shock_service_url,
+                               handle_url=args.handle_service_url,
+                               ws_url=args.workspace_service_url,
+                               obj_name=obj_name,
+                               ws_name=args.workspace_name)
+        except cvt.ConvertOldTypeException as e:
+            logger.exception(e)
+            sys.exit(2)
+
     sys.exit(0)
 
 

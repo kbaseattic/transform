@@ -1,0 +1,39 @@
+{
+    "script_name": "trns_transform_KBaseOntology_OntologyTranslation_to_TSV_OntologyTranslation.pl",
+    "script_type": "download",
+    "external_type": "TSV.OntologyTranslation",
+    "kbase_type": "KBaseOntology.OntologyTranslation",
+    "user_description": "Converts KBaseOntology.OntologyTranslation to TSV file.",
+    "developer_description": "Converts KBaseOntology.OntologyTranslation to TSV file.",
+    "url_mapping": ["KBaseOntology.OntologyTranslation"],
+    "handler_options": {        
+        "must_own_validation": false,
+        "must_own_saving_to_workspace": false,
+        "max_runtime": 360,
+        "custom_options": [],
+        "required_fields":
+        [
+	    "workspace_service_url",
+	    "object_name",
+	    "workspace_name",
+            "output_file_name"
+        ],
+        "optional_fields":[],
+        "input_mapping": {"KBaseOntology.OntologyTranslation":"input_file_name"}
+    },
+    "user_options": [
+        {
+            "name": "object_name",
+            "type": "string",
+            "required": true,
+            "help": "Name of KBaseOntology.OntologyTranslation Object"
+        },
+        {
+            "name": "output_file_name",
+            "type": "string",
+            "required": true,
+            "help": "Output TSV Ontology Translation File"
+        }
+    ],
+    "user_option_groups": []
+}

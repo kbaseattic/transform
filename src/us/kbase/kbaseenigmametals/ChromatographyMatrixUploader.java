@@ -262,14 +262,15 @@ public class ChromatographyMatrixUploader {
 			try {
 				for (PropertyValue p: m.getRowMetadata().get(rowName)){
 					if (p.getCategory().equals(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES)){
-						if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME.contains(p.getPropertyName())) {
+						if (!MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME.contains(p.getPropertyName())) {
 							if (errorCount == 0) printErrorStatus("Metadata validation");
 							if (errorCount < 50) System.err.println(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + " metadata entry for row " + rowName + " contains illegal property name " + p.getPropertyName());
 							errorCount ++;
 						}
 						
 						if (timeUnit.equals("")) timeUnit = p.getPropertyUnit();
-						if (!MetadataProperties.GROWTHMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT.contains(p.getPropertyUnit())){
+						if (!MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT.contains(p.getPropertyUnit())){
+							System.out.println(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT);
 							if (errorCount == 0) printErrorStatus("Metadata validation");
 							if (errorCount < 50) System.err.println(MetadataProperties.CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES + "_" + p.getPropertyName() + " metadata entry for row " + rowName + " contains illegal unit " + p.getPropertyUnit());
 							errorCount ++;

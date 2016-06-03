@@ -56,6 +56,8 @@ public class ConvertGBK {
     WorkspaceClient wc = null;
 
     int MAX_ALLOWED_FILES = 10000;
+    int MAX_ALLOWED_FILES_SPLIT = 10000;
+
 
     boolean isTest = false;
 
@@ -159,10 +161,15 @@ public class ConvertGBK {
             File[] files = indir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
-                    return name.matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$");
+                    return name.matches("^.*\\.(gb|gbk|genbank|gbf|gbff|dat)$");
                 }
             });
-            System.out.println("testing name matches " + files.length + "\t" + files[0]);
+
+            if (files == null || files.length == 0) {
+                System.err.println("The provided file does not have a valid GenBank file extension: gb|gbk|genbank|gbf|gbff.");
+                System.exit(1);
+            } else
+                System.out.println("testing name matches " + files.length + "\t" + files[0]);
 
             String outpath = workdir.getAbsolutePath();
 
@@ -174,8 +181,9 @@ public class ConvertGBK {
                     File outf = new File(outpath2);
                     PrintWriter pw = new PrintWriter(outf);
 
-                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " files. This download had " + files.length
-                            + " files, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " separate GenBank files (contigs). " +
+                            "This download had " + files.length
+                            + " files, only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
                     pw.print(readmestr);
                     pw.close();
                 } catch (FileNotFoundException e) {
@@ -271,7 +279,7 @@ public class ConvertGBK {
             Scanner fileScanner2 = new Scanner(path);
             List<String> loci = new ArrayList<String>();
             StringBuilder sb = new StringBuilder("");
-            while (fileScanner2.hasNextLine() && countfiles < MAX_ALLOWED_FILES) {
+            while (fileScanner2.hasNextLine() && countfiles < MAX_ALLOWED_FILES_SPLIT) {
                 String cur = fileScanner2.nextLine();
                 //if (!cur.startsWith(" "))
                 //    System.out.println(cur);
@@ -294,7 +302,7 @@ public class ConvertGBK {
                         out.print(sb);
                         out.close();
                         split = true;
-                        System.out.println("    wrote: " + outpath);
+                        System.out.println("    wrote: " + curoutpath);
                         countfiles++;
                     } catch (IOException e) {
                         System.out.println("Error creating or writing file " + outpath);
@@ -308,15 +316,16 @@ public class ConvertGBK {
             }
 
 
-            if (countfiles == MAX_ALLOWED_FILES && fileScanner2.hasNextLine()) {
+            if (countfiles == MAX_ALLOWED_FILES_SPLIT && fileScanner2.hasNextLine()) {
                 final String outpath2 = (workdir != null ? workdir + "/" : "") + "README.txt";
                 System.out.println("writing " + outpath2);
                 try {
                     File outf = new File(outpath2);
                     PrintWriter pw = new PrintWriter(outf);
 
-                    String readmestr = "The limit for uploading is " + MAX_ALLOWED_FILES + " contigs. This download had more than " + MAX_ALLOWED_FILES
-                            + " contigs, however only the first " + MAX_ALLOWED_FILES + " will be uploaded.";
+                    String readmestr = "The limit for uploading multiple contigs from a single GenBank file is " + MAX_ALLOWED_FILES_SPLIT + " contigs. " +
+                            "This download had more than " + MAX_ALLOWED_FILES_SPLIT
+                            + " contigs, only the first " + MAX_ALLOWED_FILES_SPLIT + " contigs will be uploaded.";
                     pw.print(readmestr);
                     pw.close();
                 } catch (FileNotFoundException e) {
@@ -357,7 +366,7 @@ public class ConvertGBK {
                     //System.out.println("parseAllInDir file " + f.getAbsolutePath());
                     if (f.isDirectory()) {
                         parseAllInDir(pos, f, wc, wsname, http, isTestThis);
-                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff)$")) {
+                    } else if (f.getName().matches("^.*\\.(gb|gbk|genbank|gbf|gbff|dat)$")) {
                         files.add(f);
                         System.out.println("Added from dir " + f + "\ttotal " + files.size());
                     }
@@ -387,7 +396,7 @@ public class ConvertGBK {
         String name = gbkFiles.get(0).getName();
         final int endIndex = name.lastIndexOf(".");
         name = name.substring(0, endIndex != -1 ? endIndex : name.length());
-        System.out.println("parseGenome " + name);
+        System.out.println("parseGenome " + gbkFiles.get(0) + "\t" + name);
         ArrayList ar = GbkUploader.uploadGbk(gbkFiles, wsname, name, true);
 
         Genome genome = (Genome) ar.get(2);
@@ -399,12 +408,17 @@ public class ConvertGBK {
         }*/
 
         genome.setAdditionalProperties("SOURCE", "KBASE_USER_UPLOAD");
-        String outpath = workdir + "/" + out_object_g + ".jsonp";
+        String outpath = workdir + "/" + out_object_g;
+        if (!out_object_g.endsWith(".json") && !out_object_g.endsWith(".jsonp"))
+            outpath += ".jsonp";
 
         System.out.println("workdir " + workdir + "\nout_object_g " + out_object_g + "\tout_object_c " + out_object_c);
         if (out_object_g == null) {
             out_object_g = genome.getId();
-            outpath = workdir + "/" + out_object_g + ".jsonp";
+
+            outpath = workdir + "/" + out_object_g;
+            if (!out_object_g.endsWith(".json") && !out_object_g.endsWith(".jsonp"))
+                outpath += ".jsonp";
         }
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath));
@@ -433,12 +447,9 @@ public class ConvertGBK {
             }
         }
 
-        if (out_object_c.indexOf("ContigSet") == -1)
+        if (!out_object_c.endsWith(".json") && !out_object_c.endsWith(".jsonp")
+                && !out_object_c.endsWith("ContigSet.json") && !out_object_c.endsWith("ContigSet.jsonp"))
             outpath2 = workdir + "/" + out_object_c + "_ContigSet.jsonp";
-        else if (!out_object_c.endsWith(".json") && !out_object_c.endsWith(".jsonp"))
-            outpath2 = workdir + "/" + out_object_c + ".jsonp";
-        else
-            outpath2 = workdir + "/" + out_object_c;
 
         try {
             PrintWriter out = new PrintWriter(new FileWriter(outpath2));

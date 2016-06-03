@@ -76,7 +76,7 @@ public class MetadataProperties {
 			GROWTHMATRIX_METADATA_COLUMN_CONDITION_UNIT = Arrays.asList(prop.getProperty("growthmatrix.metadata.column.condition.unit").split(",", 0));
 			GROWTHMATRIX_METADATA_COLUMN_DATASERIES_SAMPLEID = prop.getProperty("growthmatrix.metadata.column.dataseries.sampleid");
 			CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES = prop.getProperty("chromatographymatrix.metadata.row.timeseries");
-			CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME = Arrays.asList(prop.getProperty("chromatographymatrix.metadata.row.timeseries.time"));
+			CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME = Arrays.asList(prop.getProperty("chromatographymatrix.metadata.row.timeseries.time").split(",", 0));
 			CHROMATOGRAPHYMATRIX_METADATA_ROW_TIMESERIES_TIME_UNIT = Arrays.asList(prop.getProperty("chromatographymatrix.metadata.row.timeseries.time.unit").split(",", 0));
 			CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT = prop.getProperty("chromatographymatrix.metadata.column.measurement");
 			CHROMATOGRAPHYMATRIX_METADATA_COLUMN_MEASUREMENT_SUBSTANCE = prop.getProperty("chromatographymatrix.metadata.column.measurement.substance");

@@ -14,8 +14,8 @@ KEEP_CURRENT_VENV = False
 
 FILE_LOC = os.path.split(__file__)[0]
 sys.path.append(os.path.join(FILE_LOC, '../'))  # to import script framework
-import script_checking_framework
-from script_checking_framework import ScriptCheckFramework
+import script_checking_framework  # @IgnorePep8
+from script_checking_framework import ScriptCheckFramework  # @IgnorePep8
 
 # TODO test template with instructions
 

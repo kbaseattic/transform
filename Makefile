@@ -162,7 +162,15 @@ deploy-jars:
 # Deploy client artifacts, including the application programming interface
 # libraries, command line scripts, and associated reference documentation.
 
-deploy-client: deploy-libs deploy-scripts deploy-docs
+deploy-client: deploy-libs deploy-scripts deploy-docs deploy-data-api
+
+deploy-data-api:
+        branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+	git clone https://github.com/kbase/data_api -b $branch
+	cd data_api
+	pip install .
+	cd ..
+	rm -rf data_api
 
 # Deploy command line scripts.  The scripts are "wrapped" so users do not
 # need to modify their environment to run KBase scripts.

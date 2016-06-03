@@ -387,10 +387,10 @@ if __name__ == "__main__":
     parser.add_argument('--input_directory', 
                         help="Directory the fasta file is in", 
                         action='store', type=str, nargs='?', required=True)
-    parser.add_argument('--no_convert', action='store_true', dest='no_convert_to_old_type',
-                        help='After upload, do NOT add equivalent ContigSet object, '
-                             'in the same workspace (for backwards compatibility)')
-#    parser.add_argument('--shock_id',
+    parser.add_argument('--no_convert',
+                        help="Dont convert", action='store_true',
+                        dest='no_convert_to_old_type')
+    #    parser.add_argument('--shock_id',
 #                        help=script_details["Args"]["shock_id"],
 #                        action='store', type=str, nargs='?', default=None, required=False)
 #    parser.add_argument('--handle_id', 
@@ -407,7 +407,7 @@ if __name__ == "__main__":
 
     logger.debug(args)
     try:
-
+    
         obj_name = upload_assembly(shock_service_url = args.shock_service_url,
                         handle_service_url = args.handle_service_url, 
                         input_directory = args.input_directory, 
@@ -438,7 +438,6 @@ if __name__ == "__main__":
         except cvt.ConvertOldTypeException as e:
             logger.exception(e)
             sys.exit(2)
-
 
     sys.exit(0)
 

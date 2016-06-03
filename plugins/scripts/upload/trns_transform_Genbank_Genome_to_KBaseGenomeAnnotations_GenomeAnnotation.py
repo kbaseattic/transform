@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-"""
-Upload GenomeAnnotation objects from Genbank files.
-"""
+
 # standard library imports
-import argparse
-from collections import OrderedDict
-import datetime
-import hashlib
-import logging
 import os
-import os.path
-import re
-import shutil
 import sys
-import time
+import logging
+import re
+import hashlib
+import time 
+import traceback 
+import os.path 
+import datetime
+import shutil
+from string import digits
+from string import maketrans
+from collections import OrderedDict
 
 #try:
 #    from cStringIO import StringIO
@@ -30,7 +30,7 @@ import biokbase.Transform.script_utils as script_utils
 import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import biokbase.workspace.client 
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
-from doekbase.data_api.converters import genome as cvt
+
 
 
 def make_scientific_names_lookup(taxon_names_file=None):
@@ -95,8 +95,7 @@ def upload_genome(shock_service_url=None,
                   type=None,
                   level=logging.INFO, logger=None):
     """
-    Uploads CondensedGenomeAssembly.
-
+    Uploads CondensedGenomeAssembly
     Args:
         shock_service_url: A url for the KBase SHOCK service.
         input_fasta_directory: The directory where files will be read from.
@@ -1873,16 +1872,15 @@ def upload_genome(shock_service_url=None,
 #            raise 
 
     logger.info("Conversions completed.")
-    return genome_annotation_object_name
 
-#####################################################################
-# Command-line entry point
-#####################################################################
 
+# called only if script is run from command line
 if __name__ == "__main__":
     script_details = script_utils.parse_docs(upload_genome.__doc__)    
 
-    parser = argparse.ArgumentParser(prog=__file__,
+    import argparse
+
+    parser = argparse.ArgumentParser(prog=__file__, 
                                      description=script_details["Description"],
                                      epilog=script_details["Authors"])
                                      
@@ -1923,10 +1921,7 @@ if __name__ == "__main__":
     parser.add_argument('--input_directory', 
                         help="directory the genbank file is in", 
                         action='store', type=str, nargs='?', required=True)
-    parser.add_argument('--no_convert', action='store_true', dest='no_convert_to_old_type',
-                        help='After upload, do NOT add equivalent Genome/ContigSet objects, '
-                        'in the same workspace (for backwards compatibility)')
-#   parser.add_argument('--output_file_name',
+#    parser.add_argument('--output_file_name', 
 #                        help=script_details["Args"]["output_file_name"],
 #                        action='store', type=str, nargs='?', default=None, required=False)
 #    parser.add_argument('--shock_id', 
@@ -1935,6 +1930,7 @@ if __name__ == "__main__":
 #    parser.add_argument('--handle_id', 
 #                        help=script_details["Args"]["handle_id"], 
 #                        action='store', type=str, nargs='?', default=None, required=False)
+
 #    parser.add_argument('--input_mapping', 
 #                        help=script_details["Args"]["input_mapping"], 
 #                        action='store', type=unicode, nargs='?', default=None, required=False)
@@ -1944,47 +1940,30 @@ if __name__ == "__main__":
     logger = script_utils.stderrlogger(__file__)
 
     logger.debug(args)
-
-
     try:
-        obj_name = upload_genome(
-            shock_service_url = args.shock_service_url,
-            handle_service_url = args.handle_service_url,
-            #                  output_file_name = args.output_file_name,
-            #                      input_file_name = args.input_file_name,
-            input_directory = args.input_directory,
-            #                  shock_id = args.shock_id,
-            #                  handle_id = args.handle_id,
-            #                  input_mapping = args.input_mapping,
-            workspace_name = args.workspace_name,
-            workspace_service_url = args.workspace_service_url,
-            taxon_wsname = args.taxon_wsname,
-            exclude_feature_types = args.exclude_feature_types,
-            #                      taxon_names_file = args.taxon_names_file,
-            taxon_reference = args.taxon_reference,
-            core_genome_name = args.object_name,
-            source = args.source,
-            release = args.release,
-            type = args.type,
-            #                      genome_list_file = args.genome_list_file,
-            logger = logger)
+        upload_genome(shock_service_url = args.shock_service_url, 
+                      handle_service_url = args.handle_service_url, 
+                      #                  output_file_name = args.output_file_name, 
+                      #                      input_file_name = args.input_file_name, 
+                      input_directory = args.input_directory, 
+                      #                  shock_id = args.shock_id, 
+                      #                  handle_id = args.handle_id,
+                      #                  input_mapping = args.input_mapping,
+                      workspace_name = args.workspace_name,
+                      workspace_service_url = args.workspace_service_url,
+                      taxon_wsname = args.taxon_wsname,
+                      exclude_feature_types = args.exclude_feature_types,
+#                      taxon_names_file = args.taxon_names_file,
+                      taxon_reference = args.taxon_reference,
+                      core_genome_name = args.object_name,
+                      source = args.source,
+                      release = args.release,
+                      type = args.type,
+                      #                      genome_list_file = args.genome_list_file,
+                      logger = logger)
     except Exception, e:
         logger.exception(e)
         sys.exit(1)
-
-    if args.no_convert_to_old_type:
-        logger.info('Conversion to legacy types skipped by request')
-    else:
-        logger.info('Converting to legacy type, object={}'.format(obj_name))
-        try:
-            cvt.convert_genome(shock_url=args.shock_service_url,
-                               handle_url=args.handle_service_url,
-                               ws_url=args.workspace_service_url,
-                               obj_name=obj_name,
-                               ws_name=args.workspace_name)
-        except cvt.ConvertOldTypeException as e:
-            logger.exception(e)
-            sys.exit(2)
     
     sys.exit(0)
 

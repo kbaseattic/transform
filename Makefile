@@ -8,6 +8,16 @@ SERVICE_DIR_NAME = transform
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
 SERVICE_PORT = 7778
 
+BRANCH = $(shell git symbolic-ref HEAD 2>/dev/null)
+
+ifneq ($(filter $(BRANCH),refs/heads/develop refs/heads/staging refs/heads/master),)
+# if one of the develop/staging/master branches, strip the refs/heads/ portion
+BRANCH := $(subst refs/heads/,,$(BRANCH))
+else
+# else if using an unknown branch of transform, default to master branch of data_api
+BRANCH = master
+endif
+
 DIR = $(shell pwd)
 
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
@@ -162,7 +172,12 @@ deploy-jars:
 # Deploy client artifacts, including the application programming interface
 # libraries, command line scripts, and associated reference documentation.
 
-deploy-client: deploy-libs deploy-scripts deploy-docs
+deploy-client: deploy-libs deploy-scripts deploy-docs deploy-data-api
+
+deploy-data-api:
+	git clone https://github.com/kbase/data_api -b $(BRANCH)
+	cd data_api;pip install . --target $(TARGET)/lib;cd ..
+	rm -rf data_api
 
 # Deploy command line scripts.  The scripts are "wrapped" so users do not
 # need to modify their environment to run KBase scripts.

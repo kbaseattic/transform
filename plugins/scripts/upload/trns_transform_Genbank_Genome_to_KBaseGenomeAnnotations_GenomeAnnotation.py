@@ -32,7 +32,6 @@ import biokbase.workspace.client
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
 
 
-
 def make_scientific_names_lookup(taxon_names_file=None):
     # TODO change this work with a master taxonomy tree object.  Currently requires the names file from NCBI
     #key scientific name, value is taxon object name (taxid_taxon)
@@ -1873,6 +1872,7 @@ def upload_genome(shock_service_url=None,
 
     logger.info("Conversions completed.")
 
+    return genome_annotation_object_name
 
 # called only if script is run from command line
 if __name__ == "__main__":
@@ -1921,7 +1921,10 @@ if __name__ == "__main__":
     parser.add_argument('--input_directory', 
                         help="directory the genbank file is in", 
                         action='store', type=str, nargs='?', required=True)
-#    parser.add_argument('--output_file_name', 
+    parser.add_argument('--no_convert',
+                        help="Dont convert", action='store_true',
+                        dest='no_convert_to_old_type')
+#    parser.add_argument('--output_file_name',
 #                        help=script_details["Args"]["output_file_name"],
 #                        action='store', type=str, nargs='?', default=None, required=False)
 #    parser.add_argument('--shock_id', 
@@ -1941,7 +1944,7 @@ if __name__ == "__main__":
 
     logger.debug(args)
     try:
-        upload_genome(shock_service_url = args.shock_service_url, 
+        obj_name = upload_genome(shock_service_url = args.shock_service_url,
                       handle_service_url = args.handle_service_url, 
                       #                  output_file_name = args.output_file_name, 
                       #                      input_file_name = args.input_file_name, 
@@ -1964,7 +1967,22 @@ if __name__ == "__main__":
     except Exception, e:
         logger.exception(e)
         sys.exit(1)
-    
+
+    if args.no_convert_to_old_type:
+        logger.info('Conversion to legacy types skipped by request')
+    else:
+        from doekbase.data_api.converters import genome as cvt
+        logger.info('Converting to legacy type, object={}'.format(obj_name))
+        try:
+            cvt.convert_genome(shock_url=args.shock_service_url,
+                               handle_url=args.handle_service_url,
+                               ws_url=args.workspace_service_url,
+                               obj_name=obj_name,
+                               ws_name=args.workspace_name)
+        except cvt.ConvertOldTypeException as e:
+            logger.exception(e)
+            sys.exit(2)
+
     sys.exit(0)
 
 

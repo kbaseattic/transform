@@ -13,19 +13,20 @@
         "custom_options": [],
         "required_fields":
         [
-            "input_file_name",
+	    "workspace_service_url",
+	    "object_name",
+	    "workspace_name",
             "output_file_name"
         ],
-        "optional_fields":
-        [],
+        "optional_fields":[],
         "input_mapping": {"KBaseOntology.OntologyTranslation":"input_file_name"}
     },
     "user_options": [
         {
-            "name": "input_file_name",
+            "name": "object_name",
             "type": "string",
             "required": true,
-            "help": "Input KBaseOntology.OntologyTranslation File"
+            "help": "Name of KBaseOntology.OntologyTranslation Object"
         },
         {
             "name": "output_file_name",

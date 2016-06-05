@@ -175,6 +175,7 @@ deploy-jars:
 deploy-client: deploy-libs deploy-scripts deploy-docs deploy-data-api
 
 deploy-data-api:
+	echo $(BRANCH)
 	git clone https://github.com/kbase/data_api -b $(BRANCH)
 	virtualenv --system-site-packages venv
 	venv/bin/pip install data_api/ -U

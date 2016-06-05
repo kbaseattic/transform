@@ -176,8 +176,11 @@ deploy-client: deploy-libs deploy-scripts deploy-docs deploy-data-api
 
 deploy-data-api:
 	git clone https://github.com/kbase/data_api -b $(BRANCH)
-	cd data_api;pip install . --target $(TARGET)/lib;cd ..
+	virtualenv --system-site-packages venv
+	venv/bin/pip install data_api/
 	rm -rf data_api
+	cp -R venv/lib/python2.7/site-packages/* $(TARGET)/lib/
+	rm -rf venv
 
 # Deploy command line scripts.  The scripts are "wrapped" so users do not
 # need to modify their environment to run KBase scripts.

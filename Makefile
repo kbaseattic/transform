@@ -8,8 +8,9 @@ SERVICE_DIR_NAME = transform
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
 SERVICE_PORT = 7778
 
-BRANCH ?= $(shell git symbolic-ref HEAD 2>/dev/null)
-BRANCH := $(subst refs/heads/,,$(BRANCH))
+#BRANCH ?= $(shell git symbolic-ref HEAD 2>/dev/null)
+#BRANCH := $(subst refs/heads/,,$(BRANCH))
+BRANCH = develop
 
 DIR = $(shell pwd)
 

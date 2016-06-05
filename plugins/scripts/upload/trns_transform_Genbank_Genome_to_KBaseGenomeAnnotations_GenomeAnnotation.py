@@ -1739,8 +1739,10 @@ def upload_genome(shock_service_url=None,
 #            except biokbase.workspace.client.ServerError as err:
 #                #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
 #                raise 
+
+
     else:
-        raise Exception("No CDS annotations exist in this Genbank file.  This appears not to be a genome.  If this is just an assembly, you should upload it as an assembly using a fasta file.")
+        raise Exception("No CDS annotations exist in this Genbank file.  This appears not to be a genome.  If this is just an assembly, you should upload it as an assembly# using a fasta file.")
 
 
     counts_map = dict() #dict of feature type and number of occurrences.
@@ -1756,124 +1758,56 @@ def upload_genome(shock_service_url=None,
         print "TYPE IN : " + feature_type
         feature_container_object_name = "%s_feature_container_%s" % (core_genome_name,feature_type)
         feature_container_object_ref = "%s/%s" % (workspace_name,feature_container_object_name)
-        feature_container_references[feature_type] = feature_container_object_ref
- 
 
         features_dict = dict()
         feature_container = dict()
         feature_container['features'] = dict()
-        container_feature_lengths = OrderedDict() 
 
-        #Retrieve the features from the sqllite DB
-        sql_cursor.execute("select feature_id, sequence_length, feature_data from features where feature_type = ? order by sequence_length asc", 
-                           (feature_type,))
-        for row in sql_cursor: 
-            feature_id = row[0]
-            sequence_length = row[1]
-            feature_data = cPickle.loads(str(row[2])) 
-            container_feature_lengths[feature_id] = sequence_length 
-            feature_container['features'][feature_id] = feature_data
+        #Do size check of the features
+        sql_cursor.execute("select sum(length(feature_data)) from features where feature_type = ?", (feature_type,))
+        for row in sql_cursor:
+            data_length = row[0]
 
-        #Build up container object
-        feature_container['feature_container_id']= feature_container_object_name
-        feature_container['name']= feature_container_object_name
-        feature_container['type']= feature_type
-        feature_container['assembly_ref'] = assembly_reference
+        if data_length < 900000000:
+            #Size is probably ok Try the save
+            #Retrieve the features from the sqllite DB
+            sql_cursor.execute("select feature_id, feature_data from features where feature_type = ? ", (feature_type,))
 
-        #Provenance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
-        #provenance_description = "features from upload from %s includes accession(s) : " % (source_name,",".join(locus_name_order))
-        feature_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source_name)}]
-        logger.info("Attempting save of Feature Container %s" % (feature_container_object_name)) 
+            for row in sql_cursor: 
+                feature_id = row[0]
+                feature_data = cPickle.loads(str(row[1])) 
+                feature_container['features'][feature_id] = feature_data
 
-        do_feature_container_save = True
+            #Build up container object
+            feature_container['feature_container_id']= feature_container_object_name
+            feature_container['name']= feature_container_object_name
+            feature_container['type']= feature_type
+            feature_container['assembly_ref'] = assembly_reference
 
-#        container_byte_estimate = len(simplejson.dumps(feature_container))  
-        container_byte_estimate = sys.getsizeof(feature_container)
+            feature_container_references[feature_type] = feature_container_object_ref
 
-        container_feature_lengths = OrderedDict()
-        features_with_sequences_removed_list = list()
-        #1073741824 bytes is a GB.  This gives ~7%cushion for potential unicode 16 characters
-#        if container_byte_estimate > 1000000000 : 
-#            #Create an ordered dict of features and lengths
-#            temp_dict = dict()
-#            for feature in feature_container['features']:
-#                temp_dict[feature] = feature_container['features'][feature]['dna_sequence_length']
-#            container_feature_lengths = OrderedDict(sorted(temp_dict.items(), key=lambda t: t[1]))
-        while container_byte_estimate > 1000000000 :
-            remove_count = 100
-            container_length = len(container_feature_lengths)
-            if container_length < remove_count :
-                remove_count = container_length
-            if container_length == 0:
-                #IF CORE TYPE THROW AN ERROR
-                if feature_container['type'] in ['gene','CDS','mRNA']:
-                    raise Exception("The resulting %s feature type container is above the workspace 1GB limit." % (feature_container['type']))
-                else:
-                    #REMOVE FEATURE TYPE AND CLEANUP ALIASES (IF NOT CORE FEATURE TYPE) AND DO WARNING  (DONT SAVE CONTAINER)
-                    do_feature_container_save = False
-                    for alias in feature_lookup_dict:
-                        f_counter = 0
-                        for temp_fc_ref, temp_fc_id in feature_lookup_dict[alias]:
-                            if feature_container['type'] == reverse_feature_container_ref_lookup[temp_fc_ref]:
-                                #HOW TO REMOVE TUPLE FROM LIST IN PLACE?
-                                del( feature_lookup_dict[alias][f_counter])
-                            else:
-                                # important because the positions of all values will be decremented on a delete
-                                # so only increment if you did not delete                   
-                                f_counter += 1
-                        if len(feature_lookup_dict[alias]) == 0:
-                            #Need to remove the alias.
-                            del( feature_lookup_dict[alias]) 
-                    #annotation_quality_warnings.append("The feature type {} was unable to be saved due to workspace size limitations".format(feature_container['type']))
-                    sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",("The feature type {} was unable to be saved due to workspace size limitations".format(feature_container['type']),))
-                    break
+            #Provenance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
+            #provenance_description = "features from upload from %s includes accession(s) : " % (source_name,",".join(locus_name_order))
+            feature_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source_name)}]
+            logger.info("Attempting save of Feature Container %s" % (feature_container_object_name)) 
 
-            #remove remove count (100) sequences at a time and retry (or what's left)
-            for i in range(remove_count):
-                removed_sequence_feature_id = container_feature_lengths.popitem()[0]
-                features_with_sequences_removed_list.append(removed_sequence_feature_id)
-                feature_container['features'][removed_sequence_feature_id]['dna_sequence']=""
-            #container_byte_estimate = len(simplejson.dumps(feature_container))
-            container_byte_estimate = sys.getsizeof(feature_container)
-
-            #Need to remove sequences from largest sequences first until it fits.
-            #Keep track of sequences removed and do warning
-            #If all sequences removed and still will not fit
-            #Then if core feature type (Gene,CDS,mRNA) throw an error. 
-            #If not core feature type Drop the feature type and do a warning log (and cleanup all the alliases pointing to this feature type)
-
-
-#        feature_container_not_saved = True
-#        while feature_container_not_saved:
-#            try:
-
-        if len(features_with_sequences_removed_list) > 0 :
-            #ADD WARNING TO THE QUALITY WARNINGS OBJECT
-            temp_warning = "The following features for feature type {} do not have an included sequence due to workspace size limitations : {} ".format(
-                feature_container['type'],
-                ",".join(features_with_sequences_removed_list))
-            #annotation_quality_warnings.append(temp_warning)
-            sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(temp_warning,))
-
-
-        #determine mRNA to CDS relationship counts
-        if feature_type == "CDS":
-            CDS_to_mRNA_count = 0 
-            for feature in feature_container['features']:
-                if "CDS_properties" in feature_container['features'][feature]:
-                    if "associated_mRNA" in feature_container['features'][feature]["CDS_properties"]:
-                        CDS_to_mRNA_count += 1 
-            interfeature_relationship_counts_map["CDS_with_mRNA"] = CDS_to_mRNA_count
+            #determine mRNA to CDS relationship counts
+            if feature_type == "CDS":
+                CDS_to_mRNA_count = 0 
+                for feature in feature_container['features']:
+                    if "CDS_properties" in feature_container['features'][feature]:
+                        if "associated_mRNA" in feature_container['features'][feature]["CDS_properties"]:
+                            CDS_to_mRNA_count += 1 
+                interfeature_relationship_counts_map["CDS_with_mRNA"] = CDS_to_mRNA_count
  
-        if feature_type == "mRNA":
-            mRNA_to_CDS_count = 0 
-            for feature in feature_container['features']:
-                if "mRNA_properties" in feature_container['features'][feature]:
-                    if "associated_CDS" in feature_container['features'][feature]["mRNA_properties"]:
-                        mRNA_to_CDS_count += 1 
-            interfeature_relationship_counts_map["mRNA_with_CDS"] = mRNA_to_CDS_count
+            if feature_type == "mRNA":
+                mRNA_to_CDS_count = 0 
+                for feature in feature_container['features']:
+                    if "mRNA_properties" in feature_container['features'][feature]:
+                        if "associated_CDS" in feature_container['features'][feature]["mRNA_properties"]:
+                            mRNA_to_CDS_count += 1 
+                interfeature_relationship_counts_map["mRNA_with_CDS"] = mRNA_to_CDS_count
 
-        if do_feature_container_save:
             counts_map[feature_type] = len(feature_container['features'])
             feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
                                                               "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
@@ -1881,14 +1815,32 @@ def upload_genome(shock_service_url=None,
                                                                             "name": feature_container_object_name,
                                                                             "hidden":1,
                                                                             "provenance":feature_container_provenance}]}) 
-#                    feature_container_not_saved = False 
             logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
-#                except biokbase.workspace.client.ServerError as err: 
-#                    #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
-#                    raise 
-#    else:
-#        raise Exception("This genome appears to have no annotations.")
-
+        else:
+            #Feature container too large
+            #If core type Fail
+            if feature_type in ["gene", "mRNA", "CDS"]:
+                raise Exception("This genome annotation can not be saved due to at least one of the core feature types (gene, CDS, mRNA) being too large for the workspace")
+            #Else do not save the feature container (add waring)
+            else:
+                temp_warning = "Feature type {} will not be made because the resulting object will be too large for the workspace.".format(feature_type)
+                #annotation_quality_warnings.append(temp_warning)
+                sql_cursor.execute("insert into annotation_quality_warnings values(:warning)",(temp_warning,))
+                alias_list = feature_lookup_dict.keys()
+                for alias in alias_list:
+                    f_counter = 0
+#                    alias_tuple_list = feature_lookup_dict[alias]
+                    for temp_fc_ref, temp_fc_id in feature_lookup_dict[alias]:
+                        if feature_type == reverse_feature_container_ref_lookup[temp_fc_ref]:
+                            #HOW TO REMOVE TUPLE FROM LIST IN PLACE?
+                            del( feature_lookup_dict[alias][f_counter])
+                        else:
+                            # important because the positions of all values will be decremented on a delete
+                            # so only increment if you did not delete                   
+                            f_counter += 1
+                    if len(feature_lookup_dict[alias]) == 0:
+                        #Need to remove the alias.
+                        del( feature_lookup_dict[alias]) 
 
     #MAKE THE BAREBONES ANNOTATION QUALITY OBJECT:
     #LIST OF WARNINGS TO PUT INTO THE AnnotationQualityObject.

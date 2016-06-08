@@ -7,6 +7,7 @@
 # Standard imports
 import sys,os,time,datetime
 import itertools,hashlib,logging
+import gzip,shutil
 
 # 3rd party imports
 import simplejson
@@ -55,6 +56,12 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     assembly_name = "%s_assembly" % (core_genome_name)
     assembly_reference = "%s/%s" % (workspace_name,assembly_name)
     input_directory = "/".join(input_fasta_file.split("/")[0:-1])
+    
+    #Files should be gzipped
+    with gzip.open(input_fasta_file, 'rb') as f_in:
+        with open(input_fasta_file[0:-3], 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
     try:
         assembly.upload_assembly(shock_service_url = shock_service_url,
                                  handle_service_url = handle_service_url,
@@ -74,6 +81,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
         sys.exit(1) 
 
     logger.info("Assembly Uploaded as "+assembly_reference)
+    os.remove(args.input_fasta_file[0:-3])
 
     ##########################################
     #Reading in Fasta file, Code taken from https://www.biostars.org/p/710/
@@ -81,7 +89,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     logger.info("Reading FASTA file.") 
 
     contigs_sequences = dict()
-    input_file_handle = open(input_fasta_file,'r')
+    input_file_handle = gzip.open(input_fasta_file,'rb')
     # ditch the boolean (x[0]) and just keep the header or sequence since
     # we know they alternate.
     faiter = (x[1] for x in itertools.groupby(input_file_handle, lambda line: line[0] == ">"))
@@ -104,7 +112,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     header = list()
     feature_list = dict()
 
-    gff_file_handle = TextFileDecoder.open_textdecoder(input_gff_file, 'ISO-8859-1')
+    gff_file_handle = gzip.open(input_gff_file, 'rb')
     current_line = gff_file_handle.readline()
     while ( current_line != '' ):
         current_line=current_line.strip()
@@ -379,14 +387,14 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
             while feature_container_not_saved:
                 try:
                     feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
-                                                                      "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
-                                                                                    "data":feature_container,
+                                                                      "objects":[ { "type": "KBaseGenomeAnnotations.FeatureContainer",
+                                                                                    "data": feature_container,
                                                                                     "name": feature_container_object_name,
-                                                                                    "provenance":feature_container_provenance}]}) 
+                                                                                    "hidden" : 1,
+                                                                                    "provenance": feature_container_provenance}]}) 
                     feature_container_not_saved = False 
                     logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
                 except biokbase.workspace.client.ServerError as err: 
-                    #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
                     raise
 
     protein_container_object_name = "%s_protein_container" % (core_genome_name)
@@ -415,10 +423,11 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
             try: 
                 logger.info("Attempting Protein Container save for %s" % (protein_container_object_name))  
                 protein_container_info =  ws_client.save_objects({"workspace": workspace_name,
-                                                                  "objects":[ { "type":"KBaseGenomeAnnotations.ProteinContainer",
-                                                                                "data":protein_container,
+                                                                  "objects":[ { "type": "KBaseGenomeAnnotations.ProteinContainer",
+                                                                                "data": protein_container,
                                                                                 "name": protein_container_object_name,
-                                                                                "provenance":protein_container_provenance}]})
+                                                                                "hidden": 1,
+                                                                                "provenance": protein_container_provenance}]})
                 logger.info("Protein Container saved for %s" % (protein_container_object_name))  
                 protein_container_not_saved = False 
             except biokbase.workspace.client.ServerError as err:
@@ -476,10 +485,10 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     while genome_annotation_not_saved:
         try:
             genome_annotation_info =  ws_client.save_objects({"workspace":workspace_name,
-                                                              "objects":[ { "type":"KBaseGenomeAnnotations.GenomeAnnotation",
-                                                                            "data":genome_annotation,
+                                                              "objects":[ { "type": "KBaseGenomeAnnotations.GenomeAnnotation",
+                                                                            "data": genome_annotation,
                                                                             "name": genome_annotation_object_name,
-                                                                            "provenance":genome_annotation_provenance}]}) 
+                                                                            "provenance": genome_annotation_provenance}]}) 
             genome_annotation_not_saved = False 
             logger.info("Genome Annotation saved for %s" % (genome_annotation_object_name))
         except biokbase.workspace.client.ServerError as err: 
@@ -514,8 +523,14 @@ if __name__ == "__main__":
     if not os.path.isfile(args.input_gff_file):
         logger.warning("{0} is not a recognizable file".format(args.input_gff_file))
 
+    if(args.input_gff_file[-3:len(args.input_gff_file)] != '.gz'):
+        logger.warning("{0} is not a gzipped file".format(args.input_gff_file))
+
     if not os.path.isfile(args.input_fasta_file):
         logger.warning("{0} is not a recognizable file".format(args.input_fasta_file))
+
+    if(args.input_fasta_file[-3:len(args.input_fasta_file)] != '.gz'):
+        logger.warning("{0} is not a gzipped file".format(args.input_fasta_file))
 
     ws_client = biokbase.workspace.client.Workspace(args.workspace_service_url)
 

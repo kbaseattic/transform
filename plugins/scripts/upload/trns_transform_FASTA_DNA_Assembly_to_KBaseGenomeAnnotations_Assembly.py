@@ -3,15 +3,10 @@
 # standard library imports
 import os
 import sys
-import logging
 import re
 import hashlib
-import time 
-import traceback 
-import os.path 
-import datetime
+import os.path
 import collections
-from string import digits
 
 # 3rd party imports
 import simplejson
@@ -429,6 +424,7 @@ if __name__ == "__main__":
     else:
         from doekbase.data_api.converters import genome as cvt
         logger.info('Converting to legacy type, object={}'.format(obj_name))
+        script_utils.stderrlogger(cvt._log.name) # capture converter logs as well
         try:
             cvt.convert_assembly(shock_url=args.shock_service_url,
                                  handle_url=args.handle_service_url,

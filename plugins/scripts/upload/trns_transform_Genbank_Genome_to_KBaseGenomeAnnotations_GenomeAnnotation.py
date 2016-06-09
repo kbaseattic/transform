@@ -2032,6 +2032,7 @@ if __name__ == "__main__":
         logger.info('Conversion to legacy types skipped by request')
     else:
         from doekbase.data_api.converters import genome as cvt
+        script_utils.stderrlogger(cvt._log.name) # capture converter logs as well
         logger.info('Converting to legacy type, object={}'.format(obj_name))
         try:
             cvt.convert_genome(shock_url=args.shock_service_url,

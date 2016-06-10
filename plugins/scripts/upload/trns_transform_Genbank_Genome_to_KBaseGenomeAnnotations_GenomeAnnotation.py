@@ -231,8 +231,6 @@ def upload_genome(shock_service_url=None,
     genomes_without_taxon_refs = list()
     if taxon_reference is None:
         #Get the taxon_lookup_object
-#        taxon_lookup = ws_client.get_object( {'workspace':taxon_wsname,
-#                                              'id':"taxon_lookup"})
         taxon_lookup = ws_client.get_objects( [{'workspace':taxon_wsname,
                                                 'name':"taxon_lookup"}])
         if ((organism is not None) and (organism[0:3] in taxon_lookup[0]['data']['taxon_lookup'])):
@@ -960,7 +958,7 @@ def upload_genome(shock_service_url=None,
                     #NOTE THIS IS A PLACE WHERE A QUALITY WARNING CHECK CAN BE DONE, 
                     #see if translation is accurate.(codon start (1,2,3) may need to be used)
                     #
-                    value = re.sub('\s+',' ',value)
+                    value = re.sub('\s+','',value)
                     feature_object["translation"] = value 
                 elif ((key == "function") and (value is not None) and (value.strip() == "")) :
                     feature_object["function"] = value

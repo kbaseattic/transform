@@ -146,6 +146,7 @@ def upload_genome(shock_service_url=None,
   
     logger.info("Found {0}".format(str(genbank_files))) 
  
+    source_file_name = genbank_files[0]
     input_file_name = os.path.join(input_directory,genbank_files[0]) 
  
     if len(genbank_files) > 1: 
@@ -225,28 +226,27 @@ def upload_genome(shock_service_url=None,
 
     genome_annotation = dict()
 
+    display_sc_name = None;
+
     genomes_without_taxon_refs = list()
     if taxon_reference is None:
         #Get the taxon_lookup_object
-        taxon_lookup = ws_client.get_object( {'workspace':taxon_wsname,
-                                              'id':"taxon_lookup"})
-        if ((organism is not None) and (organism[0:3] in taxon_lookup['data']['taxon_lookup'])):
-            if organism in taxon_lookup['data']['taxon_lookup'][organism[0:3]]:
-                tax_id = taxon_lookup['data']['taxon_lookup'][organism[0:3]][organism] 
+        taxon_lookup = ws_client.get_objects( [{'workspace':taxon_wsname,
+                                                'name':"taxon_lookup"}])
+        if ((organism is not None) and (organism[0:3] in taxon_lookup[0]['data']['taxon_lookup'])):
+            if organism in taxon_lookup[0]['data']['taxon_lookup'][organism[0:3]]:
+                tax_id = taxon_lookup[0]['data']['taxon_lookup'][organism[0:3]][organism] 
                 taxon_object_name = "%s_taxon" % (str(tax_id))
             else:
                 genomes_without_taxon_refs.append(organism)
                 taxon_object_name = "unknown_taxon"
-                genome_annotation['notes'] = "Unable to find taxon for this organism : %s ." % (organism ) 
+                genome_annotation['notes'] = "Unable to find taxon for this organism : %s ." % (organism )
         else: 
             genomes_without_taxon_refs.append(organism)
             taxon_object_name = "unknown_taxon"
             genome_annotation['notes'] = "Unable to find taxon for this organism : %s ." % (organism ) 
         del taxon_lookup
         try: 
-#            taxon_info = ws_client.get_object_info_new({"objects":[{"wsid": str(taxon_workspace_id), 
-#                                                                    "name": taxon_object_name}],
-#                                                        "includeMetadata":0,"ignoreErrors": 0}) 
             taxon_info = ws_client.get_objects([{"workspace": taxon_wsname, 
                                                  "name": taxon_object_name}]) 
             taxon_id = "%s/%s/%s" % (taxon_info[0]["info"][6], taxon_info[0]["info"][0], taxon_info[0]["info"][4]) 
@@ -254,15 +254,16 @@ def upload_genome(shock_service_url=None,
 #            print "TAXON OBJECT TYPE : " + taxon_info[0]["info"][2]
             if not taxon_info[0]["info"][2].startswith("KBaseGenomeAnnotations.Taxon"):
                 raise Exception("The object retrieved for the taxon object is not actually a taxon object.  It is " + taxon_info[0]["info"][2])
+            display_sc_name = taxon_info[0]['data']['scientific_name']
         except Exception, e: 
             raise Exception("The taxon " + taxon_object_name + " from workspace " + str(taxon_workspace_id) + " does not exist. " + str(e))
     else:
         try: 
-#            taxon_info = ws_client.get_object_info_new({"objects":[{"ref": taxon_reference}],"includeMetadata":0,"ignoreErrors": 0})
             taxon_info = ws_client.get_objects({"object_ids":[{"ref": taxon_reference}]})
             print "TAXON OBJECT TYPE : " + taxon_info[0]["info"][2] 
             if not taxon_info[0]["info"][2].startswith("KBaseGenomeAnnotations.Taxon"):
                 raise Exception("The object retrieved for the taxon object is not actually a taxon object.  It is " + taxon_info[0]["info"][2])
+            display_sc_name = taxon_info[0]['data']['scientific_name']
         except Exception, e:
             raise Exception("The taxon reference " + taxon_reference + " does not correspond to a workspace object.")
     tax_lineage = taxon_info[0]["data"]["scientific_lineage"]
@@ -957,7 +958,7 @@ def upload_genome(shock_service_url=None,
                     #NOTE THIS IS A PLACE WHERE A QUALITY WARNING CHECK CAN BE DONE, 
                     #see if translation is accurate.(codon start (1,2,3) may need to be used)
                     #
-                    value = re.sub('\s+',' ',value)
+                    value = re.sub('\s+','',value)
                     feature_object["translation"] = value 
                 elif ((key == "function") and (value is not None) and (value.strip() == "")) :
                     feature_object["function"] = value
@@ -1901,6 +1902,8 @@ def upload_genome(shock_service_url=None,
     else:
         genome_annotation['reference_annotation'] = 0
     genome_annotation['taxon_ref'] = taxon_id
+    genome_annotation['display_sc_name'] = display_sc_name
+    genome_annotation['original_source_file_name'] = source_file_name
     genome_annotation['assembly_ref'] =  assembly_reference 
     genome_annotation['genome_annotation_id'] = genome_annotation_object_name
     genome_annotation['external_source'] = source_name

@@ -11,39 +11,17 @@ import gzip,shutil
 
 # 3rd party imports
 import simplejson
+from Bio.Seq import Seq
+from Bio.Alphabet import IUPAC
 
 # KBase imports
 import biokbase.workspace.client 
 import biokbase.Transform.script_utils as script_utils
-import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
-
-#For reverse strand
-complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
-
-#For translation
-#Taken from http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/index.cgi?chapter=tgencodes#SG1
-#However plant mitochondrial (2) and plastidial genomes (11) have different translation codes
-dna_aa_map = {"TTT":"F", "TTC":"F", "TTA":"L", "TTG":"L",
-              "TCT":"S", "TCC":"S", "TCA":"S", "TCG":"S",
-              "TAT":"Y", "TAC":"Y", "TAA":"*", "TAG":"*",
-              "TGT":"C", "TGC":"C", "TGA":"*", "TGG":"W",
-              "CTT":"L", "CTC":"L", "CTA":"L", "CTG":"L",
-              "CCT":"P", "CCC":"P", "CCA":"P", "CCG":"P",
-              "CAT":"H", "CAC":"H", "CAA":"Q", "CAG":"Q",
-              "CGT":"R", "CGC":"R", "CGA":"R", "CGG":"R",
-              "ATT":"I", "ATC":"I", "ATA":"I", "ATG":"M",
-              "ACT":"T", "ACC":"T", "ACA":"T", "ACG":"T",
-              "AAT":"N", "AAC":"N", "AAA":"K", "AAG":"K",
-              "AGT":"S", "AGC":"S", "AGA":"R", "AGG":"R",
-              "GTT":"V", "GTC":"V", "GTA":"V", "GTG":"V",
-              "GCT":"A", "GCC":"A", "GCA":"A", "GCG":"A",
-              "GAT":"D", "GAC":"D", "GAA":"E", "GAG":"E",
-              "GGT":"G", "GGC":"G", "GGA":"G", "GGG":"G"}
 
 def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=None,
                   shock_service_url=None, handle_service_url=None, workspace_service_url=None,
-                  taxon_reference = None, source=None, release=None, core_genome_name=None, genome_type=None,
+                  taxon_reference = None, source=None, release=None, core_genome_name=None, genome_type=None,scientific_name=None,
                   level=logging.INFO, logger=None):
 
     ws_client = biokbase.workspace.client.Workspace(workspace_service_url)
@@ -102,7 +80,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
         try:
             fasta_header,fasta_description = header.split(' ',1)
         except:
-            fasta_header = fasta_header_line
+            fasta_header = header
             fasta_description = None
 
         contigs_sequences[fasta_header]= {'description':fasta_description,'sequence':seq}
@@ -172,8 +150,6 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
 
             feature_object["feature_id"]=feature_id
 
-#            print contig,feature["attributes"],feature["type"],feature["start"],feature["end"],feature["strand"],feature["phase"]
-
             #GFF use 1-based integers
             substr_start = feature["start"]-1 
             substr_end = feature["end"]
@@ -181,19 +157,17 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 substr_start = feature["end"]-1
                 substr_end = feature["start"]
 
-            dna_sequence = contigs_sequences[contig]["sequence"][feature["start"]-1:feature["end"]]
-            dna_sequence = dna_sequence.upper()
-
+            dna_sequence = Seq(contigs_sequences[contig]["sequence"][feature["start"]-1:feature["end"]], IUPAC.ambiguous_dna)
+            
             if(feature["strand"] == "-"):
                 #reverse complement
-                dna_sequence = dna_sequence[::-1]
-                dna_sequence = "".join(complement[base] for base in dna_sequence)
+                dna_sequence = dna_sequence.reverse_complement()
 
 #            print feature["attributes"],dna_sequence
 
-            feature_object["dna_sequence"]=dna_sequence
+            feature_object["dna_sequence"]=str(dna_sequence).upper()
             feature_object["dna_sequence_length"]=len(dna_sequence)
-            feature_object["md5"]=hashlib.md5(dna_sequence).hexdigest()
+            feature_object["md5"]=hashlib.md5(str(dna_sequence)).hexdigest()
             feature_object["locations"]=[[contig,feature["start"],feature["strand"],len(dna_sequence)]]
 
             feature_object["quality_warnings"]=list()
@@ -277,42 +251,29 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
         feature_id = "CDS_%s" % (str(features_type_id_counter_dict["CDS"]))
 
         if("dna_sequence" in aggregated_cds[mRNA]):
+            #Translate protein sequence
+            dna_sequence = Seq(aggregated_cds[mRNA]["dna_sequence"], IUPAC.ambiguous_dna)
+            rna_sequence = dna_sequence.transcribe()
+            protein_sequence = rna_sequence.translate()
 
-                #Build up the protein object for the protein container
-                protein_object = dict()
-                protein_id = "protein_%s" % (str(protein_id_counter))
-                protein_id_counter += 1
-                protein_object["protein_id"] = protein_id
-                protein_object["amino_acid_sequence"] = ""
+            #Build up the protein object for the protein container
+            protein_object = dict()
+            protein_id = "protein_%s" % (str(protein_id_counter))
+            protein_id_counter += 1
+            protein_object["protein_id"] = protein_id
+            protein_object["amino_acid_sequence"] = str(protein_sequence).upper()
+            protein_object["md5"] = hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
+            
+            if "function" in aggregated_cds[mRNA]:
+                protein_object["function"] = aggregated_cds[mRNA]["function"]
 
-                sequence_length = len(aggregated_cds[mRNA]["dna_sequence"])
-                amino_acids=list()
-                for i in range(0, sequence_length - sequence_length % 3, 3):
-                    codon = aggregated_cds[mRNA]["dna_sequence"][i:i + 3]
-                    amino_acid = "*"
-                    if(codon in dna_aa_map):
-                        amino_acid = dna_aa_map[codon]
-                    else:
-                        print "Warning, codon %s not recognized for CDS %s (%s)" % (codon,feature_id_map_dict[mRNA],mRNA)
-                    amino_acids.append(amino_acid)
+            protein_object["aliases"]=dict()
+            if "aliases" in aggregated_cds[mRNA]:
+                protein_object["aliases"] = aggregated_cds[mRNA]["aliases"]
 
-                if( sequence_length % 3 != 0 ):
-                    print "Warning, length of dna_sequence is not a multiple of 3 for CDS %s (%s)" % (mRNA,feature_id_map_dict[mRNA])
-
-                protein_object["amino_acid_sequence"]="".join(amino_acids)
-                protein_object["md5"] = hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
-
-                if "function" in aggregated_cds[mRNA]:
-                    protein_object["function"] = aggregated_cds[mRNA]["function"]
-
-                protein_object["aliases"]=dict()
-                if "aliases" in aggregated_cds[mRNA]:
-                    protein_object["aliases"] = aggregated_cds[mRNA]["aliases"]
-
-                protein_container_dict[protein_object["protein_id"]] = protein_object
-                protein_container_object_name = "%s_protein_container" % (core_genome_name)
-                protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
-#                aggregated_cds[mRNA]["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
+            protein_container_dict[protein_object["protein_id"]] = protein_object
+            protein_container_object_name = "%s_protein_container" % (core_genome_name)
+            protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
 
         features_type_containers_dict["CDS"][feature_id]=aggregated_cds[mRNA]
         feature_id_map_dict[mRNA+".CDS"]=feature_id
@@ -431,26 +392,27 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 logger.info("Protein Container saved for %s" % (protein_container_object_name))  
                 protein_container_not_saved = False 
             except biokbase.workspace.client.ServerError as err:
-#                #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
                 raise 
 
     genome_annotation = dict()
 
-
-#shock_id = None
-#handle_id = None
-#if shock_id is None:
-#    shock_info = script_utils.upload_file_to_shock(logger, shock_service_url, input_file_name, token=token)
-#    shock_id = shock_info["id"]
-#    handles = script_utils.getHandles(logger, shock_service_url, handle_service_url, [shock_id], [handle_id], token)   
-#    handle_id = handles[0]
-#genome_annotation['genbank_handle_ref'] = handle_id
+    #Upload GFF to shock
+    token = os.environ.get('KB_AUTH_TOKEN') 
+    shock_id = None
+    handle_id = None
+    if shock_id is None:
+        shock_info = script_utils.upload_file_to_shock(logger, shock_service_url, input_gff_file, token=token)
+        shock_id = shock_info["id"]
+        handles = script_utils.getHandles(logger, shock_service_url, handle_service_url, [shock_id], [handle_id], token)   
+        handle_id = handles[0]
+    genome_annotation['gff_handle_ref'] = handle_id
 
     genome_annotation['feature_lookup'] = dict() #feature_lookup_dict
     genome_annotation['protein_container_ref'] = protein_reference
     genome_annotation['feature_container_references'] = features_container_references 
     genome_annotation['counts_map'] = features_type_counts_map
     genome_annotation['type'] = genome_type
+
     if genome_type == "Reference":
         genome_annotation['reference_annotation'] = 1
     else:
@@ -459,8 +421,10 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     genome_annotation_object_name = core_genome_name
     genome_annotation['genome_annotation_id'] = genome_annotation_object_name
 
+    genome_annotation['display_sc_name']=scientific_name
     genome_annotation['taxon_ref'] = taxon_reference
     genome_annotation['assembly_ref'] = assembly_reference
+    genome_annotation['original_source_file_name']=input_gff_file
 
     genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
     print interfeature_relationship_counts_map
@@ -468,6 +432,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     genome_annotation['alias_source_counts_map'] = alias_source_counts_map
     genome_annotation['external_source'] = source
     genome_annotation['external_source_origination_date'] = time_string
+    genome_annotation['release'] = release
 
 #genome_annotation['external_source_id'] = ",".join(locus_name_order)
 #genome_annotation['annotation_quality_ref'] = annotation_quality_reference
@@ -555,19 +520,22 @@ if __name__ == "__main__":
 
     tax_id=0
     taxon_object_name = "unknown_taxon"
+    display_sc_name = None
 
     if(args.organism[0:3] in taxon_lookup and args.organism in taxon_lookup[args.organism[0:3]]):
         tax_id=taxon_lookup[args.organism[0:3]][args.organism]
         taxon_object_name = "%s_taxon" % (str(tax_id))
 
     taxon_info = ws_client.get_objects([{"workspace": args.taxon_wsname, 
-                                         "name": taxon_object_name}])[0]['info']
+                                         "name": taxon_object_name}])[0]
 
-    taxon_ref = "%s/%s/%s" % (taxon_info[6], taxon_info[0], taxon_info[4])
+    taxon_ref = "%s/%s/%s" % (taxon_info['info'][6], taxon_info['info'][0], taxon_info['info'][4])
+    display_sc_name = taxon_info['data']['scientific_name']
 
     core_genome_name = "%s_%s" % (tax_id,args.source) 
     genome_type="Reference"
     upload_genome(input_gff_file=args.input_gff_file,input_fasta_file=args.input_fasta_file,workspace_name=args.workspace_name,
                   shock_service_url=args.shock_service_url,handle_service_url=args.handle_service_url,workspace_service_url=args.workspace_service_url,
-                  taxon_reference=taxon_ref,source=args.source,release=args.release,core_genome_name=core_genome_name,genome_type=genome_type,logger=logger)
+                  taxon_reference=taxon_ref,source=args.source,release=args.release,core_genome_name=core_genome_name,genome_type=genome_type,scientific_name=display_sc_name,
+                  logger=logger)
     sys.exit(0)

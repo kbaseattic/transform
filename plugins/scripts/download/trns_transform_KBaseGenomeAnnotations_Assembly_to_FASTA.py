@@ -113,6 +113,10 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
     #    blah=1
     #else:
     #    output_file_name= '{}.fasta'.format(output_file_name)
+
+    if output_file_name is None:
+        output_file_name = object_name + ".fasta"
+        
     with open(output_file_name, 'w') as outFile:
         asm_api.get_fasta().to_file(outFile)
 

@@ -37,23 +37,24 @@ def main():
         source_object_name: The source object name.
         destination_object_name: The destination object name.
         source_kbase_type: The KBase Workspace type string that indicates the module
-                           and type of the object being created.                       
+                           and type of the object being created.
         destination_kbase_type: The KBase Workspace type string that indicates the module
                                 and type of the object being created.
-        optional_arguments: This is a JSON string containing optional parameters that can
-                            be passed in for custom behavior per conversion.
+        optional_arguments: This is a base64 encoded JSON string containing
+                            optional parameters that can be passed in for
+                            custom behavior per conversion.
         ujs_job_id: The job id from the User and Job State service that can be used to
                     report status on task progress back to the user.
-        job_details: This is a JSON string that passes in the script specific command
-                     line options for a given conversion type.  The service pulls
-                     these config settings from a script config created by the developer
-                     of the conversion script and passes that into the AWE job that
+        job_details: This is a base64 encoded JSON string that passes in the
+                     script specific command line options for a given
+                     conversion type.  The service pulls these config settings
+                     from a script config created by the developer of the
+                     conversion script and passes that into the AWE job that
                      calls this script.
         working_directory: The working directory on disk where files can be created and
                            will be cleaned when the job ends with success or failure.
         keep_working_directory: A flag to tell the script not to delete the working
                                 directory, which is mainly for debugging purposes.
-        debug: Run the taskrunner in debug mode for local execution in a virtualenv.
     
     Returns:
         Literal return value is 0 for success and 1 for failure.
@@ -61,7 +62,7 @@ def main():
         Actual data output is one or more Workspace objects saved to a user's workspace. 
         
     Authors:
-        Matt Henderson, Gavin Price            
+        Matt Henderson, Gavin Price
     """
 
     logger = script_utils.stderrlogger(__file__, level=logging.DEBUG)
@@ -123,11 +124,11 @@ def main():
                         action='store', 
                         required=True)
 
-    # any user options provided, encoded as a jason string                           
+    # any user options provided, encoded as a json string                           
     parser.add_argument('--optional_arguments', 
                         help=script_details["Args"]["optional_arguments"], 
                         action='store', 
-                        default='{}')
+                        default=None)
 
     # Used if you are restarting a previously executed job?
     parser.add_argument('--ujs_job_id', 
@@ -140,7 +141,7 @@ def main():
     parser.add_argument('--job_details', 
                         help=script_details["Args"]["job_details"], 
                         action='store', 
-                        default=None)
+                        required=True)
 
     # the working directory is where all the files for this job will be written, 
     # and normal operation cleans it after the job ends (success or fail)
@@ -153,11 +154,6 @@ def main():
                         help=script_details["Args"]["keep_working_directory"], 
                         action='store_true')
 
-    # turn on debugging options for script developers running locally
-    parser.add_argument('--debug', 
-                        help=script_details["Args"]["debug"], 
-                        action='store_true')
-
     args = None
     try:
         args = parser.parse_args()
@@ -166,16 +162,26 @@ def main():
         logger.exception(e)
         sys.exit(1)
     
-    if not args.debug:
-        # parse all the json strings from the argument list into dicts
-        # TODO had issues with json.loads and unicode strings, workaround was using simplejson and base64
-        try:    
-            args.optional_arguments = simplejson.loads(base64.urlsafe_b64decode(args.optional_arguments))
-            args.job_details = simplejson.loads(base64.urlsafe_b64decode(args.job_details))
+    # parse all the json strings from the argument list into dicts
+    # TODO had issues with json.loads and unicode strings, workaround was using simplejson and base64
+    if not args.optional_arguments:
+        args.optional_arguments = {}
+    else:
+        try:
+            args.optional_arguments = simplejson.loads(
+                base64.urlsafe_b64decode(args.optional_arguments))
         except Exception, e:
-            logger.debug("Exception while loading base64 json strings!")
+            logger.debug('Exception while loading base64 JSON strings for ' +
+                         'optional_arguments parameter')
             sys.exit(1)
-    
+    try:
+        args.job_details = simplejson.loads(base64.urlsafe_b64decode(
+                                                args.job_details))
+    except Exception, e:
+        logger.debug('Exception while loading base64 JSON strings for ' +
+                     'job_details parameter')
+        sys.exit(1)
+        
     kb_token = None
     try:
         kb_token = script_utils.get_token()

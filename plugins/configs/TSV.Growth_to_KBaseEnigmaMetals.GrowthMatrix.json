@@ -15,6 +15,7 @@
             "workspace_name",
             "workspace_service_url",
             "working_directory",
+		    "has_replicates",
             "object_name"
         ],
         "optional_fields": [
@@ -25,6 +26,12 @@
         "input_mapping": {"TSV.Growth": "input_directory"}
     },
     "user_options": [
+        {
+            "name": "has_replicates",
+            "type": "string",
+            "required": true,
+            "help": "0 or 1 if data contains replicates or 2 if no replicates."
+        },
         {
             "name": "object_name",
             "type": "string",

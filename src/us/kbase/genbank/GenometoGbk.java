@@ -202,37 +202,37 @@ public class GenometoGbk {
                             out = createHeader(curcontig.getId(), 1, curcontig.getLength(), curcontig.getName());
 
                             out = createFeatures(curcontig.getId(), curcontig.getName(), out);
+                            //System.out.println(out);
 
                             out.append("ORIGIN\n");
-                            if (contigs.size() > 0) {
 
-                                out.append("ORIGIN\n");
+                           /* if (contigs.size() > 0) {
                                 PrintWriter pw = outputGenbank(contigs, out, j, curcontig);
                                 formatDNASequence(curcontig.getSequence(), 10, 60, pw);
                                 pw.append("\n//\n");
-                                pw.close();
-                            }
 
+                            } else {*/
                             out.append(formatDNASequence(curcontig.getSequence(), 10, 60));
                             //out += "        1 tctcgcagag ttcttttttg tattaacaaa cccaaaaccc atagaattta atgaacccaa\n";//10
-
                             out.append("//\n");
                             outputGenbank(contigs, out, j, curcontig);
+                            //}
                         }
-
+                        //if (contigs.size() > 0)
+                        //pw.close();
                         if (donumcontigs < contigs.size()) {
                             final String outpath = (workdir != null ? workdir + "/" : "") + "README.txt";
-                            System.out.println("writing " + outpath);
+                            System.out.println("writing README " + outpath);
                             try {
                                 File outf = new File(outpath);
                                 PrintWriter pw = new PrintWriter(outf);
 
-                                String readmestr = "The limit for downloading is 1000 contigs. This download had " + contigs.size()
-                                        + " contigs, however only the first 1000 are available for downloaded.";
+                                String readmestr = "The limit for downloading is " + MAX_ALLOWED_CONTIGS + " contigs. This download had " + contigs.size()
+                                        + " contigs, however only the first " + MAX_ALLOWED_CONTIGS + " are available for downloaded.";
                                 pw.print(readmestr);
                                 pw.close();
                             } catch (FileNotFoundException e) {
-                                System.err.println("failed to write output " + outpath);
+                                System.out.println("failed to write output " + outpath);
                                 e.printStackTrace();
                             }
                         }
@@ -245,7 +245,7 @@ public class GenometoGbk {
         //hack for plant transcripts
         if (contigSet == null || contigSet.getContigs() == null || contigSet.getContigs().size() == 0) {
 
-            genome.setComplete(0L);
+            genome.setComplete(1L);
             StringBuffer out2 = createHeader(genome.getId(), 0, 0, "");
 
             out2.append("ORIGIN\n");
@@ -289,7 +289,7 @@ public class GenometoGbk {
 
         outname = outname.replace("|", "_");
         final String outpath = (workdir != null ? workdir + "/" : "") + outname;
-        System.out.println("writing " + outpath);
+        System.out.println("writing gbk " + outpath);
         try {
             File outf = new File(outpath);
             PrintWriter pw = new PrintWriter(outf);
@@ -298,7 +298,7 @@ public class GenometoGbk {
             pw.flush();
             return pw;
         } catch (FileNotFoundException e) {
-            System.err.println("failed to write output " + outpath);
+            System.out.println("failed to write output " + outpath);
             e.printStackTrace();
             return null;
         }
@@ -314,7 +314,7 @@ public class GenometoGbk {
     private StringBuffer createHeader(String contig_id, int contigssize, long contiglen, String contig_name) {
         StringBuffer out = new StringBuffer("");
         //out += "LOCUS       NC_005213             " + curcontig.getLength() + " bp    " + molecule_type_short + "     circular CON 10-JUN-2013\n";
-        out.append("LOCUS       " + contig_id + "             " + contigssize + " bp    " +
+        out.append("LOCUS       " + contig_id + "             " + contiglen + " bp    " +
                 molecule_type_short + "\n");// + "     circular CON 10-JUN-2013\n");
         out.append("DEFINITION  " + genome.getScientificName() + " genome.\n");
         //out.append("ACCESSION   NC_005213\n");
@@ -376,18 +376,17 @@ public class GenometoGbk {
             }
         */
 
+        out.append("COMMENT     Exported from the DOE KnowledgeBase.\n");
+
         //out += "COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final\n";
         //out += "            NCBI review. The reference sequence was derived from AE017199.\n";
 
         System.out.println(genome.getNumContigs());
 
-        Long completeness = genome.getComplete();
-        if (completeness == null)
-            completeness = new Long(0);
-        out.append(" COMMENT            COMPLETENESS: " + (completeness == 1 ? "full length" : "incomplete") + ".\n");
-
-        out.append("                    Exported from the DOE KnowledgeBase.\n");
-
+        //Long completeness = genome.getComplete();
+        //if (completeness == null)
+        //    completeness = new Long(0);
+        //out.append(" COMMENT            COMPLETENESS: " + (completeness == 1 ? "full length" : "incomplete") + ".\n");
 
         out.append("FEATURES             Location/Qualifiers\n");
         out.append("     source          1.." + (contiglen == 0 ? 1 : contiglen) + "\n");
@@ -424,9 +423,12 @@ public class GenometoGbk {
         System.out.println("all features " + features.size());
         for (int i = 0; i < features.size(); i++) {
             Feature cur = features.get(i);
+            //System.out.println(i + "\t" + cur);
             List<Tuple4<String, Long, String, Long>> location = cur.getLocation();
 
-            //System.out.println(location);
+            /*System.out.println("contig_id "+contig_id);
+            System.out.println("contig_name "+contig_name);
+            System.out.println("location "+location.get(0).getE1());*/
 
             //match features to their contig
             if ((contig_id == null && contig_name == null) || location.get(0).getE1().equals(contig_name) || location.get(0).getE1().equals(contig_id)) {
@@ -475,9 +477,10 @@ public class GenometoGbk {
                 System.out.println("allfunction " + allfunction.length + "\t" + function.length());
             }*/
 
-                StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
+                //StringBuffer formatNote = getAnnotation(function, allfunction, 51, 58, debug);
                 StringBuffer formatFunction = getAnnotation(function, allfunction, 48, 58, debug);//51,58);
 
+                //System.out.println("id " + id);
             /*TODO add operons, promoteres, terminators as gene features ? */
                 if (id.indexOf(".opr.") == -1 && id.indexOf(".prm.") == -1 && id.indexOf(".trm.") == -1) {
 
@@ -492,6 +495,9 @@ public class GenometoGbk {
                     }
                     out = getCDS(out, location);
                     out.append("                     /gene=\"" + id + "\"\n");
+
+                    //System.out.println("appended gene");
+
                     //out += "                     /db_xref=\"GeneID:2732620\"\n";
                     if (cur.getType().equals("CDS")) {
                         out.append("     CDS             ");
@@ -499,10 +505,10 @@ public class GenometoGbk {
                         out.append("                     /gene=\"" + id + "\"\n");
                     }
 
-                    out.append("                     /note=\"" + formatNote);
+                    //out.append("                     /note=\"" + formatNote);
                     //out += "                     /codon_start=1\n";
                     //out += "                     /transl_table=11\n";
-                    out.append("                     /product=\"" + id + "\"\n");
+                    //out.append("                     /product=\"" + id + "\"\n");
                     out.append("                     /function=\"" + new String(formatFunction));
 
                     if (cur.getType().equals("CDS")) {
@@ -577,7 +583,7 @@ public class GenometoGbk {
 
         if (genomefile == null && contigfile == null) {
             if (objectname == null && objectid == null) {
-                System.err.println("no object name or id provided and no input files provided");
+                System.out.println("no object name or id provided and no input files provided");
             }
         }
 
@@ -717,7 +723,7 @@ public class GenometoGbk {
 
                 System.out.println("got ContigSet object number " + contigSet.getContigs().size() + ", size " + result4 + "M");
             } catch (Exception e) {
-                System.err.println("ContigSet not found in workspace.");
+                System.out.println("ContigSet not found in workspace.");
 
             /*String outputfile = args[0] + "_ContigSet.json";
             try {
@@ -992,13 +998,10 @@ public class GenometoGbk {
                 char[] ch = new char[9 - len];
                 Arrays.fill(ch, ' ');
                 String padStr = new String(ch);
-                out.append(padStr + indexStr);
+                out.append(padStr + indexStr + " ");
                 counter = 0;
-                if (last + 1 < s.length())
-                    out.append(" ");
             } else {
-                if (last + 1 < s.length())
-                    out.append(" ");
+                out.append(" ");
             }
         }
         out.append("\n");

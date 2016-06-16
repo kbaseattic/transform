@@ -78,13 +78,13 @@ public class GbkFeature extends GbkLocation {
         if (error != null) {
             wasError = true;
             if (!params.isIgnoreWrongFeatureLocation())
-                System.err.println("Error parsing location for feataure [" + type + "] on line " + line_num + ": " + error);
+                System.out.println("Error parsing location for feature [" + type + "] on line " + line_num + ": " + error);
             return;
         }
         if (locations.size() == 0) {
             wasError = true;
             if (!params.isIgnoreWrongFeatureLocation())
-                System.err.println("Error detecting location for feataure [" + type + "] on line " + line_num);
+                System.out.println("Error detecting location for feature [" + type + "] on line " + line_num);
             return;
         }
         this.strand = str;
@@ -108,24 +108,27 @@ public class GbkFeature extends GbkLocation {
             ArrayList aliases = new ArrayList();
             for (GbkQualifier qualifier : qualifiers) {
                 //System.out.println("qualifier " + qualifier);
-                if (qualifier.type.equals("organism")) {
+                if (qualifier.type.equalsIgnoreCase("organism")) {
                     genomeName = qualifier.getValue();
-                } else if (qualifier.type.equals("db_xref")) {
+                } else if (qualifier.type.equalsIgnoreCase("db_xref")) {
                     String value = qualifier.getValue();
                     if (value.startsWith(TAXON_PREFIX)) {
-                        taxId = Integer.parseInt(value.substring(TAXON_PREFIX.length()).trim());
+                        String taxstring = value.substring(TAXON_PREFIX.length()).trim();
+                        int dotind = taxstring.indexOf(".");
+                        if (dotind != -1)
+                            taxstring = taxstring.substring(0, dotind - 1);
+                        taxId = Integer.parseInt(taxstring);
                         //System.out.println("taxid " + taxId);
-                    }
-                    else {
+                    } else {
                         //System.out.println("DBXREF_PREFIX " + value);
                         String alias = value.substring(DBXREF_PREFIX.length()).trim();
                         aliases.add(alias);
                     }
-                } else if (qualifier.type.equals("plasmid")) {
+                } else if (qualifier.type.equalsIgnoreCase("plasmid")) {
                     plasmid = qualifier.getValue();
                 }
             }
-            //System.out.println("taxid " + taxId);
+            //System.out.println("save genomeName " + genomeName);
             ret.setGenomeTrackFile(locus.name, genomeName, taxId, plasmid, filename);
         } else {
             ret.addFeatureTrackFile(locus.name, type, strand, start, stop, locations, qualifiers, filename);

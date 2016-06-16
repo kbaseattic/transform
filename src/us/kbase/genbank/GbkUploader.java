@@ -22,6 +22,7 @@ public class GbkUploader {
 
 
     final static boolean debug = false;
+    public final static String[] domains = {"bacteria", "archaea", "eukarya", "eukaryota", "viruses"};
 
     /**
      * @param files
@@ -35,9 +36,9 @@ public class GbkUploader {
         try {
             ar = (ArrayList) uploadGbk(files, wsName, id, true);
         } catch (Exception e) {
-            System.err.println("uploadGbk");
-            System.err.print(e.getMessage());
-            System.err.print(e.getStackTrace());
+            System.out.println("uploadGbk");
+            System.out.print(e.getMessage());
+            System.out.print(e.getStackTrace());
             e.printStackTrace();
         }
 
@@ -89,7 +90,7 @@ public class GbkUploader {
 
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
-                .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
+                .withComplete(1L).withDomain("").withGeneticCode(0L).withId(id)
                 .withSource("KBase user upload").withSourceId(id);
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
@@ -156,6 +157,7 @@ public class GbkUploader {
                         try {
                             if (headerType.equals("SOURCE")) {
                                 String genomeName = value;
+                                //System.out.println("genomeName 1 "+genomeName);
                                 //genome.withScientificName(genomeName);
                                 contigToOrgName.put(contigName, genomeName);
                                 for (GbkSubheader sub : items) {
@@ -166,6 +168,10 @@ public class GbkUploader {
                                         for (int i = 0; i < parts.length; i++) {
                                             if (i == 0 && parts[0].equals(genomeName))
                                                 continue;
+                                            else if (i == 0) {
+                                                genomeName = parts[0];
+                                                contigToOrgName.put(contigName, genomeName);
+                                            }
                                             if (taxPath.length() > 0)
                                                 taxPath += " ";
                                             taxPath += parts[i];
@@ -176,6 +182,8 @@ public class GbkUploader {
                                         contigToTaxonomy.put(contigName, fullPath);
                                     }
                                 }
+
+                                //System.out.println("genomeName " + genomeName);
                             }
                         } catch (Exception e) {
                             System.err.println("SOURCE, ORGANISM");
@@ -195,6 +203,8 @@ public class GbkUploader {
                                 f = new Feature().withType("CDS");
                             } else if (featureType.toUpperCase().endsWith("RNA")) {
                                 f = new Feature().withType("RNA");
+                            } else if (featureType.endsWith("gene")) {
+                                f = new Feature().withType("gene");
                             }
                             if (f == null)
                                 return;
@@ -231,7 +241,7 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("note")) {
+                                } /*else if (prop.type.equals("note")) {
                                     try {
                                         f.setFunction(prop.getValue());
                                     } catch (Exception e) {
@@ -240,9 +250,23 @@ public class GbkUploader {
                                         System.err.print(e.getStackTrace());
                                         e.printStackTrace();
                                     }
-                                } else if (prop.type.equals("product")) {
+                                }*/
+                                //use function field if has info
+                                else if (prop.type.equals("function")) {
                                     try {
-                                        if (f.getFunction() == null)
+                                        if (prop.getValue() != null && prop.getValue().length() > 0)
+                                            f.setFunction(prop.getValue());
+                                    } catch (Exception e) {
+                                        System.err.println("note error " + filename);
+                                        System.err.print(e.getMessage());
+                                        System.err.print(e.getStackTrace());
+                                        e.printStackTrace();
+                                    }
+                                }
+                                //only use product field if function field is empty
+                                else if (prop.type.equals("product")) {
+                                    try {
+                                        if (f.getFunction() == null || f.getFunction().length() == 0)
                                             f.setFunction(prop.getValue());
                                     } catch (Exception e) {
                                         System.err.println("product error " + filename);
@@ -329,10 +353,18 @@ public class GbkUploader {
             boolean nameProblems = false;
             for (String key : contigToOrgName.keySet()) {
                 Boolean isPlasmid = contigToPlasmid.get(key);
+                //System.out.println("scientificName 8 isPlasmid " + isPlasmid);
                 if (isPlasmid != null && isPlasmid)
                     continue;
-                genome.setScientificName(contigToOrgName.get(key));
+                final String scientificName = contigToOrgName.get(key);
+                //System.out.println("scientificName 8 " + scientificName);
+                genome.setScientificName(scientificName);
                 String taxonomy = contigToTaxonomy.get(key);
+                //System.out.println("taxonomy "+taxonomy);
+
+                String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
+                //System.out.println("domain "+domain);
+
                 if (taxonomy != null) {
                     if (genome.getTaxonomy() != null && !genome.getTaxonomy().equals(taxonomy)) {
                         System.err.println("Taxonomy path is wrong in file [" + files.get(0).getParent() + ":" +
@@ -341,8 +373,14 @@ public class GbkUploader {
                         nameProblems = true;
                     }
                     //System.out.println("nonplasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                    genome.withTaxonomy(taxonomy);
-                }
+                    if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                        genome.withTaxonomy(taxonomy).withDomain(domain);
+                    else {
+                        System.err.println("Domain not recognized " + domain);
+                        genome.withTaxonomy(taxonomy).withDomain("");
+                    }
+                } else
+                    genome.withTaxonomy("").withDomain("");
             }
         } catch (Exception e) {
             System.err.println("non plamids");
@@ -356,13 +394,22 @@ public class GbkUploader {
                 Boolean isPlasmid = contigToPlasmid.get(key);
                 if (isPlasmid != null && !isPlasmid)
                     continue;
-                if (genome.getScientificName() == null)
-                    genome.setScientificName(contigToOrgName.get(key));
-                String taxonomy = contigToTaxonomy.get(key);
-                if (genome.getTaxonomy() == null && taxonomy != null) {
-                    //System.out.println("plasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                    genome.withTaxonomy(taxonomy);
+                if (genome.getScientificName() == null) {
+                    final String scientificName = contigToOrgName.get(key);
+                    genome.setScientificName(scientificName);
                 }
+                String taxonomy = contigToTaxonomy.get(key);
+                String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
+                if (genome.getTaxonomy() == null && taxonomy != null) {
+                    if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                        //System.out.println("plasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
+                        genome.withTaxonomy(taxonomy).withDomain(domain);
+                    else {
+                        System.err.println("Domain not recognized " + domain);
+                        genome.withTaxonomy(taxonomy).withDomain("");
+                    }
+                } else
+                    genome.withTaxonomy("").withDomain("");
             }
         } catch (Exception e) {
             System.err.println("plamids");
@@ -446,7 +493,7 @@ public class GbkUploader {
                                       Map<String, List<String>> genomeNameToPaths) throws Exception {
         final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
         final Genome genome = new Genome()
-                .withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
+                .withComplete(1L).withDomain("").withGeneticCode(0L).withId(id)
                 .withSource("KBase user upload").withSourceId(id);
         final List<Feature> features = new ArrayList<Feature>();
         final Set<String> usedFeatureIds = new HashSet<String>();
@@ -493,6 +540,8 @@ public class GbkUploader {
                                     for (int i = 0; i < parts.length; i++) {
                                         if (i == 0 && parts[0].equals(genomeName))
                                             continue;
+                                        else if (i == 0)
+                                            genomeName = parts[0];
                                         if (taxPath.length() > 0)
                                             taxPath += " ";
                                         taxPath += parts[i];
@@ -590,8 +639,11 @@ public class GbkUploader {
             Boolean isPlasmid = contigToPlasmid.get(key);
             if (isPlasmid != null && isPlasmid)
                 continue;
-            genome.setScientificName(contigToOrgName.get(key));
+            final String scientificName = contigToOrgName.get(key);
+            System.out.println("scientificName 9 " + scientificName);
+            genome.setScientificName(scientificName);
             String taxonomy = contigToTaxonomy.get(key);
+            String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
             if (taxonomy != null) {
                 if (genome.getTaxonomy() != null && !genome.getTaxonomy().equals(taxonomy)) {
                     System.err.println("Taxonomy path is wrong in file [" + files.get(0).getParent() + ":" +
@@ -599,21 +651,37 @@ public class GbkUploader {
                     nameProblems = true;
                 }
                 //System.out.println("nonplasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                genome.withTaxonomy(taxonomy);
-            }
+                if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                    genome.withTaxonomy(taxonomy).withDomain(domain);
+                else {
+                    System.err.println("Domain not recognized " + domain);
+                    genome.withTaxonomy(taxonomy).withDomain("");
+                }
+            } else
+                genome.withTaxonomy("").withDomain("");
         }
         // And all plasmids now
         for (String key : contigToOrgName.keySet()) {
             Boolean isPlasmid = contigToPlasmid.get(key);
             if (isPlasmid != null && !isPlasmid)
                 continue;
-            if (genome.getScientificName() == null)
-                genome.setScientificName(contigToOrgName.get(key));
+            if (genome.getScientificName() == null) {
+                final String scientificName = contigToOrgName.get(key);
+                System.out.println("scientificName 10 " + scientificName);
+                genome.setScientificName(scientificName);
+            }
             String taxonomy = contigToTaxonomy.get(key);
+            String domain = taxonomy.substring(0, taxonomy.indexOf(";"));
             if (genome.getTaxonomy() == null && taxonomy != null) {
                 //System.out.println("plasmid genome.withTaxonomy(taxonomy) 1 " + taxonomy);
-                genome.withTaxonomy(taxonomy);
-            }
+                if (Arrays.asList(domains).contains(domain.toLowerCase()))
+                    genome.withTaxonomy(taxonomy).withDomain(domain);
+                else {
+                    System.err.println("Domain not recognized " + domain);
+                    genome.withTaxonomy(taxonomy).withDomain("");
+                }
+            } else
+                genome.withTaxonomy("").withDomain("");
         }
         if (contigMap.size() == 0) {
             throw new Exception("GBK-file has no DNA-sequence");

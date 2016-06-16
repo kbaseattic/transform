@@ -8,6 +8,10 @@ SERVICE_DIR_NAME = transform
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
 SERVICE_PORT = 7778
 
+#BRANCH ?= $(shell git symbolic-ref HEAD 2>/dev/null)
+#BRANCH := $(subst refs/heads/,,$(BRANCH))
+BRANCH = develop
+
 DIR = $(shell pwd)
 
 TPAGE = $(DEPLOY_RUNTIME)/bin/tpage
@@ -162,7 +166,15 @@ deploy-jars:
 # Deploy client artifacts, including the application programming interface
 # libraries, command line scripts, and associated reference documentation.
 
-deploy-client: deploy-libs deploy-scripts deploy-docs
+deploy-client: deploy-libs deploy-scripts deploy-docs deploy-data-api
+
+deploy-data-api:
+	git clone https://github.com/kbase/data_api -b $(BRANCH)
+	virtualenv --system-site-packages venv
+	venv/bin/pip install data_api/ -U
+	rm -rf data_api
+	cp -R venv/lib/python2.7/site-packages/* $(TARGET)/lib/
+	rm -rf venv
 
 # Deploy command line scripts.  The scripts are "wrapped" so users do not
 # need to modify their environment to run KBase scripts.

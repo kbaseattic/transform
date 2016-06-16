@@ -6,6 +6,7 @@ import sys
 import logging
 import re
 import hashlib
+import collections
 
 # 3rd party imports
 import simplejson
@@ -97,13 +98,13 @@ def transform(shock_service_url=None, handle_service_url=None,
         contig_set_has_sequences = False 
 
     fasta_filesize = os.stat(input_file_name).st_size
-    if fasta_filesize > 1000000000:
-        # Fasta file too large to save sequences into the ContigSet object.
-        contigset_warn = """The FASTA input file seems to be too large. A ContigSet
-                            object will be created without sequences, but will
-                            contain a reference to the file."""
-        logger.warning(contigset_warn) 
-        contig_set_has_sequences = False 
+#    if fasta_filesize > 1000000000:
+#        # Fasta file too large to save sequences into the ContigSet object.
+#        contigset_warn = """The FASTA input file seems to be too large. A ContigSet
+#                            object will be created without sequences, but will
+#                            contain a reference to the file."""
+#        logger.warning(contigset_warn) 
+#        contig_set_has_sequences = False 
 
     input_file_handle = open(input_file_name, 'r')
     
@@ -135,7 +136,10 @@ def transform(shock_service_url=None, handle_service_url=None,
                 if not total_sequence :
                     logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
                     raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header))
-                for character in total_sequence:
+#                for character in total_sequence:
+                seq_count = collections.Counter(total_sequence)
+                seq_dict = dict(seq_count)
+                for character in seq_dict:
                     if character not in valid_chars:
                         if character in amino_acid_specific_characters:
                             raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
@@ -166,7 +170,7 @@ def transform(shock_service_url=None, handle_service_url=None,
                 else: 
                     contig_dict["sequence"]= ""
                 
-                if fasta_key in fasta_dict.keys():
+                if fasta_key in fasta_dict:
                     raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key)) 
                 else:
                     fasta_dict[fasta_key] = contig_dict                 
@@ -197,7 +201,10 @@ def transform(shock_service_url=None, handle_service_url=None,
             logger.error("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
             raise Exception("There is no sequence related to FASTA record : {0}".format(fasta_header)) 
 
-        for character in total_sequence: 
+#        for character in total_sequence: 
+        seq_count = collections.Counter(total_sequence)
+        seq_dict = dict(seq_count)
+        for character in seq_dict:
             if character not in valid_chars: 
                 if character in amino_acid_specific_characters:
                     raise Exception("This fasta file may have amino acids in it instead of the required nucleotides.")
@@ -227,9 +234,9 @@ def transform(shock_service_url=None, handle_service_url=None,
         
         if contig_set_has_sequences: 
             contig_dict["sequence"] = total_sequence 
-        else:
-            contig_dict["sequence"]= ""
-        if fasta_key in fasta_dict.keys():
+#        else:
+#            contig_dict["sequence"]= ""
+        if fasta_key in fasta_dict:
             raise Exception("The fasta header {0} appears more than once in the file ".format(fasta_key)) 
         else:
             fasta_dict[fasta_key] = contig_dict 
@@ -260,11 +267,19 @@ def transform(shock_service_url=None, handle_service_url=None,
     objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
     if len(contig_set_dict["contigs"]) == 0:
         raise Exception("There appears to be no FASTA DNA Sequences in the input file.") 
-    if sys.getsizeof(objectString) > 1000000000 :
-        contig_set_dict["contigs"] = []
+    #The workspace has a 1GB limit
+    if  sys.getsizeof(objectString) > 1E9 :
+        #too large make the sequences empty
+        for contig in contig_set_dict["contigs"]: 
+            contig_set_dict["contigs"][contig]["sequence"] = ""
+        logger.warning("""The FASTA input file seems to be too large. A ContigSet object will be created without sequences, but will contain a reference to the file.""")
         objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
-        logger.warning("The fasta file has a very large number of contigs thus resulting in an object being too large if " 
-                       "the contigs are to have metadata. The resulting contigset will not have individual metadata for the contigs.")
+        if sys.getsizeof(objectString) > 1E9 :
+            #contig set still too large.  Need to make contig list an empty list.
+            contig_set_dict["contigs"] = []
+            objectString = simplejson.dumps(contig_set_dict, sort_keys=True, indent=4)
+            logger.warning("The fasta file has a very large number of contigs thus resulting in an object being too large if " 
+                           "the contigs are to have metadata. The resulting contigset will not have individual metadata for the contigs.")
 
     logger.info("ContigSet data structure creation completed.  Writing out JSON.")
 

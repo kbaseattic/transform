@@ -1,16 +1,9 @@
 #!/usr/bin/env python
 
 import sys
-import time
 import datetime
 import os
 import os.path
-import io
-import bz2
-import gzip
-import zipfile
-import tarfile
-import pprint
 import subprocess
 import base64
 
@@ -24,7 +17,6 @@ sys.path.insert(0,os.path.abspath("venv/lib/python2.7/site-packages/"))
 
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import requests
-import magic
 import blessings
 import dateutil.parser
 import dateutil.tz
@@ -95,12 +87,7 @@ def show_job_progress(ujs_url, ujs_id, token):
             print term.red("\t\tIssue connecting to UJS!")
             status[1] = "ERROR"
             status[2] = "Caught Exception"
-        
-        if (datetime.datetime.utcnow() - start).seconds > time_limit:
-            print "\t\tJob is taking longer than it should, check debugging messages for more information."
-            status[1] = "ERROR"
-            status[2] = "Timeout"            
-        
+
         if last_status != status[2]:
             print "\t\t{0} status update: {1}".format(status[0], status[2])
             last_status = status[2]
@@ -375,7 +362,7 @@ if __name__ == "__main__":
             input_object["workspace_name"] = workspace
             input_object["object_name"] = object_name
             input_object["url_mapping"] = inputs[x]["url_mapping"]
-            input_object["working_directory"] = stamp
+            input_object["working_directory"] = os.path.join(stamp, x)
             input_object.update(services)
             if input_object.has_key("awe_service_url"): del input_object["awe_service_url"] 
             if input_object.has_key("transform_service_url"): del input_object["transform_service_url"] 
@@ -400,14 +387,26 @@ if __name__ == "__main__":
 
             print "\n\nHandler invocation {0}".format(" ".join(command_list))
 
-            task = subprocess.Popen(command_list, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+            stdout = open('stdout.txt', 'w+')
+            stderr = open('stderr.txt', 'w+')
+            try:
+                task = subprocess.Popen(command_list, stdout=stdout.fileno(), stderr=stderr.fileno(), close_fds=True)
+                show_job_progress(args.ujs_service_url, ujs_job_id, token)
+                task.wait()
+            except:
+                print sys.exc_info()
 
-            show_job_progress(args.ujs_service_url, ujs_job_id, token)
-
-            sub_stdout, sub_stderr = task.communicate()
+            stdout.seek(0)
+            sub_stdout = stdout.readlines()
+            stdout.close()
 
             if sub_stdout is not None:
                 print sub_stdout
+
+            stderr.seek(0)
+            sub_stderr = stderr.readlines()
+            stdout.close()
+
             if sub_stderr is not None:
                 print >> sys.stderr, sub_stderr
             

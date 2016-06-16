@@ -133,7 +133,7 @@ type but different versions.
         #BEGIN version
 
         # get service config version        
-
+        result = 'not yet implemented'
         #END version
 
         # At some point might do deeper type checking...

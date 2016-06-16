@@ -226,7 +226,7 @@ def upload_genome(shock_service_url=None,
 
     genome_annotation = dict()
 
-    display_sc_name = None;
+    display_sc_name = None
 
     genomes_without_taxon_refs = list()
     if taxon_reference is None:

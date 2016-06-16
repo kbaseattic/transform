@@ -1,5 +1,5 @@
 { 
-    "script_name": "trns_transform_KBaseGenomeAnnotationss_Assembly_to_FASTA_DNA_Assembly.py", 
+    "script_name": "trns_transform_KBaseGenomeAnnotations_Assembly_to_FASTA_DNA_Assembly.py", 
     "script_type": "download", 
     "external_type": "FASTA.DNA.Assembly", 
     "kbase_type": "KBaseGenomeAnnotations.Assembly", 

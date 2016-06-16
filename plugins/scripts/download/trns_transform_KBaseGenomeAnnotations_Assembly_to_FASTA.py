@@ -59,7 +59,7 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
 
 
     if logger is None:
-        logger = script_utils.stderrlogger(__file__)
+        logger = script_utils.stdoutlogger(__file__)
     
     logger.info("Starting conversion of KBaseGenomeAnnotations.Assembly to Fasta")
     token = os.environ.get("KB_AUTH_TOKEN")
@@ -116,7 +116,7 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
 
     if output_file_name is None:
         output_file_name = object_name + ".fasta"
-        
+
     with open(output_file_name, 'w') as outFile:
         asm_api.get_fasta().to_file(outFile)
 

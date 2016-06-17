@@ -20,6 +20,7 @@ from doekbase.data_api.taxonomy.taxon.api import TaxonAPI
 from doekbase.workspace.client import Workspace
 from doekbase.data_api.core import ObjectAPI
 from doekbase.handle.Client import AbstractHandle as handleClient
+from doekbase.data_api.downloaders import GenomeAnnotation
 
 services = {"workspace_service_url": "https://ci.kbase.us/services/ws/",
             "shock_service_url": "https://ci.kbase.us/services/shock-api/",
@@ -49,18 +50,12 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
         level: Logging level, defaults to logging.INFO.
     
     Returns:
-        A Genbank file containing metadata, annotations, from a GenomeAnnotation object and contig sequences from an Assembly object.
+        A Genbank file containing metadata, annotations from a GenomeAnnotation object and contig sequences from an Assembly object.
     
     Authors:
         Marcin Joachimiak
     
-    """ 
-
-    def insert_newlines(s, every):
-        lines = []
-        for i in xrange(0, len(s), every):
-            lines.append(s[i:i+every])
-        return "\n".join(lines)+"\n"
+    """
 
 
     if logger is None:
@@ -74,124 +69,18 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
 
     logger.info("Grabbing Data.")
  
-    try:
 
-        ga_api = GenomeAnnotationAPI(services, token=token, ref=genome_ref)
+    services = {"workspace_service_url": workspace_service_url, 
+    "shock_service_url": "https://ci.kbase.us/services/shock-api/",
+    "handle_service_url": handle_service_url}
 
-        tax_api = ga_api.get_taxon()
+    genome_ref = workspace_name+"/"+object_name
 
-        asm_api = ga_api.get_assembly()
+    if output_file_name is None:
+        output_file_name = object_name + ".gbk"
 
-
-        ws_client = biokbase.workspace.client.Workspace(workspace_service_url) 
-
-        #load GenomeAnnotation
-        #if object_version_number and object_name:
-        #    genome_annotation = ws_client.get_objects([{"workspace":workspace_name,"name":object_name, "ver":object_version_number}])[0] 
-        #elif object_name:
-        #    genome_annotation = ws_client.get_objects([{"workspace":workspace_name,"name":object_name}])[0]
-        #elif object_version_number and object_id:
-        #    genome_annotation = ws_client.get_objects([{"workspace":workspace_name,"objid":object_id, "ver":object_version_number}])[0]
-        #else:
-        #    genome_annotation = ws_client.get_objects([{"workspace":workspace_name,"objid":object_id}])[0] 
-
-        #load Assembly
-        #if object_name:
-        #    assembly = ws_client.get_objects([{"workspace":workspace_name,"name":object_name}])[0] 
-        #elif object_id:
-        #    contig_set = ws_client.get_objects([{"workspace":workspace_name,"objid":object_id}])[0]
-
-    except Exception, e: 
-        logger.exception("Unable to retrieve workspace object from {0}:{1}.".format(workspace_service_url,workspace_name))
-        logger.exception(e)
-        raise 
-
-    #shock_id = None 
-    #build_up_object = False
-    #if "fasta_ref" in contig_set["data"]: 
-    #    shock_id = contig_set["data"]["fasta_ref"] 
-    #    logger.info("Trying to Retrieve data from Shock.")
-    #    try:
-    #        script_utils.download_file_from_shock(logger = logger, 
-    #                                              shock_service_url = shock_service_url, 
-    #                                              shock_id = shock_id, 
-    #                                              directory = working_directory, 
-    #                                              token = token)
-    #    except Exception, e:
-    #        logger.warning("Unable to retrive the contig set from shock.  Trying to build from the object")
-    #        build_up_object = True 
-    #else: 
-    #    build_up_object = True
-
-    #if build_up_object:
-    ws_object_name = contig_set["info"][1]
-    valid_chars = "-_.(){0}{1}".format(string.ascii_letters, string.digits)
-    temp_file_name = ""
-    filename_chars = list()
-    
-    for character in ws_object_name:
-        if character in valid_chars:
-            filename_chars.append(character)
-        else:
-            filename_chars.append("_")
-    
-    if len(filename_chars) == 0:
-        temp_file_name = "GenbankFile"
-    else:
-        temp_file_name = "".join(filename_chars)
-
-    logger.warning("The Assembly associated with this GenomeAnnotation does not have a fasta_ref to shock.  The fasta file will be attempted to be built from contig sequences in the object.")
-    
-    output_file = os.path.join(working_directory,temp_file_name)
-    
-    contig_ids = asm_api.get_contig_ids()
-    contig_lengths = asm_api.get_contig_lengths(contig_ids)
-
-    start=1
-    stop=100000000
-
-    with open(output_file, "w") as outFile:
-
-        for c in contig_ids:
-
-            outFile.write("LOCUS       " + c + "             " + contig_lengths[c] + " bp    " +"DNA\n")
-            sn = tax_api.get_scientific_name()
-            outFile.write("DEFINITION  " + sn + " genome.\n")
-            outFile.write("SOURCE      " + sn + "\n")
-            outFile.write("  ORGANISM  " + sn + "\n")
-
-
-            region = {"contig_id": c, "start": start, "length": stop-start, "strand": "?"}
-            features = get_features()
-
-            for feat in features:
-                outFile.write(">{} {}\n".format(contig["id"],contig["description"]))
-
-        outFile.close()    
-        raise IOError("The Assembly associated with this GenomeAnnotation does not have a fasta_ref to shock or sequences in the contigs. A Genbank file can not be created.  Likely dueto the ContigSet being too large.")
-
-
-        #if not contig_set["data"]["contigs"]:
-        #    #The contig list is empty
-        #    raise Exception("This ContigSet does not have a fasta_ref to shock and does not have any contigs. Likely due to the ContigSet being too large.")
-
-        #with open(output_file, "w") as outFile:
-        #    for contig in contig_set["data"]["contigs"]:
-        #        if "description" in contig:
-        #            outFile.write(">{} {}\n".format(contig["id"],contig["description"]))
-        #        else:
-        #            outFile.write(">{}\n".format(contig["id"]))
-        #    
-        #        #write 80 nucleotides per line
-        #        if contig["sequence"] != "":
-        #            outFile.write(insert_newlines(contig["sequence"],80))
-        #        else:
-        #            outFile.close()    
-        #            raise IOError("The Assembly associated with this GenomeAnnotation does not have a fasta_ref to shock or sequences in the contigs. A Genbank file can not be created.  Likely dueto the ContigSet being too large.")
-    
-    if output_file_name is not None and len(output_file_name) > 0:
-        name = os.listdir(working_directory)[0]
-        os.rename(os.path.join(working_directory, name), os.path.join(working_directory, output_file_name))
+    with open(output_file_name, 'w') as outFile:
+        downloadAsGBK(genome_ref, services, token)
 
     logger.info("Conversion completed.")
 
@@ -264,7 +153,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = script_utils.stderrlogger(__file__)
-    logger.info("Starting download of ContigSet => FASTA")
+    logger.info("Starting download of GenomeAnnotation => Genbank")
     try:
         transform(workspace_service_url = args.workspace_service_url, 
                   shock_service_url = args.shock_service_url, 

@@ -83,37 +83,6 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
         logger.exception(e)
         raise 
 
-    #shock_id = None 
-    #build_up_object = False
-    #if "fasta_ref" in contig_set["data"]: 
-    #    shock_id = contig_set["data"]["fasta_ref"] 
-    #    logger.info("Trying to Retrieve data from Shock.")
-    #    try:
-    #        script_utils.download_file_from_shock(logger = logger, 
-    #                                              shock_service_url = shock_service_url, 
-    #                                              shock_id = shock_id, 
-    #                                              directory = working_directory, 
-    #                                              token = token)
-    #    except Exception, e:
-    #        logger.warning("Unable to retrive the contig set from shock.  Trying to build from the object")
-    #        build_up_object = True 
-    #else: 
-    #    build_up_object = True
-        
-    #contig_ids = asm_api.get_contig_ids()
-    #print ",".join(contig_ids)
-
-    #contigs = asm_api.get_contigs(contig_ids)
-    #print contigs[contig_ids[0]]
-
-    #output = StringIO.StringIO()
-    #asm_api.get_fasta().to_file(output)
-
-    #if(output_file_name.endswith(".fa") or output_file_name.endswith(".fasta") or output_file_name.endswith(".fna")):
-    #    blah=1
-    #else:
-    #    output_file_name= '{}.fasta'.format(output_file_name)
-
     if output_file_name is None:
         output_file_name = object_name + ".fasta"
         

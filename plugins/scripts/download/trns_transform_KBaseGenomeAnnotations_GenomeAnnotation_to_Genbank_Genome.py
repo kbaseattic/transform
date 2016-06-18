@@ -60,7 +60,7 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
  
 
     services = {"workspace_service_url": workspace_service_url, 
-    "shock_service_url": "https://ci.kbase.us/services/shock-api/",
+    "shock_service_url": shock_service_url,
     "handle_service_url": handle_service_url}
 
     genome_ref = workspace_name+"/"+object_name

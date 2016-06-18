@@ -14,12 +14,6 @@ import string
 import biokbase.Transform.script_utils as script_utils 
 import biokbase.workspace.client 
 
-from doekbase.data_api.sequence.assembly.api import AssemblyAPI
-from doekbase.data_api.annotation.genome_annotation.api import GenomeAnnotationAPI
-from doekbase.data_api.taxonomy.taxon.api import TaxonAPI
-from doekbase.workspace.client import Workspace
-from doekbase.data_api.core import ObjectAPI
-from doekbase.handle.Client import AbstractHandle as handleClient
 from doekbase.data_api.downloaders import GenomeAnnotation
 
 services = {"workspace_service_url": "https://ci.kbase.us/services/ws/",
@@ -80,7 +74,8 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
         output_file_name = object_name + ".gbk"
 
     with open(output_file_name, 'w') as outFile:
-        downloadAsGBK(genome_ref, services, token)
+        #genome_ref, services, token, output_file, working_dir
+        GenomeAnnotation.downloadAsGBK(genome_ref, services, token, output_file_name, working_directory)
 
     logger.info("Conversion completed.")
 

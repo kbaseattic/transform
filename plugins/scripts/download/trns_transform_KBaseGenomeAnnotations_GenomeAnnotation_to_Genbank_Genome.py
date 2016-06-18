@@ -7,25 +7,14 @@ import argparse
 import logging
 import string
 
-try:
-    import cStringIO as StringIO
-except:
-    import StringIO
-
 # 3rd party imports
 # None
 
 # KBase imports
 import biokbase.Transform.script_utils as script_utils 
+import biokbase.workspace.client 
 
-from doekbase.data_api.sequence.assembly.api import AssemblyAPI
-from doekbase.data_api.core import ObjectAPI
-from doekbase.handle.Client import AbstractHandle as handleClient
-
-#services = {"workspace_service_url": "https://ci.kbase.us/services/ws/",
-#            "shock_service_url": "https://ci.kbase.us/services/shock-api/",
-#            "handle_service_url": "https://ci.kbase.us/services/handle_service/"}
-
+from doekbase.data_api.downloaders import GenomeAnnotation
 
 # Download method that can be called if this module is imported
 # Note the logger has different levels with which it could be run.  See: https://docs.python.org/2/library/logging.html#logging-levels
@@ -35,33 +24,33 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
               object_version_number=None, working_directory=None, output_file_name=None, 
               level=logging.INFO, logger=None):  
     """
-    Converts KBaseGenomeAnnotations.Assembly to FASTA.
+    Converts KBaseGenomeAnnotations.GenomeAnnotation to Genbank.
     
     Args:
         workspace_service_url:  A url for the KBase Workspace service 
         shock_service_url: A url for the KBase SHOCK service.
         handle_service_url: A url for the KBase Handle Service.
         workspace_name: Name of the workspace
-        object_name: Name of the Assembly object in the workspace 
-        object_id: Id of the Assembly object in the workspace, mutually exclusive to object_name
-        object_version_number: Version number of workspace object (Assembly), defaults to most recent version
+        object_name: Name of the GenomeAnnotation object in the workspace 
+        object_id: Id of the GenomeAnnotation object in the workspace, mutually exclusive to object_name
+        object_version_number: Version number of workspace object (GenomeAnnotation), defaults to most recent version
         working_directory: The working directory where the output file should be stored.
-        output_file_name: The desired file name of the resulting FASTA file.
+        output_file_name: The desired file name of the resulting Genbank file.
         level: Logging level, defaults to logging.INFO.
     
     Returns:
-        A FASTA file containing header and sequence data from an Assembly object.
+        A Genbank file containing metadata, annotations from a GenomeAnnotation object and contig sequences from an Assembly object.
     
     Authors:
         Marcin Joachimiak
     
-    """ 
+    """
 
 
     if logger is None:
         logger = script_utils.stderrlogger(__file__)
     
-    logger.info("Starting conversion of KBaseGenomeAnnotations.Assembly to Fasta")
+    logger.info("Starting conversion of KBaseGenomeAnnotations.GenomeAnnotation to Genbank")
     token = os.environ.get("KB_AUTH_TOKEN")
     
     if not os.path.isdir(args.working_directory): 
@@ -69,25 +58,19 @@ def transform(workspace_service_url=None, shock_service_url=None, handle_service
 
     logger.info("Grabbing Data.")
  
+
     services = {"workspace_service_url": workspace_service_url, 
-    "shock_service_url": "https://ci.kbase.us/services/shock-api/",
+    "shock_service_url": shock_service_url,
     "handle_service_url": handle_service_url}
 
-    assembly_ref = workspace_name+"/"+object_name
-    try:
-
-        asm_api = AssemblyAPI(services, token=token, ref=assembly_ref)
-
-    except Exception, e: 
-        logger.exception("Unable to create AssemblyAPI {0}:{1}:{2}.".format(workspace_service_url,workspace_name, assembly_ref))
-        logger.exception(e)
-        raise 
+    genome_ref = workspace_name+"/"+object_name
 
     if output_file_name is None:
-        output_file_name = object_name + ".fasta"
-        
+        output_file_name = object_name + ".gbk"
+
     with open(output_file_name, 'w') as outFile:
-        asm_api.get_fasta().to_file(outFile)
+        #genome_ref, services, token, output_file, working_dir
+        GenomeAnnotation.downloadAsGBK(genome_ref, services, token, output_file_name, working_directory)
 
     logger.info("Conversion completed.")
 
@@ -160,7 +143,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = script_utils.stderrlogger(__file__)
-    logger.info("Starting download of Assembly => FASTA")
+    logger.info("Starting download of GenomeAnnotation => Genbank")
     try:
         transform(workspace_service_url = args.workspace_service_url, 
                   shock_service_url = args.shock_service_url, 

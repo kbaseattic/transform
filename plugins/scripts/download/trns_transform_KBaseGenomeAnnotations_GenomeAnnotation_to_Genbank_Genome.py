@@ -16,11 +16,6 @@ import biokbase.workspace.client
 
 from doekbase.data_api.downloaders import GenomeAnnotation
 
-services = {"workspace_service_url": "https://ci.kbase.us/services/ws/",
-            "shock_service_url": "https://ci.kbase.us/services/shock-api/",
-            "handle_service_url": "https://ci.kbase.us/services/handle_service/"}
-
-
 # Download method that can be called if this module is imported
 # Note the logger has different levels with which it could be run.  See: https://docs.python.org/2/library/logging.html#logging-levels
 # The default level is set to INFO which includes everything except DEBUG

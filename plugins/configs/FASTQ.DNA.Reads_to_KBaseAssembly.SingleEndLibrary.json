@@ -30,6 +30,15 @@
 	],
 	"input_mapping": {"FASTQ.DNA.Reads": "input_file_name"}
     },
-    "user_options": [],
+    "user_options": 
+        [
+            {
+                "name": "sra",
+                "type": "int",
+                "value": 0,
+                "required": false,
+                "help": "Insert size standard deviation"
+            }
+        ],
     "user_option_groups": []
 }

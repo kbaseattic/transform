@@ -41,10 +41,14 @@ def transform(shock_service_url=None, handle_service_url=None,
         logger = script_utils.stderrlogger(__file__)
 
     if  sra > 0 :
+
         if  not os.path.isfile( "fastq-dump" ) :
-            logger.exception( "did not find fastq-dump in working directory" )
+            logger.error( "did not find fastq-dump in working directory" )
+            raise Exception( "did not find fastq-dump in working directory" )
+
         if  not os.access( "fastq-dump", os.X_OK ) :
-            logger.exception( "fastq-dump is not executable" )
+            logger.error( "fastq-dump is not executable" )
+            raise Exception( "fastq-dump is not executable" )
 
         logger.info( "scanning for SRA files" )
 
@@ -52,13 +56,15 @@ def transform(shock_service_url=None, handle_service_url=None,
         sra_files = [x for x in files if os.path.splitext(x)[-1] in [".sra"]]
 
         if  len( sra_files ) < 0 :
-            logger.execption( "no sra files found in working directory" )
+            logger.error( "no sra files found in working directory" )
+            raise Exception( "no sra files found in working directory" )
 
         if  len( sra_files ) > 1 :
-            logger.exception( "several sra files found in working directory, exiting" )
+            logger.error( "several sra files found in working directory, exiting" )
+            raise Exception( "several sra files found in working directory, exiting" )
 
         logger.info( "converting " + sra_files[0] + " to fastq" )
-        subprocess.call( [ "./fastq-dump", sra_files[0] ] )
+        subprocess.check_call( [ "./fastq-dump", sra_files[0] ] )
     
     logger.info("Scanning for FASTQ files.")
 

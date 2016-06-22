@@ -58,7 +58,15 @@
 	    "value" : 0,
             "required": false,
             "help": "Whether reads in the pair point outward; set to false by default. 0 = false, 1 = true."
+        },
+        {
+            "name": "sra",
+            "type": "int",
+            "value": 0,
+            "required": false,
+            "help": "Insert size standard deviation"
         }
+
     ],
     "user_option_groups": []
 }

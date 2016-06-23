@@ -83,12 +83,24 @@ if __name__ == "__main__":
                                      description=script_details["Description"],
                                      epilog=script_details["Authors"])
     
-    # The following 8 arguments should be fairly standard to all uploaders
+    # The following arguments should be fairly standard to all uploaders
     parser.add_argument("--workspace_service_url", 
                         help=script_details["Args"]["workspace_service_url"], 
                         action="store", 
                         type=str, 
                         nargs="?", 
+                        required=True)
+    parser.add_argument("--shock_service_url", 
+                        help=script_details["Args"]["shock_service_url"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?",
+                        required=True) 
+    parser.add_argument("--handle_service_url", 
+                        help=script_details["Args"]["handle_service_url"], 
+                        action="store", 
+                        type=str, 
+                        nargs="?",
                         required=True)
     parser.add_argument("--workspace_name", 
                         help=script_details["Args"]["workspace_name"], 
@@ -127,18 +139,6 @@ if __name__ == "__main__":
                              action="store", 
                              type=int, 
                              nargs="?")
-
-    data_services = parser.add_mutually_exclusive_group(required=True) 
-    data_services.add_argument("--shock_service_url", 
-                        help=script_details["Args"]["shock_service_url"], 
-                        action="store", 
-                        type=str, 
-                        nargs="?") 
-    data_services.add_argument("--handle_service_url", 
-                        help=script_details["Args"]["handle_service_url"], 
-                        action="store", 
-                        type=str, 
-                        nargs="?")
 
     args = parser.parse_args()
 

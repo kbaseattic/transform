@@ -10,6 +10,7 @@
         "required_fields": [ 
             "workspace_service_url",
             "handle_service_url",
+            "shock_service_url",
             "workspace_name", 
             "object_name",
             "working_directory"

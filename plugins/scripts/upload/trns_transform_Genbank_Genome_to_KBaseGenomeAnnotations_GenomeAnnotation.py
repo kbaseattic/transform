@@ -872,6 +872,7 @@ def upload_genome(shock_service_url=None,
             additional_properties = dict()
             feature_specific_id = None
             product = None
+            EC_number = None
 
             for feature_key_value_pair in feature_key_value_pairs_list:
                 #the key value pair removing unnecessary white space (including new lines as these often span multiple lines)
@@ -967,11 +968,14 @@ def upload_genome(shock_service_url=None,
                     additional_properties[key] = value
                 elif (key == "trans_splicing"):
                     feature_object["trans_splicing"] = 1
+                elif (key == "EC_number") and feature_type == "CDS":
+                    EC_number = value
                 else:
                     if key in additional_properties:
                         additional_properties[key] =  "%s::%s" % (additional_properties[key],value)
                     else:
                         additional_properties[key] = value
+
 
             if len(additional_properties) > 0:
                 feature_object["additional_properties"] = additional_properties
@@ -1128,6 +1132,8 @@ def upload_genome(shock_service_url=None,
                         feature_object["CDS_properties"] = dict() 
                     protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
                     feature_object["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
+                    if EC_number is not None:
+                        feature_object["CDS_properties"]["EC_Number"] = EC_number
                     #NEED TO MAKE PICKLED PROTEIN ENTRY IN DB
                     pickled_protein = cPickle.dumps(protein_object, cPickle.HIGHEST_PROTOCOL) 
                     sql_cursor.execute("insert into proteins values(:protein_id, :protein_data)", 

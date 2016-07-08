@@ -417,7 +417,7 @@ def upload_genome(shock_service_url=None,
             fasta_file_handle.close()
             raise Exception("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
         if locus_line_info[4].upper() != 'DNA':
-            if (locus_line_info[4].upper() == 'RNA') or (locus_line_info[4].upper() == 'SS-RNA') :
+            if (locus_line_info[4].upper() == 'RNA') or (locus_line_info[4].upper() == 'SS-RNA') or (locus_line_info[4].upper() == 'SS-DNA'):
                 if not tax_lineage.lower().startswith("viruses") and not tax_lineage.lower().startswith("viroids"):
                     fasta_file_handle.close()
                     raise Exception("Error the record with the Locus Name of %s is RNA, but the organism does not belong to Viruses or Viroids." % (locus_line_info[1]))

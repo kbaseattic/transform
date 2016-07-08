@@ -417,7 +417,7 @@ def upload_genome(shock_service_url=None,
             fasta_file_handle.close()
             raise Exception("Error the record with the Locus Name of %s does not have a valid Locus line.  It has %s space separated elements when 6 to 8 are expected (typically 8)." % (locus_info_line[1],str(len(locus_line_info))))
         if locus_line_info[4].upper() != 'DNA':
-            if locus_line_info[4].upper() == 'RNA':
+            if (locus_line_info[4].upper() == 'RNA') or (locus_line_info[4].upper() == 'SS-RNA') :
                 if not tax_lineage.lower().startswith("viruses") and not tax_lineage.lower().startswith("viroids"):
                     fasta_file_handle.close()
                     raise Exception("Error the record with the Locus Name of %s is RNA, but the organism does not belong to Viruses or Viroids." % (locus_line_info[1]))
@@ -872,6 +872,7 @@ def upload_genome(shock_service_url=None,
             additional_properties = dict()
             feature_specific_id = None
             product = None
+            EC_number = None
 
             for feature_key_value_pair in feature_key_value_pairs_list:
                 #the key value pair removing unnecessary white space (including new lines as these often span multiple lines)
@@ -967,11 +968,14 @@ def upload_genome(shock_service_url=None,
                     additional_properties[key] = value
                 elif (key == "trans_splicing"):
                     feature_object["trans_splicing"] = 1
+                elif (key == "EC_number") and feature_type == "CDS":
+                    EC_number = value
                 else:
                     if key in additional_properties:
                         additional_properties[key] =  "%s::%s" % (additional_properties[key],value)
                     else:
                         additional_properties[key] = value
+
 
             if len(additional_properties) > 0:
                 feature_object["additional_properties"] = additional_properties
@@ -1033,7 +1037,8 @@ def upload_genome(shock_service_url=None,
 
 #            features_type_containers_dict[feature_type][feature_id] = feature_object
 
-            feature_container_object_name = "%s_feature_container_%s" % (core_genome_name, feature_type)
+            sanitized_feature_type = re.sub(r'\W+', '', feature_type)
+            feature_container_object_name = "%s_feature_container_%s" % (core_genome_name, sanitized_feature_type)
             feature_container_ref = "%s/%s" % (workspace_name,feature_container_object_name)
             reverse_feature_container_ref_lookup[feature_container_ref]=feature_type
 
@@ -1128,6 +1133,8 @@ def upload_genome(shock_service_url=None,
                         feature_object["CDS_properties"] = dict() 
                     protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
                     feature_object["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
+                    if EC_number is not None:
+                        feature_object["CDS_properties"]["EC_Number"] = EC_number
                     #NEED TO MAKE PICKLED PROTEIN ENTRY IN DB
                     pickled_protein = cPickle.dumps(protein_object, cPickle.HIGHEST_PROTOCOL) 
                     sql_cursor.execute("insert into proteins values(:protein_id, :protein_data)", 
@@ -1756,7 +1763,9 @@ def upload_genome(shock_service_url=None,
 
     for feature_type in feature_type_list:
         print "TYPE IN : " + feature_type
-        feature_container_object_name = "%s_feature_container_%s" % (core_genome_name,feature_type)
+
+        sanitized_feature_type = re.sub(r'\W+', '', feature_type) 
+        feature_container_object_name = "%s_feature_container_%s" % (core_genome_name,sanitized_feature_type)
         feature_container_object_ref = "%s/%s" % (workspace_name,feature_container_object_name)
 
         features_dict = dict()

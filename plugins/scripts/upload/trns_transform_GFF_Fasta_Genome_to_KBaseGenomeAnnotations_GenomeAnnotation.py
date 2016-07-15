@@ -5,7 +5,7 @@
 #http://gmod.org/wiki/GFF3
 
 # Standard imports
-import sys,os,time,datetime
+import sys,os,time,datetime,re
 import itertools,hashlib,logging
 import gzip,shutil
 
@@ -13,6 +13,7 @@ import gzip,shutil
 import simplejson
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
+from Bio.Data import CodonTable
 
 # KBase imports
 import biokbase.workspace.client 
@@ -118,7 +119,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     features_type_id_counter_dict = dict()
     features_container_references = dict()
     feature_grouping_dict = { "gene_with_mRNA" : {}, "mRNA_with_gene" : {}, "mRNA_with_CDS" : {},
-                              "gene_with_CDS" : {}, "CDS_with_gene" : {}, "CDS_with_mRNA" : {} }
+                              "gene_with_CDS" : {}, "CDS_with_gene" : {}, "CDS_with_mRNA" : {}, "mRNA_with_UTR" : {} }
 
     feature_id_map_dict = dict()
     features_type_counts_map = dict()
@@ -163,8 +164,6 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 #reverse complement
                 dna_sequence = dna_sequence.reverse_complement()
 
-#            print feature["attributes"],dna_sequence
-
             feature_object["dna_sequence"]=str(dna_sequence).upper()
             feature_object["dna_sequence_length"]=len(dna_sequence)
             feature_object["md5"]=hashlib.md5(str(dna_sequence)).hexdigest()
@@ -188,11 +187,8 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                     else:
                         alias_source_counts_map[source]+=1
 
-            if("Parent" in feature and feature["type"] in ["mRNA","CDS"]):
-                if(feature["type"] == "mRNA"):
-                    grouping_tuples = [("gene_with_mRNA",feature["Parent"],feature["ID"]),("mRNA_with_gene",feature["ID"],feature["Parent"])]
-                if(feature["type"] == "CDS"):
-                    grouping_tuples = [("mRNA_with_CDS",feature["Parent"],feature["ID"]),("CDS_with_mRNA",feature["ID"],feature["Parent"])]
+            if("Parent" in feature and feature["type"] == "mRNA"):
+                grouping_tuples = [("gene_with_mRNA",feature["Parent"],feature["ID"]),("mRNA_with_gene",feature["ID"],feature["Parent"])]
 
                 for group in grouping_tuples:
                     if(group[1] not in feature_grouping_dict[group[0]]):
@@ -211,20 +207,17 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 aggregated_cds_map[feature_id_map_dict[feature["Parent"]]].append(feature_id)
 
             features_type_containers_dict[feature["type"]][feature_id] = feature_object
+            
+            if("UTR" in feature["type"]):
+                if(feature_id_map_dict[feature["Parent"]] not in feature_grouping_dict["mRNA_with_UTR"]):
+                    feature_grouping_dict["mRNA_with_UTR"][feature_id_map_dict[feature["Parent"]]]={}
+                feature_grouping_dict["mRNA_with_UTR"][feature_id_map_dict[feature["Parent"]]][feature_id]=1
 
     #####################################################
     #Aggregate CDS
     #####################################################
     aggregated_cds=dict()
     for mRNA_id in aggregated_cds_map:
-#        Original_mRNA_id = feature_id_map_dict[mRNA_id]
-
-#        Checked ordering of CDS in Phytozome, all correct       
-#        Original_List = "|".join(aggregated_cds_map[mRNA])
-#        New_List = "|".join(sorted(aggregated_cds_map[mRNA], key=lambda x: (int(x.split('_')[1]))))
-#        if Original_List != New_List:
-#            print mRNA,Original_List
-
         for cds_id in sorted(aggregated_cds_map[mRNA_id], key = lambda x: int(x.split('_')[1])):
             CDS_Object = features_type_containers_dict["CDS"][cds_id]
 
@@ -251,19 +244,24 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
         feature_id = "CDS_%s" % (str(features_type_id_counter_dict["CDS"]))
 
         if("dna_sequence" in aggregated_cds[mRNA]):
-            #Translate protein sequence
-            dna_sequence = Seq(aggregated_cds[mRNA]["dna_sequence"], IUPAC.ambiguous_dna)
-            rna_sequence = dna_sequence.transcribe()
-            protein_sequence = rna_sequence.translate()
-
             #Build up the protein object for the protein container
             protein_object = dict()
             protein_id = "protein_%s" % (str(protein_id_counter))
             protein_id_counter += 1
             protein_object["protein_id"] = protein_id
+            
+            #Translate protein sequence
+            dna_sequence = Seq(aggregated_cds[mRNA]["dna_sequence"], IUPAC.ambiguous_dna)
+            rna_sequence = dna_sequence.transcribe()
+            protein_sequence = Seq("")
+            try: 
+                protein_sequence = rna_sequence.translate(cds=True)
+            except CodonTable.TranslationError as te:
+                print "TranslationError for "+feature_id_map_dict[mRNA]+": "+str(te)
+
             protein_object["amino_acid_sequence"] = str(protein_sequence).upper()
             protein_object["md5"] = hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
-            
+
             if "function" in aggregated_cds[mRNA]:
                 protein_object["function"] = aggregated_cds[mRNA]["function"]
 
@@ -277,7 +275,49 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
 
         features_type_containers_dict["CDS"][feature_id]=aggregated_cds[mRNA]
         feature_id_map_dict[mRNA+".CDS"]=feature_id
-        feature_grouping_dict["mRNA_with_CDS"][feature_id_map_dict[mRNA]]={mRNA+".CDS":1}
+
+        grouping_tuples = [("mRNA_with_CDS",feature_id_map_dict[mRNA],mRNA+".CDS"),("CDS_with_mRNA",mRNA+".CDS",feature_id_map_dict[mRNA])]
+        feature_grouping_dict["mRNA_with_CDS"][feature_id_map_dict[mRNA]]={}
+
+        for group in grouping_tuples:
+            if(group[1] not in feature_grouping_dict[group[0]]):
+                feature_grouping_dict[group[0]][group[1]] = {}
+            feature_grouping_dict[group[0]][group[1]][group[2]]=1
+
+    #####################################################
+    #Update mRNA locations
+    #Should be aggregate of UTRs and CDSs
+    #####################################################
+    for mRNA_id in features_type_containers_dict["mRNA"].keys():
+        features_type_containers_dict["mRNA"][mRNA_id]["dna_sequence"]=""
+        features_type_containers_dict["mRNA"][mRNA_id]["locations"]=[]
+
+        #Build with five_prime, then CDS, then three_prime
+        #Respectively, they may be missing, which is OK, but it's reported nonetheless
+        if(mRNA_id in feature_grouping_dict["mRNA_with_UTR"]):
+            UTR_Type = "five_prime_UTR"
+            for UTR_id in feature_grouping_dict["mRNA_with_UTR"][mRNA_id]:
+                if(UTR_Type in UTR_id):
+                    features_type_containers_dict["mRNA"][mRNA_id]["locations"].append(features_type_containers_dict[UTR_Type][UTR_id]["locations"][0])
+                    features_type_containers_dict["mRNA"][mRNA_id]["dna_sequence"]+=features_type_containers_dict[UTR_Type][UTR_id]["dna_sequence"]
+        else:
+            print "Missing UTR :",mRNA_id,feature_id_map_dict[mRNA_id]
+
+        if(feature_id_map_dict[mRNA_id] in feature_grouping_dict["mRNA_with_CDS"]):
+            for CDS_id in sorted(feature_grouping_dict["mRNA_with_CDS"][feature_id_map_dict[mRNA_id]], key = lambda x: int(re.split('[_.]',x)[1])):
+                print "Adding CDS :",mRNA_id,features_type_containers_dict["mRNA"][mRNA_id]["locations"]
+                print "Adding CDS :",CDS_id,features_type_containers_dict["CDS"][feature_id_map_dict[CDS_id]]["locations"][0]
+                features_type_containers_dict["mRNA"][mRNA_id]["locations"].append(features_type_containers_dict["CDS"][feature_id_map_dict[CDS_id]]["locations"][0])
+                features_type_containers_dict["mRNA"][mRNA_id]["dna_sequence"]+=features_type_containers_dict["CDS"][feature_id_map_dict[CDS_id]]["dna_sequence"]
+        else:
+            print "Missing CDS :",mRNA_id,feature_id_map_dict[mRNA_id]
+
+        if(mRNA_id in feature_grouping_dict["mRNA_with_UTR"]):
+            UTR_Type = "three_prime_UTR"
+            for UTR_id in feature_grouping_dict["mRNA_with_UTR"][mRNA_id]:
+                if(UTR_Type in UTR_id):
+                    features_type_containers_dict["mRNA"][mRNA_id]["locations"].append(features_type_containers_dict[UTR_Type][UTR_id]["locations"][0])
+                    features_type_containers_dict["mRNA"][mRNA_id]["dna_sequence"]+=features_type_containers_dict[UTR_Type][UTR_id]["dna_sequence"]
 
     #####################################################
     #Process relationships (to and from gene, mRNA, and CDS)

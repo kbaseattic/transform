@@ -1390,9 +1390,9 @@ def upload_genome(shock_service_url=None,
                                             else: 
                                                 mrna_features[feature_id]["quality_warnings"] = [general_warning] 
                 if len(gene_mRNA_list) > 0:
+                    if "gene_properties" not in gene_features[gene_id]:
+                        gene_features[gene_id]["gene_properties"] = dict()
                     if gene_id not in genes_with_mRNA:
-                        if "gene_properties" not in gene_features[gene_id]:
-                            gene_features[gene_id]["gene_properties"] = dict()
                         temp_dict = dict()
                         for e1 in gene_mRNA_list:
                             temp_dict[e1[1]] = 1

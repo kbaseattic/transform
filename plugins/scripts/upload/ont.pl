@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-
+use warnings;
 use strict;
 use Data::Dumper;
 use JSON;
@@ -13,14 +13,16 @@ Usage: $0 --from-obo ontology.obo  > ontology.json
 
 End_of_Usage
 
-my ($help, $print_spec, $from_obo, $to_obo, $from_trans, $to_trans);
+my ($help, $print_spec, $from_obo, $to_obo, $from_trans, $to_trans, $first_dict, $second_dict);
 
-GetOptions("h|help"     => \$help,
-           "spec"       => \$print_spec,
-           "from-obo"   => \$from_obo,
-           "to-obo"     => \$to_obo,
-           "from-trans" => \$from_trans,
-           "to-trans"   => \$to_trans,
+GetOptions("h|help"      => \$help,
+           "spec"        => \$print_spec,
+           "from-obo"    => \$from_obo,
+           "to-obo"      => \$to_obo,
+           "from-trans"  => \$from_trans,
+           "to-trans"    => \$to_trans,
+	   "first-dict=s"  => \$first_dict,
+	   "second-dict=s" => \$second_dict
 	  ) or die("Error in command line arguments\n");
 
 if ($print_spec) {
@@ -37,7 +39,7 @@ if ($from_obo && $ftype eq 'obo') {
 } elsif ($to_obo && $ftype eq 'json') {
     json_to_obo($input);
 } elsif ($from_trans && $ftype eq 'trans') {
-    trans_to_json($input);
+    trans_to_json($input,$first_dict,$second_dict);
 } elsif ($to_trans && $ftype eq 'json') {
     json_to_trans($input);
 } else {
@@ -77,11 +79,10 @@ sub json_to_obo {
 }
 
 sub trans_to_json {
-    my ($input) = @_;
+    my ($input,$ont1,$ont2) = @_;
     my @lines = split(/\n/, slurp($input));
     my @comment;
     my $trans;
-    my ($ont1, $ont2);
     for (@lines) {
         if (/^\!\s*(.*?)/) {
             push @comment, $1;

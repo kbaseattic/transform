@@ -15,7 +15,7 @@ trns_transform_KBaseOntology_OntologyDictionary_to_OBO_Ontology.pl
 
 =head1 SYNOPSIS
 
-trns_transform_KBaseOntology_OntologyDictionary_to_OBO_Ontology.pl --workspace_service_service_url url --object_name object --workspace_name workspace --output_file_name obo file
+trns_transform_KBaseOntology_OntologyDictionary_to_OBO_Ontology.pl --workspace_service_url url --object_name object --workspace_name workspace --output_file_name obo file
 
 =head1 DESCRIPTION
 

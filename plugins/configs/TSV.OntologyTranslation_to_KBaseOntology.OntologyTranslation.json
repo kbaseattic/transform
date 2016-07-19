@@ -14,11 +14,17 @@
         "required_fields":
         [
             "input_file_name",
-            "output_file_name"
+            "output_file_name",
+	    "dictionary_1",
+	    "dictionary_2",
+	    "workspace_service_url",
+	    "workspace_name"
         ],
         "optional_fields":
         [],
-        "input_mapping": {"TSV.OntologyTranslation":"input_file_name"}
+        "input_mapping": {"TSV.OntologyTranslation":"input_file_name",
+			  "KBaseOntology.OntologyDictionary":"dictionary_1",
+			  "KBaseOntology.OntologyDictionary":"dictionary_2"}
     },
     "user_options": [
         {
@@ -32,6 +38,18 @@
             "type": "string",
             "required": true,
             "help": "Output KBaseOntology.OntologyTranslation File"
+        },
+        {
+            "name": "dictionary_1",
+            "type": "string",
+            "required": true,
+            "help": "First KBaseOntology.OntologyDictionary Object"
+        },
+        {
+            "name": "dictionary_2",
+            "type": "string",
+            "required": true,
+            "help": "Second KBaseOntology.OntologyDictionary Object"
         }
     ],
     "user_option_groups": []

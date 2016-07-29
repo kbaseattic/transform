@@ -1957,7 +1957,10 @@ def upload_genome(shock_service_url=None,
                                         token=os.environ.get('KB_AUTH_TOKEN'), 
                                         ref=genome_ref) 
         logger.info("pre summary")
-        ga_object.save_summary()
+        if (ga_object.save_summary()):
+            logger.info("summary saving success")
+        else:
+            logger.info("summary saving failed")
         logger.info("post summary")
     except:
         logger.info("Unexpected error:", sys.exc_info()[0])

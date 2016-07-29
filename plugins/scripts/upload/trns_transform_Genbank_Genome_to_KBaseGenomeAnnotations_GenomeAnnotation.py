@@ -1952,12 +1952,16 @@ def upload_genome(shock_service_url=None,
     genome_ref = "{}/{}".format(workspace_name,genome_annotation_object_name) 
  
     try:
+        logger.info("Trying api genome")
         ga_object = GenomeAnnotationAPI(services = services, 
                                         token=os.environ.get('KB_AUTH_TOKEN'), 
                                         ref=genome_ref) 
+        logger.info("pre summary")
         ga_object.save_summary()
+        logger.info("post summary")
     except:
-        print("Unexpected error:", sys.exc_info()[0])
+        logger.info("Unexpected error:", sys.exc_info()[0])
+        logger.info("summary fail")
         raise
 
     logger.info("Conversions completed.")

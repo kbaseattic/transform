@@ -35,7 +35,7 @@ import biokbase.Transform.script_utils as script_utils
 import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import biokbase.workspace.client 
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
-
+from doekbase.data_api.annotation.genome_annotation.api import GenomeAnnotationAPI, GenomeAnnotationClientAPI
 
 def make_scientific_names_lookup(taxon_names_file=None):
     # TODO change this work with a master taxonomy tree object.  Currently requires the names file from NCBI
@@ -1941,6 +1941,20 @@ def upload_genome(shock_service_url=None,
 
     if not make_sql_in_memory:
         os.remove(db_name) 
+
+    services = { 
+        "workspace_service_url": workspace_service_url, 
+        "shock_service_url": shock_service_url, 
+        "handle_service_url": handle_service_url 
+    } 
+ 
+#    genome_ref = "8020/11/1" 
+    genome_ref = "workspace_name/genome_annotation_object_name" 
+ 
+    ga_object = GenomeAnnotationAPI(services = services, 
+                                token=os.environ.get('KB_AUTH_TOKEN'), 
+                                ref=genome_ref) 
+    ga.save_summary()
 
     logger.info("Conversions completed.")
 

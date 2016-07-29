@@ -1954,7 +1954,7 @@ def upload_genome(shock_service_url=None,
     ga_object = GenomeAnnotationAPI(services = services, 
                                 token=os.environ.get('KB_AUTH_TOKEN'), 
                                 ref=genome_ref) 
-    ga.save_summary()
+    ga_object.save_summary()
 
     logger.info("Conversions completed.")
 

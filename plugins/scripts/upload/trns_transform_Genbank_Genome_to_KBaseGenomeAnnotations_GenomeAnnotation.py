@@ -1951,10 +1951,14 @@ def upload_genome(shock_service_url=None,
 #    genome_ref = "8020/11/1" 
     genome_ref = "{}/{}".format(workspace_name,genome_annotation_object_name) 
  
-    ga_object = GenomeAnnotationAPI(services = services, 
-                                token=os.environ.get('KB_AUTH_TOKEN'), 
-                                ref=genome_ref) 
-    ga_object.save_summary()
+    try:
+        ga_object = GenomeAnnotationAPI(services = services, 
+                                        token=os.environ.get('KB_AUTH_TOKEN'), 
+                                        ref=genome_ref) 
+        ga_object.save_summary()
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
 
     logger.info("Conversions completed.")
 

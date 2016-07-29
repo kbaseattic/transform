@@ -1949,7 +1949,7 @@ def upload_genome(shock_service_url=None,
     } 
  
 #    genome_ref = "8020/11/1" 
-    genome_ref = "workspace_name/genome_annotation_object_name" 
+    genome_ref = "{}/{}".format(workspace_name,genome_annotation_object_name) 
  
     ga_object = GenomeAnnotationAPI(services = services, 
                                 token=os.environ.get('KB_AUTH_TOKEN'), 

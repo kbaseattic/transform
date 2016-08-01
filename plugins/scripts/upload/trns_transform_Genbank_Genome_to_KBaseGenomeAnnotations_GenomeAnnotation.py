@@ -1948,7 +1948,6 @@ def upload_genome(shock_service_url=None,
         "handle_service_url": handle_service_url 
     } 
  
-#    genome_ref = "8020/11/1" 
     genome_ref = "{}/{}".format(workspace_name,genome_annotation_object_name) 
  
     try:
@@ -1956,16 +1955,13 @@ def upload_genome(shock_service_url=None,
         ga_object = GenomeAnnotationAPI(services = services, 
                                         token=os.environ.get('KB_AUTH_TOKEN'), 
                                         ref=genome_ref) 
-        logger.info("pre summary")
         if (ga_object.save_summary()):
             logger.info("summary saving success")
         else:
-            logger.info("summary saving failed")
-        logger.info("post summary")
+            logger.warning("summary saving failed")
     except:
-        logger.info("Unexpected error:", sys.exc_info()[0])
-        logger.info("summary fail")
-        raise
+        logger.warning("Unexpected error using the data api:", sys.exc_info()[0])
+        logger.warning("summary saving failed")
 
     logger.info("Conversions completed.")
 

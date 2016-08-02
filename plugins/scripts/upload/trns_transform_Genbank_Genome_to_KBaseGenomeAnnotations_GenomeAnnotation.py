@@ -288,7 +288,10 @@ def upload_genome(shock_service_url=None,
             fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
     else:
         fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
-        source_name = "unknown_source"
+        if source is None:
+            source_name = "unknown_source"
+        else:
+            source_name = source
 
     print "Core Genome Name :"+ core_genome_name + ":"
     print "FASTA FILE Name :"+ fasta_file_name + ":"

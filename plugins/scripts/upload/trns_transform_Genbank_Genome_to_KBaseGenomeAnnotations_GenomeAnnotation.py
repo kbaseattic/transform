@@ -1957,8 +1957,9 @@ def upload_genome(shock_service_url=None,
         logger.info("Trying api genome")
         ga_object = GenomeAnnotationAPI(services = services, 
                                         token=os.environ.get('KB_AUTH_TOKEN'), 
-                                        ref=genome_ref) 
-        if (ga_object.save_summary()):
+                                        ref=genome_ref)
+        summary_save_result = ga_object.save_summary()
+        if (summary_save_result[0]):
             logger.info("summary saving success")
         else:
             logger.warning("summary saving failed")

@@ -1109,13 +1109,14 @@ def upload_genome(shock_service_url=None,
 
                 if "translation" in feature_object:
                     protein_object["amino_acid_sequence"] = feature_object["translation"].upper()
+                    protein_object["translation_derived"] = 0
                 else:
                     if "dna_sequence" in feature_object:
                         coding_dna = Seq(feature_object["dna_sequence"], generic_dna)
                         aa_seq = coding_dna.translate()
                         protein_object["amino_acid_sequence"] = str(aa_seq[0:].upper())
+                        protein_object["translation_derived"] = 1
                     else:
-                        # TODO.  REMOVE PROTEIN REF FROM CDS PROPERTIES?
                         add_protein = false
                 
                 if add_protein:

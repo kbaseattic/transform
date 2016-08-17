@@ -35,7 +35,7 @@ import biokbase.Transform.script_utils as script_utils
 import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import biokbase.workspace.client 
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
-
+from doekbase.data_api.annotation.genome_annotation.api import GenomeAnnotationAPI, GenomeAnnotationClientAPI
 
 def make_scientific_names_lookup(taxon_names_file=None):
     # TODO change this work with a master taxonomy tree object.  Currently requires the names file from NCBI
@@ -288,7 +288,10 @@ def upload_genome(shock_service_url=None,
             fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
     else:
         fasta_file_name = "%s_%s.fa" % (core_genome_name,time_string) 
-        source_name = "unknown_source"
+        if source is None:
+            source_name = "unknown_source"
+        else:
+            source_name = source
 
     print "Core Genome Name :"+ core_genome_name + ":"
     print "FASTA FILE Name :"+ fasta_file_name + ":"
@@ -1106,13 +1109,14 @@ def upload_genome(shock_service_url=None,
 
                 if "translation" in feature_object:
                     protein_object["amino_acid_sequence"] = feature_object["translation"].upper()
+                    protein_object["translation_derived"] = 0
                 else:
                     if "dna_sequence" in feature_object:
                         coding_dna = Seq(feature_object["dna_sequence"], generic_dna)
                         aa_seq = coding_dna.translate()
                         protein_object["amino_acid_sequence"] = str(aa_seq[0:].upper())
+                        protein_object["translation_derived"] = 1
                     else:
-                        # TODO.  REMOVE PROTEIN REF FROM CDS PROPERTIES?
                         add_protein = false
                 
                 if add_protein:
@@ -1941,6 +1945,28 @@ def upload_genome(shock_service_url=None,
 
     if not make_sql_in_memory:
         os.remove(db_name) 
+
+    services = { 
+        "workspace_service_url": workspace_service_url, 
+        "shock_service_url": shock_service_url, 
+        "handle_service_url": handle_service_url 
+    } 
+ 
+    genome_ref = "{}/{}".format(workspace_name,genome_annotation_object_name) 
+ 
+    try:
+        logger.info("Trying api genome")
+        ga_object = GenomeAnnotationAPI(services = services, 
+                                        token=os.environ.get('KB_AUTH_TOKEN'), 
+                                        ref=genome_ref)
+        summary_save_result = ga_object.save_summary()
+        if (summary_save_result[0]):
+            logger.info("summary saving success")
+        else:
+            logger.warning("summary saving failed")
+    except:
+        logger.warning("Unexpected error using the data api:", sys.exc_info()[0])
+        logger.warning("summary saving failed")
 
     logger.info("Conversions completed.")
 

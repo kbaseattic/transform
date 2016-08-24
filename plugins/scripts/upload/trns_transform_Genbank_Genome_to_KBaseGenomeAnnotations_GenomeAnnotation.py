@@ -227,6 +227,7 @@ def upload_genome(shock_service_url=None,
     genome_annotation = dict()
 
     display_sc_name = None
+    genetic_code = 1 #By default
 
     genomes_without_taxon_refs = list()
     if taxon_reference is None:
@@ -250,6 +251,7 @@ def upload_genome(shock_service_url=None,
             taxon_info = ws_client.get_objects([{"workspace": taxon_wsname, 
                                                  "name": taxon_object_name}]) 
             taxon_id = "%s/%s/%s" % (taxon_info[0]["info"][6], taxon_info[0]["info"][0], taxon_info[0]["info"][4]) 
+            genetic_code = taxon_info[0]["data"]["genetic_code"]
 #            print "Found name : " + taxon_object_name + " id: " + taxon_id
 #            print "TAXON OBJECT TYPE : " + taxon_info[0]["info"][2]
             if not taxon_info[0]["info"][2].startswith("KBaseGenomeAnnotations.Taxon"):
@@ -991,7 +993,7 @@ def upload_genome(shock_service_url=None,
             if ("function" not in feature_object) and (product is not None):
                 feature_object["function"] = product
 
-            feature_object["quality_warnings"] = quality_warnings
+#            feature_object["quality_warnings"] = quality_warnings
 
 
 #            ############################################
@@ -1106,15 +1108,20 @@ def upload_genome(shock_service_url=None,
                 # DO GENERIC TRANSLATION FOR NOW (REALLY NEED TO GET TAXONOMY OBJECT AND LOOKUP ALPHABET
                 # SEE http://biopython.org/wiki/Seq#Translation
                 # ADD CHECK LATER AND WARNINGS IF THE TRANSLATION IN FILE AND FROM DNA SEQUENCE DO NOT MATCH
+                coding_dna = Seq(feature_object["dna_sequence"], generic_dna)
+                aa_seq = coding_dna.translate(table=genetic_code, to_stop=True)
+                aa_trans_seq = str(aa_seq[0:].upper())
 
                 if "translation" in feature_object:
                     protein_object["amino_acid_sequence"] = feature_object["translation"].upper()
                     protein_object["translation_derived"] = 0
+                    if aa_trans_seq != protein_object["amino_acid_sequence"]:
+                        temp_warning = "%s translated amino acid sequence does not match the supplied amino acid sequence." % (feature_id) 
+                        quality_warnings.append(temp_warning) 
+                        sql_cursor.execute("insert into annotation_metadata_warnings values(:warning)",(temp_warning,)) 
                 else:
                     if "dna_sequence" in feature_object:
-                        coding_dna = Seq(feature_object["dna_sequence"], generic_dna)
-                        aa_seq = coding_dna.translate()
-                        protein_object["amino_acid_sequence"] = str(aa_seq[0:].upper())
+                        protein_object["amino_acid_sequence"] = aa_trans_seq
                         protein_object["translation_derived"] = 1
                     else:
                         add_protein = false
@@ -1157,6 +1164,7 @@ def upload_genome(shock_service_url=None,
                 del feature_object["translation"]
             
 
+            feature_object["quality_warnings"] = quality_warnings
             #MAKE ENTRY INTO THE FEATURE TABLE
             pickled_feature = cPickle.dumps(feature_object, cPickle.HIGHEST_PROTOCOL) 
             sql_cursor.execute("insert into features values(:feature_id, :feature_type , :sequence_length, :feature_data)", 

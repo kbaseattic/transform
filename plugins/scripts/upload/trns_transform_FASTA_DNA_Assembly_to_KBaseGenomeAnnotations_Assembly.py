@@ -35,6 +35,7 @@ def upload_assembly(shock_service_url = None,
                     source = None, 
                     date_string = None,
                     contig_information_dict = None,
+                    provenance = None,
                     logger = None):
 
     """
@@ -333,7 +334,11 @@ def upload_assembly(shock_service_url = None,
 
     # For future development if the type is updated to the handle_reference instead of a shock_reference
     assembly_not_saved = True 
-    assembly_provenance = [{"script": __file__, "script_ver": "0.1", "description": "Generated from fasta files generated from v5 of the CS."}]
+    provenance_action = {"script": __file__, "script_ver": "0.1", "description": "Assembly generated from FASTA file upload")}
+    assembly_provenance = []
+    if provenance is not None:
+        assembly_provenance = provenance
+    assembly_provenance.append(provenance_action)
     while assembly_not_saved: 
         try: 
             assembly_info =  ws_client.save_objects({"workspace": workspace_name,"objects":[ 

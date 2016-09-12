@@ -334,7 +334,7 @@ def upload_assembly(shock_service_url = None,
 
     # For future development if the type is updated to the handle_reference instead of a shock_reference
     assembly_not_saved = True 
-    provenance_action = {"script": __file__, "script_ver": "0.1", "description": "Assembly generated from FASTA file upload")}
+    provenance_action = {"script": __file__, "script_ver": "0.1", "description": "Assembly generated from FASTA file upload"}
     assembly_provenance = []
     if provenance is not None:
         assembly_provenance = provenance

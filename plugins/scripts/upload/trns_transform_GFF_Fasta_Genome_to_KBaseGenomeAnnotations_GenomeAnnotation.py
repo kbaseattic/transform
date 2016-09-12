@@ -5,24 +5,24 @@
 #http://gmod.org/wiki/GFF3
 
 # Standard imports
-import sys,os,time,datetime
+import sys,os,time,datetime,re
 import itertools,hashlib,logging
+import gzip,shutil
 
 # 3rd party imports
 import simplejson
+from Bio.Seq import Seq
+from Bio.Alphabet import IUPAC
+from Bio.Data import CodonTable
 
 # KBase imports
 import biokbase.workspace.client 
 import biokbase.Transform.script_utils as script_utils
-import biokbase.Transform.TextFileDecoder as TextFileDecoder
 import trns_transform_FASTA_DNA_Assembly_to_KBaseGenomeAnnotations_Assembly as assembly
-
-#For reverse strand
-complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
 
 def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=None,
                   shock_service_url=None, handle_service_url=None, workspace_service_url=None,
-                  taxon_reference = None, source=None, release=None, core_genome_name=None, genome_type=None,
+                  taxon_reference = None, source=None, release=None, core_genome_name=None, genome_type=None,scientific_name=None,
                   level=logging.INFO, logger=None):
 
     ws_client = biokbase.workspace.client.Workspace(workspace_service_url)
@@ -35,7 +35,12 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     assembly_name = "%s_assembly" % (core_genome_name)
     assembly_reference = "%s/%s" % (workspace_name,assembly_name)
     input_directory = "/".join(input_fasta_file.split("/")[0:-1])
-    print input_directory
+    
+    #Files should be gzipped
+    with gzip.open(input_fasta_file, 'rb') as f_in:
+        with open(input_fasta_file[0:-3], 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
     try:
         assembly.upload_assembly(shock_service_url = shock_service_url,
                                  handle_service_url = handle_service_url,
@@ -55,6 +60,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
         sys.exit(1) 
 
     logger.info("Assembly Uploaded as "+assembly_reference)
+    os.remove(args.input_fasta_file[0:-3])
 
     ##########################################
     #Reading in Fasta file, Code taken from https://www.biostars.org/p/710/
@@ -62,7 +68,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     logger.info("Reading FASTA file.") 
 
     contigs_sequences = dict()
-    input_file_handle = open(input_fasta_file,'r')
+    input_file_handle = gzip.open(input_fasta_file,'rb')
     # ditch the boolean (x[0]) and just keep the header or sequence since
     # we know they alternate.
     faiter = (x[1] for x in itertools.groupby(input_file_handle, lambda line: line[0] == ">"))
@@ -75,7 +81,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
         try:
             fasta_header,fasta_description = header.split(' ',1)
         except:
-            fasta_header = fasta_header_line
+            fasta_header = header
             fasta_description = None
 
         contigs_sequences[fasta_header]= {'description':fasta_description,'sequence':seq}
@@ -85,7 +91,7 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     header = list()
     feature_list = dict()
 
-    gff_file_handle = TextFileDecoder.open_textdecoder(input_gff_file, 'ISO-8859-1')
+    gff_file_handle = gzip.open(input_gff_file, 'rb')
     current_line = gff_file_handle.readline()
     while ( current_line != '' ):
         current_line=current_line.strip()
@@ -113,23 +119,20 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     features_type_id_counter_dict = dict()
     features_container_references = dict()
     feature_grouping_dict = { "gene_with_mRNA" : {}, "mRNA_with_gene" : {}, "mRNA_with_CDS" : {},
-                              "gene_with_CDS" : {}, "CDS_with_gene" : {}, "CDS_with_mRNA" : {} }
+                              "gene_with_CDS" : {}, "CDS_with_gene" : {}, "CDS_with_mRNA" : {}, "mRNA_with_UTR" : {} }
 
     feature_id_map_dict = dict()
-    features_type_counts = dict()
- 
-    protein_container_dict = dict()
-    protein_id_counter = 1;
+    features_type_counts_map = dict()
+
+    feature_lookup_dict = dict()
 
     alias_source_counts_map = dict()
 
-    for contig in feature_list:
-    ##################################################################################################
-    #FEATURE ANNOTATION PORTION - Build up datastructures to be able to build feature containers.
-    ##################################################################################################
+    aggregated_cds_map = dict()
+
+    for contig in sorted(feature_list):
         for feature in feature_list[contig]:
             #To consider:
-            #feature_object["locations"]=locations
             #feature_object["function"] = value
             #feature_object["trans_splicing"] = 1
             #feature_object["additional_properties"] = additional_properties
@@ -142,15 +145,13 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 features_type_containers_dict[feature['type']] = dict()
 
             if feature['type'] not in features_type_id_counter_dict:
-                features_type_id_counter_dict[feature['type']] = 1;
+                features_type_id_counter_dict[feature['type']] = 1
                 feature_id = "%s_%s" % (feature['type'],str(1)) 
             else: 
-                features_type_id_counter_dict[feature['type']] += 1; 
+                features_type_id_counter_dict[feature['type']] += 1 
                 feature_id = "%s_%s" % (feature['type'],str(features_type_id_counter_dict[feature['type']]))
 
             feature_object["feature_id"]=feature_id
-
-#            print contig,feature["attributes"],feature["type"],feature["start"],feature["end"],feature["strand"],feature["phase"]
 
             #GFF use 1-based integers
             substr_start = feature["start"]-1 
@@ -159,34 +160,22 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                 substr_start = feature["end"]-1
                 substr_end = feature["start"]
 
-            dna_sequence = contigs_sequences[contig]["sequence"][feature["start"]-1:feature["end"]]
-            dna_sequence = dna_sequence.upper()
-
+            dna_sequence = Seq(contigs_sequences[contig]["sequence"][feature["start"]-1:feature["end"]], IUPAC.ambiguous_dna)
+            
             if(feature["strand"] == "-"):
                 #reverse complement
-                dna_sequence = dna_sequence[::-1]
-                dna_sequence = "".join(complement[base] for base in dna_sequence)
+                dna_sequence = dna_sequence.reverse_complement()
 
-#            print feature["attributes"],dna_sequence
-
-            #Right now, this assumes that the GFF file contains CDS sequences in the right order
-            #Will double-check, or write code to correct, when translating for protein objects
-            if(feature["type"]=="CDS" and "dna_sequence" in feature_object):
-                feature_object["dna_sequence"]=feature_object["dna_sequence"]+dna_sequence
-            else:
-                feature_object["dna_sequence"]=dna_sequence
-
+            feature_object["dna_sequence"]=str(dna_sequence).upper()
             feature_object["dna_sequence_length"]=len(dna_sequence)
-            feature_object["md5"]=hashlib.md5(dna_sequence).hexdigest()
-
-            if("locations" not in feature_object):
-                feature_object["locations"]=list()
-            feature_object["locations"].append([contig,feature["start"],feature["strand"],len(dna_sequence)])
+            feature_object["md5"]=hashlib.md5(str(dna_sequence)).hexdigest()
+            feature_object["locations"]=[[contig,feature["start"],feature["strand"],len(dna_sequence)]]
 
             feature_object["quality_warnings"]=list()
 
             alias_dict = { feature["ID"] : [ "Original "+feature["type"]+" ID" ] }
             feature_id_map_dict[feature["ID"]] = feature_id
+            feature_id_map_dict[feature_id] = feature["ID"]
             if("Name" in feature):
                 alias_dict[feature["Name"]] = ["Original "+feature["type"]+" Name"]
             if("pacid" in feature):
@@ -200,11 +189,8 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
                     else:
                         alias_source_counts_map[source]+=1
 
-            if("Parent" in feature and feature["type"] in ["mRNA","CDS"]):
-                if(feature["type"] == "mRNA"):
-                    grouping_tuples = [("gene_with_mRNA",feature["Parent"],feature["ID"]),("mRNA_with_gene",feature["ID"],feature["Parent"])]
-                if(feature["type"] == "CDS"):
-                    grouping_tuples = [("mRNA_with_CDS",feature["Parent"],feature["ID"]),("CDS_with_mRNA",feature["ID"],feature["Parent"])]
+            if("Parent" in feature and feature["type"] == "mRNA"):
+                grouping_tuples = [("gene_with_mRNA",feature["Parent"],feature["ID"]),("mRNA_with_gene",feature["ID"],feature["Parent"])]
 
                 for group in grouping_tuples:
                     if(group[1] not in feature_grouping_dict[group[0]]):
@@ -214,50 +200,127 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
             if(feature["type"] == "gene"):
                 feature_object["gene_properties"]={ "children_CDS" : [], "children_mRNA" : [] }
             if(feature["type"] == "mRNA"):
-                feature_object["mRNA_properties"]={ "parent_gene" : ('gene',feature["Parent"]), "associated_CDS" : ("CDS","") }
+                feature_object["mRNA_properties"]={ "parent_gene" : ('gene',feature_id_map_dict[feature["Parent"]]), "associated_CDS" : ("CDS","") }
             if(feature["type"] == "CDS"):
-                feature_object["CDS_properties"]= { "parent_gene" : ("gene",""), "associated_mRNA" : ("mRNA",feature["Parent"]), "codes_for_protein_ref" : ("","") }
+                feature_object["CDS_properties"]= { "parent_gene" : ("gene",""), "associated_mRNA" : ("mRNA",feature_id_map_dict[feature["Parent"]]) }
+
+                if(feature_id_map_dict[feature["Parent"]] not in aggregated_cds_map):
+                    aggregated_cds_map[feature_id_map_dict[feature["Parent"]]]=list()
+                aggregated_cds_map[feature_id_map_dict[feature["Parent"]]].append(feature_id)
 
             features_type_containers_dict[feature["type"]][feature_id] = feature_object
+            
+            if("UTR" in feature["type"]):
+                if(feature_id_map_dict[feature["Parent"]] not in feature_grouping_dict["mRNA_with_UTR"]):
+                    feature_grouping_dict["mRNA_with_UTR"][feature_id_map_dict[feature["Parent"]]]={}
+                feature_grouping_dict["mRNA_with_UTR"][feature_id_map_dict[feature["Parent"]]][feature_id]=1
 
-            #############################
-            #build up protein object
-            #############################
-            if feature['type'] == 'CDS' and "dna_sequence" in feature_object:
+    #####################################################
+    #Aggregate CDS
+    #####################################################
+    aggregated_cds=dict()
+    for mRNA_id in aggregated_cds_map:
+        for cds_id in sorted(aggregated_cds_map[mRNA_id], key = lambda x: int(x.split('_')[1])):
+            CDS_Object = features_type_containers_dict["CDS"][cds_id]
 
-                #Build up the protein object for the protein container
-                protein_object = dict()
-                protein_id = "protein_%s" % (str(protein_id_counter))
-                protein_id_counter += 1
-                protein_object["protein_id"] = protein_id
-                protein_object["amino_acid_sequence"] = ""
+            #Save first object, otherwise append sequence and location
+            if(mRNA_id not in aggregated_cds):
+                aggregated_cds[mRNA_id]=CDS_Object
+            else:
+                aggregated_cds[mRNA_id]["dna_sequence"]+=CDS_Object["dna_sequence"]
+                aggregated_cds[mRNA_id]["locations"].append(CDS_Object["locations"][0])
 
-                #Translate feature_object["dna_sequence"]
-                #Add it to feature_object["translation"]
-                #Add it to protein_object["amino_acid_sequence"]
-                #Make sure its upper class
-                #from Bio.Seq import Seq
-                #from Bio.Alphabet import IUPAC, generic_dna
-                #if "dna_sequence" in feature_object:
-                #    coding_dna = Seq(feature_object["dna_sequence"], generic_dna)
-                #    aa_seq = coding_dna.translate()
-                #    protein_object["amino_acid_sequence"] = str(aa_seq[0:].upper())
+    #############################
+    #Refill features_type_containers_dict["CDS"]
+    #and build up protein objects
+    #############################
 
-                if "function" in feature_object:
-                    protein_object["function"] = feature_object["function"]
+    protein_container_dict = dict()
+    protein_id_counter = 1;
 
-                protein_object["aliases"]=dict()
-                if "aliases" in feature_object:
-                    protein_object["aliases"] = feature_object["aliases"]
+    features_type_containers_dict["CDS"]=dict()
+    features_type_id_counter_dict["CDS"]=0
 
-                protein_object["md5"] = "" #hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
-                protein_container_dict[protein_object["protein_id"]] = protein_object
-                protein_container_object_name = "%s_protein_container" % (core_genome_name)
-                protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
+    for mRNA in sorted(aggregated_cds, key=lambda x: int(x.split('_')[1])):
 
-                if "CDS_properties" not in features_type_containers_dict["CDS"][feature_id]: 
-                    features_type_containers_dict["CDS"][feature_id]["CDS_properties"] = dict() 
-                features_type_containers_dict["CDS"][feature_id]["CDS_properties"]["codes_for_protein_ref"] = [protein_ref,protein_id]
+        if("dna_sequence" in aggregated_cds[mRNA]):
+            #Build up the protein object for the protein container
+            protein_object = dict()
+            protein_id = "protein_%s" % (str(protein_id_counter))
+            protein_id_counter += 1
+            protein_object["protein_id"] = protein_id
+            
+            #Translate protein sequence
+            dna_sequence = Seq(aggregated_cds[mRNA]["dna_sequence"], IUPAC.ambiguous_dna)
+            rna_sequence = dna_sequence.transcribe()
+            protein_sequence = Seq("")
+            try: 
+                protein_sequence = rna_sequence.translate(cds=True)
+            except CodonTable.TranslationError as te:
+                print "TranslationError for "+feature_id_map_dict[mRNA]+": "+str(te)
+
+            protein_object["amino_acid_sequence"] = str(protein_sequence).upper()
+            protein_object["md5"] = hashlib.md5(protein_object["amino_acid_sequence"]).hexdigest()
+            protein_object["translation_derived"]=1
+
+            if "function" in aggregated_cds[mRNA]:
+                protein_object["function"] = aggregated_cds[mRNA]["function"]
+
+            protein_object["aliases"]=dict()
+            if "aliases" in aggregated_cds[mRNA]:
+                protein_object["aliases"] = aggregated_cds[mRNA]["aliases"]
+
+            protein_container_dict[protein_object["protein_id"]] = protein_object
+            protein_container_object_name = "%s_protein_container" % (core_genome_name)
+            protein_ref = "%s/%s" % (workspace_name,protein_container_object_name)
+
+        #Update dict of aggregated CDS objects
+        features_type_id_counter_dict["CDS"] += 1
+        feature_id = "CDS_%s" % (str(features_type_id_counter_dict["CDS"]))
+        aggregated_cds[mRNA]["feature_id"]=feature_id
+        features_type_containers_dict["CDS"][feature_id]=aggregated_cds[mRNA]
+        feature_id_map_dict[mRNA+".CDS"]=feature_id
+
+        grouping_tuples = [("mRNA_with_CDS",feature_id_map_dict[mRNA],mRNA+".CDS"),("CDS_with_mRNA",mRNA+".CDS",feature_id_map_dict[mRNA])]
+        feature_grouping_dict["mRNA_with_CDS"][feature_id_map_dict[mRNA]]={}
+
+        for group in grouping_tuples:
+            if(group[1] not in feature_grouping_dict[group[0]]):
+                feature_grouping_dict[group[0]][group[1]] = {}
+            feature_grouping_dict[group[0]][group[1]][group[2]]=1
+
+    #####################################################
+    #Update mRNA locations
+    #Should be aggregate of UTRs and CDSs
+    #####################################################
+    for mRNA_id in features_type_containers_dict["mRNA"].keys():
+        features_type_containers_dict["mRNA"][mRNA_id]["dna_sequence"]=""
+        features_type_containers_dict["mRNA"][mRNA_id]["locations"]=[]
+
+        #Build with five_prime, then CDS, then three_prime
+        #Respectively, they may be missing, which is OK, but it's reported nonetheless
+        if(mRNA_id in feature_grouping_dict["mRNA_with_UTR"]):
+            UTR_Type = "five_prime_UTR"
+            for UTR_id in feature_grouping_dict["mRNA_with_UTR"][mRNA_id]:
+                if(UTR_Type in UTR_id):
+                    features_type_containers_dict["mRNA"][mRNA_id]["locations"].append(features_type_containers_dict[UTR_Type][UTR_id]["locations"][0])
+                    features_type_containers_dict["mRNA"][mRNA_id]["dna_sequence"]+=features_type_containers_dict[UTR_Type][UTR_id]["dna_sequence"]
+        else:
+            print "Missing UTR :",mRNA_id,feature_id_map_dict[mRNA_id]
+
+        if(feature_id_map_dict[mRNA_id] in feature_grouping_dict["mRNA_with_CDS"]):
+            for CDS_id in sorted(feature_grouping_dict["mRNA_with_CDS"][feature_id_map_dict[mRNA_id]], key = lambda x: int(re.split('[_.]',x)[1])):
+                features_type_containers_dict["mRNA"][mRNA_id]["locations"].append(features_type_containers_dict["CDS"][feature_id_map_dict[CDS_id]]["locations"][0])
+                features_type_containers_dict["mRNA"][mRNA_id]["dna_sequence"]+=features_type_containers_dict["CDS"][feature_id_map_dict[CDS_id]]["dna_sequence"]
+        else:
+            print "Missing CDS :",mRNA_id,feature_id_map_dict[mRNA_id]
+
+        if(mRNA_id in feature_grouping_dict["mRNA_with_UTR"]):
+            UTR_Type = "three_prime_UTR"
+            for UTR_id in feature_grouping_dict["mRNA_with_UTR"][mRNA_id]:
+                if(UTR_Type in UTR_id):
+                    features_type_containers_dict["mRNA"][mRNA_id]["locations"].append(features_type_containers_dict[UTR_Type][UTR_id]["locations"][0])
+                    features_type_containers_dict["mRNA"][mRNA_id]["dna_sequence"]+=features_type_containers_dict[UTR_Type][UTR_id]["dna_sequence"]
 
     #####################################################
     #Process relationships (to and from gene, mRNA, and CDS)
@@ -297,7 +360,8 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     interfeature_relationship_counts_map["gene_with_CDS"] = len(feature_grouping_dict["gene_with_CDS"])
     interfeature_relationship_counts_map["CDS_with_gene"] = len(feature_grouping_dict["CDS_with_gene"])
 
-    counts_map = dict() #dict of feature type and number of occurrences.
+    feature_container_objects = dict()
+
     if len(features_type_containers_dict) > 0:
         for feature_type in features_type_containers_dict:
 
@@ -312,16 +376,22 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
             feature_container['features'] = features_type_containers_dict[feature_type]
             feature_container['assembly_ref'] = assembly_reference
 
-            features_type_counts[feature_type] = len(features_type_containers_dict[feature_type])
-            counts_map[feature_type] = len(features_type_containers_dict[feature_type])
+            features_type_counts_map[feature_type] = len(features_type_containers_dict[feature_type])
 
             #Provenance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
             #provenance_description = "features from upload from %s includes accession(s) : " % (source,",".join(locus_name_order))
             feature_container_provenance = [{"script": __file__, "script_ver": "0.1", "description": "features from upload from %s" % (source)}]
 
+            #Fill feature lookup dict
+            for feature in feature_container['features']:
+                feature_id = feature_container["features"][feature]["feature_id"]
+                feature_lookup_dict[feature_id] = [[feature_container_object_ref,feature_id]]
+
             print feature_container_object_name,len(feature_container['features'])
+            feature_container_objects[feature_type]=feature_container
+
             feature_container_string = simplejson.dumps(feature_container, sort_keys=True, indent=4)
-            feature_container_file = open(feature_container_object_name+'.json', 'w+')
+            feature_container_file = open("Bulk_Phytozome_Upload/"+feature_container_object_name+'.json', 'w+')
             feature_container_file.write(feature_container_string)
             feature_container_file.close()
 
@@ -330,14 +400,14 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
             while feature_container_not_saved:
                 try:
                     feature_container_info =  ws_client.save_objects({"workspace":workspace_name,
-                                                                      "objects":[ { "type":"KBaseGenomeAnnotations.FeatureContainer",
-                                                                                    "data":feature_container,
+                                                                      "objects":[ { "type": "KBaseGenomeAnnotations.FeatureContainer",
+                                                                                    "data": feature_container,
                                                                                     "name": feature_container_object_name,
-                                                                                    "provenance":feature_container_provenance}]}) 
+                                                                                    "hidden" : 1,
+                                                                                    "provenance": feature_container_provenance}]}) 
                     feature_container_not_saved = False 
                     logger.info("Feature Container saved for %s" % (feature_container_object_name)) 
                 except biokbase.workspace.client.ServerError as err: 
-                    #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
                     raise
 
     protein_container_object_name = "%s_protein_container" % (core_genome_name)
@@ -350,13 +420,20 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
 
         protein_reference = "%s/%s" % (workspace_name, protein_container_object_name)
 
-        features_type_counts['protein'] = len(protein_container_dict)
+        features_type_counts_map['protein'] = len(protein_container_dict)
         protein_container['proteins'] = protein_container_dict
 
         protein_container_string = simplejson.dumps(protein_container, sort_keys=True, indent=4)
-        protein_container_file = open(protein_container_object_name+'.json', 'w+')
+        protein_container_file = open("Bulk_Phytozome_Upload/"+protein_container_object_name+'.json', 'w+')
         protein_container_file.write(protein_container_string)
         protein_container_file.close()
+
+        #Fill feature lookup dict
+        #for protein in protein_container['proteins']:
+        #        protein_id = protein_container["proteins"][protein]["protein_id"]
+        #        if protein_id not in feature_lookup_dict:
+        #            feature_lookup_dict[protein_id] = list()
+        #        feature_lookup_dict[protein_id].append([protein_reference,protein_id])
 
         #Provencance has a 1 MB limit.  We may want to add more like the accessions, but to be safe for now not doing that.
         #provenance_description = "proteins from upload from %s includes accession(s) : " % (source,",".join(locus_name_order))
@@ -366,33 +443,41 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
             try: 
                 logger.info("Attempting Protein Container save for %s" % (protein_container_object_name))  
                 protein_container_info =  ws_client.save_objects({"workspace": workspace_name,
-                                                                  "objects":[ { "type":"KBaseGenomeAnnotations.ProteinContainer",
-                                                                                "data":protein_container,
+                                                                  "objects":[ { "type": "KBaseGenomeAnnotations.ProteinContainer",
+                                                                                "data": protein_container,
                                                                                 "name": protein_container_object_name,
-                                                                                "provenance":protein_container_provenance}]})
+                                                                                "hidden": 1,
+                                                                                "provenance": protein_container_provenance}]})
                 logger.info("Protein Container saved for %s" % (protein_container_object_name))  
                 protein_container_not_saved = False 
             except biokbase.workspace.client.ServerError as err:
-#                #KEEPS GOING FOR NOW.  DO WE WANT TO HAVE A LIMIT?
                 raise 
 
     genome_annotation = dict()
 
+    #Upload GFF to shock
+    token = os.environ.get('KB_AUTH_TOKEN') 
+    shock_id = None
+    handle_id = None
+    if shock_id is None:
+        shock_info = script_utils.upload_file_to_shock(logger, shock_service_url, input_gff_file, token=token)
+        shock_id = shock_info["id"]
+        handles = script_utils.getHandles(logger, shock_service_url, handle_service_url, [shock_id], [handle_id], token)   
+        handle_id = handles[0]
+    genome_annotation['gff_handle_ref'] = handle_id
 
-#shock_id = None
-#handle_id = None
-#if shock_id is None:
-#    shock_info = script_utils.upload_file_to_shock(logger, shock_service_url, input_file_name, token=token)
-#    shock_id = shock_info["id"]
-#    handles = script_utils.getHandles(logger, shock_service_url, handle_service_url, [shock_id], [handle_id], token)   
-#    handle_id = handles[0]
-#genome_annotation['genbank_handle_ref'] = handle_id
+    for ftr in feature_lookup_dict.keys():
+        array=ftr.split('_')
+        feature_type='_'.join(array[0:-1])
+        if(ftr not in feature_container_objects[feature_type]['features']):
+            print "Missing Featuer Lookup: "+ftr
 
-    genome_annotation['feature_lookup'] = dict() #feature_lookup_dict
+    genome_annotation['feature_lookup'] = feature_lookup_dict
     genome_annotation['protein_container_ref'] = protein_reference
     genome_annotation['feature_container_references'] = features_container_references 
-    genome_annotation['counts_map'] = counts_map
+    genome_annotation['counts_map'] = features_type_counts_map
     genome_annotation['type'] = genome_type
+
     if genome_type == "Reference":
         genome_annotation['reference_annotation'] = 1
     else:
@@ -401,8 +486,10 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     genome_annotation_object_name = core_genome_name
     genome_annotation['genome_annotation_id'] = genome_annotation_object_name
 
+    genome_annotation['display_sc_name']=scientific_name
     genome_annotation['taxon_ref'] = taxon_reference
     genome_annotation['assembly_ref'] = assembly_reference
+    genome_annotation['original_source_file_name']=input_gff_file
 
     genome_annotation['interfeature_relationship_counts_map'] = interfeature_relationship_counts_map
     print interfeature_relationship_counts_map
@@ -410,12 +497,13 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     genome_annotation['alias_source_counts_map'] = alias_source_counts_map
     genome_annotation['external_source'] = source
     genome_annotation['external_source_origination_date'] = time_string
+    genome_annotation['release'] = release
 
 #genome_annotation['external_source_id'] = ",".join(locus_name_order)
 #genome_annotation['annotation_quality_ref'] = annotation_quality_reference
 
     genome_annotation_string = simplejson.dumps(genome_annotation, sort_keys=True, indent=4)
-    genome_annotation_file = open(genome_annotation_object_name+'.json', 'w+')
+    genome_annotation_file = open("Bulk_Phytozome_Upload/"+genome_annotation_object_name+'.json', 'w+')
     genome_annotation_file.write(genome_annotation_string)
     genome_annotation_file.close()
 
@@ -427,10 +515,10 @@ def upload_genome(input_gff_file=None, input_fasta_file=None, workspace_name=Non
     while genome_annotation_not_saved:
         try:
             genome_annotation_info =  ws_client.save_objects({"workspace":workspace_name,
-                                                              "objects":[ { "type":"KBaseGenomeAnnotations.GenomeAnnotation",
-                                                                            "data":genome_annotation,
+                                                              "objects":[ { "type": "KBaseGenomeAnnotations.GenomeAnnotation",
+                                                                            "data": genome_annotation,
                                                                             "name": genome_annotation_object_name,
-                                                                            "provenance":genome_annotation_provenance}]}) 
+                                                                            "provenance": genome_annotation_provenance}]}) 
             genome_annotation_not_saved = False 
             logger.info("Genome Annotation saved for %s" % (genome_annotation_object_name))
         except biokbase.workspace.client.ServerError as err: 
@@ -450,8 +538,9 @@ if __name__ == "__main__":
     parser.add_argument('--handle_service_url', type=str, nargs='?', required=False, default='https://ci.kbase.us/services/handle_service/')
     parser.add_argument('--workspace_service_url', type=str, nargs='?', required=False, default='https://ci.kbase.us/services/ws/')
 
+    parser.add_argument('--organism', nargs='?', help='Taxon', required=True)
     parser.add_argument('--taxon_wsname', nargs='?', help='Taxon Workspace', required=False, default='ReferenceTaxons')
-    parser.add_argument('--taxon_names_file', nargs='?', help='Taxon Mappings', required=False, default="Phytozome_Mapping")
+    parser.add_argument('--taxon_names_file', nargs='?', help='Taxon Mappings', required=False)
 
     parser.add_argument('--source', help="data source : examples Refseq, Genbank, Pythozyme, Gramene, etc", nargs='?', required=False, default="Phytozome") 
     parser.add_argument('--release', help="Release or version of the data.  Example Ensembl release 30", nargs='?', required=False, default = "11") 
@@ -464,28 +553,54 @@ if __name__ == "__main__":
     if not os.path.isfile(args.input_gff_file):
         logger.warning("{0} is not a recognizable file".format(args.input_gff_file))
 
+    if(args.input_gff_file[-3:len(args.input_gff_file)] != '.gz'):
+        logger.warning("{0} is not a gzipped file".format(args.input_gff_file))
+
     if not os.path.isfile(args.input_fasta_file):
         logger.warning("{0} is not a recognizable file".format(args.input_fasta_file))
+
+    if(args.input_fasta_file[-3:len(args.input_fasta_file)] != '.gz'):
+        logger.warning("{0} is not a gzipped file".format(args.input_fasta_file))
 
     ws_client = biokbase.workspace.client.Workspace(args.workspace_service_url)
 
     #Get the taxon_lookup_object
-    #Organism retrieved from lookup file
-    organism = "Arabidopsis thaliana"
     taxon_lookup = ws_client.get_object( {'workspace':args.taxon_wsname,
                                           'id':"taxon_lookup"})['data']['taxon_lookup']
+    
+    #Taxon lookup dependent on full genus
+    #Can use a file that has two columns, and will translate the organism text into what's in the second column
+    #In order to match what's in the taxon lookup
+    #Example: Athaliana    Arabidopsis thaliana
+    if(args.taxon_names_file is not None):
+        if(os.path.isfile(args.taxon_names_file)):
+            for line in open(args.taxon_names_file):
+                line=line.strip()
+                array=line.split('\t')
+                if(args.organism in array[0]):
+                    args.organism = array[1]
+                    break
+        else:
+            print "Warning taxon_names_file argument (%s) doesn't exist" % args.taxon_names_file
+
     tax_id=0
     taxon_object_name = "unknown_taxon"
-    if(organism[0:3] in taxon_lookup and organism in taxon_lookup[organism[0:3]]):
-           tax_id=taxon_lookup[organism[0:3]][organism]
-           tax_object_name = "%s_taxon" % (str(tax_id))
+    display_sc_name = None
+
+    if(args.organism[0:3] in taxon_lookup and args.organism in taxon_lookup[args.organism[0:3]]):
+        tax_id=taxon_lookup[args.organism[0:3]][args.organism]
+        taxon_object_name = "%s_taxon" % (str(tax_id))
 
     taxon_info = ws_client.get_objects([{"workspace": args.taxon_wsname, 
-                                         "name": taxon_object_name}])[0]['info'] 
-    taxon_ref = "%s/%s/%s" % (taxon_info[6], taxon_info[0], taxon_info[4])
-    core_genome_name = "%s_%s" % (tax_id,args.source) 
+                                         "name": taxon_object_name}])[0]
+
+    taxon_ref = "%s/%s/%s" % (taxon_info['info'][6], taxon_info['info'][0], taxon_info['info'][4])
+    display_sc_name = taxon_info['data']['scientific_name']
+
+    core_genome_name = "%s_%s_%s" % (tax_id,args.source,args.release) 
     genome_type="Reference"
     upload_genome(input_gff_file=args.input_gff_file,input_fasta_file=args.input_fasta_file,workspace_name=args.workspace_name,
                   shock_service_url=args.shock_service_url,handle_service_url=args.handle_service_url,workspace_service_url=args.workspace_service_url,
-                  taxon_reference=taxon_ref,source=args.source,release=args.release,core_genome_name=core_genome_name,genome_type=genome_type,logger=logger)
+                  taxon_reference=taxon_ref,source=args.source,release=args.release,core_genome_name=core_genome_name,genome_type=genome_type,scientific_name=display_sc_name,
+                  logger=logger)
     sys.exit(0)
